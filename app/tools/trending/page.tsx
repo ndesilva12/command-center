@@ -14,8 +14,19 @@ interface TrendingTopic {
   source: "google" | "x";
 }
 
+interface TrendsData {
+  googleTrends: TrendingTopic[];
+  xTrends: TrendingTopic[];
+  counts: {
+    google: number;
+    x: number;
+    total: number;
+  };
+}
+
 export default function TrendingPage() {
-  const [trends, setTrends] = useState<TrendingTopic[]>([]);
+  const [googleTrends, setGoogleTrends] = useState<TrendingTopic[]>([]);
+  const [xTrends, setXTrends] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,13 +42,61 @@ export default function TrendingPage() {
     try {
       const response = await fetch("/api/trending");
       if (!response.ok) throw new Error("Failed to fetch trending topics");
-      const data = await response.json();
-      setTrends(data.trends || []);
+      const data: TrendsData = await response.json();
+      setGoogleTrends(data.googleTrends || []);
+      setXTrends(data.xTrends || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load trending topics");
     } finally {
       setLoading(false);
     }
+  };
+
+  const totalCount = googleTrends.length + xTrends.length;
+
+  const renderTrendSection = (trends: TrendingTopic[], title: string, sourceColor: string) => {
+    if (trends.length === 0) return null;
+
+    return (
+      <div style={{ marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px", paddingLeft: "20px" }}>
+          {title} <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({trends.length})</span>
+        </h2>
+        <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
+          {trends.map((trend, index) => (
+            <a
+              key={index}
+              href={trend.searchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "start",
+                justifyContent: "space-between",
+                padding: "16px 20px",
+                borderBottom: index < trends.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
+                textDecoration: "none",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                  {trend.title || trend.topic}
+                </h3>
+                {trend.description && (
+                  <p style={{ fontSize: "13px", color: "var(--foreground-muted)", lineHeight: 1.5 }}>
+                    {trend.description}
+                  </p>
+                )}
+              </div>
+              <ExternalLink style={{ width: "16px", height: "16px", color: "var(--foreground-muted)", flexShrink: 0, marginLeft: "12px" }} />
+            </a>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -52,10 +111,10 @@ export default function TrendingPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <TrendingUp style={{ width: "24px", height: "24px", color: "#00aaff" }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
-              Trending {trends.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({trends.length})</span>}
+              Trending {totalCount > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({totalCount})</span>}
             </h1>
           </div>
-          
+
           <button
             onClick={fetchTrends}
             disabled={loading}
@@ -79,12 +138,14 @@ export default function TrendingPage() {
         </div>
 
         {/* Content */}
-        <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
-          {loading ? (
+        {loading ? (
+          <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
               <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
             </div>
-          ) : error ? (
+          </div>
+        ) : error ? (
+          <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
               <p>{error}</p>
               <button
@@ -102,7 +163,9 @@ export default function TrendingPage() {
                 Try Again
               </button>
             </div>
-          ) : trends.length === 0 ? (
+          </div>
+        ) : totalCount === 0 ? (
+          <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
               <TrendingUp style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
               <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
@@ -112,58 +175,13 @@ export default function TrendingPage() {
                 Unable to fetch trending topics at this time
               </p>
             </div>
-          ) : (
-            <div>
-              {trends.map((trend, index) => (
-                <a
-                  key={index}
-                  href={trend.searchUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "start",
-                    justifyContent: "space-between",
-                    padding: "16px 20px",
-                    borderBottom: index < trends.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-                    textDecoration: "none",
-                    transition: "background 0.15s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                      <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)" }}>
-                        {trend.title || trend.topic}
-                      </h3>
-                      <span
-                        style={{
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                          fontSize: "10px",
-                          fontWeight: 600,
-                          color: trend.source === "google" ? "#4285f4" : "#1da1f2",
-                          backgroundColor: trend.source === "google" ? "rgba(66, 133, 244, 0.15)" : "rgba(29, 161, 242, 0.15)",
-                          border: `1px solid ${trend.source === "google" ? "rgba(66, 133, 244, 0.3)" : "rgba(29, 161, 242, 0.3)"}`,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {trend.source === "google" ? "Google" : "X"}
-                      </span>
-                    </div>
-                    {trend.description && (
-                      <p style={{ fontSize: "13px", color: "var(--foreground-muted)", lineHeight: 1.5 }}>
-                        {trend.description}
-                      </p>
-                    )}
-                  </div>
-                  <ExternalLink style={{ width: "16px", height: "16px", color: "var(--foreground-muted)", flexShrink: 0, marginLeft: "12px" }} />
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div>
+            {renderTrendSection(googleTrends, "Google Trends", "#4285f4")}
+            {renderTrendSection(xTrends, "X Trending", "#1da1f2")}
+          </div>
+        )}
       </main>
 
       <style jsx global>{`

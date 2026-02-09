@@ -26,10 +26,10 @@ export async function GET(request: Request) {
     let googleTrends: TrendingTopic[] = [];
     let xTrends: TrendingTopic[] = [];
 
-    // Process Google Trends
+    // Process Google Trends - get ALL trends
     if (googleResponse.status === 'fulfilled' && googleResponse.value.ok) {
       const data = await googleResponse.value.json();
-      googleTrends = (data.trends || []).slice(0, 5).map((t: { title: string; searchUrl: string; description?: string }) => ({
+      googleTrends = (data.trends || []).map((t: { title: string; searchUrl: string; description?: string }) => ({
         title: t.title,
         description: t.description,
         searchUrl: t.searchUrl,
@@ -37,10 +37,10 @@ export async function GET(request: Request) {
       }));
     }
 
-    // Process X Trends
+    // Process X Trends - get ALL trends
     if (xResponse.status === 'fulfilled' && xResponse.value.ok) {
       const data = await xResponse.value.json();
-      xTrends = (data.topics || []).slice(0, 5).map((t: { topic: string; searchUrl: string; description?: string }) => ({
+      xTrends = (data.topics || []).map((t: { topic: string; searchUrl: string; description?: string }) => ({
         topic: t.topic,
         description: t.description,
         searchUrl: t.searchUrl,
@@ -48,25 +48,14 @@ export async function GET(request: Request) {
       }));
     }
 
-    // Merge and interleave trends to get exactly 10
-    const merged: TrendingTopic[] = [];
-    const maxLen = Math.max(googleTrends.length, xTrends.length);
-    
-    for (let i = 0; i < maxLen && merged.length < 10; i++) {
-      if (i < googleTrends.length && merged.length < 10) {
-        merged.push(googleTrends[i]);
-      }
-      if (i < xTrends.length && merged.length < 10) {
-        merged.push(xTrends[i]);
-      }
-    }
-
+    // Return separate arrays for Google and X trends
     return NextResponse.json({
-      trends: merged,
+      googleTrends,
+      xTrends,
       counts: {
         google: googleTrends.length,
         x: xTrends.length,
-        total: merged.length,
+        total: googleTrends.length + xTrends.length,
       },
     });
   } catch (error) {

@@ -27,13 +27,25 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
       const response = await fetch("/api/trending", {
         cache: 'no-store'
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch trends');
       }
 
       const data = await response.json();
-      setTopics(data.trends || []);
+
+      // Get exactly 5 from each source to make 10 total
+      const googleTrends = (data.googleTrends || []).slice(0, 5);
+      const xTrends = (data.xTrends || []).slice(0, 5);
+
+      // Merge and interleave to get exactly 10
+      const merged: TrendingTopic[] = [];
+      for (let i = 0; i < 5; i++) {
+        if (googleTrends[i]) merged.push(googleTrends[i]);
+        if (xTrends[i]) merged.push(xTrends[i]);
+      }
+
+      setTopics(merged.slice(0, 10));
     } catch (error) {
       console.error("Error fetching trends:", error);
       // Keep existing topics on error
@@ -100,7 +112,7 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
         </button>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
         {topics.map((topic, index) => {
           const displayText = topic.title || topic.topic || "";
           const sourceColor = topic.source === "google" ? "#4285f4" : "#ffffff";
