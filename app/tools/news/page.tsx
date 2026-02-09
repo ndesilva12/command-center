@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Newspaper, ExternalLink, RefreshCw } from "lucide-react";
+import { TopNav } from "@/components/navigation/TopNav";
+import { BottomNav } from "@/components/navigation/BottomNav";
+import { ToolNav } from "@/components/tools/ToolNav";
 
 interface Article {
   title: string;
@@ -34,68 +37,85 @@ export default function NewsPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--background)", padding: "80px 20px 20px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <Newspaper size={48} style={{ color: "var(--primary)" }} />
-            <h1 style={{ fontSize: "36px", fontWeight: "bold", color: "var(--foreground)", margin: 0 }}>News</h1>
+    <>
+      <TopNav />
+      <BottomNav />
+      <ToolNav currentToolId="news" />
+
+      <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "1400px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
+        {/* Page Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Newspaper style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
+              News {articles.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({articles.length})</span>}
+            </h1>
           </div>
           
-          <div style={{ display: "flex", gap: "12px" }}>
-            <button
-              onClick={() => window.open('https://news.google.com', '_blank')}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <a
+              href="https://news.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
-                padding: "10px 20px",
-                background: "var(--glass-bg)",
-                border: "1px solid var(--glass-border)",
-                borderRadius: "8px",
-                color: "var(--foreground)",
-                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "var(--foreground-muted)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                textDecoration: "none",
+                fontSize: "13px",
+                transition: "all 0.15s",
               }}
             >
-              <ExternalLink size={16} />
-              Google News
-            </button>
+              <ExternalLink style={{ width: "14px", height: "14px" }} />
+              Open in Google News
+            </a>
             
             <button
               onClick={loadNews}
+              disabled={loading}
               style={{
-                padding: "10px 20px",
-                background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
-                border: "none",
-                borderRadius: "8px",
-                color: "white",
-                cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "var(--foreground-muted)",
+                border: "none",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontSize: "13px",
+                opacity: loading ? 0.5 : 1,
               }}
             >
-              <RefreshCw size={16} />
+              <RefreshCw style={{ width: "14px", height: "14px", animation: loading ? "spin 1s linear infinite" : "none" }} />
               Refresh
             </button>
           </div>
         </div>
 
         {/* Categories */}
-        <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "4px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
               style={{
-                padding: "8px 16px",
-                background: category === cat ? "linear-gradient(135deg, var(--primary), var(--primary-dark))" : "var(--glass-bg)",
-                border: category === cat ? "none" : "1px solid var(--glass-border)",
+                padding: "8px 14px",
                 borderRadius: "8px",
-                color: category === cat ? "white" : "var(--foreground)",
-                fontSize: "14px",
-                fontWeight: "600",
+                backgroundColor: category === cat ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                color: category === cat ? "#00aaff" : "var(--foreground-muted)",
+                border: category === cat ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
                 cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: category === cat ? 500 : 400,
+                whiteSpace: "nowrap",
+                transition: "all 0.15s",
+                flexShrink: 0,
                 textTransform: "capitalize",
               }}
             >
@@ -104,47 +124,61 @@ export default function NewsPage() {
           ))}
         </div>
 
-        {loading ? (
-          <p style={{ color: "var(--muted)", textAlign: "center", padding: "40px" }}>Loading news...</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {articles.map((article, idx) => (
-              <a
-                key={idx}
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "block",
-                  background: "var(--glass-bg)",
-                  border: "1px solid var(--glass-border)",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--glass-bg-hover)";
-                  e.currentTarget.style.transform = "translateX(4px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--glass-bg)";
-                  e.currentTarget.style.transform = "translateX(0)";
-                }}
-              >
-                <h3 style={{ fontSize: "18px", fontWeight: "600", color: "var(--foreground)", marginBottom: "8px", lineHeight: "1.4" }}>
-                  {article.title}
-                </h3>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "var(--muted)" }}>
-                  <span>{article.source}</span>
-                  <span>•</span>
-                  <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Content */}
+        <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
+              <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+            </div>
+          ) : articles.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <Newspaper style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                No articles found
+              </h2>
+              <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
+                Try selecting a different category
+              </p>
+            </div>
+          ) : (
+            <div>
+              {articles.map((article, index) => (
+                <a
+                  key={index}
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block",
+                    padding: "16px 20px",
+                    borderBottom: index < articles.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
+                    textDecoration: "none",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px", lineHeight: 1.4 }}>
+                    {article.title}
+                  </h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "var(--foreground-muted)" }}>
+                    <span>{article.source}</span>
+                    <span>•</span>
+                    <span>{new Date(article.publishedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </>
   );
 }
