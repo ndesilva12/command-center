@@ -7,12 +7,35 @@ import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
   const [isMobile, setIsMobile] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [raindropConnected, setRaindropConnected] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Check OAuth connection status
+    const checkConnections = async () => {
+      try {
+        const [googleRes, raindropRes] = await Promise.all([
+          fetch('/api/auth/google/status'),
+          fetch('/api/auth/raindrop/status')
+        ]);
+        
+        setGoogleConnected(googleRes.ok);
+        setRaindropConnected(raindropRes.ok);
+      } catch (e) {
+        console.error('Failed to check connections:', e);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+    checkConnections();
   }, []);
 
   return (
@@ -42,6 +65,88 @@ export default function SettingsPage() {
             Manage your preferences and account settings
           </p>
 
+          {/* Connected Accounts Section */}
+          <div style={{ marginBottom: "32px" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "var(--foreground)" }}>
+              Connected Accounts
+            </h2>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* Google OAuth Button */}
+              <button
+                onClick={() => window.location.href = '/api/auth/google'}
+                disabled={checkingStatus}
+                style={{
+                  padding: "16px 24px",
+                  background: googleConnected 
+                    ? "linear-gradient(135deg, #34a853, #2d8e47)" 
+                    : "linear-gradient(135deg, #4285f4, #34a853)",
+                  border: "none",
+                  borderRadius: "12px",
+                  color: "white",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  cursor: checkingStatus ? "wait" : "pointer",
+                  transition: "all 0.3s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  opacity: checkingStatus ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!checkingStatus) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(66, 133, 244, 0.4)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <span>🔐 {googleConnected ? "Google Connected" : "Connect Google Account"}</span>
+                {googleConnected && <span style={{ fontSize: "20px" }}>✓</span>}
+              </button>
+              
+              {/* Raindrop OAuth Button */}
+              <button
+                onClick={() => window.location.href = '/api/auth/raindrop'}
+                disabled={checkingStatus}
+                style={{
+                  padding: "16px 24px",
+                  background: raindropConnected
+                    ? "linear-gradient(135deg, #0088cc, #006699)"
+                    : "linear-gradient(135deg, #00aaff, #0088cc)",
+                  border: "none",
+                  borderRadius: "12px",
+                  color: "white",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  cursor: checkingStatus ? "wait" : "pointer",
+                  transition: "all 0.3s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  opacity: checkingStatus ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!checkingStatus) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 170, 255, 0.4)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <span>🔖 {raindropConnected ? "Raindrop Connected" : "Connect Raindrop (Bookmarks)"}</span>
+                {raindropConnected && <span style={{ fontSize: "20px" }}>✓</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* Other Settings Sections */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <SettingSection
               icon={User}

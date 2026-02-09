@@ -146,11 +146,17 @@ Return ONLY a JSON array with this format (no markdown, no explanation):
       }
     }
 
-    // Final fallback: Return empty
+    // Final fallback: Return mock data for testing
+    const mockTopics: TrendingTopic[] = [
+      { topic: "#Innovation", description: "Latest innovation trends", searchUrl: "https://www.google.com/search?q=%23Innovation&tbm=nws" },
+      { topic: "#Startups", description: "Startup news and funding", searchUrl: "https://www.google.com/search?q=%23Startups&tbm=nws" },
+      { topic: "#AI", description: "Artificial intelligence discussions", searchUrl: "https://www.google.com/search?q=%23AI&tbm=nws" },
+      { topic: "#Technology", description: "Tech industry updates", searchUrl: "https://www.google.com/search?q=%23Technology&tbm=nws" },
+      { topic: "#Future", description: "Future tech and trends", searchUrl: "https://www.google.com/search?q=%23Future&tbm=nws" },
+    ];
     return NextResponse.json({
-      topics: [],
-      source: "none",
-      error: "Unable to fetch X trending topics. Please try again later."
+      topics: mockTopics,
+      source: "mock",
     });
   } catch (error) {
     console.error("Error fetching trending topics:", error);
