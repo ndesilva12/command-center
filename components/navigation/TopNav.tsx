@@ -47,19 +47,24 @@ export function TopNav() {
           justifyContent: "space-between",
         }}
       >
-        {/* Logo - Sacramento font will be added in layout */}
+        {/* Signature Logo */}
         <Link
           href="/"
           style={{
-            fontSize: "24px",
-            fontWeight: 400,
-            color: "var(--foreground)",
+            display: "flex",
+            alignItems: "center",
             textDecoration: "none",
-            letterSpacing: "0.02em",
-            fontFamily: "var(--font-sacramento)",
           }}
         >
-          Norman C. de Silva
+          <img 
+            src="/signature.jpg" 
+            alt="Norman C. de Silva" 
+            style={{
+              height: "32px",
+              width: "auto",
+              filter: "invert(1)",
+            }}
+          />
         </Link>
 
         {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}
