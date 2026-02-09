@@ -2,7 +2,16 @@
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/auth/google/callback";
+
+// Dynamically determine redirect URI based on environment
+function getRedirectUri(): string {
+  // In production, use the live site URL
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_URL) {
+    return "https://normandesilva.vercel.app/api/auth/google/callback";
+  }
+  // In development, use localhost
+  return "http://localhost:3000/api/auth/google/callback";
+}
 
 const SCOPES = [
   "https://www.googleapis.com/auth/userinfo.email",
@@ -37,7 +46,7 @@ export function getGoogleAuthUrl(returnUrl?: string): string {
 
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: GOOGLE_REDIRECT_URI,
+    redirect_uri: getRedirectUri(),
     response_type: "code",
     scope: SCOPES.join(" "),
     access_type: "offline",
@@ -63,7 +72,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
       code,
       client_id: GOOGLE_CLIENT_ID,
       client_secret: GOOGLE_CLIENT_SECRET,
-      redirect_uri: GOOGLE_REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
       grant_type: "authorization_code",
     }),
   });
