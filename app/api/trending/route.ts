@@ -8,14 +8,17 @@ export interface TrendingTopic {
   source: "google" | "x";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Get the base URL from the request headers for correct environment
+    const { origin } = new URL(request.url);
+    
     // Fetch both Google Trends and X Trending in parallel
     const [googleResponse, xResponse] = await Promise.allSettled([
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/google-trends`, {
+      fetch(`${origin}/api/google-trends`, {
         next: { revalidate: 900 } // 15 minutes
       }),
-      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/x-trending`, {
+      fetch(`${origin}/api/x-trending`, {
         next: { revalidate: 900 } // 15 minutes
       })
     ]);
