@@ -62,7 +62,7 @@ export function TopNav() {
             style={{
               height: "32px",
               width: "auto",
-              filter: "invert(1)",
+              filter: "invert(1) sepia(1) saturate(5) hue-rotate(175deg) brightness(1.1)",
             }}
           />
         </Link>
