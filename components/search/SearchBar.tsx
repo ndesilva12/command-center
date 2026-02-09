@@ -4,7 +4,6 @@ import { useState, FormEvent, useEffect } from "react";
 import { Search, Clock, X } from "lucide-react";
 import { UnifiedSourceId, getSearchUrl, getSourceConfig, getAIModelUrl } from "@/lib/unified-sources";
 import { SourceSelector } from "./SourceSelector";
-import { TrendingTags } from "./TrendingTags";
 
 const RECENT_SEARCHES_KEY = "cc-recent-searches";
 const MAX_RECENT = 5;
@@ -82,9 +81,6 @@ export function SearchBar() {
 
   return (
     <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
-      {/* Trending Tags */}
-      <TrendingTags onTagClick={handleTagClick} />
-
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative" }}>
         <div
