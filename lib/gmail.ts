@@ -202,6 +202,24 @@ export async function sendEmail(
   return response.json();
 }
 
+// Helper functions for email display
+export function formatEmailSender(from: string): string {
+  if (!from) return "Unknown Sender";
+  const match = from.match(/^(.+?)\s*<.+>$/);
+  if (match) {
+    return match[1].replace(/"/g, "");
+  }
+  const emailMatch = from.match(/<(.+)>/);
+  if (emailMatch) {
+    return emailMatch[1];
+  }
+  return from;
+}
+
+export function getSuperhumanUrl(threadId: string): string {
+  return `https://mail.superhuman.com/thread/${threadId}`;
+}
+
 // Email actions
 export async function markEmailAsRead(accessToken: string, messageId: string): Promise<void> {
   await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/modify`, {
