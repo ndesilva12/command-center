@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Command Center
 
-## Getting Started
+Norman C. de Silva's personal AI-powered productivity dashboard.
 
-First, run the development server:
+## Live Site
+https://normandesilva.vercel.app
+
+## Recent Updates (Feb 2026)
+
+### ✅ Security & Architecture
+- **No API tokens used** - all AI calls routed through OpenClaw gateway (uses Norman's Anthropic subscription)
+- All Anthropic API calls replaced with OpenClaw gateway endpoints
+
+### ✅ Visual Updates
+- **Homepage**: Logo replaces "Command Center" heading
+- **Header**: "Norman C. de Silva" text replaces logo
+- Blue gradient styling (#00aaff) throughout
+
+### ✅ Features
+- Multi-source search (14+ sources)
+- Trending tags (Google + X trends)
+- OAuth connections for Google & Raindrop (Settings page)
+- 25+ integrated productivity tools
+- PWA-ready for iPhone installation
+
+## Tech Stack
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS 4
+- Framer Motion
+- Firebase/Firestore
+- Vercel deployment
+
+## Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## OAuth Setup
+1. Visit Settings page
+2. Click "Connect Google Account"
+3. Authorize access
+4. Repeat for Raindrop bookmarks integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built with Claude Code + Jimmy (OpenClaw AI assistant)
