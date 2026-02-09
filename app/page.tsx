@@ -3,6 +3,7 @@
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolCard } from "@/components/tools/ToolCard";
+import { SearchBar } from "@/components/search/SearchBar";
 import { useEffect, useState } from "react";
 import {
   Sparkles,
@@ -275,13 +276,17 @@ export default function Home() {
                 fontWeight: 700,
                 color: "var(--foreground)",
                 marginBottom: "8px",
+                textAlign: "center",
               }}
             >
               Command Center
             </h1>
-            <p style={{ fontSize: "16px", color: "var(--muted)" }}>
+            <p style={{ fontSize: "16px", color: "var(--muted)", textAlign: "center", marginBottom: "40px" }}>
               Your personal intelligence and productivity hub
             </p>
+            
+            {/* Multi-Source Search */}
+            <SearchBar />
           </div>
 
           {/* Tool Categories */}
