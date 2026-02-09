@@ -1,285 +1,369 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { TrendingUp, Plus, RefreshCw, ExternalLink, Search, TrendingDown, Minus } from "lucide-react";
+import { useEffect, useRef, memo } from "react";
+import { TrendingUp, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 
-interface MarketPrice {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  type: "stock" | "crypto";
-}
+// User's TradingView watchlist symbols with descriptions
+// Note: Removed VIX, DXY, US10Y, US30Y as they don't display properly in the widget
+const WATCHLIST_SYMBOLS = [
+  { s: "CAPITALCOM:US500", d: "US 500" },
+  { s: "AMEX:SPY", d: "SPDR S&P 500 ETF" },
+  { s: "NASDAQ:QQQ", d: "Invesco QQQ Trust" },
+  { s: "AMEX:IWM", d: "iShares Russell 2000" },
+  { s: "NYSE:BSX", d: "Boston Scientific" },
+  { s: "TVC:GOLD", d: "Gold" },
+  { s: "TVC:SILVER", d: "Silver" },
+  { s: "NASDAQ:TLT", d: "20+ Year Treasury Bond" },
+  { s: "COINBASE:BTCUSD", d: "Bitcoin USD" },
+  { s: "FX:USDJPY", d: "USD/JPY" },
+  { s: "NASDAQ:TSLA", d: "Tesla" },
+  { s: "AMEX:GLD", d: "SPDR Gold Shares" },
+  { s: "AMEX:SLV", d: "iShares Silver Trust" },
+  { s: "NYMEX:CL1!", d: "Crude Oil Futures" },
+  { s: "AMEX:XLE", d: "Energy Select Sector" },
+  { s: "NYSE:GME", d: "GameStop" },
+  { s: "NYSE:CVNA", d: "Carvana" },
+  { s: "NYSE:KSS", d: "Kohl's" },
+  { s: "NYSE:RKT", d: "Rocket Companies" },
+  { s: "NASDAQ:HTZ", d: "Hertz" },
+  { s: "NASDAQ:GRPN", d: "Groupon" },
+  { s: "NASDAQ:BETR", d: "Better Home & Finance" },
+  { s: "NASDAQ:OPEN", d: "Opendoor Technologies" },
+];
 
-export default function MarketPage() {
-  const [prices, setPrices] = useState<MarketPrice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function TradingViewWatchlistWidget() {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 60000); // Refresh every minute
-    return () => clearInterval(interval);
+    if (!containerRef.current) return;
+
+    containerRef.current.innerHTML = "";
+
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    containerRef.current.appendChild(widgetContainer);
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      colorTheme: "dark",
+      dateRange: "1D",
+      showChart: true,
+      locale: "en",
+      width: "100%",
+      height: "100%",
+      largeChartUrl: "",
+      isTransparent: true,
+      showSymbolLogo: true,
+      showFloatingTooltip: true,
+      plotLineColorGrowing: "rgba(34, 197, 94, 1)",
+      plotLineColorFalling: "rgba(239, 68, 68, 1)",
+      gridLineColor: "rgba(240, 243, 250, 0.1)",
+      scaleFontColor: "rgba(209, 212, 220, 1)",
+      belowLineFillColorGrowing: "rgba(34, 197, 94, 0.12)",
+      belowLineFillColorFalling: "rgba(239, 68, 68, 0.12)",
+      belowLineFillColorGrowingBottom: "rgba(34, 197, 94, 0)",
+      belowLineFillColorFallingBottom: "rgba(239, 68, 68, 0)",
+      symbolActiveColor: "rgba(41, 98, 255, 0.12)",
+      tabs: [
+        {
+          title: "Watchlist",
+          symbols: WATCHLIST_SYMBOLS,
+        },
+      ],
+    });
+
+    containerRef.current.appendChild(script);
+
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
+    };
   }, []);
 
-  const fetchPrices = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/market?symbols=BTC,ETH,SOL,AAPL,GOOGL,TSLA,NVDA");
-      if (!response.ok) throw new Error("Failed to fetch market data");
-      const data = await response.json();
-      setPrices(data.prices || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load market data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  return (
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
+      style={{
+        width: "100%",
+        height: "100%",
+      }}
+    />
+  );
+}
 
-  const formatPrice = (price: number) => {
-    if (price >= 1000) return `$${price.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
-    if (price >= 1) return `$${price.toFixed(2)}`;
-    return `$${price.toFixed(4)}`;
-  };
+const MemoizedWatchlistWidget = memo(TradingViewWatchlistWidget);
 
-  const formatChange = (change: number) => {
-    const sign = change >= 0 ? "+" : "";
-    return `${sign}${change.toFixed(2)}%`;
-  };
+function TradingViewTickerTape() {
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    containerRef.current.innerHTML = "";
+
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    containerRef.current.appendChild(widgetContainer);
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      symbols: WATCHLIST_SYMBOLS.map(s => ({ proName: s.s, title: s.d })),
+      showSymbolLogo: true,
+      isTransparent: true,
+      displayMode: "adaptive",
+      colorTheme: "dark",
+      locale: "en",
+    });
+
+    containerRef.current.appendChild(script);
+
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
+      style={{ width: "100%" }}
+    />
+  );
+}
+
+const MemoizedTickerTape = memo(TradingViewTickerTape);
+
+export default function MarketPage() {
   return (
     <>
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="market" />
 
-      <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "1400px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
-        {/* Page Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <TrendingUp style={{ width: "24px", height: "24px", color: "#00aaff" }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>Market</h1>
-          </div>
-          
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
+        <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 24px" }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+            <div>
+              <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)", marginBottom: "4px", display: "flex", alignItems: "center", gap: "12px" }}>
+                <TrendingUp style={{ width: "28px", height: "28px", color: "#00aaff" }} />
+                Market
+              </h1>
+              <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                Real-time market data powered by TradingView
+              </p>
+            </div>
             <a
-              href="https://www.google.com/finance"
+              href="https://www.tradingview.com/watchlists/16742067/"
               target="_blank"
               rel="noopener noreferrer"
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "8px 14px",
+                padding: "10px 16px",
                 borderRadius: "8px",
                 backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "var(--foreground-muted)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
-                textDecoration: "none",
-                fontSize: "13px",
-                transition: "all 0.15s",
-              }}
-            >
-              <ExternalLink style={{ width: "14px", height: "14px" }} />
-              Open in Google Finance
-            </a>
-            
-            <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
                 color: "var(--foreground-muted)",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "13px",
+                fontSize: "14px",
+                textDecoration: "none",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                e.currentTarget.style.borderColor = "#00aaff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
               }}
             >
-              <RefreshCw style={{ width: "14px", height: "14px" }} />
-              Refresh
-            </button>
-            
-            <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "#00aaff",
-                color: "#000",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: 500,
-              }}
-            >
-              <Plus style={{ width: "14px", height: "14px" }} />
-              Add to Watchlist
-            </button>
+              <svg viewBox="0 0 36 28" width="18" height="14" fill="currentColor">
+                <path d="M14 22H7V6h7v16ZM21 22h-7V0h7v22Zm14 6H21V11h14v17Z" />
+              </svg>
+              Open in TradingView
+            </a>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginBottom: "16px" }}>
-          {["Stocks", "Crypto", "Watchlist"].map((tab, idx) => (
-            <button
-              key={idx}
+          {/* Ticker Tape */}
+          <div
+            className="glass"
+            style={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              marginBottom: "24px",
+            }}
+          >
+            <MemoizedTickerTape />
+          </div>
+
+          {/* Main Content - Watchlist and Quick Access Side by Side */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "24px",
+            }}
+          >
+            {/* Watchlist Widget */}
+            <div
+              className="glass"
               style={{
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: idx === 0 ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                color: idx === 0 ? "#00aaff" : "var(--foreground-muted)",
-                border: idx === 0 ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: idx === 0 ? 500 : 400,
-                whiteSpace: "nowrap",
-                transition: "all 0.15s",
+                borderRadius: "12px",
+                overflow: "hidden",
+                height: "600px",
               }}
             >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {/* Search Bar */}
-        <div style={{ marginBottom: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
-            <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
-            <input
-              type="text"
-              placeholder="Search stocks or crypto..."
-              style={{ flex: 1, backgroundColor: "transparent", border: "none", outline: "none", color: "var(--foreground)", fontSize: "14px" }}
-            />
-          </div>
-        </div>
-
-        {/* Content */}
-        <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
-          {loading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+              <MemoizedWatchlistWidget />
             </div>
-          ) : error ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
-              <p>{error}</p>
-              <button
-                onClick={fetchPrices}
+
+            {/* Quick Access Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <h2 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                Quick Access
+              </h2>
+              <div
                 style={{
-                  marginTop: "16px",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  color: "var(--foreground)",
-                  border: "none",
-                  cursor: "pointer",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "12px",
                 }}
               >
-                Try Again
-              </button>
-            </div>
-          ) : prices.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <TrendingUp style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                No market data
-              </h2>
-              <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                Failed to load market prices
-              </p>
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px", padding: "20px" }}>
-              {prices.map((item) => {
-                const isPositive = item.change >= 0;
-                return (
-                  <div
-                    key={item.symbol}
-                    style={{
-                      background: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      borderRadius: "10px",
-                      padding: "16px",
-                      transition: "all 0.15s",
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-                      e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "8px" }}>
-                      <div>
-                        <h3 style={{ fontSize: "18px", fontWeight: 700, color: "var(--foreground)", marginBottom: "2px" }}>
-                          {item.symbol}
-                        </h3>
-                        <p style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>{item.name}</p>
-                      </div>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          fontSize: "10px",
-                          fontWeight: 600,
-                          color: item.type === "crypto" ? "#f59e0b" : "#06b6d4",
-                          backgroundColor: item.type === "crypto" ? "rgba(245, 158, 11, 0.15)" : "rgba(6, 182, 212, 0.15)",
-                          border: `1px solid ${item.type === "crypto" ? "rgba(245, 158, 11, 0.3)" : "rgba(6, 182, 212, 0.3)"}`,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {item.type}
-                      </span>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
-                      <div>
-                        <p style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
-                          {formatPrice(item.price)}
-                        </p>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        {isPositive ? (
-                          <TrendingUp style={{ width: "16px", height: "16px", color: "#10b981" }} />
-                        ) : (
-                          <TrendingDown style={{ width: "16px", height: "16px", color: "#ef4444" }} />
-                        )}
-                        <span
+                {WATCHLIST_SYMBOLS.slice(0, 12).map((item) => {
+                  const symbolName = item.s.split(":")[1] || item.s;
+                  return (
+                    <a
+                      key={item.s}
+                      href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(item.s)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="glass"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "14px 16px",
+                        borderRadius: "10px",
+                        textDecoration: "none",
+                        transition: "transform 0.15s, box-shadow 0.15s, border-color 0.15s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 170, 255, 0.2)";
+                        e.currentTarget.style.borderColor = "#00aaff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>
+                          {symbolName}
+                        </div>
+                        <div
                           style={{
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            color: isPositive ? "#10b981" : "#ef4444",
+                            fontSize: "11px",
+                            color: "var(--foreground-muted)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                           }}
                         >
-                          {formatChange(item.change)}
-                        </span>
+                          {item.d}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
+                      <ExternalLink style={{ width: "14px", height: "14px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+                    </a>
+                  );
+                })}
+              </div>
 
-      <style jsx global>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+              {/* View More */}
+              <div style={{ marginTop: "8px" }}>
+                <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "8px" }}>
+                  Click any symbol in the watchlist to see its chart. Use the TradingView widget to interact with real-time data.
+                </p>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {WATCHLIST_SYMBOLS.slice(12).map((item) => {
+                    const symbolName = item.s.split(":")[1] || item.s;
+                    return (
+                      <a
+                        key={item.s}
+                        href={`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(item.s)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          backgroundColor: "rgba(255, 255, 255, 0.05)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          color: "var(--foreground-muted)",
+                          fontSize: "12px",
+                          textDecoration: "none",
+                          transition: "all 0.15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+                          e.currentTarget.style.color = "var(--foreground)";
+                          e.currentTarget.style.borderColor = "#00aaff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                          e.currentTarget.style.color = "var(--foreground-muted)";
+                          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                        }}
+                      >
+                        {symbolName}
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Attribution */}
+          <div style={{ marginTop: "24px", textAlign: "center" }}>
+            <a
+              href="https://www.tradingview.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: "12px",
+                color: "var(--foreground-muted)",
+                textDecoration: "none",
+              }}
+            >
+              Market data by TradingView
+            </a>
+          </div>
+        </div>
+
+        {/* Responsive styles */}
+        <style jsx global>{`
+          @media (max-width: 900px) {
+            main > div > div:nth-child(4) {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
+      </main>
     </>
   );
 }
