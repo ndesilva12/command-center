@@ -289,8 +289,8 @@ export default function Home() {
                 style={{
                   height: isMobile ? "48px" : "64px",
                   width: "auto",
-                  mixBlendMode: "screen",
-                  filter: "brightness(1.2) contrast(1.1) hue-rotate(180deg) saturate(2)",
+                  mixBlendMode: "multiply",
+                  filter: "invert(1) brightness(1.5) contrast(1.2) hue-rotate(180deg) saturate(3)",
                 }}
               />
             </div>
