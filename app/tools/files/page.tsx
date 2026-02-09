@@ -1,84 +1,128 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TopNav } from "@/components/navigation/TopNav";
-import { BottomNav } from "@/components/navigation/BottomNav";
-import { FolderOpen, File, Upload, Search } from "lucide-react";
-
-interface FileItem {
-  id: string;
-  name: string;
-  type: "folder" | "file";
-  size?: string;
-  modifiedAt: string;
-}
+import { FolderOpen, ExternalLink, LogIn, File } from "lucide-react";
 
 export default function FilesPage() {
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setFiles([
-      { id: "1", name: "Documents", type: "folder", modifiedAt: "2 days ago" },
-      { id: "2", name: "Images", type: "folder", modifiedAt: "1 week ago" },
-      { id: "3", name: "Project Proposal.pdf", type: "file", size: "2.4 MB", modifiedAt: "3 hours ago" },
-      { id: "4", name: "Budget 2026.xlsx", type: "file", size: "856 KB", modifiedAt: "1 day ago" },
-    ]);
+    // Check if Google tokens exist in cookies
+    const cookies = document.cookie.split(';');
+    const hasGoogleToken = cookies.some(c => c.trim().startsWith('google_tokens='));
+    setIsAuthenticated(hasGoogleToken);
+    setLoading(false);
   }, []);
 
-  const filteredFiles = files.filter(file =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleConnect = async () => {
+    try {
+      const res = await fetch('/api/auth/google?returnUrl=/tools/files');
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Failed to initiate Google auth:", err);
+      alert("Failed to connect to Google Drive");
+    }
+  };
 
   return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <main style={{ minHeight: "100vh", paddingTop: "80px", paddingBottom: "32px", padding: "80px 24px 32px 24px" }}>
-        <div className="container" style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <FolderOpen style={{ width: "28px", height: "28px", color: "var(--accent)" }} />
-              <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)" }}>Files</h1>
-            </div>
-            <button style={{ padding: "10px 20px", borderRadius: "10px", border: "none", background: "var(--accent)", color: "var(--background)", fontSize: "14px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Upload style={{ width: "16px", height: "16px" }} />
-              Upload
+    <div style={{ minHeight: "100vh", background: "var(--background)", padding: "80px 20px 20px" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <FolderOpen size={48} style={{ color: "var(--primary)" }} />
+            <h1 style={{ fontSize: "36px", fontWeight: "bold", color: "var(--foreground)", margin: 0 }}>Files</h1>
+          </div>
+          
+          <button
+            onClick={() => window.open('https://drive.google.com', '_blank')}
+            style={{
+              padding: "10px 20px",
+              background: "var(--glass-bg)",
+              border: "1px solid var(--glass-border)",
+              borderRadius: "8px",
+              color: "var(--foreground)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <ExternalLink size={16} />
+            Open Google Drive
+          </button>
+        </div>
+
+        {loading ? (
+          <p style={{ color: "var(--muted)", textAlign: "center", padding: "40px" }}>Loading...</p>
+        ) : !isAuthenticated ? (
+          <div style={{
+            background: "var(--glass-bg)",
+            border: "1px solid var(--glass-border)",
+            borderRadius: "16px",
+            padding: "60px 40px",
+            textAlign: "center",
+            maxWidth: "600px",
+            margin: "60px auto",
+          }}>
+            <FolderOpen size={64} style={{ color: "var(--primary)", margin: "0 auto 24px" }} />
+            <h2 style={{ fontSize: "24px", fontWeight: "bold", color: "var(--foreground)", marginBottom: "12px" }}>
+              Connect to Google Drive
+            </h2>
+            <p style={{ fontSize: "16px", color: "var(--muted)", marginBottom: "32px", lineHeight: "1.6" }}>
+              Access your Google Drive files directly from Command Center.
+            </p>
+            <button
+              onClick={handleConnect}
+              style={{
+                padding: "14px 32px",
+                background: "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+                border: "none",
+                borderRadius: "8px",
+                color: "white",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              <LogIn size={20} />
+              Connect Google Drive
             </button>
           </div>
-
-          <div className="glass" style={{ padding: "16px", borderRadius: "12px", marginBottom: "24px" }}>
-            <div style={{ position: "relative" }}>
-              <Search style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search files..."
-                style={{ width: "100%", padding: "12px 14px 12px 44px", background: "rgba(255, 255, 255, 0.05)", border: "1px solid var(--glass-border)", borderRadius: "8px", color: "var(--foreground)", fontSize: "14px", outline: "none" }}
-              />
-            </div>
+        ) : (
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <p style={{ fontSize: "18px", color: "var(--foreground)", marginBottom: "16px" }}>
+              ✅ Connected to Google Drive
+            </p>
+            <p style={{ fontSize: "14px", color: "var(--muted)", marginBottom: "24px" }}>
+              File browser interface coming soon. For now, use Google Drive directly.
+            </p>
+            <button
+              onClick={() => window.open('https://drive.google.com', '_blank')}
+              style={{
+                padding: "12px 24px",
+                background: "var(--glass-bg)",
+                border: "1px solid var(--glass-border)",
+                borderRadius: "8px",
+                color: "var(--foreground)",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <ExternalLink size={16} />
+              Open Google Drive
+            </button>
           </div>
-
-          <div style={{ display: "grid", gap: "12px" }}>
-            {filteredFiles.map(file => (
-              <div key={file.id} className="glass" style={{ display: "flex", alignItems: "center", gap: "16px", padding: "16px 20px", borderRadius: "12px", cursor: "pointer" }}>
-                {file.type === "folder" ? (
-                  <FolderOpen style={{ width: "24px", height: "24px", color: "var(--accent)" }} />
-                ) : (
-                  <File style={{ width: "24px", height: "24px", color: "var(--foreground-muted)" }} />
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "14px", fontWeight: 500, color: "var(--foreground)", marginBottom: "2px" }}>{file.name}</div>
-                  <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
-                    {file.size && `${file.size} • `}{file.modifiedAt}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    </>
+        )}
+      </div>
+    </div>
   );
 }

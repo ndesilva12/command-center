@@ -59,7 +59,7 @@ export function TopNav() {
             fontFamily: "var(--font-sacramento)",
           }}
         >
-          Command Center
+          Norman C. de Silva
         </Link>
 
         {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}
