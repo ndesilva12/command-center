@@ -283,13 +283,14 @@ export default function Home() {
               justifyContent: "center", 
               marginBottom: "8px" 
             }}>
-              <img 
-                src="/signature.jpg" 
-                alt="Norman C. de Silva" 
+              <img
+                src="/signature.jpg"
+                alt="Norman C. de Silva"
                 style={{
                   height: isMobile ? "48px" : "64px",
                   width: "auto",
-                  filter: "invert(1) sepia(1) saturate(5) hue-rotate(175deg) brightness(1.1)",
+                  mixBlendMode: "screen",
+                  filter: "brightness(1.2) contrast(1.1) hue-rotate(180deg) saturate(2)",
                 }}
               />
             </div>
