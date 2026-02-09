@@ -26,7 +26,7 @@ export default function SettingsPage() {
           fetch('/api/auth/google/status'),
           fetch('/api/auth/raindrop/status')
         ]);
-        
+
         setGoogleConnected(googleRes.ok);
         setRaindropConnected(raindropRes.ok);
       } catch (e) {
@@ -37,6 +37,32 @@ export default function SettingsPage() {
     };
     checkConnections();
   }, []);
+
+  const handleGoogleConnect = async () => {
+    try {
+      const res = await fetch('/api/auth/google?returnUrl=/settings');
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Failed to initiate Google auth:", err);
+      alert("Failed to connect to Google");
+    }
+  };
+
+  const handleRaindropConnect = async () => {
+    try {
+      const res = await fetch('/api/auth/raindrop?returnUrl=/settings');
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Failed to initiate Raindrop auth:", err);
+      alert("Failed to connect to Raindrop");
+    }
+  };
 
   return (
     <>
@@ -74,7 +100,7 @@ export default function SettingsPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {/* Google OAuth Button */}
               <button
-                onClick={() => window.location.href = '/api/auth/google'}
+                onClick={handleGoogleConnect}
                 disabled={checkingStatus}
                 style={{
                   padding: "16px 24px",
@@ -110,7 +136,7 @@ export default function SettingsPage() {
               
               {/* Raindrop OAuth Button */}
               <button
-                onClick={() => window.location.href = '/api/auth/raindrop'}
+                onClick={handleRaindropConnect}
                 disabled={checkingStatus}
                 style={{
                   padding: "16px 24px",

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Client } from "@notionhq/client";
 import { adminDb } from "@/lib/firebase-admin";
 
 interface NotionPerson {
@@ -46,19 +45,29 @@ export async function POST() {
       return NextResponse.json({ error: "Notion API key not configured" }, { status: 500 });
     }
 
-    const notion = new Client({ auth: notionApiKey });
-
-    // Query Notion database - properly typed
-    const response = await (notion.databases as any).query({
-      database_id: databaseId,
+    // Query Notion database using REST API directly
+    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${notionApiKey}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Notion API error: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
     const userId = "norman"; // TODO: get from auth
     const batch = adminDb.batch();
     let importedCount = 0;
 
     // Import each person to Firestore
-    for (const page of response.results as NotionPerson[]) {
+    for (const page of data.results as NotionPerson[]) {
       const props = page.properties;
       const name = extractText(props.Name);
 
@@ -106,7 +115,7 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       count: importedCount,
-      total: response.results.length,
+      total: data.results.length,
       message: `Imported ${importedCount} people from Notion`,
     });
   } catch (error) {
