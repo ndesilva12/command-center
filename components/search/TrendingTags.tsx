@@ -7,6 +7,7 @@ import { UnifiedSourceId } from "@/lib/unified-sources";
 interface TrendingTopic {
   title?: string;
   topic?: string;
+  description?: string;
   searchUrl: string;
   source: "google" | "x";
 }
@@ -18,46 +19,40 @@ interface TrendingTagsProps {
 export function TrendingTags({ onTagClick }: TrendingTagsProps) {
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchTrends = async () => {
-    setLoading(true);
+    setRefreshing(true);
     try {
-      const response = await fetch("/api/trending");
-      const data = await response.json();
-
-      const googleTrends: TrendingTopic[] = (data.trends || []).slice(0, 4).map((t: { title: string; searchUrl: string }) => ({
-        title: t.title,
-        searchUrl: t.searchUrl,
-        source: "google" as const,
-      }));
-
-      const xTrends: TrendingTopic[] = (data.topics || []).slice(0, 4).map((t: { topic: string; searchUrl: string }) => ({
-        topic: t.topic,
-        searchUrl: t.searchUrl,
-        source: "x" as const,
-      }));
-
-      // Interleave trends
-      const mixed: TrendingTopic[] = [];
-      const maxLen = Math.max(googleTrends.length, xTrends.length);
-      for (let i = 0; i < maxLen; i++) {
-        if (i < googleTrends.length) mixed.push(googleTrends[i]);
-        if (i < xTrends.length) mixed.push(xTrends[i]);
+      const response = await fetch("/api/trending", {
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch trends');
       }
 
-      setTopics(mixed.slice(0, 8));
+      const data = await response.json();
+      setTopics(data.trends || []);
     } catch (error) {
       console.error("Error fetching trends:", error);
+      // Keep existing topics on error
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchTrends();
+    
+    // Auto-refresh every 15 minutes
+    const interval = setInterval(fetchTrends, 15 * 60 * 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  if (loading && topics.length === 0) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
         <TrendingUp style={{ width: "16px", height: "16px", color: "var(--accent)" }} />
@@ -79,6 +74,7 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
         </div>
         <button
           onClick={fetchTrends}
+          disabled={refreshing}
           style={{
             display: "flex",
             alignItems: "center",
@@ -88,54 +84,83 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
             borderRadius: "6px",
             border: "none",
             background: "transparent",
-            color: "var(--foreground-muted)",
-            cursor: "pointer",
+            color: refreshing ? "var(--accent)" : "var(--foreground-muted)",
+            cursor: refreshing ? "default" : "pointer",
+            transition: "color 0.2s",
           }}
-          title="Refresh"
+          title="Refresh trends"
         >
-          <RefreshCw style={{ width: "14px", height: "14px" }} />
+          <RefreshCw 
+            style={{ 
+              width: "14px", 
+              height: "14px",
+              animation: refreshing ? "spin 1s linear infinite" : "none"
+            }} 
+          />
         </button>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-        {topics.map((topic, index) => (
-          <button
-            key={`${topic.source}-${index}`}
-            onClick={() => onTagClick(topic.title || topic.topic || "", "news")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              borderRadius: "20px",
-              border: "1px solid var(--glass-border)",
-              background: "rgba(255, 255, 255, 0.03)",
-              color: "var(--foreground)",
-              fontSize: "13px",
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-              e.currentTarget.style.borderColor = "var(--accent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-              e.currentTarget.style.borderColor = "var(--glass-border)";
-            }}
-          >
-            <span
+        {topics.map((topic, index) => {
+          const displayText = topic.title || topic.topic || "";
+          const sourceColor = topic.source === "google" ? "#4285f4" : "#ffffff";
+          
+          return (
+            <button
+              key={`${topic.source}-${index}`}
+              onClick={() => onTagClick(displayText, "news")}
+              title={topic.description || displayText}
               style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: topic.source === "google" ? "#4285f4" : "#ffffff",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "20px",
+                border: "1px solid var(--glass-border)",
+                background: "rgba(255, 255, 255, 0.03)",
+                color: "var(--foreground)",
+                fontSize: "13px",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                maxWidth: "200px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
-            />
-            {topic.title || topic.topic}
-          </button>
-        ))}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                e.currentTarget.style.borderColor = "var(--accent)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                e.currentTarget.style.borderColor = "var(--glass-border)";
+              }}
+            >
+              <span
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: sourceColor,
+                  flexShrink: 0,
+                }}
+              />
+              {displayText}
+            </button>
+          );
+        })}
       </div>
+
+      <style jsx>{`
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,31 +1,79 @@
 import { NextResponse } from "next/server";
 
+export interface TrendingTopic {
+  title?: string;
+  topic?: string;
+  description?: string;
+  searchUrl: string;
+  source: "google" | "x";
+}
+
 export async function GET() {
   try {
-    // Fetch Google Trends (simplified - using mock data for now)
-    const googleTrends = [
-      { title: "Tech News", searchUrl: "https://www.google.com/search?q=tech+news&tbm=nws" },
-      { title: "AI Development", searchUrl: "https://www.google.com/search?q=ai+development&tbm=nws" },
-      { title: "Climate Change", searchUrl: "https://www.google.com/search?q=climate+change&tbm=nws" },
-      { title: "Economic Updates", searchUrl: "https://www.google.com/search?q=economic+updates&tbm=nws" },
-    ];
+    // Fetch both Google Trends and X Trending in parallel
+    const [googleResponse, xResponse] = await Promise.allSettled([
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/google-trends`, {
+        next: { revalidate: 900 } // 15 minutes
+      }),
+      fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/x-trending`, {
+        next: { revalidate: 900 } // 15 minutes
+      })
+    ]);
 
-    // Fetch X/Twitter Trends (simplified - using mock data for now)
-    const xTrends = [
-      { topic: "Breaking News", searchUrl: "https://x.com/search?q=breaking+news" },
-      { topic: "Tech Innovation", searchUrl: "https://x.com/search?q=tech+innovation" },
-      { topic: "Sports Highlights", searchUrl: "https://x.com/search?q=sports+highlights" },
-      { topic: "Entertainment", searchUrl: "https://x.com/search?q=entertainment" },
-    ];
+    let googleTrends: TrendingTopic[] = [];
+    let xTrends: TrendingTopic[] = [];
+
+    // Process Google Trends
+    if (googleResponse.status === 'fulfilled' && googleResponse.value.ok) {
+      const data = await googleResponse.value.json();
+      googleTrends = (data.trends || []).slice(0, 5).map((t: { title: string; searchUrl: string; description?: string }) => ({
+        title: t.title,
+        description: t.description,
+        searchUrl: t.searchUrl,
+        source: "google" as const,
+      }));
+    }
+
+    // Process X Trends
+    if (xResponse.status === 'fulfilled' && xResponse.value.ok) {
+      const data = await xResponse.value.json();
+      xTrends = (data.topics || []).slice(0, 5).map((t: { topic: string; searchUrl: string; description?: string }) => ({
+        topic: t.topic,
+        description: t.description,
+        searchUrl: t.searchUrl,
+        source: "x" as const,
+      }));
+    }
+
+    // Merge and interleave trends to get exactly 10
+    const merged: TrendingTopic[] = [];
+    const maxLen = Math.max(googleTrends.length, xTrends.length);
+    
+    for (let i = 0; i < maxLen && merged.length < 10; i++) {
+      if (i < googleTrends.length && merged.length < 10) {
+        merged.push(googleTrends[i]);
+      }
+      if (i < xTrends.length && merged.length < 10) {
+        merged.push(xTrends[i]);
+      }
+    }
 
     return NextResponse.json({
-      trends: googleTrends,
-      topics: xTrends,
+      trends: merged,
+      counts: {
+        google: googleTrends.length,
+        x: xTrends.length,
+        total: merged.length,
+      },
     });
   } catch (error) {
     console.error("Error fetching trending topics:", error);
     return NextResponse.json(
-      { error: "Failed to fetch trending topics", trends: [], topics: [] },
+      { 
+        error: "Failed to fetch trending topics", 
+        trends: [],
+        counts: { google: 0, x: 0, total: 0 }
+      },
       { status: 500 }
     );
   }
