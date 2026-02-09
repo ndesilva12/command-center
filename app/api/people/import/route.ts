@@ -49,6 +49,7 @@ export async function POST() {
     const notion = new Client({ auth: notionApiKey });
 
     // Query Notion database
+    // @ts-ignore - Notion SDK type definitions issue
     const response = await notion.databases.query({
       database_id: databaseId,
     });
