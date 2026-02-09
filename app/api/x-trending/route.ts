@@ -6,6 +6,34 @@ export interface TrendingTopic {
   searchUrl: string;
 }
 
+async function askOpenClaw(prompt: string): Promise<string> {
+  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
+  const token = process.env.OPENCLAW_TOKEN;
+
+  if (!gatewayUrl || !token) {
+    throw new Error("OpenClaw gateway not configured");
+  }
+
+  const response = await fetch(`${gatewayUrl}/api/v1/sessions/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      message: prompt,
+      timeoutSeconds: 30,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenClaw gateway error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.reply || "";
+}
+
 export async function GET() {
   try {
     // Method 1: Try to scrape trends from a public Nitter instance
@@ -80,31 +108,16 @@ export async function GET() {
       console.error("getdaytrends error:", e);
     }
 
-    // Method 4: Use Claude API as a fallback with web search prompt
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
-    if (anthropicKey) {
-      try {
-        const today = new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
+    // Method 4: Use OpenClaw gateway as a fallback (uses Norman's Anthropic subscription)
+    try {
+      const today = new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
-        const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1500,
-            messages: [
-              {
-                role: "user",
-                content: `Today is ${today}. Based on current events and what's likely being discussed on social media right now, generate a realistic list of 10 trending topics that would be popular on X (Twitter) in the United States today.
+      const prompt = `Today is ${today}. Based on current events and what's likely being discussed on social media right now, generate a realistic list of 10 trending topics that would be popular on X (Twitter) in the United States today.
 
 Consider:
 - Current news events
@@ -115,35 +128,22 @@ Consider:
 - Viral moments and memes
 
 Return ONLY a JSON array with this format (no markdown, no explanation):
-[{"topic": "Topic Name", "description": "Brief reason why it's trending"}]`
-              }
-            ],
-            temperature: 0.7,
-          }),
-        });
+[{"topic": "Topic Name", "description": "Brief reason why it's trending"}]`;
 
-        if (claudeResponse.ok) {
-          const data = await claudeResponse.json();
-          const content = data.content?.[0]?.text || "";
+      const content = await askOpenClaw(prompt);
 
-          try {
-            const jsonMatch = content.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0]);
-              const topics: TrendingTopic[] = parsed.slice(0, 10).map((item: { topic: string; description?: string }) => ({
-                topic: item.topic,
-                description: item.description,
-                searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.topic)}&tbm=nws`,
-              }));
-              return NextResponse.json({ topics, source: "claude" });
-            }
-          } catch {
-            // Parse error
-          }
-        }
-      } catch (e) {
-        console.error("Claude API error:", e);
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const topics: TrendingTopic[] = parsed.slice(0, 10).map((item: { topic: string; description?: string }) => ({
+          topic: item.topic,
+          description: item.description,
+          searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.topic)}&tbm=nws`,
+        }));
+        return NextResponse.json({ topics, source: "openclaw" });
       }
+    } catch (e) {
+      console.error("OpenClaw gateway error:", e);
     }
 
     // Final fallback: Return mock data for testing

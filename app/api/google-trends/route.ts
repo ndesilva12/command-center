@@ -6,12 +6,39 @@ export interface GoogleTrend {
   description?: string;
 }
 
+async function askOpenClaw(prompt: string): Promise<string> {
+  const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
+  const token = process.env.OPENCLAW_TOKEN;
+
+  if (!gatewayUrl || !token) {
+    throw new Error("OpenClaw gateway not configured");
+  }
+
+  const response = await fetch(`${gatewayUrl}/api/v1/sessions/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      message: prompt,
+      timeoutSeconds: 30,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenClaw gateway error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.reply || "";
+}
+
 export async function GET() {
   try {
     // Try multiple methods to get Google Trends
 
-    // Method 1: Use Grok/Claude API with current events knowledge
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    // Method 1: Use Grok API (preferred for real-time data)
     const xaiKey = process.env.XAI_API_KEY;
 
     if (xaiKey) {
@@ -82,72 +109,7 @@ Limit to exactly 10 topics.`,
       }
     }
 
-    // Method 2: Fallback to Claude
-    if (anthropicKey) {
-      try {
-        const today = new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1500,
-            messages: [
-              {
-                role: "user",
-                content: `Today is ${today}. What are the top 10 trending search topics on Google right now in the United States?
-
-Consider:
-- Breaking news events
-- Popular entertainment and celebrity topics
-- Sports events and highlights
-- Technology announcements
-- Political developments
-- Viral topics
-
-Return ONLY a JSON array with this format (no markdown, no explanation):
-[{"title": "Topic Name", "description": "Brief description"}]`
-              }
-            ],
-            temperature: 0.7,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          const content = data.content?.[0]?.text || "";
-
-          try {
-            const jsonMatch = content.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0]);
-              const trends: GoogleTrend[] = parsed.slice(0, 10).map((item: { title: string; description?: string }) => ({
-                title: item.title,
-                description: item.description,
-                searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`,
-              }));
-              return NextResponse.json({ trends, source: "claude" });
-            }
-          } catch {
-            // Parse error
-          }
-        }
-      } catch (e) {
-        console.error("Claude API error:", e);
-      }
-    }
-
-    // Method 3: Try Google Trends RSS feed (daily trends)
+    // Method 2: Try Google Trends RSS feed (daily trends)
     try {
       const rssResponse = await fetch("https://trends.google.com/trending/rss?geo=US", {
         headers: {
@@ -165,6 +127,44 @@ Return ONLY a JSON array with this format (no markdown, no explanation):
       }
     } catch (e) {
       console.error("Google Trends RSS error:", e);
+    }
+
+    // Method 3: Fallback to OpenClaw gateway (uses Norman's Anthropic subscription)
+    try {
+      const today = new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+
+      const prompt = `Today is ${today}. What are the top 10 trending search topics on Google right now in the United States?
+
+Consider:
+- Breaking news events
+- Popular entertainment and celebrity topics
+- Sports events and highlights
+- Technology announcements
+- Political developments
+- Viral topics
+
+Return ONLY a JSON array with this format (no markdown, no explanation):
+[{"title": "Topic Name", "description": "Brief description"}]`;
+
+      const content = await askOpenClaw(prompt);
+
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const trends: GoogleTrend[] = parsed.slice(0, 10).map((item: { title: string; description?: string }) => ({
+          title: item.title,
+          description: item.description,
+          searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`,
+        }));
+        return NextResponse.json({ trends, source: "openclaw" });
+      }
+    } catch (e) {
+      console.error("OpenClaw gateway error:", e);
     }
 
     // Final fallback: Return mock data for testing

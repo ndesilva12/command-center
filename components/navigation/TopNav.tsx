@@ -47,24 +47,21 @@ export function TopNav() {
           justifyContent: "space-between",
         }}
       >
-        {/* Signature Logo */}
+        {/* Site Title */}
         <Link
           href="/"
           style={{
             display: "flex",
             alignItems: "center",
             textDecoration: "none",
+            fontFamily: "var(--font-sans)",
+            fontSize: "18px",
+            fontWeight: 600,
+            color: "var(--foreground)",
+            letterSpacing: "-0.02em",
           }}
         >
-          <img 
-            src="/signature.jpg" 
-            alt="Norman C. de Silva" 
-            style={{
-              height: "32px",
-              width: "auto",
-              filter: "invert(1) sepia(1) saturate(5) hue-rotate(175deg) brightness(1.1)",
-            }}
-          />
+          Norman C. de Silva
         </Link>
 
         {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}

@@ -278,17 +278,21 @@ export default function Home() {
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
           {/* Welcome Section */}
           <div style={{ marginBottom: "40px" }}>
-            <h1
-              style={{
-                fontSize: isMobile ? "28px" : "36px",
-                fontWeight: 700,
-                color: "var(--foreground)",
-                marginBottom: "8px",
-                textAlign: "center",
-              }}
-            >
-              Command Center
-            </h1>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              marginBottom: "8px" 
+            }}>
+              <img 
+                src="/signature.jpg" 
+                alt="Norman C. de Silva" 
+                style={{
+                  height: isMobile ? "48px" : "64px",
+                  width: "auto",
+                  filter: "invert(1) sepia(1) saturate(5) hue-rotate(175deg) brightness(1.1)",
+                }}
+              />
+            </div>
             <p style={{ fontSize: "16px", color: "var(--muted)", textAlign: "center", marginBottom: "40px" }}>
               Your personal intelligence and productivity hub
             </p>
