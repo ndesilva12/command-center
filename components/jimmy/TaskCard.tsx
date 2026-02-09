@@ -33,23 +33,28 @@ export function TaskCard({ id, title, date, status, preview }: TaskCardProps) {
       }}
     >
       <div
-        className="glass"
         style={{
           padding: "24px",
-          borderRadius: "12px",
-          transition: "all 0.15s",
+          borderRadius: "16px",
+          transition: "all 0.3s ease",
           cursor: "pointer",
           height: "100%",
           display: "flex",
           flexDirection: "column",
+          background: "rgba(255, 255, 255, 0.03)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 10px 30px rgba(0, 0, 0, 0.2)";
+          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 170, 255, 0.2)";
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "translateY(0)";
           e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
         }}
       >
         {/* Header */}

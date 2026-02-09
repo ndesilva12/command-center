@@ -111,7 +111,6 @@ export function SourceSelector({ selectedSource, onSelectSource }: SourceSelecto
 
       {isOpen && (
         <div
-          className="glass"
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
@@ -122,7 +121,11 @@ export function SourceSelector({ selectedSource, onSelectSource }: SourceSelecto
             borderRadius: "12px",
             padding: "8px",
             zIndex: 1000,
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
+            background: "rgba(10, 10, 10, 0.95)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
           }}
         >
           {/* Web Sources */}

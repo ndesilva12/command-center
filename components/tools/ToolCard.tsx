@@ -31,17 +31,24 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
       <div
         className="card glass-hover"
         style={{
-          padding: "16px",
-          transition: "all 0.2s",
+          padding: "20px",
+          transition: "all 0.3s ease",
           borderColor: "var(--glass-border)",
+          background: "rgba(255, 255, 255, 0.03)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = color;
+          e.currentTarget.style.boxShadow = `0 8px 32px ${color}33`;
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
           const overlay = e.currentTarget.querySelector(".tool-overlay") as HTMLElement;
           if (overlay) overlay.style.opacity = "0.08";
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.borderColor = "var(--glass-border)";
+          e.currentTarget.style.boxShadow = "none";
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
           const overlay = e.currentTarget.querySelector(".tool-overlay") as HTMLElement;
           if (overlay) overlay.style.opacity = "0";
         }}

@@ -93,10 +93,19 @@ export function SearchBar() {
             display: "flex",
             alignItems: "center",
             gap: "12px",
-            padding: "16px 20px",
-            borderRadius: "16px",
+            padding: "14px 20px",
+            borderRadius: "14px",
             border: "1px solid var(--glass-border)",
-            transition: "all 0.2s",
+            transition: "all 0.3s ease",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 170, 255, 0.15)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--glass-border)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
           }}
         >
           <Search style={{ width: "20px", height: "20px", color: "var(--foreground-muted)", flexShrink: 0 }} />
@@ -124,15 +133,28 @@ export function SearchBar() {
             type="submit"
             disabled={!query.trim()}
             style={{
-              padding: "10px 20px",
+              padding: "10px 24px",
               borderRadius: "10px",
               border: "none",
-              background: query.trim() ? "var(--accent)" : "rgba(255, 255, 255, 0.1)",
-              color: query.trim() ? "var(--background)" : "var(--foreground-muted)",
+              background: query.trim() ? "linear-gradient(135deg, #00aaff 0%, #0088cc 100%)" : "rgba(255, 255, 255, 0.08)",
+              color: "white",
               fontSize: "14px",
               fontWeight: 600,
               cursor: query.trim() ? "pointer" : "not-allowed",
-              transition: "all 0.15s",
+              transition: "all 0.3s ease",
+              boxShadow: query.trim() ? "0 4px 12px rgba(0, 170, 255, 0.25)" : "none",
+            }}
+            onMouseEnter={(e) => {
+              if (query.trim()) {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 170, 255, 0.35)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (query.trim()) {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 170, 255, 0.25)";
+              }
             }}
           >
             Search
@@ -142,16 +164,19 @@ export function SearchBar() {
         {/* Recent Searches Dropdown */}
         {showRecent && recentSearches.length > 0 && (
           <div
-            className="glass"
             style={{
               position: "absolute",
               top: "calc(100% + 8px)",
               left: 0,
               right: 0,
-              borderRadius: "12px",
+              borderRadius: "14px",
               padding: "12px",
-              zIndex: 100,
-              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+              zIndex: 1000,
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
+              background: "rgba(10, 10, 10, 0.95)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
