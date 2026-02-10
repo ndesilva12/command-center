@@ -22,6 +22,7 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
   { id: 'notes', name: 'Notes', href: '/tools/notes', description: 'Quick notes' },
   { id: 'files', name: 'Files', href: '/tools/files', description: 'Google Drive files' },
   { id: 'trending', name: 'Trending', href: '/tools/trending', description: 'Trending topics' },
+  { id: 'meals', name: 'Meals', href: '/tools/meals', description: 'Weekly meal planning' },
 ];
 
 export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
