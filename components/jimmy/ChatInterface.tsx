@@ -2,40 +2,66 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot,
+  Timestamp,
+  serverTimestamp 
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: number;
+  message: string;
+  sender: "user" | "assistant";
+  userId: string;
+  timestamp: any;
+  status: "pending" | "processing" | "completed";
+  sessionId: string;
 }
 
 export function ChatInterface() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load messages from localStorage on mount
+  // Real-time listener for messages
   useEffect(() => {
-    const saved = localStorage.getItem("jimmy-chat-messages");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setMessages(parsed);
-      } catch (e) {
-        console.error("Failed to parse messages:", e);
-      }
-    }
-  }, []);
+    if (!user) return;
 
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem("jimmy-chat-messages", JSON.stringify(messages));
-    }
-  }, [messages]);
+    const messagesRef = collection(db, "jimmy_chat_messages");
+    const q = query(
+      messagesRef,
+      where("userId", "==", user.uid),
+      where("sessionId", "==", sessionId),
+      orderBy("timestamp", "asc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedMessages: Message[] = [];
+      snapshot.forEach((doc) => {
+        loadedMessages.push({ id: doc.id, ...doc.data() } as Message);
+      });
+      setMessages(loadedMessages);
+      
+      // Check if there's a processing message (show loading indicator)
+      const hasProcessing = loadedMessages.some(
+        (msg) => msg.sender === "user" && msg.status === "processing"
+      );
+      setIsLoading(hasProcessing);
+    });
+
+    return () => unsubscribe();
+  }, [user, sessionId]);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -43,57 +69,41 @@ export function ChatInterface() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !user) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputValue.trim(),
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const messageText = inputValue.trim();
     setInputValue("");
     setIsLoading(true);
 
     try {
-      // Call the API route (proxy to OpenClaw gateway)
-      const response = await fetch("/api/jimmy/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userMessage.content }),
+      // Add message to Firestore
+      await addDoc(collection(db, "jimmy_chat_messages"), {
+        message: messageText,
+        sender: "user",
+        userId: user.uid,
+        timestamp: serverTimestamp(),
+        status: "pending",
+        sessionId: sessionId,
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.response || "No response received",
-        timestamp: Date.now(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Message will appear via onSnapshot listener
+      inputRef.current?.focus();
     } catch (error) {
       console.error("Failed to send message:", error);
-
+      
+      // Show error message locally
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
-        timestamp: Date.now(),
+        id: `error_${Date.now()}`,
+        message: "Sorry, I encountered an error sending your message. Please try again.",
+        sender: "assistant",
+        userId: user.uid,
+        timestamp: Timestamp.now(),
+        status: "completed",
+        sessionId: sessionId,
       };
 
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
-      inputRef.current?.focus();
     }
   };
 
@@ -104,10 +114,20 @@ export function ChatInterface() {
     }
   };
 
-  const formatTime = (timestamp: number) => {
-    const date = new Date(timestamp);
+  const formatTime = (timestamp: any) => {
+    if (!timestamp) return "";
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   };
+
+  if (!user) {
+    return (
+      <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--foreground-muted)" }}>
+        <p>Please log in to chat with Jimmy</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 200px)", maxHeight: "800px" }}>
@@ -145,6 +165,9 @@ export function ChatInterface() {
             <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
               Ask questions, request analysis, or get insights
             </p>
+            <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "12px", fontStyle: "italic" }}>
+              Messages are processed asynchronously. Responses may take a moment.
+            </p>
           </div>
         ) : (
           messages.map((message) => (
@@ -152,7 +175,7 @@ export function ChatInterface() {
               key={message.id}
               style={{
                 display: "flex",
-                justifyContent: message.role === "user" ? "flex-end" : "flex-start",
+                justifyContent: message.sender === "user" ? "flex-end" : "flex-start",
                 animation: "fadeIn 0.3s ease-in",
               }}
             >
@@ -162,25 +185,36 @@ export function ChatInterface() {
                   padding: "12px 16px",
                   borderRadius: "16px",
                   background:
-                    message.role === "user"
+                    message.sender === "user"
                       ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                       : "rgba(255, 255, 255, 0.06)",
-                  color: message.role === "user" ? "white" : "var(--foreground)",
-                  border: message.role === "assistant" ? "1px solid var(--glass-border)" : "none",
+                  color: message.sender === "user" ? "white" : "var(--foreground)",
+                  border: message.sender === "assistant" ? "1px solid var(--glass-border)" : "none",
+                  position: "relative",
                 }}
               >
                 <div style={{ fontSize: "14px", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                  {message.content}
+                  {message.message}
                 </div>
                 <div
                   style={{
                     fontSize: "11px",
                     marginTop: "6px",
                     opacity: 0.7,
-                    textAlign: message.role === "user" ? "right" : "left",
+                    textAlign: message.sender === "user" ? "right" : "left",
+                    display: "flex",
+                    justifyContent: message.sender === "user" ? "flex-end" : "flex-start",
+                    alignItems: "center",
+                    gap: "6px",
                   }}
                 >
                   {formatTime(message.timestamp)}
+                  {message.sender === "user" && message.status === "pending" && (
+                    <span style={{ fontSize: "10px" }}>⏳</span>
+                  )}
+                  {message.sender === "user" && message.status === "processing" && (
+                    <span style={{ fontSize: "10px" }}>⚡</span>
+                  )}
                 </div>
               </div>
             </div>

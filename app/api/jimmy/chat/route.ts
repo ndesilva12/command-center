@@ -3,13 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 /**
  * Jimmy Chat API Route
  * 
- * NOTE: Direct chat interface is temporarily disabled.
- * Gateway connection at 3.128.31.231:18789 is not publicly accessible from Vercel.
+ * DEPRECATED: This route is no longer used.
  * 
- * Future implementation options:
- * 1. Firestore-based async messaging (messages → /jimmy_chat_messages → backend picks up → responses)
- * 2. Public gateway endpoint with proper authentication
- * 3. WebSocket/SSE streaming from backend
+ * Chat interface now uses Firestore-based async messaging:
+ * - Frontend writes to /jimmy_chat_messages collection
+ * - Backend polls Firestore and writes responses back
+ * - Frontend receives updates via real-time onSnapshot listeners
+ * 
+ * See JIMMY_CHAT_BACKEND.md for backend implementation details.
+ * See /components/jimmy/ChatInterface.tsx for frontend implementation.
+ * 
+ * This file is kept for reference but can be removed in future cleanup.
  */
 
 export async function POST(request: NextRequest) {
@@ -20,33 +24,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    // Return helpful message directing to Telegram
+    // Return deprecation notice
     return NextResponse.json({
-      response: "👋 Thanks for your message! The direct chat interface is coming soon.\n\n" +
-                "For now, you can chat with Jimmy via Telegram: @normancdesilva\n\n" +
-                "I'll get back to you as soon as possible!",
-      success: true,
-      temporaryResponse: true,
-    });
-
-    /* 
-     * DISABLED: Direct gateway connection (not publicly accessible)
-     * 
-     * const gatewayUrl = "http://3.128.31.231:18789";
-     * const token = process.env.OPENCLAW_TOKEN;
-     * 
-     * const response = await fetch(`${gatewayUrl}/api/v1/sessions/send`, {
-     *   method: "POST",
-     *   headers: {
-     *     "Content-Type": "application/json",
-     *     Authorization: `Bearer ${token}`,
-     *   },
-     *   body: JSON.stringify({
-     *     message,
-     *     session: "jimmy-chat",
-     *   }),
-     * });
-     */
+      error: "This API endpoint is deprecated. Please use the Firestore-based chat interface.",
+      deprecated: true,
+      message: "Chat messages should be written directly to Firestore collection: /jimmy_chat_messages",
+      documentation: "See JIMMY_CHAT_BACKEND.md for implementation details"
+    }, { status: 410 }); // 410 Gone - indicates deprecated endpoint
 
   } catch (error: any) {
     console.error("Chat API error:", error);
