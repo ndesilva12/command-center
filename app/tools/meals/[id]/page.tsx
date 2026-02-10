@@ -370,9 +370,9 @@ export default function MealDetailPage() {
             </div>
 
             {/* Source */}
-            {(typeof displayMeal?.source === 'string' ? displayMeal?.source : displayMeal?.source?.url) && (
+            {(typeof displayMeal?.source === 'string' ? displayMeal?.source : displayMeal?.source?.url) && displayMeal && (
               <a
-                href={typeof displayMeal.source === 'string' ? displayMeal.source : displayMeal.source.url}
+                href={typeof displayMeal.source === 'string' ? displayMeal.source : (displayMeal.source as any).url}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
