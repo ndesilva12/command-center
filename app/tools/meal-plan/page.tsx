@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -45,7 +46,11 @@ interface WeeklyPlan {
 
 export default function MealPlanPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'this-week' | 'next-week' | 'shopping' | 'all-recipes'>('this-week');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'this-week' | 'next-week' | 'shopping' | 'all-recipes'>(
+    (tabParam === 'next-week' || tabParam === 'shopping') ? tabParam as any : 'this-week'
+  );
   const [currentWeek, setCurrentWeek] = useState<WeeklyPlan | null>(null);
   const [nextWeek, setNextWeek] = useState<WeeklyPlan | null>(null);
   const [allMeals, setAllMeals] = useState<Meal[]>([]);

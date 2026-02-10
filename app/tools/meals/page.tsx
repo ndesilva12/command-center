@@ -141,19 +141,19 @@ export default function MealsPage() {
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
               <a
-                href="/tools/meal-plan"
+                href="/tools/meal-plan?tab=this-week"
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 16px",
+                  gap: "6px",
+                  padding: "8px 14px",
                   borderRadius: "8px",
                   backgroundColor: "rgba(0, 170, 255, 0.15)",
                   border: "1px solid rgba(0, 170, 255, 0.3)",
                   color: "#00aaff",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   fontWeight: 600,
                   textDecoration: "none",
                   transition: "all 0.2s",
@@ -165,8 +165,60 @@ export default function MealsPage() {
                   e.currentTarget.style.backgroundColor = "rgba(0, 170, 255, 0.15)";
                 }}
               >
-                <Calendar style={{ width: "16px", height: "16px" }} />
-                This Week's Plan
+                <Calendar style={{ width: "14px", height: "14px" }} />
+                This Week
+              </a>
+              <a
+                href="/tools/meal-plan?tab=next-week"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(16, 185, 129, 0.15)",
+                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  color: "#10b981",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
+                }}
+              >
+                <Calendar style={{ width: "14px", height: "14px" }} />
+                Next Week
+              </a>
+              <a
+                href="/tools/shopping-list"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(139, 92, 246, 0.15)",
+                  border: "1px solid rgba(139, 92, 246, 0.3)",
+                  color: "#8b5cf6",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  textDecoration: "none",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.15)";
+                }}
+              >
+                <Calendar style={{ width: "14px", height: "14px" }} />
+                Shopping List
               </a>
             </div>
           </div>
