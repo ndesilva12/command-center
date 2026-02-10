@@ -8,6 +8,8 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, ShoppingCart, RefreshCw, Check, ChefHat, X, ArrowLeft } from "lucide-react";
 import { ManualMealSelector } from "@/components/meals/ManualMealSelector";
 import { useAuth } from "@/hooks/useAuth";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 
 interface Meal {
   id: string;
@@ -67,44 +69,46 @@ export default function MealPlanPage() {
 
   const fetchData = async () => {
     try {
-      // Fetch all plans
-      const plansResponse = await fetch('https://the-dashboard-50be1-default-rtdb.firebaseio.com/weekly_plans.json');
-      const plansData = await plansResponse.json();
+      // Fetch all plans from Firestore
+      const plansSnapshot = await getDocs(collection(db, 'weekly_plans'));
+      const plans: WeeklyPlan[] = [];
+      plansSnapshot.forEach((doc) => {
+        plans.push({ id: doc.id, ...doc.to_dict() } as WeeklyPlan);
+      });
       
-      // Fetch all meals
-      const mealsResponse = await fetch('https://the-dashboard-50be1-default-rtdb.firebaseio.com/meals.json');
-      const mealsData = await mealsResponse.json();
+      // Fetch all meals from Firestore
+      const mealsSnapshot = await getDocs(collection(db, 'meals'));
+      const meals: Meal[] = [];
+      mealsSnapshot.forEach((doc) => {
+        const data = doc.to_dict();
+        meals.push({
+          id: doc.id,
+          name: data.name || data.title,
+          prepTime: data.prepTime,
+          cookTime: data.cookTime,
+          frequency: data.frequency,
+          tags: data.tags || [],
+          ingredients: data.ingredients || [],
+          instructions: data.instructions || []
+        });
+      });
+      setAllMeals(meals);
       
-      if (mealsData) {
-        const mealsArray = Object.entries(mealsData).map(([id, meal]: [string, any]) => ({
-          id,
-          ...meal,
-        }));
-        setAllMeals(mealsArray);
-      }
+      // Find current and next week
+      const now = new Date();
+      const currentWeekStart = getMonday(now);
+      const nextWeekStart = new Date(currentWeekStart);
+      nextWeekStart.setDate(nextWeekStart.getDate() + 7);
       
-      if (plansData) {
-        const plans = Object.entries(plansData).map(([id, plan]: [string, any]) => ({
-          id,
-          ...plan,
-        })) as WeeklyPlan[];
-        
-        // Find current and next week
-        const now = new Date();
-        const currentWeekStart = getMonday(now);
-        const nextWeekStart = new Date(currentWeekStart);
-        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
-        
-        const current = plans.find(p => 
-          new Date(p.weekOf).toDateString() === currentWeekStart.toDateString()
-        );
-        const next = plans.find(p => 
-          new Date(p.weekOf).toDateString() === nextWeekStart.toDateString()
-        );
-        
-        setCurrentWeek(current || null);
-        setNextWeek(next || null);
-      }
+      const current = plans.find(p => 
+        new Date(p.weekOf).toDateString() === currentWeekStart.toDateString()
+      );
+      const next = plans.find(p => 
+        new Date(p.weekOf).toDateString() === nextWeekStart.toDateString()
+      );
+      
+      setCurrentWeek(current || null);
+      setNextWeek(next || null);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
