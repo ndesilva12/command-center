@@ -9,9 +9,10 @@ interface TaskCardProps {
   date: string;
   status: "completed" | "in-progress";
   preview: string;
+  createdBy?: string;
 }
 
-export function TaskCard({ id, title, date, status, preview }: TaskCardProps) {
+export function TaskCard({ id, title, date, status, preview, createdBy }: TaskCardProps) {
   const statusColors = {
     completed: "#10b981",
     "in-progress": "#f59e0b",
@@ -63,8 +64,25 @@ export function TaskCard({ id, title, date, status, preview }: TaskCardProps) {
             <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px", lineHeight: 1.3 }}>
               {title}
             </h3>
-            <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
-              {new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            <div style={{ fontSize: "12px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>{new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+              {createdBy === "cc_jimmy_command" && (
+                <>
+                  <span>•</span>
+                  <span
+                    style={{
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      background: "rgba(102, 126, 234, 0.2)",
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      color: "#667eea",
+                    }}
+                  >
+                    cc jimmy
+                  </span>
+                </>
+              )}
             </div>
           </div>
           <StatusIcon style={{ width: "20px", height: "20px", color: statusColors[status], flexShrink: 0 }} />
