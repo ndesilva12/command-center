@@ -2,8 +2,9 @@
 
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ToolNav } from "@/components/tools/ToolNav";
+import { useParams } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // Tool metadata mapping
@@ -24,8 +25,7 @@ const TOOL_INFO: Record<string, { name: string; description: string; color: stri
   contacts: { name: "Contacts", description: "Contact database", color: "#8b5cf6" },
   people: { name: "People", description: "Manage your contacts", color: "#06b6d4" },
   recommendations: { name: "Recommendations", description: "Track suggestions and referrals", color: "#ec4899" },
-  news: { name: "News", description: "News aggregation", color: "#64748b" },
-  rss: { name: "RSS", description: "RSS feed reader", color: "#10b981" },
+  read: { name: "Read", description: "RSS feed reader", color: "#10b981" },
   bookmarks: { name: "Bookmarks", description: "Bookmark manager", color: "#06b6d4" },
   market: { name: "Market", description: "Market data and insights", color: "#3b82f6" },
   notes: { name: "Notes", description: "Note taking", color: "#a78bfa" },
@@ -37,7 +37,6 @@ const TOOL_INFO: Record<string, { name: string; description: string; color: stri
 
 export default function ToolPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params?.slug as string;
   const [isMobile, setIsMobile] = useState(false);
 
@@ -57,46 +56,17 @@ export default function ToolPage() {
   return (
     <>
       <TopNav />
+      <ToolNav currentToolId={slug} />
       <BottomNav />
       <main
         style={{
           minHeight: "100vh",
-          paddingTop: "80px",
+          paddingTop: "120px",
           paddingBottom: isMobile ? "96px" : "32px",
-          padding: isMobile ? "80px 16px 96px 16px" : "80px 24px 32px 24px",
+          padding: isMobile ? "120px 16px 96px 16px" : "120px 24px 32px 24px",
         }}
       >
         <div className="container" style={{ maxWidth: "900px", margin: "0 auto" }}>
-          {/* Back Button */}
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              marginBottom: "24px",
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "var(--muted)",
-              background: "transparent",
-              border: "1px solid var(--glass-border)",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--foreground)";
-              e.currentTarget.style.background = "var(--glass-bg)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--muted)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <ArrowLeft style={{ width: "16px", height: "16px" }} />
-            Back to Dashboard
-          </button>
 
           {/* Coming Soon Card */}
           <div

@@ -137,10 +137,14 @@ export default function JimmyPage() {
           </div>
 
           {/* Telegram Chat Button */}
-          <a
-            href="https://t.me/jimmy_chief_bot"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => {
+              // Try Telegram app protocol first, fallback to web
+              window.location.href = "tg://resolve?domain=jimmy_chief_bot";
+              setTimeout(() => {
+                window.open("https://t.me/jimmy_chief_bot", "_blank");
+              }, 500);
+            }}
             style={{
               padding: "12px 24px",
               borderRadius: "12px",
@@ -167,7 +171,7 @@ export default function JimmyPage() {
           >
             <MessageSquare style={{ width: "18px", height: "18px" }} />
             Chat with Jimmy
-          </a>
+          </button>
         </div>
 
         {/* View Toggle & Filter */}
