@@ -42,9 +42,7 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
           left: 0;
           right: 0;
           height: 56px;
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          background: transparent;
           display: flex;
           align-items: center;
           justify-content: center;

@@ -75,24 +75,28 @@ export function SourceSelector({ selectedSource, onSelectSource }: SourceSelecto
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "8px",
-          padding: "10px 16px",
-          borderRadius: "10px",
-          border: "1px solid var(--glass-border)",
-          background: "rgba(255, 255, 255, 0.05)",
-          color: "var(--foreground)",
+          gap: "4px",
+          padding: "0",
+          border: "none",
+          background: "transparent",
+          color: "#00aaff",
           fontSize: "14px",
-          fontWeight: 500,
+          fontWeight: 600,
           cursor: "pointer",
           transition: "all 0.15s",
-          minWidth: "140px",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.textDecoration = "underline";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.textDecoration = "none";
         }}
       >
-        <span style={{ flex: 1 }}>{selectedConfig?.name || "Select"}</span>
+        <span>{selectedConfig?.name || "Select"}</span>
         <ChevronDown
           style={{
-            width: "16px",
-            height: "16px",
+            width: "14px",
+            height: "14px",
             transition: "transform 0.2s",
             transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
           }}

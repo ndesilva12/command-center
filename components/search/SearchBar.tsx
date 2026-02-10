@@ -127,28 +127,23 @@ export function SearchBar() {
             type="submit"
             disabled={!query.trim()}
             style={{
-              padding: "10px 24px",
-              borderRadius: "10px",
+              padding: "0",
               border: "none",
-              background: query.trim() ? "linear-gradient(135deg, #00aaff 0%, #0088cc 100%)" : "rgba(255, 255, 255, 0.08)",
-              color: "white",
+              background: "transparent",
+              color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
               fontSize: "14px",
               fontWeight: 600,
               cursor: query.trim() ? "pointer" : "not-allowed",
               transition: "all 0.3s ease",
-              boxShadow: query.trim() ? "0 4px 12px rgba(0, 170, 255, 0.25)" : "none",
+              textDecoration: "none",
             }}
             onMouseEnter={(e) => {
               if (query.trim()) {
-                e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 170, 255, 0.35)";
+                e.currentTarget.style.textDecoration = "underline";
               }
             }}
             onMouseLeave={(e) => {
-              if (query.trim()) {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 170, 255, 0.25)";
-              }
+              e.currentTarget.style.textDecoration = "none";
             }}
           >
             Search
