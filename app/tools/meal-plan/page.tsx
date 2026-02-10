@@ -6,6 +6,8 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, ShoppingCart, RefreshCw, Check, ChefHat, X, ArrowLeft } from "lucide-react";
+import { ManualMealSelector } from "@/components/meals/ManualMealSelector";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Meal {
   id: string;
@@ -40,6 +42,7 @@ interface WeeklyPlan {
 }
 
 export default function MealPlanPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'this-week' | 'next-week' | 'shopping' | 'all-recipes'>('this-week');
   const [currentWeek, setCurrentWeek] = useState<WeeklyPlan | null>(null);
   const [nextWeek, setNextWeek] = useState<WeeklyPlan | null>(null);
@@ -48,6 +51,15 @@ export default function MealPlanPage() {
   const [showMealSelector, setShowMealSelector] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
+  
+  // Calculate next week's Monday
+  const getNextWeekMonday = () => {
+    const now = new Date();
+    const currentMonday = getMonday(now);
+    const nextMonday = new Date(currentMonday);
+    nextMonday.setDate(nextMonday.getDate() + 7);
+    return nextMonday.toISOString().split('T')[0];
+  };
 
   useEffect(() => {
     fetchData();
@@ -414,19 +426,30 @@ export default function MealPlanPage() {
               </div>
             )
           ) : activeTab === 'next-week' ? (
-            nextWeek ? (
-              <WeekView week={nextWeek} title="Next Week" canEdit={nextWeek.status !== 'archived'} weekType="next" />
-            ) : (
-              <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
-                <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-                <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                  Next week's plan coming soon
-                </h2>
-                <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                  Will be proposed Friday at 6pm ET
-                </p>
-              </div>
-            )
+            <>
+              {user && (
+                <ManualMealSelector 
+                  userId={user.uid} 
+                  weekOf={getNextWeekMonday()}
+                  onSelectionsChange={(selections) => {
+                    console.log('Manual selections updated:', selections);
+                  }}
+                />
+              )}
+              {nextWeek ? (
+                <WeekView week={nextWeek} title="Next Week" canEdit={nextWeek.status !== 'archived'} weekType="next" />
+              ) : (
+                <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+                  <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+                  <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                    Next week's plan coming soon
+                  </h2>
+                  <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
+                    Will be proposed Friday at 6pm ET
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
             <div>
               <a
