@@ -7,6 +7,8 @@ import { TaskCard } from "@/components/jimmy/TaskCard";
 import { TaskList } from "@/components/jimmy/TaskList";
 import { ChatInterface } from "@/components/jimmy/ChatInterface";
 import { Sparkles, Grid3X3, List, MessageSquare, FileText } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
 interface Task {
   id: string;
@@ -15,6 +17,9 @@ interface Task {
   status: "completed" | "in-progress";
   preview: string;
   createdBy?: string;
+  content?: string;
+  commandText?: string;
+  createdAt?: any;
 }
 
 type TabType = "chat" | "output";
@@ -24,58 +29,78 @@ export default function JimmyPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState<TabType>("chat");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load tasks from localStorage or API
+    // Load tasks from Firestore with real-time updates
+    const loadTasksFromFirestore = () => {
+      try {
+        const deliveriesRef = collection(db, "jimmy_deliverables");
+        const q = query(
+          deliveriesRef,
+          where("createdBy", "==", "cc_jimmy_command"),
+          orderBy("createdAt", "desc")
+        );
+
+        // Set up real-time listener
+        const unsubscribe = onSnapshot(
+          q,
+          (snapshot) => {
+            const loadedTasks: Task[] = snapshot.docs.map((doc) => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                title: data.title || "Untitled",
+                date: data.date || new Date().toISOString().split("T")[0],
+                status: data.status || "completed",
+                preview: data.preview || "",
+                content: data.content || "",
+                commandText: data.commandText || "",
+                createdBy: data.createdBy,
+                createdAt: data.createdAt,
+              };
+            });
+            
+            setTasks(loadedTasks);
+            setLoading(false);
+            setError(null);
+          },
+          (err) => {
+            console.error("Error loading tasks from Firestore:", err);
+            setError("Failed to load deliverables from Firestore");
+            setLoading(false);
+            // Fallback to localStorage if Firestore fails
+            loadTasksFromLocalStorage();
+          }
+        );
+
+        // Clean up listener on unmount
+        return unsubscribe;
+      } catch (err) {
+        console.error("Error setting up Firestore listener:", err);
+        setError("Failed to connect to Firestore");
+        setLoading(false);
+        loadTasksFromLocalStorage();
+      }
+    };
+
+    const unsubscribe = loadTasksFromFirestore();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  // Fallback to localStorage if Firestore is unavailable
+  const loadTasksFromLocalStorage = () => {
     const savedTasks = localStorage.getItem("jimmy-tasks");
     if (savedTasks) {
       try {
         const parsed = JSON.parse(savedTasks);
         setTasks(parsed.tasks || []);
       } catch (e) {
-        console.error("Failed to parse tasks:", e);
-        loadDefaultTasks();
+        console.error("Failed to parse tasks from localStorage:", e);
       }
-    } else {
-      loadDefaultTasks();
     }
-    setLoading(false);
-  }, []);
-
-  const loadDefaultTasks = () => {
-    const defaultTasks: Task[] = [
-      {
-        id: "1",
-        title: "Market Analysis Report",
-        date: "2026-02-09",
-        status: "completed",
-        preview: "Comprehensive analysis of Q1 2026 market trends, including technology sector performance, emerging opportunities, and competitive landscape assessment. Key findings highlight a 15% growth in AI-driven solutions and increased demand for sustainable technologies.",
-        createdBy: "cc_jimmy_command",
-      },
-      {
-        id: "2",
-        title: "Competitor Research Summary",
-        date: "2026-02-08",
-        status: "completed",
-        preview: "Deep dive into top 5 competitors' strategies, product roadmaps, and market positioning. Identified key differentiators and potential partnership opportunities. Recommendations for strategic positioning included.",
-        createdBy: "cc_jimmy_command",
-      },
-      {
-        id: "3",
-        title: "Customer Insights Dashboard",
-        date: "2026-02-07",
-        status: "in-progress",
-        preview: "Aggregated customer feedback from multiple sources, sentiment analysis, and trend identification. Currently analyzing patterns in user behavior and feature requests to inform product development priorities.",
-        createdBy: "cc_jimmy_command",
-      },
-    ];
-    setTasks(defaultTasks);
-    localStorage.setItem("jimmy-tasks", JSON.stringify({ tasks: defaultTasks }));
-  };
-
-  const saveTasks = (updatedTasks: Task[]) => {
-    setTasks(updatedTasks);
-    localStorage.setItem("jimmy-tasks", JSON.stringify({ tasks: updatedTasks }));
   };
 
   return (
@@ -213,24 +238,66 @@ export default function JimmyPage() {
             </div>
           ) : (
             <>
+              {/* Error State */}
+              {error && (
+                <div
+                  className="glass"
+                  style={{
+                    padding: "20px",
+                    borderRadius: "12px",
+                    marginBottom: "20px",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    background: "rgba(239, 68, 68, 0.1)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{ fontSize: "20px" }}>⚠️</div>
+                    <div>
+                      <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                        Error Loading Deliverables
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>{error}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Tasks/Deliverables */}
               {loading ? (
-                <div style={{ textAlign: "center", padding: "60px", color: "var(--foreground-muted)" }}>
-                  Loading tasks...
+                <div
+                  className="glass"
+                  style={{
+                    padding: "60px 40px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      border: "3px solid var(--glass-border)",
+                      borderTop: "3px solid var(--accent)",
+                      borderRadius: "50%",
+                      margin: "0 auto 16px",
+                      animation: "spin 1s linear infinite",
+                    }}
+                  />
+                  <div style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                    Loading deliverables from Firestore...
+                  </div>
                 </div>
               ) : view === "grid" ? (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "20px" }}>
-                  {tasks
-                    .filter((task) => task.createdBy === "cc_jimmy_command")
-                    .map((task) => (
-                      <TaskCard key={task.id} {...task} />
-                    ))}
+                  {tasks.map((task) => (
+                    <TaskCard key={task.id} {...task} />
+                  ))}
                 </div>
               ) : (
                 <TaskList tasks={tasks} />
               )}
 
-              {!loading && tasks.filter((task) => task.createdBy === "cc_jimmy_command").length === 0 && view === "grid" && (
+              {!loading && tasks.length === 0 && !error && (
                 <div
                   className="glass"
                   style={{
