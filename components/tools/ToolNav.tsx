@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { getToolsInCategory } from "@/lib/tool-categories";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { useAuth } from "@/hooks/useAuth";
 import { memo, useCallback } from "react";
 
 interface ToolNavProps {
@@ -10,7 +12,25 @@ interface ToolNavProps {
 
 export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
   const router = useRouter();
-  const tools = getToolsInCategory(currentToolId);
+  const { getCustomization } = useToolCustomizations();
+  const { hasPermission, isAdmin } = useAuth();
+  
+  const allTools = getToolsInCategory(currentToolId);
+  
+  // Filter by visibility and permissions (same logic as homepage)
+  const tools = allTools
+    .map((tool) => {
+      const custom = getCustomization(tool.id, tool.name, "#6366f1");
+      return {
+        ...tool,
+        name: custom.name,
+        visible: custom.visible,
+        order: custom.order,
+      };
+    })
+    .filter((tool) => tool.visible)
+    .filter((tool) => isAdmin || hasPermission(tool.id))
+    .sort((a, b) => a.order - b.order);
 
   const handleToolClick = useCallback((href: string) => {
     router.push(href);
