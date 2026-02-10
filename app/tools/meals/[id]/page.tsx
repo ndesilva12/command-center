@@ -395,7 +395,7 @@ export default function MealDetailPage() {
           )}
 
           {/* Stats */}
-          {(displayMeal?.lastCooked || displayMeal?.timesCooked > 0) && (
+          {(displayMeal?.lastCooked || (displayMeal?.timesCooked && displayMeal.timesCooked > 0)) && (
             <div className="glass" style={{ padding: "16px", borderRadius: "12px" }}>
               {displayMeal.lastCooked && (
                 <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "8px" }}>
