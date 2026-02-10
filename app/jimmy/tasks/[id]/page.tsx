@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { MarkdownContent } from "@/components/jimmy/MarkdownContent";
 import { Sparkles, ArrowLeft, Download, Copy, CheckCircle, Clock } from "lucide-react";
 
 interface Task {
@@ -204,9 +205,7 @@ export default function TaskDetailPage() {
 
           {/* Content */}
           <div className="glass" style={{ padding: "32px", borderRadius: "12px" }}>
-            <div style={{ fontSize: "16px", color: "var(--foreground)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
-              {task.content || task.preview}
-            </div>
+            <MarkdownContent content={task.content || task.preview} />
           </div>
         </div>
       </main>
