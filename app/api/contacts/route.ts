@@ -24,22 +24,35 @@ async function getValidAccessToken(tokens: any): Promise<string> {
 }
 
 async function fetchGoogleContacts(accessToken: string): Promise<any[]> {
-  const url = new URL('https://people.googleapis.com/v1/people/me/connections');
-  url.searchParams.append('personFields', 'names,emailAddresses,phoneNumbers,photos,organizations,addresses,birthdays');
-  url.searchParams.append('pageSize', '100');
+  let allContacts: any[] = [];
+  let nextPageToken: string | undefined = undefined;
 
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  do {
+    const url = new URL('https://people.googleapis.com/v1/people/me/connections');
+    url.searchParams.append('personFields', 'names,emailAddresses,phoneNumbers,photos,organizations,addresses,birthdays');
+    url.searchParams.append('pageSize', '1000'); // Maximum allowed by Google API
+    if (nextPageToken) {
+      url.searchParams.append('pageToken', nextPageToken);
+    }
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch contacts');
-  }
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
-  const data = await response.json();
-  return data.connections || [];
+    if (!response.ok) {
+      throw new Error('Failed to fetch contacts');
+    }
+
+    const data = await response.json();
+    if (data.connections && data.connections.length > 0) {
+      allContacts = allContacts.concat(data.connections);
+    }
+    nextPageToken = data.nextPageToken;
+  } while (nextPageToken);
+
+  return allContacts;
 }
 
 export async function GET(request: Request) {

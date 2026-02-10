@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, RefreshCw, ExternalLink, Mail, Phone, AlertCircle, Grid, List } from "lucide-react";
+import { Users, RefreshCw, ExternalLink, Mail, Phone, AlertCircle, Grid, List, Search, X } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -24,6 +24,7 @@ export default function ContactsPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     // Load view preference from localStorage
@@ -69,6 +70,20 @@ export default function ContactsPage() {
     fetchContacts();
   };
 
+  const filteredContacts = contacts.filter(contact => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      contact.name.toLowerCase().includes(query) ||
+      contact.email?.toLowerCase().includes(query) ||
+      contact.phone?.includes(query) ||
+      contact.organization?.toLowerCase().includes(query) ||
+      contact.title?.toLowerCase().includes(query)
+    );
+  });
+
+  const displayContacts = filteredContacts;
+
   return (
     <>
       <TopNav />
@@ -82,7 +97,7 @@ export default function ContactsPage() {
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>Contacts</h1>
             {!loading && !error && (
               <span style={{ fontSize: "14px", color: "var(--foreground-muted)", marginLeft: "4px" }}>
-                ({contacts.length})
+                ({searchQuery ? `${displayContacts.length} of ${contacts.length}` : contacts.length})
               </span>
             )}
           </div>
@@ -194,6 +209,37 @@ export default function ContactsPage() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+          <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Search contacts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ flex: 1, backgroundColor: "transparent", border: "none", outline: "none", color: "var(--foreground)", fontSize: "14px" }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--foreground-muted)",
+              }}
+            >
+              <X style={{ width: "12px", height: "12px" }} />
+            </button>
+          )}
+        </div>
+
         {loading ? (
           <div style={{
             background: "rgba(255, 255, 255, 0.03)",
@@ -254,7 +300,7 @@ export default function ContactsPage() {
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
             gap: "16px"
           }}>
-            {contacts.map((contact) => (
+            {displayContacts.map((contact) => (
               <div
                 key={contact.id}
                 style={{
