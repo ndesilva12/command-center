@@ -264,6 +264,8 @@ export default function CalendarPage() {
                 minHeight: "150px",
                 display: "flex",
                 flexDirection: "column",
+                minWidth: 0,
+                overflow: "hidden",
               }}
             >
               <div
@@ -272,12 +274,13 @@ export default function CalendarPage() {
                   fontWeight: 600,
                   marginBottom: "8px",
                   color: isToday ? "#00aaff" : "var(--foreground)",
+                  flexShrink: 0,
                 }}
               >
                 <div>{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
                 <div style={{ fontSize: "18px", marginTop: "2px" }}>{date.getDate()}</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0, overflow: "hidden" }}>
                 {dayEvents.map((event) => (
                   <div
                     key={event.id}
@@ -292,6 +295,9 @@ export default function CalendarPage() {
                       color: "#00aaff",
                       cursor: "pointer",
                       transition: "all 0.15s",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)")}
@@ -360,6 +366,8 @@ export default function CalendarPage() {
                   display: "flex",
                   flexDirection: "column",
                   opacity: isCurrentMonth ? 1 : 0.5,
+                  minWidth: 0,
+                  overflow: "hidden",
                 }}
               >
                 <div
@@ -368,11 +376,12 @@ export default function CalendarPage() {
                     fontWeight: 600,
                     marginBottom: "6px",
                     color: isToday ? "#00aaff" : "var(--foreground)",
+                    flexShrink: 0,
                   }}
                 >
                   {date.getDate()}
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: 0, overflow: "hidden" }}>
                   {dayEvents.slice(0, 3).map((event) => (
                     <div
                       key={event.id}
@@ -390,6 +399,7 @@ export default function CalendarPage() {
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
                         transition: "all 0.15s",
+                        minWidth: 0,
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)")}
