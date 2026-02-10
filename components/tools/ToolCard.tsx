@@ -65,7 +65,7 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
           }}
         />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", minHeight: "64px" }}>
             <div
               style={{
                 width: "40px",
@@ -86,13 +86,9 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
                   fontSize: "15px",
                   fontWeight: 700,
                   color: "var(--foreground)",
-                  marginBottom: "2px",
                 }}
               >
                 {name}
-              </div>
-              <div style={{ fontSize: "13px", color: "var(--muted)", lineHeight: "1.4" }}>
-                {description}
               </div>
             </div>
           </div>

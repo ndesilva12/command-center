@@ -56,31 +56,31 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
         .tool-nav-button {
           padding: 8px 16px;
           border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
-          color: var(--foreground);
-          font-size: 14px;
-          font-weight: 500;
+          border: 1px solid transparent;
+          background: transparent;
+          color: var(--muted);
+          font-size: 15px;
+          font-weight: 600;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s;
           white-space: nowrap;
           flex-shrink: 0;
         }
 
         .tool-nav-button:hover {
-          background: rgba(255, 255, 255, 0.08);
-          color: #00aaff;
+          background: var(--glass-bg);
+          color: var(--foreground);
         }
 
         .tool-nav-button.active {
-          border-color: #00aaff;
-          background: rgba(0, 170, 255, 0.15);
-          color: #00aaff;
+          border-color: var(--glass-border);
+          background: var(--glass-bg);
+          color: var(--foreground);
         }
 
         .tool-nav-button.active:hover {
-          background: rgba(0, 170, 255, 0.15);
-          color: #00aaff;
+          background: var(--glass-bg);
+          color: var(--foreground);
         }
       `}</style>
     </>

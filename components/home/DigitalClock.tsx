@@ -38,7 +38,8 @@ export function DigitalClock() {
     }}>
       <div style={{
         fontSize: "64px",
-        fontWeight: 300,
+        fontWeight: 700,
+        fontFamily: "'Orbitron', monospace",
         color: "var(--foreground)",
         letterSpacing: "0.05em",
         marginBottom: "8px",

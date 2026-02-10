@@ -40,8 +40,6 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'investors', name: 'Investors', href: '/tools/investors', description: 'Fundraising pipeline' },
   { id: 'business-info', name: 'Business Info', href: '/tools/business-info', description: 'Company research' },
   { id: 'corporate', name: 'Corporate', href: '/tools/corporate', description: 'Corporate insights' },
-  { id: 'analyze', name: 'Analyze', href: '/tools/analyze', description: 'Data analysis' },
-  { id: 'insights', name: 'Insights', href: '/tools/insights', description: 'AI insights' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];
