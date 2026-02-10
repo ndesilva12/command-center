@@ -149,6 +149,14 @@ const TOOL_CATEGORIES = [
         href: "/tools/rosters",
         color: "#3b82f6",
       },
+      {
+        id: "meals",
+        name: "Meal Plan",
+        description: "Weekly meal planning",
+        icon: Calendar,
+        href: "/tools/meals",
+        color: "#10b981",
+      },
     ],
   },
   {
