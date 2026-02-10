@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Search, Clock, X } from "lucide-react";
 import { UnifiedSourceId, getSearchUrl, getSourceConfig, getAIModelUrl } from "@/lib/unified-sources";
 import { SourceSelector } from "./SourceSelector";
@@ -8,11 +8,22 @@ import { SourceSelector } from "./SourceSelector";
 const RECENT_SEARCHES_KEY = "cc-recent-searches";
 const MAX_RECENT = 5;
 
-export function SearchBar() {
+export interface SearchBarRef {
+  setQuery: (q: string) => void;
+  setSource: (s: UnifiedSourceId) => void;
+}
+
+export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, ref) {
   const [query, setQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<UnifiedSourceId>("google");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecent, setShowRecent] = useState(false);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    setQuery: (q: string) => setQuery(q),
+    setSource: (s: UnifiedSourceId) => setSelectedSource(s),
+  }));
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -63,13 +74,6 @@ export function SearchBar() {
     }
 
     setQuery("");
-    setShowRecent(false);
-  };
-
-  // Handle trending tag click
-  const handleTagClick = (tagQuery: string, source: UnifiedSourceId) => {
-    setQuery(tagQuery);
-    setSelectedSource(source);
     setShowRecent(false);
   };
 
@@ -246,4 +250,4 @@ export function SearchBar() {
       )}
     </div>
   );
-}
+});
