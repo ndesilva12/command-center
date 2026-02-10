@@ -73,7 +73,7 @@ export default function MealPlanPage() {
       const plansSnapshot = await getDocs(collection(db, 'weekly_plans'));
       const plans: WeeklyPlan[] = [];
       plansSnapshot.forEach((doc) => {
-        plans.push({ id: doc.id, ...doc.to_dict() } as WeeklyPlan);
+        plans.push({ id: doc.id, ...doc.data() } as WeeklyPlan);
       });
       
       // Fetch all meals from Firestore
