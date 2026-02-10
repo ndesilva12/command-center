@@ -318,7 +318,7 @@ export default function JimmyPage() {
             }}
           >
             {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} />
+              <TaskCard key={task.id} {...task} />
             ))}
           </div>
         ) : (
