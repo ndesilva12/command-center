@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug Auth</title></head>
+<body>
+<h1>Auth Debug</h1>
+<pre id="output">Loading...</pre>
+<script type="module">
+import { auth, db } from './lib/firebase.js';
+import { doc, getDoc } from 'firebase/firestore';
+
+auth.onAuthStateChanged(async (user) => {
+  const output = document.getElementById('output');
+  if (user) {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.data();
+    output.textContent = JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      userData: userData,
+      isAdmin: userData?.role === 'admin'
+    }, null, 2);
+  } else {
+    output.textContent = 'Not logged in';
+  }
+});
+</script>
+</body>
+</html>

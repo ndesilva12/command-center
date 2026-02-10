@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Sacramento } from "next/font/google";
+import { Inter, Sacramento, Orbitron } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,6 +10,11 @@ const inter = Inter({
 const sacramento = Sacramento({
   variable: "--font-sacramento",
   weight: "400",
+  subsets: ["latin"],
+});
+
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
   subsets: ["latin"],
 });
 
@@ -55,7 +60,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Command Center" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className={`${inter.variable} ${sacramento.variable}`}>
+      <body className={`${inter.variable} ${sacramento.variable} ${orbitron.variable}`}>
         {children}
       </body>
     </html>

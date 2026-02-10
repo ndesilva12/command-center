@@ -105,15 +105,27 @@ export function TopNav() {
             >
               <Search style={{ width: "18px", height: "18px" }} />
             </button>
-            <span style={{
-              fontSize: "18px",
-              fontWeight: 700,
-              color: "var(--foreground)",
-              letterSpacing: "0.02em",
-              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-            }}>
+            <Link
+              href="/"
+              style={{
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "var(--foreground)",
+                letterSpacing: "0.02em",
+                fontFamily: "var(--font-orbitron, 'Orbitron', system-ui)",
+                textDecoration: "none",
+                transition: "all 0.2s",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#00aaff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--foreground)";
+              }}
+            >
               Command Center
-            </span>
+            </Link>
           </div>
 
           {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}
