@@ -284,7 +284,7 @@ export default function Home() {
               marginBottom: "8px" 
             }}>
               <img
-                src="/signature.jpg"
+                src="/signature.png"
                 alt="Norman C. de Silva"
                 style={{
                   height: isMobile ? "48px" : "64px",
