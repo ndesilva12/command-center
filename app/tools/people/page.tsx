@@ -143,7 +143,7 @@ export default function PeoplePage() {
     }
   };
 
-  const displayPeople = searchQuery ? filteredPeople : people;
+  const displayPeople = filteredPeople;
 
   return (
     <>
@@ -161,50 +161,6 @@ export default function PeoplePage() {
             </h1>
           </div>
           
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <a
-              href="https://www.notion.so/2fbbedd4141981deaf93da2dee6e098a"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "var(--foreground-muted)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                textDecoration: "none",
-                fontSize: "13px",
-                transition: "all 0.15s",
-              }}
-            >
-              <ExternalLink style={{ width: "14px", height: "14px" }} />
-              Open in Notion
-            </a>
-            
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "var(--foreground-muted)",
-                border: "none",
-                cursor: syncing ? "not-allowed" : "pointer",
-                fontSize: "13px",
-                opacity: syncing ? 0.5 : 1,
-              }}
-            >
-              <RefreshCw style={{ width: "14px", height: "14px", animation: syncing ? "spin 1s linear infinite" : "none" }} />
-              {syncing ? "Syncing..." : "Sync from Notion"}
-            </button>
-          </div>
         </div>
 
         {/* Search Bar and Controls */}
@@ -244,13 +200,14 @@ export default function PeoplePage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "name" | "relationship" | "location" | "profession")}
+              className="people-select"
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
                 padding: "10px 32px 10px 36px",
                 borderRadius: "10px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                backgroundColor: "rgba(0, 0, 0, 0.4)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
                 color: "var(--foreground)",
                 fontSize: "13px",
@@ -259,10 +216,10 @@ export default function PeoplePage() {
                 outline: "none",
               }}
             >
-              <option value="name">Sort: Name</option>
-              <option value="relationship">Sort: Relationship</option>
-              <option value="location">Sort: Location</option>
-              <option value="profession">Sort: Profession</option>
+              <option value="name" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Sort: Name</option>
+              <option value="relationship" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Sort: Relationship</option>
+              <option value="location" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Sort: Location</option>
+              <option value="profession" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Sort: Profession</option>
             </select>
             <ArrowUpDown style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--foreground-muted)", pointerEvents: "none" }} />
           </div>
@@ -272,13 +229,14 @@ export default function PeoplePage() {
             <select
               value={filterRelationship}
               onChange={(e) => setFilterRelationship(e.target.value)}
+              className="people-select"
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
                 padding: "10px 32px 10px 36px",
                 borderRadius: "10px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                backgroundColor: "rgba(0, 0, 0, 0.4)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
                 color: "var(--foreground)",
                 fontSize: "13px",
@@ -287,11 +245,11 @@ export default function PeoplePage() {
                 outline: "none",
               }}
             >
-              <option value="all">All Relationships</option>
-              <option value="Family">Family</option>
-              <option value="Friend">Friend</option>
-              <option value="Professional">Professional</option>
-              <option value="Acquaintance">Acquaintance</option>
+              <option value="all" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>All Relationships</option>
+              <option value="Family" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Family</option>
+              <option value="Friend" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Friend</option>
+              <option value="Professional" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Professional</option>
+              <option value="Acquaintance" style={{ backgroundColor: "rgba(0, 0, 0, 0.9)", color: "var(--foreground)" }}>Acquaintance</option>
             </select>
             <Filter style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--foreground-muted)", pointerEvents: "none" }} />
           </div>
@@ -366,7 +324,7 @@ export default function PeoplePage() {
                 {searchQuery ? "No people found" : "No people yet"}
               </h2>
               <p style={{ color: "var(--foreground-muted)", fontSize: "14px", marginBottom: "20px" }}>
-                {searchQuery ? "Try a different search" : "Click 'Sync from Notion' to import your contacts"}
+                {searchQuery ? "Try a different search" : "Your people will appear here once you add them"}
               </p>
             </div>
           ) : viewMode === "grid" ? (
@@ -531,6 +489,10 @@ export default function PeoplePage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        .people-select option {
+          background-color: rgb(10, 10, 10);
+          color: #e0e0e0;
         }
       `}</style>
     </>

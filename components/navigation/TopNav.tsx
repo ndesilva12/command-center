@@ -30,9 +30,9 @@ export function TopNav() {
         left: 0,
         right: 0,
         height: "64px",
-        background: "linear-gradient(180deg, rgba(10, 10, 10, 0.95) 0%, rgba(10, 10, 10, 0.7) 50%, rgba(10, 10, 10, 0) 100%)",
+        background: "linear-gradient(180deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 40%, rgba(0, 0, 0, 0) 100%)",
         backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+        borderBottom: "none",
         zIndex: 1000,
       }}
     >
