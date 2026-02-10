@@ -36,6 +36,11 @@ interface Person {
   almaMater?: string;
   interests?: string;
   notes?: string;
+  giftIdeas?: string;
+  pastGifts?: string;
+  favoriteBrands?: string;
+  sizes?: string;
+  affiliations?: string;
 }
 
 interface PersonDetailPageProps {
@@ -659,7 +664,8 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
                 <textarea
                   value={formData.notes || ""}
                   onChange={(e) => handleInputChange("notes", e.target.value)}
-                  rows={4}
+                  rows={10}
+                  placeholder="General notes about this person..."
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -671,6 +677,165 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
                     outline: "none",
                     resize: "vertical",
                     fontFamily: "inherit",
+                    transition: "all 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.5)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                  Gift Ideas
+                </label>
+                <textarea
+                  value={formData.giftIdeas || ""}
+                  onChange={(e) => handleInputChange("giftIdeas", e.target.value)}
+                  rows={3}
+                  placeholder="Gift ideas for this person..."
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    outline: "none",
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                    transition: "all 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.5)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                  Past Gifts
+                </label>
+                <textarea
+                  value={formData.pastGifts || ""}
+                  onChange={(e) => handleInputChange("pastGifts", e.target.value)}
+                  rows={3}
+                  placeholder="Gifts given to this person in the past..."
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    outline: "none",
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                    transition: "all 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.5)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                  Favorite Brands
+                </label>
+                <input
+                  type="text"
+                  value={formData.favoriteBrands || ""}
+                  onChange={(e) => handleInputChange("favoriteBrands", e.target.value)}
+                  placeholder="e.g., Apple, Nike, Patagonia"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "all 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.5)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                  Sizes
+                </label>
+                <input
+                  type="text"
+                  value={formData.sizes || ""}
+                  onChange={(e) => handleInputChange("sizes", e.target.value)}
+                  placeholder="e.g., Shirt: L, Shoes: 10, Ring: 7"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "all 0.15s",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.5)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                  Affiliations
+                </label>
+                <input
+                  type="text"
+                  value={formData.affiliations || ""}
+                  onChange={(e) => handleInputChange("affiliations", e.target.value)}
+                  placeholder="e.g., Rotary Club, Church, Alumni Association"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    outline: "none",
                     transition: "all 0.15s",
                   }}
                   onFocus={(e) => {

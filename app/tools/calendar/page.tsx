@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Plus, RefreshCw, ExternalLink, Clock, MapPin, Users, List, Grid3x3 } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, RefreshCw, ExternalLink, Clock, MapPin, Users, List, Grid3x3, FileText } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -23,6 +23,7 @@ export default function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<"today" | "week" | "month">("week");
   const [viewMode, setViewMode] = useState<"event" | "full">("event");
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
     // Load preferences from localStorage
@@ -207,7 +208,7 @@ export default function CalendarPage() {
                   hourEvents.map((event) => (
                     <div
                       key={event.id}
-                      onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
+                      onClick={() => setSelectedEvent(event)}
                       style={{
                         padding: "8px 10px",
                         background: "rgba(0, 170, 255, 0.15)",
@@ -385,7 +386,7 @@ export default function CalendarPage() {
                   {dayEvents.slice(0, 3).map((event) => (
                     <div
                       key={event.id}
-                      onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
+                      onClick={() => setSelectedEvent(event)}
                       style={{
                         padding: "4px 6px",
                         background: "rgba(0, 170, 255, 0.15)",
@@ -670,6 +671,202 @@ export default function CalendarPage() {
           )}
         </div>
       </main>
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <>
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              backdropFilter: "blur(4px)",
+              zIndex: 2000,
+            }}
+            onClick={() => setSelectedEvent(null)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "90%",
+              maxWidth: "600px",
+              maxHeight: "80vh",
+              overflowY: "auto",
+              background: "rgba(10, 10, 10, 0.95)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "16px",
+              padding: "32px",
+              zIndex: 2001,
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedEvent(null)}
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                border: "none",
+                background: "rgba(255, 255, 255, 0.1)",
+                color: "var(--foreground)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "20px",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+              }}
+            >
+              ×
+            </button>
+
+            {/* Event title */}
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "24px", paddingRight: "40px" }}>
+              {selectedEvent.summary}
+            </h2>
+
+            {/* Event details */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {/* Time */}
+              <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
+                <Clock style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                    Time
+                  </div>
+                  <div style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                    {formatEventTime(selectedEvent)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Location */}
+              {selectedEvent.location && (
+                <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
+                  <MapPin style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                      Location
+                    </div>
+                    <div style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                      {selectedEvent.location}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {selectedEvent.description && (
+                <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
+                  <FileText style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                      Description
+                    </div>
+                    <div style={{ fontSize: "14px", color: "var(--foreground-muted)", lineHeight: "1.6" }}>
+                      {selectedEvent.description}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Attendees */}
+              {selectedEvent.attendees && selectedEvent.attendees.length > 0 && (
+                <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
+                  <Users style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                      Attendees
+                    </div>
+                    <div style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                      {selectedEvent.attendees.map((a, i) => (
+                        <div key={i}>{a.email}</div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: "flex", gap: "12px", marginTop: "32px", paddingTop: "24px", borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <button
+                onClick={() => setSelectedEvent(null)}
+                style={{
+                  flex: 1,
+                  padding: "12px 24px",
+                  borderRadius: "10px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  color: "var(--foreground)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                }}
+              >
+                Close
+              </button>
+              {selectedEvent.htmlLink && (
+                <button
+                  onClick={() => {
+                    window.open(selectedEvent.htmlLink, "_blank");
+                    setSelectedEvent(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px 24px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "linear-gradient(135deg, #00aaff 0%, #0088cc 100%)",
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 170, 255, 0.35)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <ExternalLink style={{ width: "16px", height: "16px" }} />
+                  View in Google Calendar
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <style jsx global>{`
         @keyframes spin {
