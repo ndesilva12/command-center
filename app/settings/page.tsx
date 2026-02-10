@@ -4,12 +4,16 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ConnectedAccounts } from "@/components/settings/ConnectedAccounts";
 import { ToolCustomization } from "@/components/settings/ToolCustomization";
+import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Shield } from "lucide-react";
 
 export default function SettingsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [raindropConnected, setRaindropConnected] = useState(false);
   const [checkingRaindrop, setCheckingRaindrop] = useState(true);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
@@ -77,6 +81,52 @@ export default function SettingsPage() {
           <div style={{ marginBottom: "32px" }}>
             <ConnectedAccounts />
           </div>
+
+          {/* Admin Dashboard - Admin Only */}
+          {isAdmin && (
+            <div style={{ marginBottom: "32px" }}>
+              <div className="card" style={{ padding: "24px" }}>
+                <h2 style={{
+                  fontSize: "20px",
+                  fontWeight: 600,
+                  marginBottom: "16px",
+                  color: "var(--foreground)"
+                }}>
+                  Administration
+                </h2>
+                <Link
+                  href="/admin"
+                  style={{
+                    width: "100%",
+                    padding: "16px 24px",
+                    background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+                    border: "none",
+                    borderRadius: "12px",
+                    color: "white",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    textDecoration: "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(139, 92, 246, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <Shield style={{ width: "20px", height: "20px" }} />
+                  <span>Admin Dashboard</span>
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Tool Customization Section */}
           <div style={{ marginBottom: "32px" }}>

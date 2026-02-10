@@ -105,25 +105,7 @@ export function TopNav() {
             <Search style={{ width: "18px", height: "18px" }} />
           </button>
 
-          {/* Center - Site Title */}
-          <Link
-            href="/"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              textDecoration: "none",
-              fontFamily: "var(--font-sans)",
-              fontSize: "18px",
-              fontWeight: 600,
-              color: "var(--foreground)",
-              letterSpacing: "-0.02em",
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-            }}
-          >
-            Norman C. de Silva
-          </Link>
+          {/* Center - Site Title - Removed */}
 
           {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}
           {!isMobile && (
@@ -138,23 +120,17 @@ export function TopNav() {
               <NavLink href="/jimmy" icon={Sparkles} label="Jimmy" active={isActive("/jimmy")} />
               <NavLink href="/settings" icon={Settings} label="Settings" active={isActive("/settings")} />
               
-              {/* Admin Link */}
-              {user && isAdmin && (
-                <NavLink href="/admin" icon={Shield} label="Admin" active={isActive("/admin")} />
-              )}
-              
-              {/* Logout Button */}
+              {/* Logout Button - Icon Only */}
               {user && (
                 <button
                   onClick={handleLogout}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 16px",
+                    justifyContent: "center",
+                    width: "40px",
+                    height: "40px",
                     borderRadius: "8px",
-                    fontSize: "15px",
-                    fontWeight: 600,
                     color: "var(--muted)",
                     background: "transparent",
                     border: "1px solid transparent",
@@ -172,7 +148,6 @@ export function TopNav() {
                   }}
                 >
                   <LogOut style={{ width: "18px", height: "18px" }} />
-                  <span>Logout</span>
                 </button>
               )}
             </div>
