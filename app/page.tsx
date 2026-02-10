@@ -35,107 +35,6 @@ import {
 
 const TOOL_CATEGORIES = [
   {
-    name: "Intelligence",
-    tools: [
-      {
-        id: "curate",
-        name: "Curate",
-        description: "Curated intelligence",
-        icon: Sparkles,
-        href: "/tools/curate",
-        color: "#8b5cf6",
-      },
-      {
-        id: "l3d",
-        name: "L3D",
-        description: "Last 30 days research",
-        icon: TrendingUp,
-        href: "/tools/l3d",
-        color: "#10b981",
-      },
-      {
-        id: "deep-search",
-        name: "Deep Search",
-        description: "Deep web search",
-        icon: Search,
-        href: "/tools/deep-search",
-        color: "#6366f1",
-      },
-      {
-        id: "dark-search",
-        name: "Dark Search",
-        description: "Dark web search",
-        icon: Lock,
-        href: "/tools/dark-search",
-        color: "#dc2626",
-      },
-      {
-        id: "image-lookup",
-        name: "Image Lookup",
-        description: "Reverse image search",
-        icon: Image,
-        href: "/tools/image-lookup",
-        color: "#a78bfa",
-      },
-      {
-        id: "contact-finder",
-        name: "Contact Finder",
-        description: "Find contact info",
-        icon: UserSearch,
-        href: "/tools/contact-finder",
-        color: "#6366f1",
-      },
-      {
-        id: "relationships",
-        name: "Relationships",
-        description: "Contact insights",
-        icon: Network,
-        href: "/tools/relationships",
-        color: "#14b8a6",
-      },
-      {
-        id: "mission",
-        name: "Mission",
-        description: "Task management",
-        icon: Target,
-        href: "/tools/mission",
-        color: "#f59e0b",
-      },
-      {
-        id: "investors",
-        name: "Investors",
-        description: "Fundraising pipeline",
-        icon: TrendingDown,
-        href: "/tools/investors",
-        color: "#3b82f6",
-      },
-      {
-        id: "business-info",
-        name: "Business Info",
-        description: "Company research",
-        icon: Building2,
-        href: "/tools/business-info",
-        color: "#8b5cf6",
-      },
-      {
-        id: "corporate",
-        name: "Corporate",
-        description: "Corporate insights",
-        icon: Briefcase,
-        href: "/tools/corporate",
-        color: "#10b981",
-      },
-      {
-        id: "jimmy",
-        name: "Jimmy",
-        description: "AI work dashboard",
-        icon: Sparkles,
-        href: "/jimmy",
-        color: "#667eea",
-      },
-    ],
-  },
-  {
     name: "Productivity",
     tools: [
       {
@@ -252,6 +151,107 @@ const TOOL_CATEGORIES = [
       },
     ],
   },
+  {
+    name: "Intelligence",
+    tools: [
+      {
+        id: "curate",
+        name: "Curate",
+        description: "Curated intelligence",
+        icon: Sparkles,
+        href: "/tools/curate",
+        color: "#8b5cf6",
+      },
+      {
+        id: "l3d",
+        name: "L3D",
+        description: "Last 30 days research",
+        icon: TrendingUp,
+        href: "/tools/l3d",
+        color: "#10b981",
+      },
+      {
+        id: "deep-search",
+        name: "Deep Search",
+        description: "Deep web search",
+        icon: Search,
+        href: "/tools/deep-search",
+        color: "#6366f1",
+      },
+      {
+        id: "dark-search",
+        name: "Dark Search",
+        description: "Dark web search",
+        icon: Lock,
+        href: "/tools/dark-search",
+        color: "#dc2626",
+      },
+      {
+        id: "image-lookup",
+        name: "Image Lookup",
+        description: "Reverse image search",
+        icon: Image,
+        href: "/tools/image-lookup",
+        color: "#a78bfa",
+      },
+      {
+        id: "contact-finder",
+        name: "Contact Finder",
+        description: "Find contact info",
+        icon: UserSearch,
+        href: "/tools/contact-finder",
+        color: "#6366f1",
+      },
+      {
+        id: "relationships",
+        name: "Relationships",
+        description: "Contact insights",
+        icon: Network,
+        href: "/tools/relationships",
+        color: "#14b8a6",
+      },
+      {
+        id: "mission",
+        name: "Mission",
+        description: "Task management",
+        icon: Target,
+        href: "/tools/mission",
+        color: "#f59e0b",
+      },
+      {
+        id: "investors",
+        name: "Investors",
+        description: "Fundraising pipeline",
+        icon: TrendingDown,
+        href: "/tools/investors",
+        color: "#3b82f6",
+      },
+      {
+        id: "business-info",
+        name: "Business Info",
+        description: "Company research",
+        icon: Building2,
+        href: "/tools/business-info",
+        color: "#8b5cf6",
+      },
+      {
+        id: "corporate",
+        name: "Corporate",
+        description: "Corporate insights",
+        icon: Briefcase,
+        href: "/tools/corporate",
+        color: "#10b981",
+      },
+      {
+        id: "jimmy",
+        name: "Jimmy",
+        description: "AI work dashboard",
+        icon: Sparkles,
+        href: "/jimmy",
+        color: "#667eea",
+      },
+    ],
+  },
 ];
 
 export default function Home() {
@@ -304,7 +304,7 @@ export default function Home() {
               marginBottom: "8px"
             }}>
               <img
-                src="/signature.png"
+                src="/signature.jpg"
                 alt="Norman C. de Silva"
                 style={{
                   height: isMobile ? "48px" : "64px",

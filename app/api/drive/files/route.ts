@@ -23,17 +23,11 @@ async function getValidAccessToken(tokens: any): Promise<string> {
   return data.access_token;
 }
 
-async function fetchCalendarEvents(
-  accessToken: string,
-  timeMin: string,
-  timeMax: string
-): Promise<any[]> {
-  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
-  url.searchParams.append('timeMin', timeMin);
-  url.searchParams.append('timeMax', timeMax);
-  url.searchParams.append('singleEvents', 'true');
-  url.searchParams.append('orderBy', 'startTime');
-  url.searchParams.append('maxResults', '50');
+async function fetchDriveFiles(accessToken: string, pageSize: number = 50): Promise<any[]> {
+  const url = new URL('https://www.googleapis.com/drive/v3/files');
+  url.searchParams.append('pageSize', pageSize.toString());
+  url.searchParams.append('fields', 'files(id,name,mimeType,modifiedTime,size,webViewLink,iconLink,thumbnailLink)');
+  url.searchParams.append('orderBy', 'modifiedTime desc');
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -42,19 +36,18 @@ async function fetchCalendarEvents(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch calendar events');
+    throw new Error('Failed to fetch Drive files');
   }
 
   const data = await response.json();
-  return data.items || [];
+  return data.files || [];
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeMin = searchParams.get('timeMin') || new Date().toISOString();
-    const timeMax = searchParams.get('timeMax') || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const account = searchParams.get('account');
+    const pageSize = parseInt(searchParams.get('pageSize') || '50');
 
     const cookieStore = await cookies();
     const accountsCookie = cookieStore.get('google_accounts');
@@ -69,17 +62,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No Google accounts connected' }, { status: 401 });
     }
 
-    // Fetch events from all accounts (or specific account if requested)
+    // Fetch files from all accounts (or specific account if requested)
     const accountsToFetch = account ? accountEmails.filter(email => email === account) : accountEmails;
 
-    const eventsFromAllAccounts = await Promise.all(
+    const filesFromAllAccounts = await Promise.all(
       accountsToFetch.map(async (email) => {
         try {
           const accountId = email.replace(/[^a-zA-Z0-9@.]/g, "_");
           const doc = await adminDb.collection("google-accounts").doc(accountId).get();
 
           if (!doc.exists) {
-            return { events: [], account: { email, name: email } };
+            return { files: [], account: { email, name: email } };
           }
 
           const data = doc.data();
@@ -90,11 +83,11 @@ export async function GET(request: Request) {
           };
 
           const accessToken = await getValidAccessToken(tokens);
-          const events = await fetchCalendarEvents(accessToken, timeMin, timeMax);
+          const files = await fetchDriveFiles(accessToken, pageSize);
 
           return {
-            events: events.map(event => ({
-              ...event,
+            files: files.map(file => ({
+              ...file,
               accountEmail: data?.email,
               accountName: data?.name,
             })),
@@ -104,28 +97,28 @@ export async function GET(request: Request) {
             },
           };
         } catch (error) {
-          console.error(`Error fetching calendar for ${email}:`, error);
-          return { events: [], account: { email, name: email } };
+          console.error(`Error fetching Drive files for ${email}:`, error);
+          return { files: [], account: { email, name: email } };
         }
       })
     );
 
-    // Merge all events and sort by start time
-    const allEvents = eventsFromAllAccounts.flatMap(result => result.events);
-    allEvents.sort((a, b) => {
-      const aTime = new Date(a.start?.dateTime || a.start?.date || 0).getTime();
-      const bTime = new Date(b.start?.dateTime || b.start?.date || 0).getTime();
-      return aTime - bTime;
+    // Merge all files and sort by modified time
+    const allFiles = filesFromAllAccounts.flatMap(result => result.files);
+    allFiles.sort((a, b) => {
+      const aTime = new Date(a.modifiedTime || 0).getTime();
+      const bTime = new Date(b.modifiedTime || 0).getTime();
+      return bTime - aTime;
     });
 
     return NextResponse.json({
-      events: allEvents,
-      accounts: eventsFromAllAccounts.map(r => r.account),
+      files: allFiles,
+      accounts: filesFromAllAccounts.map(r => r.account),
     });
   } catch (error) {
-    console.error('Calendar events error:', error);
+    console.error('Drive files error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch calendar events' },
+      { error: 'Failed to fetch Drive files' },
       { status: 500 }
     );
   }

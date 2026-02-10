@@ -158,10 +158,19 @@ export function ToolCustomization() {
     }));
   };
 
-  const moveToolUp = (index: number) => {
+  const moveToolUp = (index: number, category: string) => {
+    const categoryTools = tools.filter(t => t.category === category);
     if (index === 0) return;
-    const newTools = [...tools];
-    [newTools[index], newTools[index - 1]] = [newTools[index - 1], newTools[index]];
+
+    const toolToMove = categoryTools[index];
+    const toolToSwap = categoryTools[index - 1];
+
+    const newTools = tools.map(t => {
+      if (t.id === toolToMove.id) return toolToSwap;
+      if (t.id === toolToSwap.id) return toolToMove;
+      return t;
+    });
+
     setTools(newTools);
 
     // Update order in customizations
@@ -170,10 +179,19 @@ export function ToolCustomization() {
     });
   };
 
-  const moveToolDown = (index: number) => {
-    if (index === tools.length - 1) return;
-    const newTools = [...tools];
-    [newTools[index], newTools[index + 1]] = [newTools[index + 1], newTools[index]];
+  const moveToolDown = (index: number, category: string) => {
+    const categoryTools = tools.filter(t => t.category === category);
+    if (index === categoryTools.length - 1) return;
+
+    const toolToMove = categoryTools[index];
+    const toolToSwap = categoryTools[index + 1];
+
+    const newTools = tools.map(t => {
+      if (t.id === toolToMove.id) return toolToSwap;
+      if (t.id === toolToSwap.id) return toolToMove;
+      return t;
+    });
+
     setTools(newTools);
 
     // Update order in customizations
@@ -212,53 +230,24 @@ export function ToolCustomization() {
     );
   }
 
-  return (
-    <div className="card" style={{ padding: "24px" }}>
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "24px"
+  const productivityTools = tools.filter(t => t.category === "Productivity");
+  const intelligenceTools = tools.filter(t => t.category === "Intelligence");
+
+  const renderToolSection = (categoryName: string, categoryTools: Tool[]) => (
+    <div key={categoryName} style={{ marginBottom: "32px" }}>
+      <h3 style={{
+        fontSize: "16px",
+        fontWeight: 600,
+        color: "var(--foreground)",
+        marginBottom: "12px",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+        opacity: 0.7
       }}>
-        <div>
-          <h2 style={{
-            fontSize: "20px",
-            fontWeight: 600,
-            marginBottom: "4px",
-            color: "var(--foreground)"
-          }}>
-            Tool Customization
-          </h2>
-          <p style={{ fontSize: "14px", color: "var(--muted)" }}>
-            Rename, reorder, change colors, and toggle visibility of tools
-          </p>
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            padding: "10px 20px",
-            background: "linear-gradient(135deg, #10b981, #059669)",
-            border: "none",
-            borderRadius: "8px",
-            color: "white",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: saving ? "wait" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            opacity: saving ? 0.6 : 1,
-          }}
-        >
-          <Save style={{ width: "16px", height: "16px" }} />
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
-
+        {categoryName}
+      </h3>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {tools.map((tool, index) => {
+        {categoryTools.map((tool, categoryIndex) => {
           const Icon = ICON_MAP[tool.id] || Sparkles;
           const customization = getToolCustomization(tool.id);
 
@@ -331,29 +320,29 @@ export function ToolCustomization() {
               {/* Reorder Buttons */}
               <div style={{ display: "flex", gap: "4px" }}>
                 <button
-                  onClick={() => moveToolUp(index)}
-                  disabled={index === 0}
+                  onClick={() => moveToolUp(categoryIndex, categoryName)}
+                  disabled={categoryIndex === 0}
                   style={{
                     padding: "6px",
                     background: "rgba(255, 255, 255, 0.05)",
                     border: "1px solid var(--glass-border)",
                     borderRadius: "6px",
-                    color: index === 0 ? "var(--muted)" : "var(--foreground)",
-                    cursor: index === 0 ? "not-allowed" : "pointer",
+                    color: categoryIndex === 0 ? "var(--muted)" : "var(--foreground)",
+                    cursor: categoryIndex === 0 ? "not-allowed" : "pointer",
                   }}
                 >
                   <ChevronUp style={{ width: "16px", height: "16px" }} />
                 </button>
                 <button
-                  onClick={() => moveToolDown(index)}
-                  disabled={index === tools.length - 1}
+                  onClick={() => moveToolDown(categoryIndex, categoryName)}
+                  disabled={categoryIndex === categoryTools.length - 1}
                   style={{
                     padding: "6px",
                     background: "rgba(255, 255, 255, 0.05)",
                     border: "1px solid var(--glass-border)",
                     borderRadius: "6px",
-                    color: index === tools.length - 1 ? "var(--muted)" : "var(--foreground)",
-                    cursor: index === tools.length - 1 ? "not-allowed" : "pointer",
+                    color: categoryIndex === categoryTools.length - 1 ? "var(--muted)" : "var(--foreground)",
+                    cursor: categoryIndex === categoryTools.length - 1 ? "not-allowed" : "pointer",
                   }}
                 >
                   <ChevronDown style={{ width: "16px", height: "16px" }} />
@@ -387,6 +376,56 @@ export function ToolCustomization() {
           );
         })}
       </div>
+    </div>
+  );
+
+  return (
+    <div className="card" style={{ padding: "24px" }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "24px"
+      }}>
+        <div>
+          <h2 style={{
+            fontSize: "20px",
+            fontWeight: 600,
+            marginBottom: "4px",
+            color: "var(--foreground)"
+          }}>
+            Tool Customization
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted)" }}>
+            Rename, reorder, change colors, and toggle visibility of tools
+          </p>
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            padding: "10px 20px",
+            background: "linear-gradient(135deg, #10b981, #059669)",
+            border: "none",
+            borderRadius: "8px",
+            color: "white",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: saving ? "wait" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            opacity: saving ? 0.6 : 1,
+          }}
+        >
+          <Save style={{ width: "16px", height: "16px" }} />
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+
+      {renderToolSection("Productivity", productivityTools)}
+      {renderToolSection("Intelligence", intelligenceTools)}
     </div>
   );
 }
