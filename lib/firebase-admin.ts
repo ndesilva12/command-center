@@ -1,9 +1,11 @@
 // Server-side Firebase Admin SDK
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getAuth, Auth } from 'firebase-admin/auth';
 
 let adminApp: App | undefined;
 let adminDbInstance: Firestore | undefined;
+let adminAuthInstance: Auth | undefined;
 
 function initializeAdminApp() {
   if (adminApp) return adminApp;
@@ -37,6 +39,14 @@ export function getAdminDb(): Firestore {
     adminDbInstance = getFirestore(app);
   }
   return adminDbInstance;
+}
+
+export function getAdminAuth(): Auth {
+  if (!adminAuthInstance) {
+    const app = initializeAdminApp();
+    adminAuthInstance = getAuth(app);
+  }
+  return adminAuthInstance;
 }
 
 // Lazy getter

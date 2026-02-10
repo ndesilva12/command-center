@@ -4,8 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Users, Plus, Trash2, Save, X } from "lucide-react";
@@ -97,18 +96,29 @@ export default function AdminPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Create Firebase Auth user
-      const userCredential = await createUserWithEmailAndPassword(auth, newEmail, newPassword);
-      
-      // Create Firestore user document
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        email: newEmail,
-        displayName: newDisplayName,
-        role: newRole,
-        permissions: newPermissions,
-        createdAt: Date.now(),
-        lastLogin: Date.now(),
+      // Call API to create user (handles both new and existing Auth users)
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: newEmail,
+          password: newPassword,
+          displayName: newDisplayName,
+          role: newRole,
+          permissions: newPermissions,
+        }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create user");
+      }
+
+      // Show success message
+      alert(data.message);
 
       // Reset form
       setNewEmail("");
