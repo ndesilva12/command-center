@@ -73,6 +73,23 @@ export default function EmailsPage() {
     }
   }, [selectedAccount, selectedFolder, isConnected, debouncedSearch]);
 
+  // Handle Enter key for delete confirmation
+  useEffect(() => {
+    if (!deleteConfirm) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        confirmDelete();
+      } else if (e.key === "Escape") {
+        setDeleteConfirm(null);
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteConfirm]);
+
   const checkConnectionAndFetch = async () => {
     try {
       const accountsResponse = await fetch("/api/auth/google/accounts");
@@ -256,6 +273,28 @@ export default function EmailsPage() {
 
       const data = await response.json();
       setEmailBody(data.body || data.snippet || "No content available");
+
+      // Mark as read if unread
+      if (email.isUnread) {
+        try {
+          await fetch(`/api/gmail/${email.id}/actions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "markAsRead",
+              account: accountParam,
+            }),
+          });
+          
+          // Update local state
+          setEmails((prev) =>
+            prev.map((e) => (e.id === email.id ? { ...e, isUnread: false } : e))
+          );
+          setSelectedEmail({ ...email, isUnread: false });
+        } catch (err) {
+          console.error("Failed to mark as read:", err);
+        }
+      }
     } catch (err) {
       console.error("Failed to load email body:", err);
       setEmailBody("Failed to load email content");
