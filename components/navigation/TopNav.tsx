@@ -64,23 +64,6 @@ export function TopNav() {
           Norman C. de Silva
         </Link>
 
-        {/* Center Image */}
-        <div style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: "translate(-50%, -50%)",
-        }}>
-          <img
-            src="/signature.jpg"
-            alt="Norman C. de Silva"
-            style={{
-              height: "40px",
-              width: "auto",
-            }}
-          />
-        </div>
-
         {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}
         {!isMobile && (
           <div
