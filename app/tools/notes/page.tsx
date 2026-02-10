@@ -6,6 +6,16 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 
+interface TreeNode {
+  id: string;
+  type: 'page' | 'database';
+  title: string;
+  icon?: any;
+  url?: string;
+  children?: TreeNode[];
+  hasChildren: boolean;
+}
+
 interface NotionPage {
   id: string;
   object: string;
@@ -24,46 +34,109 @@ interface NotionBlock {
 }
 
 export default function NotesPage() {
-  const [pages, setPages] = useState<NotionPage[]>([]);
-  const [databases, setDatabases] = useState<NotionPage[]>([]);
+  const [rootTree, setRootTree] = useState<TreeNode | null>(null);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItem, setSelectedItem] = useState<NotionPage | null>(null);
   const [pageContent, setPageContent] = useState<NotionBlock[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
-  const [showDatabases, setShowDatabases] = useState(true);
-  const [showPages, setShowPages] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
+  const [loadingChildren, setLoadingChildren] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchNotionData();
+    fetchNotionTree();
   }, []);
 
-  const fetchNotionData = async () => {
+  const fetchNotionTree = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [pagesRes, dbsRes] = await Promise.all([
-        fetch('/api/notion/pages'),
-        fetch('/api/notion/databases')
-      ]);
-
-      if (!pagesRes.ok || !dbsRes.ok) {
-        throw new Error('Failed to fetch Notion data');
+      const res = await fetch('/api/notion/tree');
+      if (!res.ok) {
+        throw new Error('Failed to fetch Notion tree');
       }
 
-      const pagesData = await pagesRes.json();
-      const dbsData = await dbsRes.json();
-
-      setPages(pagesData.results || []);
-      setDatabases(dbsData.databases || []);
+      const tree = await res.json();
+      setRootTree(tree);
+      // Auto-expand root
+      setExpandedNodes(new Set([tree.id]));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load Notion data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchChildren = async (nodeId: string) => {
+    setLoadingChildren(prev => new Set(prev).add(nodeId));
+    try {
+      const res = await fetch(`/api/notion/tree?pageId=${nodeId}`);
+      if (!res.ok) throw new Error('Failed to fetch children');
+
+      const node = await res.json();
+
+      // Update the tree with children
+      const updateNode = (n: TreeNode): TreeNode => {
+        if (n.id === nodeId) {
+          return { ...n, children: node.children };
+        }
+        if (n.children) {
+          return { ...n, children: n.children.map(updateNode) };
+        }
+        return n;
+      };
+
+      if (rootTree) {
+        setRootTree(updateNode(rootTree));
+      }
+    } catch (err) {
+      console.error('Error fetching children:', err);
+    } finally {
+      setLoadingChildren(prev => {
+        const next = new Set(prev);
+        next.delete(nodeId);
+        return next;
+      });
+    }
+  };
+
+  const toggleNode = async (nodeId: string, hasChildren: boolean) => {
+    const isExpanded = expandedNodes.has(nodeId);
+
+    if (isExpanded) {
+      // Collapse
+      setExpandedNodes(prev => {
+        const next = new Set(prev);
+        next.delete(nodeId);
+        return next;
+      });
+    } else {
+      // Expand
+      setExpandedNodes(prev => new Set(prev).add(nodeId));
+
+      // Fetch children if not already loaded
+      if (hasChildren) {
+        const node = findNode(rootTree, nodeId);
+        if (node && !node.children) {
+          await fetchChildren(nodeId);
+        }
+      }
+    }
+  };
+
+  const findNode = (node: TreeNode | null, nodeId: string): TreeNode | null => {
+    if (!node) return null;
+    if (node.id === nodeId) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findNode(child, nodeId);
+        if (found) return found;
+      }
+    }
+    return null;
   };
 
   const fetchPageContent = async (pageId: string) => {
@@ -108,7 +181,7 @@ export default function NotesPage() {
 
       if (res.ok) {
         setEditing(false);
-        fetchNotionData();
+        fetchNotionTree();
         fetchPageContent(selectedItem.id);
       }
     } catch (err) {
@@ -126,13 +199,83 @@ export default function NotesPage() {
     return 'Untitled';
   };
 
-  const getPageIcon = (page: NotionPage): string => {
+  const getPageIcon = (page: NotionPage | TreeNode): string => {
     if (page.icon) {
       if (page.icon.type === 'emoji') return page.icon.emoji;
       if (page.icon.type === 'external') return '🔗';
       if (page.icon.type === 'file') return '📄';
     }
-    return page.object === 'database' ? '🗂️' : '📝';
+    if ('type' in page) {
+      return page.type === 'database' ? '🗂️' : '📝';
+    }
+    return (page as NotionPage).object === 'database' ? '🗂️' : '📝';
+  };
+
+  const renderTreeNode = (node: TreeNode, depth: number = 0): React.ReactNode => {
+    const isExpanded = expandedNodes.has(node.id);
+    const isLoading = loadingChildren.has(node.id);
+    const isSelected = selectedItem?.id === node.id;
+
+    return (
+      <div key={node.id}>
+        <button
+          onClick={() => {
+            fetchPageContent(node.id);
+            if (node.hasChildren) {
+              toggleNode(node.id, node.hasChildren);
+            }
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 12px",
+            paddingLeft: `${12 + depth * 20}px`,
+            width: "100%",
+            background: isSelected ? "rgba(167, 139, 250, 0.15)" : "transparent",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            color: "var(--foreground)",
+            fontSize: "13px",
+            textAlign: "left",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isSelected) {
+              e.currentTarget.style.background = "transparent";
+            }
+          }}
+        >
+          {node.hasChildren && (
+            <span style={{ width: "14px", height: "14px", flexShrink: 0 }}>
+              {isLoading ? (
+                <RefreshCw style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} />
+              ) : isExpanded ? (
+                <ChevronDown style={{ width: "14px", height: "14px" }} />
+              ) : (
+                <ChevronRight style={{ width: "14px", height: "14px" }} />
+              )}
+            </span>
+          )}
+          {!node.hasChildren && <span style={{ width: "14px" }} />}
+          <span>{getPageIcon(node)}</span>
+          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {node.title}
+          </span>
+        </button>
+        {isExpanded && node.children && (
+          <div>
+            {node.children.map(child => renderTreeNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderBlockContent = (block: NotionBlock): React.ReactNode => {
@@ -218,13 +361,26 @@ export default function NotesPage() {
     }
   };
 
-  const filteredPages = pages.filter(page =>
-    getPageTitle(page).toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filterTree = (node: TreeNode | null, query: string): TreeNode | null => {
+    if (!node) return null;
+    if (!query) return node;
 
-  const filteredDatabases = databases.filter(db =>
-    getPageTitle(db).toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    const matches = node.title.toLowerCase().includes(query.toLowerCase());
+    const filteredChildren = node.children
+      ?.map(child => filterTree(child, query))
+      .filter((child): child is TreeNode => child !== null) || [];
+
+    if (matches || filteredChildren.length > 0) {
+      return {
+        ...node,
+        children: filteredChildren,
+      };
+    }
+
+    return null;
+  };
+
+  const displayTree = filterTree(rootTree, searchQuery);
 
   return (
     <>
@@ -253,10 +409,10 @@ export default function NotesPage() {
         }}>
           <div style={{ padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>Notion Workspace</h2>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>Norman C. de Silva</h2>
               <div style={{ display: "flex", gap: "4px" }}>
                 <button
-                  onClick={fetchNotionData}
+                  onClick={fetchNotionTree}
                   disabled={loading}
                   style={{
                     display: "flex",
@@ -316,134 +472,9 @@ export default function NotesPage() {
               />
             </div>
 
-            {/* Databases */}
-            <div style={{ marginBottom: "16px" }}>
-              <button
-                onClick={() => setShowDatabases(!showDatabases)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "6px 8px",
-                  width: "100%",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--foreground-muted)",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                {showDatabases ? <ChevronDown style={{ width: "14px", height: "14px" }} /> : <ChevronRight style={{ width: "14px", height: "14px" }} />}
-                Databases ({filteredDatabases.length})
-              </button>
-              {showDatabases && (
-                <div style={{ marginTop: "4px" }}>
-                  {filteredDatabases.map((db) => (
-                    <button
-                      key={db.id}
-                      onClick={() => fetchPageContent(db.id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 12px",
-                        width: "100%",
-                        background: selectedItem?.id === db.id ? "rgba(167, 139, 250, 0.15)" : "transparent",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        color: "var(--foreground)",
-                        fontSize: "13px",
-                        textAlign: "left",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (selectedItem?.id !== db.id) {
-                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedItem?.id !== db.id) {
-                          e.currentTarget.style.background = "transparent";
-                        }
-                      }}
-                    >
-                      <span>{getPageIcon(db)}</span>
-                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {getPageTitle(db)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Pages */}
+            {/* Tree Structure */}
             <div>
-              <button
-                onClick={() => setShowPages(!showPages)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "6px 8px",
-                  width: "100%",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--foreground-muted)",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                {showPages ? <ChevronDown style={{ width: "14px", height: "14px" }} /> : <ChevronRight style={{ width: "14px", height: "14px" }} />}
-                Pages ({filteredPages.length})
-              </button>
-              {showPages && (
-                <div style={{ marginTop: "4px" }}>
-                  {filteredPages.map((page) => (
-                    <button
-                      key={page.id}
-                      onClick={() => fetchPageContent(page.id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 12px",
-                        width: "100%",
-                        background: selectedItem?.id === page.id ? "rgba(167, 139, 250, 0.15)" : "transparent",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        color: "var(--foreground)",
-                        fontSize: "13px",
-                        textAlign: "left",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (selectedItem?.id !== page.id) {
-                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedItem?.id !== page.id) {
-                          e.currentTarget.style.background = "transparent";
-                        }
-                      }}
-                    >
-                      <span>{getPageIcon(page)}</span>
-                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {getPageTitle(page)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {displayTree && renderTreeNode(displayTree)}
             </div>
           </div>
         </aside>
@@ -462,7 +493,7 @@ export default function NotesPage() {
                 {error}
               </h2>
               <button
-                onClick={fetchNotionData}
+                onClick={fetchNotionTree}
                 style={{
                   marginTop: "16px",
                   padding: "8px 16px",

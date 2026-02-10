@@ -1,61 +1,69 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getValidAccessToken } from '@/lib/google-auth';
 import { adminDb } from '@/lib/firebase-admin';
 
-async function sendGmailEmail(accessToken: string, to: string, subject: string, body: string, from: string): Promise<any> {
+async function getEmailBody(accessToken: string, messageId: string): Promise<string> {
   try {
-    // Create email in RFC 2822 format
-    const email = [
-      `From: ${from}`,
-      `To: ${to}`,
-      `Subject: ${subject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      body,
-    ].join('\r\n');
-
-    // Encode email as base64url
-    const encodedEmail = Buffer.from(email)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-
     const response = await fetch(
-      'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
       {
-        method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ raw: encodedEmail }),
       }
     );
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to send email');
+      throw new Error(`Failed to fetch email: ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Extract body from payload
+    let body = '';
+
+    const findBody = (part: any): string => {
+      if (part.mimeType === 'text/html' && part.body?.data) {
+        return Buffer.from(part.body.data, 'base64').toString('utf-8');
+      }
+      if (part.mimeType === 'text/plain' && part.body?.data) {
+        const plainText = Buffer.from(part.body.data, 'base64').toString('utf-8');
+        // Convert plain text to HTML with preserved line breaks
+        return plainText.replace(/\n/g, '<br>');
+      }
+      if (part.parts) {
+        for (const subpart of part.parts) {
+          const found = findBody(subpart);
+          if (found) return found;
+        }
+      }
+      return '';
+    };
+
+    body = findBody(data.payload);
+
+    // Fallback to snippet if no body found
+    if (!body && data.snippet) {
+      body = data.snippet;
+    }
+
+    return body || 'No content available';
   } catch (error) {
-    console.error('Error sending email via Gmail API:', error);
+    console.error('Error fetching email body:', error);
     throw error;
   }
 }
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   try {
-    const body = await request.json();
-    const { to, subject, body: emailBody, account } = body;
+    const { searchParams } = new URL(request.url);
+    const messageId = searchParams.get('id');
+    const accountEmail = searchParams.get('account');
 
-    // Validate
-    if (!to || !subject || !emailBody) {
+    if (!messageId) {
       return NextResponse.json(
-        { error: "Missing required fields: to, subject, body" },
+        { error: 'Message ID is required' },
         { status: 400 }
       );
     }
@@ -81,7 +89,7 @@ export async function POST(request: Request) {
     }
 
     // Use specified account or first available
-    const targetEmail = account || accountEmails[0];
+    const targetEmail = accountEmail || accountEmails[0];
 
     if (!targetEmail) {
       return NextResponse.json(
@@ -118,18 +126,17 @@ export async function POST(request: Request) {
 
     const accessToken = await getValidAccessToken(tokens);
 
-    // Send email
-    const result = await sendGmailEmail(accessToken, to, subject, emailBody, targetEmail);
+    // Fetch email body
+    const body = await getEmailBody(accessToken, messageId);
 
     return NextResponse.json({
-      success: true,
-      messageId: result.id,
-      threadId: result.threadId,
+      body,
+      messageId,
     });
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('Error fetching email message:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to send email" },
+      { error: error instanceof Error ? error.message : 'Failed to fetch email message' },
       { status: 500 }
     );
   }
