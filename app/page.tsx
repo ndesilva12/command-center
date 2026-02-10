@@ -321,40 +321,14 @@ export default function Home() {
           </div>
         ) : (
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Top Section - Signature and Clock */}
+          {/* Clock Section - Centered */}
           <div style={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "center",
             alignItems: "center",
-            flexWrap: isMobile ? "wrap" : "nowrap",
-            gap: "24px",
             marginBottom: "32px",
           }}>
-            {/* Signature Image */}
-            <div style={{
-              flex: isMobile ? "1 1 100%" : "0 1 auto",
-              order: isMobile ? 2 : 1,
-            }}>
-              <img
-                src="/signature.jpg"
-                alt="Signature"
-                style={{
-                  maxWidth: isMobile ? "200px" : "250px",
-                  width: "100%",
-                  height: "auto",
-                  objectFit: "contain",
-                  opacity: 0.9,
-                }}
-              />
-            </div>
-
-            {/* Clock Section */}
-            <div style={{
-              flex: isMobile ? "1 1 100%" : "0 1 auto",
-              order: isMobile ? 1 : 2,
-            }}>
-              <DigitalClock />
-            </div>
+            <DigitalClock />
           </div>
 
           {/* Trending Topics */}

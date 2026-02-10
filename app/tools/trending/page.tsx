@@ -58,7 +58,7 @@ export default function TrendingPage() {
     if (trends.length === 0) return null;
 
     return (
-      <div style={{ marginBottom: "24px" }}>
+      <div>
         <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px", paddingLeft: "20px" }}>
           {title} <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({trends.length})</span>
         </h2>
@@ -177,9 +177,13 @@ export default function TrendingPage() {
             </div>
           </div>
         ) : (
-          <div>
-            {renderTrendSection(googleTrends, "Google Trends", "#4285f4")}
-            {renderTrendSection(xTrends, "X Trending", "#1da1f2")}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 500px), 1fr))",
+            gap: "24px",
+          }}>
+            <div>{renderTrendSection(xTrends, "X Trending", "#1da1f2")}</div>
+            <div>{renderTrendSection(googleTrends, "Google Trends", "#4285f4")}</div>
           </div>
         )}
       </main>

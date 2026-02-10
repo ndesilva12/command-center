@@ -36,9 +36,47 @@ async function askOpenClaw(prompt: string): Promise<string> {
 
 export async function GET() {
   try {
-    // Try multiple methods to get Google Trends
+    // Method 1: Try Google Trends RSS feed (realtime trending searches) - PRIORITIZED
+    try {
+      const rssResponse = await fetch("https://trends.google.com/trending/rss?geo=US", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
 
-    // Method 1: Use Grok API (preferred for real-time data)
+      if (rssResponse.ok) {
+        const xml = await rssResponse.text();
+        const trends = parseGoogleTrendsRSS(xml);
+        if (trends.length > 0) {
+          return NextResponse.json({ trends: trends.slice(0, 15), source: "rss" });
+        }
+      }
+    } catch (e) {
+      console.error("Google Trends RSS error:", e);
+    }
+
+    // Method 2: Try realtime trending now endpoint
+    try {
+      const realtimeResponse = await fetch("https://trends.google.com/trends/trendingsearches/daily/rss?geo=US", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (realtimeResponse.ok) {
+        const xml = await realtimeResponse.text();
+        const trends = parseGoogleTrendsRSS(xml);
+        if (trends.length > 0) {
+          return NextResponse.json({ trends: trends.slice(0, 15), source: "rss-realtime" });
+        }
+      }
+    } catch (e) {
+      console.error("Google Trends realtime RSS error:", e);
+    }
+
+    // Method 3: Use Grok API (as fallback for when RSS fails)
     const xaiKey = process.env.XAI_API_KEY;
 
     if (xaiKey) {
@@ -61,24 +99,23 @@ export async function GET() {
             messages: [
               {
                 role: "system",
-                content: "You are an assistant that provides current trending search topics. Respond only with valid JSON.",
+                content: "You provide real trending search queries people are typing into Google right now. Respond with actual specific search terms, not broad categories.",
               },
               {
                 role: "user",
-                content: `Today is ${today}. What are the top 10 trending search topics on Google right now in the United States?
+                content: `Today is ${today}. What are the top 15 ACTUAL trending search queries on Google right now in the United States?
 
-Consider:
-- Breaking news events
-- Popular entertainment and celebrity topics
-- Sports events and highlights
-- Technology announcements
-- Political developments
-- Viral topics
+Give me REAL search terms people are typing, like:
+- "Taylor Swift new album"
+- "Lakers vs Warriors score"
+- "iPhone 16 release date"
+
+NOT broad categories like "Entertainment" or "Sports Updates"
 
 Respond with this exact JSON format (no markdown):
-[{"title": "Topic Name", "description": "Brief description"}]
+[{"title": "Exact search query", "description": "Why it's trending"}]
 
-Limit to exactly 10 topics.`,
+Limit to exactly 15 specific search queries.`,
               },
             ],
             temperature: 0.5,
@@ -96,7 +133,7 @@ Limit to exactly 10 topics.`,
           }
 
           const parsed = JSON.parse(content.trim());
-          const trends: GoogleTrend[] = parsed.slice(0, 10).map((item: { title: string; description?: string }) => ({
+          const trends: GoogleTrend[] = parsed.slice(0, 15).map((item: { title: string; description?: string }) => ({
             title: item.title,
             description: item.description,
             searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`,
@@ -109,27 +146,7 @@ Limit to exactly 10 topics.`,
       }
     }
 
-    // Method 2: Try Google Trends RSS feed (daily trends)
-    try {
-      const rssResponse = await fetch("https://trends.google.com/trending/rss?geo=US", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (rssResponse.ok) {
-        const xml = await rssResponse.text();
-        const trends = parseGoogleTrendsRSS(xml);
-        if (trends.length > 0) {
-          return NextResponse.json({ trends: trends.slice(0, 10), source: "rss" });
-        }
-      }
-    } catch (e) {
-      console.error("Google Trends RSS error:", e);
-    }
-
-    // Method 3: Fallback to OpenClaw gateway (uses Norman's Anthropic subscription)
+    // Method 4: Fallback to OpenClaw gateway (uses Norman's Anthropic subscription)
     try {
       const today = new Date().toLocaleDateString("en-US", {
         weekday: "long",
@@ -138,25 +155,24 @@ Limit to exactly 10 topics.`,
         day: "numeric",
       });
 
-      const prompt = `Today is ${today}. What are the top 10 trending search topics on Google right now in the United States?
+      const prompt = `Today is ${today}. What are the top 15 ACTUAL trending search queries on Google right now in the United States?
 
-Consider:
-- Breaking news events
-- Popular entertainment and celebrity topics
-- Sports events and highlights
-- Technology announcements
-- Political developments
-- Viral topics
+Give me REAL search terms people are typing, like:
+- "Taylor Swift new album"
+- "Lakers vs Warriors score"
+- "iPhone 16 release date"
+
+NOT broad categories like "Entertainment" or "Sports Updates"
 
 Return ONLY a JSON array with this format (no markdown, no explanation):
-[{"title": "Topic Name", "description": "Brief description"}]`;
+[{"title": "Exact search query", "description": "Why it's trending"}]`;
 
       const content = await askOpenClaw(prompt);
 
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        const trends: GoogleTrend[] = parsed.slice(0, 10).map((item: { title: string; description?: string }) => ({
+        const trends: GoogleTrend[] = parsed.slice(0, 15).map((item: { title: string; description?: string }) => ({
           title: item.title,
           description: item.description,
           searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`,
@@ -167,17 +183,10 @@ Return ONLY a JSON array with this format (no markdown, no explanation):
       console.error("OpenClaw gateway error:", e);
     }
 
-    // Final fallback: Return mock data for testing
-    const mockTrends: GoogleTrend[] = [
-      { title: "AI Breakthroughs 2026", description: "Latest developments in artificial intelligence", searchUrl: "https://www.google.com/search?q=AI+Breakthroughs+2026&tbm=nws" },
-      { title: "Climate Summit Updates", description: "Global leaders meet to discuss climate action", searchUrl: "https://www.google.com/search?q=Climate+Summit+Updates&tbm=nws" },
-      { title: "Tech IPO Season", description: "Major tech companies going public", searchUrl: "https://www.google.com/search?q=Tech+IPO+Season&tbm=nws" },
-      { title: "Space Exploration News", description: "Latest missions and discoveries", searchUrl: "https://www.google.com/search?q=Space+Exploration+News&tbm=nws" },
-      { title: "Quantum Computing Advances", description: "Breakthroughs in quantum technology", searchUrl: "https://www.google.com/search?q=Quantum+Computing+Advances&tbm=nws" },
-    ];
+    // Final fallback: Return empty array (better than mock data)
     return NextResponse.json({
-      trends: mockTrends,
-      source: "mock",
+      trends: [],
+      source: "none",
     });
   } catch (error) {
     console.error("Error fetching Google trends:", error);
@@ -192,14 +201,16 @@ function parseGoogleTrendsRSS(xml: string): GoogleTrend[] {
   const trends: GoogleTrend[] = [];
 
   try {
-    // Simple XML parsing for <title> and <link> tags within <item>
+    // Parse Google Trends RSS for actual trending search queries
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-    const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>/;
+    const titleRegex = /<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/;
     const linkRegex = /<link>(.*?)<\/link>/;
-    const descRegex = /<description><!\[CDATA\[(.*?)\]\]><\/description>/;
+    const descRegex = /<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/;
+    const newsItemRegex = /<ht:news_item>([\s\S]*?)<\/ht:news_item>/g;
+    const newsItemTitleRegex = /<ht:news_item_title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/ht:news_item_title>/;
 
     let itemMatch;
-    while ((itemMatch = itemRegex.exec(xml)) !== null && trends.length < 15) {
+    while ((itemMatch = itemRegex.exec(xml)) !== null && trends.length < 20) {
       const itemContent = itemMatch[1];
       
       const titleMatch = titleRegex.exec(itemContent);
@@ -207,17 +218,43 @@ function parseGoogleTrendsRSS(xml: string): GoogleTrend[] {
       const descMatch = descRegex.exec(itemContent);
 
       if (titleMatch && titleMatch[1]) {
-        const title = titleMatch[1].trim();
-        // Skip the header "Daily Search Trends"
-        if (title !== "Daily Search Trends" && title.length > 2) {
-          trends.push({
-            title,
-            description: descMatch?.[1]?.substring(0, 100),
-            searchUrl: linkMatch?.[1] || `https://www.google.com/search?q=${encodeURIComponent(title)}&tbm=nws`,
-          });
+        let title = titleMatch[1].trim();
+        
+        // Skip channel-level titles
+        if (title === "Daily Search Trends" || title === "Google Trends" || title.length < 3) {
+          continue;
         }
+
+        // Extract description - clean HTML if present
+        let description = "";
+        if (descMatch && descMatch[1]) {
+          let desc = descMatch[1];
+          // Try to extract news item title as description
+          const newsMatch = newsItemTitleRegex.exec(desc);
+          if (newsMatch && newsMatch[1]) {
+            description = newsMatch[1].trim().substring(0, 120);
+          } else {
+            // Remove HTML tags
+            description = desc.replace(/<[^>]*>/g, " ").trim().substring(0, 120);
+          }
+        }
+
+        const searchUrl = linkMatch?.[1] || `https://www.google.com/search?q=${encodeURIComponent(title)}`;
+
+        trends.push({
+          title,
+          description: description || undefined,
+          searchUrl,
+        });
       }
     }
+
+    // Remove duplicates
+    const uniqueTrends = trends.filter((trend, index, self) =>
+      index === self.findIndex((t) => t.title.toLowerCase() === trend.title.toLowerCase())
+    );
+
+    return uniqueTrends;
   } catch (e) {
     console.error("Error parsing Google Trends RSS:", e);
   }
