@@ -232,9 +232,35 @@ export default function JimmyPage() {
               style={{
                 borderRadius: "16px",
                 overflow: "hidden",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
               }}
             >
-              <ChatInterface />
+              <div style={{ textAlign: "center", marginBottom: "8px" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                  Chat with Jimmy
+                </h2>
+                <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                  Real-time communication via Discord
+                </p>
+              </div>
+              <iframe 
+                src="https://discord.com/widget?id=1470886842877476937&theme=dark" 
+                width="100%" 
+                height="600"
+                style={{
+                  border: "none",
+                  borderRadius: "12px",
+                  maxWidth: "800px",
+                }}
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+              />
+              <p style={{ fontSize: "13px", color: "var(--foreground-muted)", textAlign: "center" }}>
+                Messages sent here will be received by Jimmy via OpenClaw
+              </p>
             </div>
           ) : (
             <>
