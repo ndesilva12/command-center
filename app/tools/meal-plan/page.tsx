@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -44,7 +44,7 @@ interface WeeklyPlan {
   updatedAt: string;
 }
 
-export default function MealPlanPage() {
+function MealPlanContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -592,5 +592,24 @@ export default function MealPlanPage() {
         </div>
       )}
     </ProtectedRoute>
+  );
+}
+
+export default function MealPlanPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <TopNav />
+        <BottomNav />
+        <ToolNav currentToolId="meals" />
+        <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <p style={{ color: "var(--foreground-muted)" }}>Loading...</p>
+          </div>
+        </main>
+      </>
+    }>
+      <MealPlanContent />
+    </Suspense>
   );
 }
