@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, RefreshCw, ExternalLink, Mail, Phone, AlertCircle } from "lucide-react";
+import { Users, RefreshCw, ExternalLink, Mail, Phone, AlertCircle, Grid, List } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -23,10 +23,20 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
+    // Load view preference from localStorage
+    const savedViewMode = localStorage.getItem("contacts_viewMode");
+    if (savedViewMode) setViewMode(savedViewMode as "grid" | "list");
+
     fetchContacts();
   }, []);
+
+  useEffect(() => {
+    // Save view preference to localStorage
+    localStorage.setItem("contacts_viewMode", viewMode);
+  }, [viewMode]);
 
   const fetchContacts = async () => {
     try {
@@ -77,6 +87,44 @@ export default function ContactsPage() {
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* View Toggle */}
+            <div style={{ display: "flex", gap: "4px", padding: "4px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <button
+                onClick={() => setViewMode("grid")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  backgroundColor: viewMode === "grid" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                  color: viewMode === "grid" ? "#00aaff" : "var(--foreground-muted)",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                <Grid style={{ width: "16px", height: "16px" }} />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  backgroundColor: viewMode === "list" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                  color: viewMode === "list" ? "#00aaff" : "var(--foreground-muted)",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                <List style={{ width: "16px", height: "16px" }} />
+              </button>
+            </div>
+
             <a
               href="https://contacts.google.com"
               target="_blank"
@@ -200,7 +248,7 @@ export default function ContactsPage() {
               Your Google Contacts will appear here
             </p>
           </div>
-        ) : (
+        ) : viewMode === "grid" ? (
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
@@ -337,6 +385,152 @@ export default function ContactsPage() {
                       fontSize: "12px",
                       color: "var(--foreground-muted)",
                       marginTop: "4px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}>
+                      {contact.organization}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            background: "rgba(255, 255, 255, 0.03)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "12px",
+            overflow: "hidden"
+          }}>
+            {contacts.map((contact, index) => (
+              <div
+                key={contact.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                  padding: "16px 20px",
+                  borderBottom: index < contacts.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {contact.photo ? (
+                  <img
+                    src={contact.photo}
+                    alt={contact.name}
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid rgba(255, 255, 255, 0.1)",
+                      flexShrink: 0
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "rgba(0, 170, 255, 0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#00aaff",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    border: "2px solid rgba(0, 170, 255, 0.3)",
+                    flexShrink: 0
+                  }}>
+                    {contact.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+
+                <div style={{ flex: "0 0 200px", minWidth: 0 }}>
+                  <h3 style={{
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    color: "var(--foreground)",
+                    marginBottom: "2px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  }}>
+                    {contact.name}
+                  </h3>
+                  {contact.title && (
+                    <p style={{
+                      fontSize: "12px",
+                      color: "var(--foreground-muted)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    }}>
+                      {contact.title}
+                    </p>
+                  )}
+                </div>
+
+                <div style={{ flex: "1 1 auto", display: "flex", alignItems: "center", gap: "24px", fontSize: "13px" }}>
+                  {contact.email && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                      <Mail style={{ width: "14px", height: "14px", color: "#00aaff", flexShrink: 0 }} />
+                      <a
+                        href={`mailto:${contact.email}`}
+                        style={{
+                          color: "var(--foreground-muted)",
+                          textDecoration: "none",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "#00aaff";
+                          e.currentTarget.style.textDecoration = "underline";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "var(--foreground-muted)";
+                          e.currentTarget.style.textDecoration = "none";
+                        }}
+                      >
+                        {contact.email}
+                      </a>
+                    </div>
+                  )}
+                  {contact.phone && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Phone style={{ width: "14px", height: "14px", color: "#00aaff", flexShrink: 0 }} />
+                      <a
+                        href={`tel:${contact.phone}`}
+                        style={{
+                          color: "var(--foreground-muted)",
+                          textDecoration: "none"
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "#00aaff";
+                          e.currentTarget.style.textDecoration = "underline";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "var(--foreground-muted)";
+                          e.currentTarget.style.textDecoration = "none";
+                        }}
+                      >
+                        {contact.phone}
+                      </a>
+                    </div>
+                  )}
+                  {contact.organization && (
+                    <p style={{
+                      fontSize: "12px",
+                      color: "var(--foreground-muted)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap"
