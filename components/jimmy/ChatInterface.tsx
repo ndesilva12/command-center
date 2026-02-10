@@ -42,14 +42,17 @@ export function ChatInterface() {
     const q = query(
       messagesRef,
       where("userId", "==", user.uid),
-      where("sessionId", "==", sessionId),
       orderBy("timestamp", "asc")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loadedMessages: Message[] = [];
       snapshot.forEach((doc) => {
-        loadedMessages.push({ id: doc.id, ...doc.data() } as Message);
+        const data = doc.data();
+        // Filter by sessionId client-side
+        if (data.sessionId === sessionId) {
+          loadedMessages.push({ id: doc.id, ...data } as Message);
+        }
       });
       setMessages(loadedMessages);
       
