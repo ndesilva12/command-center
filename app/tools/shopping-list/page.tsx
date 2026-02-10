@@ -35,7 +35,8 @@ export default function ShoppingListPage() {
       
       if (!plansSnapshot.empty) {
         const doc = plansSnapshot.docs[0];
-        setPlan({ ...doc.to_dict(), weekOf: doc.to_dict().weekOf } as WeeklyPlan);
+        const data = doc.data();
+        setPlan({ ...data, weekOf: data.weekOf } as WeeklyPlan);
       }
     } catch (error) {
       console.error("Error fetching shopping list:", error);
