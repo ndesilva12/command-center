@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Loader2 } from "lucide-react";
 
 interface TrendingTopic {
   text: string;
@@ -11,6 +11,7 @@ interface TrendingTopic {
 export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => void }) {
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetchTrending();
@@ -18,8 +19,25 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
 
   const fetchTrending = async () => {
     setLoading(true);
+    setError(false);
+    
     try {
-      const response = await fetch('/api/trending');
+      // Add aggressive timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second max wait
+
+      const response = await fetch('/api/trending', {
+        signal: controller.signal,
+        // Use client-side cache for 5 minutes
+        next: { revalidate: 300 }
+      });
+      
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
       const data = await response.json();
 
       // Combine X and Google trends (top 5 from each)
@@ -33,15 +51,47 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
         source: "google" as const
       }));
 
-      setTopics([...xTopics, ...googleTopics]);
-    } catch (error) {
-      console.error('Error fetching trending topics:', error);
+      const combinedTopics = [...xTopics, ...googleTopics];
+      
+      if (combinedTopics.length > 0) {
+        setTopics(combinedTopics);
+      } else {
+        // If no topics, consider it an error state
+        setError(true);
+      }
+    } catch (err) {
+      console.error('Error fetching trending topics:', err);
+      setError(true);
+      // Don't show error to user, just hide the component gracefully
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading || topics.length === 0) {
+  // Show loading spinner briefly (improves perceived performance)
+  if (loading) {
+    return (
+      <div style={{ marginBottom: "32px", display: "flex", justifyContent: "center" }}>
+        <Loader2 
+          style={{ 
+            width: "20px", 
+            height: "20px", 
+            color: "rgba(255, 255, 255, 0.3)",
+            animation: "spin 1s linear infinite" 
+          }} 
+        />
+        <style jsx>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // Hide component if no topics or error
+  if (error || topics.length === 0) {
     return null;
   }
 

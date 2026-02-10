@@ -6,6 +6,11 @@ export interface GoogleTrend {
   description?: string;
 }
 
+// In-memory cache with 5-minute TTL
+let cachedTrends: GoogleTrend[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 async function askOpenClaw(prompt: string): Promise<string> {
   const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
   const token = process.env.OPENCLAW_TOKEN;
@@ -22,7 +27,7 @@ async function askOpenClaw(prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       message: prompt,
-      timeoutSeconds: 30,
+      timeoutSeconds: 20, // Reduced from 30
     }),
   });
 
@@ -36,47 +41,67 @@ async function askOpenClaw(prompt: string): Promise<string> {
 
 export async function GET() {
   try {
-    // Method 1: Try Google Trends RSS feed (realtime trending searches) - PRIORITIZED
+    // Check cache first
+    const now = Date.now();
+    if (cachedTrends && (now - cacheTimestamp) < CACHE_TTL) {
+      return NextResponse.json({ 
+        trends: cachedTrends, 
+        source: "cache",
+        cached: true 
+      });
+    }
+
+    // **PRIORITY: Try Google Trends RSS with US + last 4 hours filter**
+    // Note: Google Trends realtime feed is geo-filtered but doesn't support time granularity below "daily"
+    // We'll use the US realtime feed which updates every ~15 minutes (effectively "recent hours")
     try {
       const rssResponse = await fetch("https://trends.google.com/trending/rss?geo=US", {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(3000), // Reduced from 8000ms
       });
 
       if (rssResponse.ok) {
         const xml = await rssResponse.text();
         const trends = parseGoogleTrendsRSS(xml);
         if (trends.length > 0) {
-          return NextResponse.json({ trends: trends.slice(0, 15), source: "rss" });
+          const result = trends.slice(0, 15);
+          // Cache the results
+          cachedTrends = result;
+          cacheTimestamp = now;
+          return NextResponse.json({ trends: result, source: "rss-us-realtime" });
         }
       }
     } catch (e) {
       console.error("Google Trends RSS error:", e);
     }
 
-    // Method 2: Try realtime trending now endpoint
+    // Method 2: Try daily trends with US filter (fallback)
     try {
       const realtimeResponse = await fetch("https://trends.google.com/trends/trendingsearches/daily/rss?geo=US", {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(3000), // Reduced from 8000ms
       });
 
       if (realtimeResponse.ok) {
         const xml = await realtimeResponse.text();
         const trends = parseGoogleTrendsRSS(xml);
         if (trends.length > 0) {
-          return NextResponse.json({ trends: trends.slice(0, 15), source: "rss-realtime" });
+          const result = trends.slice(0, 15);
+          // Cache the results
+          cachedTrends = result;
+          cacheTimestamp = now;
+          return NextResponse.json({ trends: result, source: "rss-us-daily" });
         }
       }
     } catch (e) {
-      console.error("Google Trends realtime RSS error:", e);
+      console.error("Google Trends daily RSS error:", e);
     }
 
-    // Method 3: Use Grok API (as fallback for when RSS fails)
+    // Method 3: Use Grok API (as fallback)
     const xaiKey = process.env.XAI_API_KEY;
 
     if (xaiKey) {
@@ -94,16 +119,17 @@ export async function GET() {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${xaiKey}`,
           },
+          signal: AbortSignal.timeout(5000), // Add timeout
           body: JSON.stringify({
             model: "grok-3-mini",
             messages: [
               {
                 role: "system",
-                content: "You provide real trending search queries people are typing into Google right now. Respond with actual specific search terms, not broad categories.",
+                content: "You provide real trending search queries people are typing into Google right now in the United States. Respond with actual specific search terms, not broad categories. Focus on last 4 hours if possible.",
               },
               {
                 role: "user",
-                content: `Today is ${today}. What are the top 15 ACTUAL trending search queries on Google right now in the United States?
+                content: `Today is ${today}. What are the top 15 ACTUAL trending search queries on Google right now in the United States (last 4 hours if possible, otherwise today)?
 
 Give me REAL search terms people are typing, like:
 - "Taylor Swift new album"
@@ -139,6 +165,9 @@ Limit to exactly 15 specific search queries.`,
             searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`,
           }));
 
+          // Cache the results
+          cachedTrends = trends;
+          cacheTimestamp = now;
           return NextResponse.json({ trends, source: "grok" });
         }
       } catch (e) {
@@ -155,7 +184,7 @@ Limit to exactly 15 specific search queries.`,
         day: "numeric",
       });
 
-      const prompt = `Today is ${today}. What are the top 15 ACTUAL trending search queries on Google right now in the United States?
+      const prompt = `Today is ${today}. What are the top 15 ACTUAL trending search queries on Google right now in the United States (last 4 hours)?
 
 Give me REAL search terms people are typing, like:
 - "Taylor Swift new album"
@@ -177,10 +206,22 @@ Return ONLY a JSON array with this format (no markdown, no explanation):
           description: item.description,
           searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title)}&tbm=nws`,
         }));
+        
+        // Cache the results
+        cachedTrends = trends;
+        cacheTimestamp = now;
         return NextResponse.json({ trends, source: "openclaw" });
       }
     } catch (e) {
       console.error("OpenClaw gateway error:", e);
+    }
+
+    // Return cached data if available (even if expired)
+    if (cachedTrends) {
+      return NextResponse.json({
+        trends: cachedTrends,
+        source: "stale-cache",
+      });
     }
 
     // Final fallback: Return empty array (better than mock data)
@@ -190,6 +231,15 @@ Return ONLY a JSON array with this format (no markdown, no explanation):
     });
   } catch (error) {
     console.error("Error fetching Google trends:", error);
+    
+    // Return cached data on error if available
+    if (cachedTrends) {
+      return NextResponse.json({
+        trends: cachedTrends,
+        source: "error-cache",
+      });
+    }
+    
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch Google trends", trends: [] },
       { status: 500 }
@@ -206,7 +256,6 @@ function parseGoogleTrendsRSS(xml: string): GoogleTrend[] {
     const titleRegex = /<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/title>/;
     const linkRegex = /<link>(.*?)<\/link>/;
     const descRegex = /<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/;
-    const newsItemRegex = /<ht:news_item>([\s\S]*?)<\/ht:news_item>/g;
     const newsItemTitleRegex = /<ht:news_item_title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?<\/ht:news_item_title>/;
 
     let itemMatch;

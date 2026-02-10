@@ -6,6 +6,11 @@ export interface TrendingTopic {
   searchUrl: string;
 }
 
+// In-memory cache with 5-minute TTL
+let cachedTopics: TrendingTopic[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 async function askOpenClaw(prompt: string): Promise<string> {
   const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL;
   const token = process.env.OPENCLAW_TOKEN;
@@ -22,7 +27,7 @@ async function askOpenClaw(prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       message: prompt,
-      timeoutSeconds: 30,
+      timeoutSeconds: 20, // Reduced from 30
     }),
   });
 
@@ -36,79 +41,91 @@ async function askOpenClaw(prompt: string): Promise<string> {
 
 export async function GET() {
   try {
-    // Method 1: Try to scrape trends from a public Nitter instance
-    const nitterInstances = [
-      "https://nitter.net",
-      "https://nitter.privacydev.net",
-      "https://nitter.poast.org",
-    ];
+    // Check cache first
+    const now = Date.now();
+    if (cachedTopics && (now - cacheTimestamp) < CACHE_TTL) {
+      return NextResponse.json({ 
+        topics: cachedTopics, 
+        source: "cache",
+        cached: true 
+      });
+    }
 
-    for (const instance of nitterInstances) {
-      try {
-        const response = await fetch(`${instance}/`, {
+    // Try scraping methods in parallel with Promise.race for first success
+    const scrapingAttempts = [
+      // Method 1: trends24.in
+      (async () => {
+        const response = await fetch("https://trends24.in/united-states/", {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           },
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(3000), // Reduced from 8000ms
+        });
+
+        if (response.ok) {
+          const html = await response.text();
+          const topics = parseTrendsFromTrends24(html);
+          if (topics.length > 0) {
+            return { topics: topics.slice(0, 10), source: "trends24" };
+          }
+        }
+        throw new Error("trends24 failed");
+      })(),
+
+      // Method 2: getdaytrends.com
+      (async () => {
+        const response = await fetch("https://getdaytrends.com/united-states/", {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          },
+          signal: AbortSignal.timeout(3000), // Reduced from 8000ms
+        });
+
+        if (response.ok) {
+          const html = await response.text();
+          const topics = parseTrendsFromGetdaytrends(html);
+          if (topics.length > 0) {
+            return { topics: topics.slice(0, 10), source: "getdaytrends" };
+          }
+        }
+        throw new Error("getdaytrends failed");
+      })(),
+
+      // Method 3: Try one Nitter instance (reduced from multiple)
+      (async () => {
+        const response = await fetch("https://nitter.poast.org/", {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          },
+          signal: AbortSignal.timeout(3000), // Reduced from 5000ms
         });
 
         if (response.ok) {
           const html = await response.text();
           const topics = parseTrendsFromNitter(html);
           if (topics.length > 0) {
-            return NextResponse.json({ topics: topics.slice(0, 10), source: "nitter" });
+            return { topics: topics.slice(0, 10), source: "nitter" };
           }
         }
-      } catch {
-        // Try next instance
-        continue;
-      }
-    }
+        throw new Error("nitter failed");
+      })(),
+    ];
 
-    // Method 2: Try using trends24.in which aggregates Twitter/X trends
+    // Race all scraping methods - use the first one that succeeds
     try {
-      const trends24Response = await fetch("https://trends24.in/united-states/", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-
-      if (trends24Response.ok) {
-        const html = await trends24Response.text();
-        const topics = parseTrendsFromTrends24(html);
-        if (topics.length > 0) {
-          return NextResponse.json({ topics: topics.slice(0, 10), source: "trends24" });
-        }
-      }
+      const result = await Promise.any(scrapingAttempts);
+      // Cache the results
+      cachedTopics = result.topics;
+      cacheTimestamp = now;
+      return NextResponse.json(result);
     } catch (e) {
-      console.error("trends24 error:", e);
+      console.error("All scraping methods failed:", e);
     }
 
-    // Method 3: Try getdaytrends.com
-    try {
-      const getdaytrendsResponse = await fetch("https://getdaytrends.com/united-states/", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-
-      if (getdaytrendsResponse.ok) {
-        const html = await getdaytrendsResponse.text();
-        const topics = parseTrendsFromGetdaytrends(html);
-        if (topics.length > 0) {
-          return NextResponse.json({ topics: topics.slice(0, 10), source: "getdaytrends" });
-        }
-      }
-    } catch (e) {
-      console.error("getdaytrends error:", e);
-    }
-
-    // Method 4: Use OpenClaw gateway as a fallback (uses Norman's Anthropic subscription)
+    // Fallback: Use OpenClaw gateway (uses Norman's Anthropic subscription)
     try {
       const today = new Date().toLocaleDateString("en-US", {
         weekday: "long",
@@ -120,7 +137,7 @@ export async function GET() {
       const prompt = `Today is ${today}. Based on current events and what's likely being discussed on social media right now, generate a realistic list of 10 trending topics that would be popular on X (Twitter) in the United States today.
 
 Consider:
-- Current news events
+- Current news events (last 4 hours if possible)
 - Sports games happening today
 - Entertainment and celebrity news
 - Political developments
@@ -140,26 +157,40 @@ Return ONLY a JSON array with this format (no markdown, no explanation):
           description: item.description,
           searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.topic)}&tbm=nws`,
         }));
+        
+        // Cache the results
+        cachedTopics = topics;
+        cacheTimestamp = now;
         return NextResponse.json({ topics, source: "openclaw" });
       }
     } catch (e) {
       console.error("OpenClaw gateway error:", e);
     }
 
-    // Final fallback: Return mock data for testing
-    const mockTopics: TrendingTopic[] = [
-      { topic: "#Innovation", description: "Latest innovation trends", searchUrl: "https://www.google.com/search?q=%23Innovation&tbm=nws" },
-      { topic: "#Startups", description: "Startup news and funding", searchUrl: "https://www.google.com/search?q=%23Startups&tbm=nws" },
-      { topic: "#AI", description: "Artificial intelligence discussions", searchUrl: "https://www.google.com/search?q=%23AI&tbm=nws" },
-      { topic: "#Technology", description: "Tech industry updates", searchUrl: "https://www.google.com/search?q=%23Technology&tbm=nws" },
-      { topic: "#Future", description: "Future tech and trends", searchUrl: "https://www.google.com/search?q=%23Future&tbm=nws" },
-    ];
+    // Return cached data if available (even if expired)
+    if (cachedTopics) {
+      return NextResponse.json({
+        topics: cachedTopics,
+        source: "stale-cache",
+      });
+    }
+
+    // Final fallback: Return empty array
     return NextResponse.json({
-      topics: mockTopics,
-      source: "mock",
+      topics: [],
+      source: "none",
     });
   } catch (error) {
     console.error("Error fetching trending topics:", error);
+    
+    // Return cached data on error if available
+    if (cachedTopics) {
+      return NextResponse.json({
+        topics: cachedTopics,
+        source: "error-cache",
+      });
+    }
+    
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to fetch trending topics", topics: [] },
       { status: 500 }
