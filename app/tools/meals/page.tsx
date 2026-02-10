@@ -44,17 +44,26 @@ export default function MealsPage() {
 
   const fetchMeals = async () => {
     try {
-      const response = await fetch('https://the-dashboard-50be1-default-rtdb.firebaseio.com/meals.json');
-      if (response.ok) {
-        const data = await response.json();
-        if (data) {
-          const mealsArray = Object.entries(data).map(([id, meal]: [string, any]) => ({
-            id,
-            ...meal,
-          }));
-          setMeals(mealsArray);
-        }
-      }
+      const { collection, getDocs } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+      
+      const mealsSnapshot = await getDocs(collection(db, "meals"));
+      const mealsArray = mealsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().title || doc.data().name, // Support both field names
+        source: doc.data().source || { type: doc.data().sourceType, url: doc.data().source, addedAt: doc.data().createdAt },
+        ingredients: doc.data().ingredients || [],
+        instructions: doc.data().instructions || [],
+        prepTime: doc.data().prepTime || 0,
+        cookTime: doc.data().cookTime || 0,
+        frequency: doc.data().frequency || 'anytime',
+        tags: doc.data().tags || [],
+        lastCooked: doc.data().lastCooked || null,
+        timesCooked: doc.data().timesCooked || 0,
+        rating: doc.data().rating || null,
+        notes: doc.data().notes || '',
+      }));
+      setMeals(mealsArray);
     } catch (error) {
       console.error("Error fetching meals:", error);
     } finally {
