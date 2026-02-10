@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, ShoppingCart, RefreshCw, Check, ChefHat, X, ArrowLeft } from "lucide-react";
 
 interface Meal {
@@ -306,7 +307,7 @@ export default function MealPlanPage() {
   );
 
   return (
-    <>
+    <ProtectedRoute requiredPermission="meal-plan">
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="meals" />
@@ -558,6 +559,6 @@ export default function MealPlanPage() {
           </div>
         </div>
       )}
-    </>
+    </ProtectedRoute>
   );
 }

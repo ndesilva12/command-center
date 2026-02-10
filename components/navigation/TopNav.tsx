@@ -3,13 +3,17 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Home, Search, Settings, Sparkles } from "lucide-react";
+import { Home, Search, Settings, Sparkles, LogOut, Shield } from "lucide-react";
 import { UniversalSearch } from "@/components/search/UniversalSearch";
+import { useAuth } from "@/hooks/useAuth";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export function TopNav() {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const [showUniversalSearch, setShowUniversalSearch] = useState(false);
+  const { user, userData, isAdmin } = useAuth();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -30,6 +34,14 @@ export function TopNav() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -125,6 +137,44 @@ export function TopNav() {
               <NavLink href="/" icon={Home} label="Home" active={isActive("/")} />
               <NavLink href="/jimmy" icon={Sparkles} label="Jimmy" active={isActive("/jimmy")} />
               <NavLink href="/settings" icon={Settings} label="Settings" active={isActive("/settings")} />
+              
+              {/* Admin Link */}
+              {user && isAdmin && (
+                <NavLink href="/admin" icon={Shield} label="Admin" active={isActive("/admin")} />
+              )}
+              
+              {/* Logout Button */}
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    color: "var(--muted)",
+                    background: "transparent",
+                    border: "1px solid transparent",
+                    textDecoration: "none",
+                    transition: "all 0.2s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#ef4444";
+                    e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "var(--muted)";
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <LogOut style={{ width: "18px", height: "18px" }} />
+                  <span>Logout</span>
+                </button>
+              )}
             </div>
           )}
         </div>

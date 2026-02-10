@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ShoppingCart, Check, Calendar } from "lucide-react";
 
 interface ShoppingItem {
@@ -117,7 +118,7 @@ export default function ShoppingListPage() {
   );
 
   return (
-    <>
+    <ProtectedRoute requiredPermission="shopping-list">
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="meals" />
@@ -188,6 +189,6 @@ export default function ShoppingListPage() {
           )}
         </div>
       </main>
-    </>
+    </ProtectedRoute>
   );
 }

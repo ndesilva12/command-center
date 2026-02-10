@@ -7,6 +7,8 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
 import { DigitalClock } from "@/components/home/DigitalClock";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef } from "react";
 import {
   Sparkles,
@@ -259,6 +261,7 @@ const TOOL_CATEGORIES = [
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const { customizations, loading, getCustomization } = useToolCustomizations();
+  const { hasPermission, isAdmin } = useAuth();
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
 
   useEffect(() => {
@@ -281,7 +284,7 @@ export default function Home() {
     }
   };
 
-  // Apply customizations to tools
+  // Apply customizations and filter by permissions
   const customizedCategories = TOOL_CATEGORIES.map(category => ({
     ...category,
     tools: category.tools
@@ -296,11 +299,12 @@ export default function Home() {
         };
       })
       .filter(tool => tool.visible)
+      .filter(tool => isAdmin || hasPermission(tool.id)) // Filter by permissions
       .sort((a, b) => a.order - b.order),
   }));
 
   return (
-    <>
+    <ProtectedRoute>
       <TopNav />
       <BottomNav />
       <main
@@ -359,6 +363,6 @@ export default function Home() {
           })}
         </div>
       </main>
-    </>
+    </ProtectedRoute>
   );
 }
