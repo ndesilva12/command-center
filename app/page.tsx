@@ -261,7 +261,7 @@ const TOOL_CATEGORIES = [
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const { customizations, loading, getCustomization } = useToolCustomizations();
-  const { hasPermission, isAdmin } = useAuth();
+  const { hasPermission, isAdmin, loading: authLoading } = useAuth();
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
 
   useEffect(() => {
@@ -315,6 +315,11 @@ export default function Home() {
           padding: isMobile ? "80px 16px 96px 16px" : "80px 24px 32px 24px",
         }}
       >
+        {authLoading ? (
+          <div style={{ textAlign: "center", padding: "100px 20px", color: "var(--muted)" }}>
+            Loading...
+          </div>
+        ) : (
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
           {/* Clock Section */}
           <DigitalClock />
@@ -362,6 +367,7 @@ export default function Home() {
             );
           })}
         </div>
+        )}
       </main>
     </ProtectedRoute>
   );

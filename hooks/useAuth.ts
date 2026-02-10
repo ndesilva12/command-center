@@ -55,7 +55,7 @@ export function useAuth() {
     hasPermission: (toolId: string) => {
       if (!userData) return false;
       if (userData.role === "admin") return true;
-      return userData.permissions.includes(toolId);
+      return userData.permissions?.includes(toolId) || false;
     },
   };
 }
