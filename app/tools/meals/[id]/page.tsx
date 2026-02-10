@@ -11,27 +11,25 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 interface Meal {
   id: string;
-  name: string;
-  source: {
-    type: string;
-    url: string;
-    addedAt: string;
-  };
-  ingredients: Array<{
-    item: string;
-    quantity: number;
-    unit: string;
-    store: string;
-  }>;
+  name?: string;
+  title?: string;
+  source?: {
+    type?: string;
+    url?: string;
+    addedAt?: string;
+  } | string;
+  ingredients: string[];
   instructions: string[];
-  prepTime: number;
-  cookTime: number;
-  frequency: 'weekly' | 'biweekly' | 'monthly' | 'anytime';
-  tags: string[];
-  lastCooked: string | null;
-  timesCooked: number;
-  rating: number | null;
-  notes: string;
+  prepTime?: number;
+  cookTime?: number;
+  frequency?: 'weekly' | 'biweekly' | 'monthly' | 'anytime';
+  tags?: string[];
+  lastCooked?: string | null;
+  timesCooked?: number;
+  rating?: number | null;
+  notes?: string;
+  store?: string;
+  servings?: string;
 }
 
 export default function MealDetailPage() {
@@ -230,8 +228,8 @@ export default function MealDetailPage() {
             {editing ? (
               <input
                 type="text"
-                value={displayMeal?.name || ''}
-                onChange={(e) => setEditedMeal(prev => prev ? {...prev, name: e.target.value} : null)}
+                value={displayMeal?.name || displayMeal?.title || ''}
+                onChange={(e) => setEditedMeal(prev => prev ? {...prev, name: e.target.value, title: e.target.value} : null)}
                 style={{
                   width: "100%",
                   fontSize: "32px",
@@ -246,24 +244,48 @@ export default function MealDetailPage() {
               />
             ) : (
               <h1 style={{ fontSize: "32px", fontWeight: 700, color: "var(--foreground)", marginBottom: "16px" }}>
-                {displayMeal?.name}
+                {displayMeal?.name || displayMeal?.title}
               </h1>
             )}
 
             {/* Meta Info */}
             <div style={{ display: "flex", gap: "24px", flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Clock style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
+              {displayMeal?.prepTime && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Clock style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
+                  <span style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                    Prep: {displayMeal.prepTime}m
+                  </span>
+                </div>
+              )}
+              {displayMeal?.cookTime && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Flame style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
+                  <span style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                    Cook: {displayMeal.cookTime}m
+                  </span>
+                </div>
+              )}
+              {displayMeal?.servings && (
                 <span style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
-                  Prep: {displayMeal?.prepTime}m
+                  Servings: {displayMeal.servings}
                 </span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Flame style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
-                <span style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
-                  Cook: {displayMeal?.cookTime}m
+              )}
+              {displayMeal?.store && (
+                <span
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#00aaff",
+                    backgroundColor: "rgba(0, 170, 255, 0.15)",
+                    border: "1px solid rgba(0, 170, 255, 0.3)",
+                  }}
+                >
+                  {displayMeal.store}
                 </span>
-              </div>
+              )}
               {displayMeal?.rating && (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <Star style={{ width: "18px", height: "18px", fill: "#f59e0b", color: "#f59e0b" }} />
@@ -309,9 +331,9 @@ export default function MealDetailPage() {
             </div>
 
             {/* Source */}
-            {displayMeal?.source?.url && (
+            {(typeof displayMeal?.source === 'string' ? displayMeal?.source : displayMeal?.source?.url) && (
               <a
-                href={displayMeal.source.url}
+                href={typeof displayMeal.source === 'string' ? displayMeal.source : displayMeal.source.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -335,26 +357,13 @@ export default function MealDetailPage() {
             <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "16px" }}>
               Ingredients
             </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <ul style={{ paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
               {displayMeal?.ingredients.map((ing, idx) => (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <span style={{ fontSize: "15px", color: "var(--foreground)" }}>
-                    {ing.quantity} {ing.unit} {ing.item}
-                  </span>
-                  <span
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      fontSize: "11px",
-                      backgroundColor: "rgba(255, 255, 255, 0.05)",
-                      color: "var(--foreground-muted)",
-                    }}
-                  >
-                    {ing.store === 'wholefoods' ? 'Whole Foods' : ing.store === 'traderjoes' ? "Trader Joe's" : 'Either'}
-                  </span>
-                </div>
+                <li key={idx} style={{ fontSize: "15px", color: "var(--foreground)" }}>
+                  {typeof ing === 'string' ? ing : `${ing.quantity} ${ing.unit} ${ing.item}`}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Instructions */}
