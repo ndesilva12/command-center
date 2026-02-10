@@ -6,6 +6,8 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, Plus, Search, Filter, Clock, ChefHat, Star, Flame } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { addMealToNextWeek } from "@/lib/meal-selections";
 
 interface Meal {
   id: string;
@@ -33,10 +35,12 @@ interface Meal {
 }
 
 export default function MealsPage() {
+  const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [addingMealId, setAddingMealId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMeals();
@@ -96,6 +100,25 @@ export default function MealsPage() {
       case 'monthly': return '#8b5cf6';
       default: return '#6b7280';
     }
+  };
+
+  const handleAddToNextWeek = async (e: React.MouseEvent, mealId: string) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    
+    if (!user) return;
+    
+    setAddingMealId(mealId);
+    const result = await addMealToNextWeek(user.uid, mealId);
+    
+    // Show feedback (you can replace with toast notification)
+    if (result.success) {
+      alert(result.message);
+    } else {
+      alert(result.message);
+    }
+    
+    setAddingMealId(null);
   };
 
   return (
@@ -305,6 +328,43 @@ export default function MealsPage() {
                     <p style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
                       Cooked {meal.timesCooked} {meal.timesCooked === 1 ? 'time' : 'times'}
                     </p>
+                  )}
+
+                  {/* Add to Next Week Button */}
+                  {user && (
+                    <button
+                      onClick={(e) => handleAddToNextWeek(e, meal.id)}
+                      disabled={addingMealId === meal.id}
+                      style={{
+                        marginTop: "12px",
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(0, 170, 255, 0.3)",
+                        backgroundColor: "rgba(0, 170, 255, 0.15)",
+                        color: "#00aaff",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        cursor: addingMealId === meal.id ? "not-allowed" : "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        opacity: addingMealId === meal.id ? 0.6 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (addingMealId !== meal.id) {
+                          e.currentTarget.style.backgroundColor = "rgba(0, 170, 255, 0.25)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(0, 170, 255, 0.15)";
+                      }}
+                    >
+                      <Calendar style={{ width: "14px", height: "14px" }} />
+                      {addingMealId === meal.id ? "Adding..." : "Add to Next Week"}
+                    </button>
                   )}
                 </a>
               ))}

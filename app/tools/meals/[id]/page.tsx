@@ -5,9 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
-import { ArrowLeft, Clock, Flame, Star, ExternalLink, Edit2, Save } from "lucide-react";
+import { ArrowLeft, Clock, Flame, Star, ExternalLink, Edit2, Save, Calendar } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuth } from "@/hooks/useAuth";
+import { addMealToNextWeek } from "@/lib/meal-selections";
 
 interface Meal {
   id: string;
@@ -33,12 +35,14 @@ interface Meal {
 }
 
 export default function MealDetailPage() {
+  const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
   const [meal, setMeal] = useState<Meal | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editedMeal, setEditedMeal] = useState<Meal | null>(null);
+  const [addingToWeek, setAddingToWeek] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -76,6 +80,16 @@ export default function MealDetailPage() {
     } catch (error) {
       console.error("Error saving meal:", error);
     }
+  };
+
+  const handleAddToNextWeek = async () => {
+    if (!user || !meal) return;
+    
+    setAddingToWeek(true);
+    const result = await addMealToNextWeek(user.uid, meal.id);
+    
+    alert(result.message);
+    setAddingToWeek(false);
   };
 
   const getFrequencyLabel = (freq: string) => {
@@ -200,25 +214,50 @@ export default function MealDetailPage() {
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={() => setEditing(true)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    backgroundColor: "rgba(0, 170, 255, 0.15)",
-                    border: "1px solid rgba(0, 170, 255, 0.3)",
-                    color: "#00aaff",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Edit2 style={{ width: "16px", height: "16px" }} />
-                  Edit
-                </button>
+                <>
+                  {user && (
+                    <button
+                      onClick={handleAddToNextWeek}
+                      disabled={addingToWeek}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "10px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "rgba(16, 185, 129, 0.15)",
+                        border: "1px solid rgba(16, 185, 129, 0.3)",
+                        color: "#10b981",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        cursor: addingToWeek ? "not-allowed" : "pointer",
+                        opacity: addingToWeek ? 0.6 : 1,
+                      }}
+                    >
+                      <Calendar style={{ width: "16px", height: "16px" }} />
+                      {addingToWeek ? "Adding..." : "Add to Next Week"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setEditing(true)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      backgroundColor: "rgba(0, 170, 255, 0.15)",
+                      border: "1px solid rgba(0, 170, 255, 0.3)",
+                      color: "#00aaff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Edit2 style={{ width: "16px", height: "16px" }} />
+                    Edit
+                  </button>
+                </>
               )}
             </div>
           </div>
