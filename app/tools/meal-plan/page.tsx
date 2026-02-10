@@ -80,7 +80,7 @@ export default function MealPlanPage() {
       const mealsSnapshot = await getDocs(collection(db, 'meals'));
       const meals: Meal[] = [];
       mealsSnapshot.forEach((doc) => {
-        const data = doc.to_dict();
+        const data = doc.data();
         meals.push({
           id: doc.id,
           name: data.name || data.title,
