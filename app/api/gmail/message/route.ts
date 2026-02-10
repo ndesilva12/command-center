@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { getValidAccessToken } from '@/lib/google-auth';
 import { adminDb } from '@/lib/firebase-admin';
 
-async function getEmailBody(accessToken: string, messageId: string): Promise<string> {
+async function getEmailBody(accessToken: string, messageId: string): Promise<{ html: string; text: string }> {
   try {
     const response = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
@@ -20,35 +20,46 @@ async function getEmailBody(accessToken: string, messageId: string): Promise<str
 
     const data = await response.json();
 
-    // Extract body from payload
-    let body = '';
+    // Extract both HTML and plain text versions
+    let htmlBody = '';
+    let textBody = '';
 
-    const findBody = (part: any): string => {
+    const findBodies = (part: any) => {
       if (part.mimeType === 'text/html' && part.body?.data) {
-        return Buffer.from(part.body.data, 'base64').toString('utf-8');
+        if (!htmlBody) {
+          htmlBody = Buffer.from(part.body.data, 'base64').toString('utf-8');
+        }
       }
       if (part.mimeType === 'text/plain' && part.body?.data) {
-        const plainText = Buffer.from(part.body.data, 'base64').toString('utf-8');
-        // Convert plain text to HTML with preserved line breaks
-        return plainText.replace(/\n/g, '<br>');
+        if (!textBody) {
+          textBody = Buffer.from(part.body.data, 'base64').toString('utf-8');
+        }
       }
       if (part.parts) {
         for (const subpart of part.parts) {
-          const found = findBody(subpart);
-          if (found) return found;
+          findBodies(subpart);
         }
       }
-      return '';
     };
 
-    body = findBody(data.payload);
+    findBodies(data.payload);
 
-    // Fallback to snippet if no body found
-    if (!body && data.snippet) {
-      body = data.snippet;
+    // Fallback logic
+    if (!htmlBody && !textBody && data.snippet) {
+      textBody = data.snippet;
+      htmlBody = data.snippet.replace(/\n/g, '<br>');
+    } else if (!htmlBody && textBody) {
+      // Convert plain text to HTML if only text is available
+      htmlBody = textBody.replace(/\n/g, '<br>');
+    } else if (htmlBody && !textBody) {
+      // Use HTML for text if only HTML is available (will need to be rendered)
+      textBody = htmlBody.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
     }
 
-    return body || 'No content available';
+    return {
+      html: htmlBody || 'No content available',
+      text: textBody || 'No content available',
+    };
   } catch (error) {
     console.error('Error fetching email body:', error);
     throw error;
@@ -126,11 +137,12 @@ export async function GET(request: Request) {
 
     const accessToken = await getValidAccessToken(tokens);
 
-    // Fetch email body
-    const body = await getEmailBody(accessToken, messageId);
+    // Fetch email body (both HTML and text)
+    const { html, text } = await getEmailBody(accessToken, messageId);
 
     return NextResponse.json({
-      body,
+      body: html,
+      textBody: text,
       messageId,
     });
   } catch (error) {

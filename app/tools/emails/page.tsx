@@ -49,12 +49,22 @@ export default function EmailsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ emailId: string; accountEmail?: string; subject: string } | null>(null);
   const [selectedEmail, setSelectedEmail] = useState<EmailWithAccount | null>(null);
   const [emailBody, setEmailBody] = useState<string>("");
+  const [emailBodyText, setEmailBodyText] = useState<string>("");
   const [loadingEmailBody, setLoadingEmailBody] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
   const [composeTo, setComposeTo] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [emailViewMode, setEmailViewMode] = useState<"html" | "text">("html");
+
+  // Load email view preference from localStorage
+  useEffect(() => {
+    const savedMode = localStorage.getItem("email-view-mode");
+    if (savedMode === "html" || savedMode === "text") {
+      setEmailViewMode(savedMode);
+    }
+  }, []);
 
   useEffect(() => {
     checkConnectionAndFetch();
@@ -258,10 +268,17 @@ export default function EmailsPage() {
     }
   };
 
+  const toggleEmailViewMode = () => {
+    const newMode = emailViewMode === "html" ? "text" : "html";
+    setEmailViewMode(newMode);
+    localStorage.setItem("email-view-mode", newMode);
+  };
+
   const handleViewEmail = async (email: EmailWithAccount) => {
     setSelectedEmail(email);
     setLoadingEmailBody(true);
     setEmailBody("");
+    setEmailBodyText("");
 
     try {
       const accountParam = email.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
@@ -273,6 +290,7 @@ export default function EmailsPage() {
 
       const data = await response.json();
       setEmailBody(data.body || data.snippet || "No content available");
+      setEmailBodyText(data.textBody || data.snippet || "No content available");
 
       // Mark as read if unread
       if (email.isUnread) {
@@ -391,25 +409,60 @@ export default function EmailsPage() {
                   <div><strong>Date:</strong> {new Date(parseInt(selectedEmail.date)).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</div>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedEmail(null)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--foreground-muted)",
-                  flexShrink: 0,
-                  marginLeft: "16px",
-                }}
-              >
-                <X style={{ width: "18px", height: "18px" }} />
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, marginLeft: "16px" }}>
+                {/* HTML/Text Toggle */}
+                <div style={{ display: "flex", gap: "4px", padding: "4px", borderRadius: "6px", backgroundColor: "rgba(255, 255, 255, 0.05)" }}>
+                  <button
+                    onClick={toggleEmailViewMode}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "4px",
+                      border: "none",
+                      backgroundColor: emailViewMode === "html" ? "rgba(0, 170, 255, 0.2)" : "transparent",
+                      color: emailViewMode === "html" ? "#00aaff" : "var(--foreground-muted)",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    HTML
+                  </button>
+                  <button
+                    onClick={toggleEmailViewMode}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "4px",
+                      border: "none",
+                      backgroundColor: emailViewMode === "text" ? "rgba(0, 170, 255, 0.2)" : "transparent",
+                      color: emailViewMode === "text" ? "#00aaff" : "var(--foreground-muted)",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    Text
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedEmail(null)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "6px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--foreground-muted)",
+                  }}
+                >
+                  <X style={{ width: "18px", height: "18px" }} />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -418,6 +471,16 @@ export default function EmailsPage() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
                   <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
                 </div>
+              ) : emailViewMode === "html" ? (
+                <div
+                  style={{
+                    fontSize: "15px",
+                    lineHeight: 1.6,
+                    color: "var(--foreground)",
+                    wordBreak: "break-word",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: emailBody }}
+                />
               ) : (
                 <div
                   style={{
@@ -426,9 +489,11 @@ export default function EmailsPage() {
                     color: "var(--foreground)",
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
+                    fontFamily: "monospace",
                   }}
-                  dangerouslySetInnerHTML={{ __html: emailBody }}
-                />
+                >
+                  {emailBodyText}
+                </div>
               )}
             </div>
 
