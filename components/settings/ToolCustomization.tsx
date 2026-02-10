@@ -59,6 +59,7 @@ const ICON_MAP: Record<string, any> = {
   "spotify": Music,
   "trending": TrendingUp,
   "rosters": BarChart3,
+  "meals": Calendar,
 };
 
 interface ToolCustomization {
@@ -102,6 +103,7 @@ const DEFAULT_TOOLS: Tool[] = [
   { id: "spotify", name: "Spotify", color: "#1DB954", category: "Productivity" },
   { id: "trending", name: "Trending", color: "#14b8a6", category: "Productivity" },
   { id: "rosters", name: "Rosters", color: "#3b82f6", category: "Productivity" },
+  { id: "meals", name: "Meal Plan", color: "#10b981", category: "Productivity" },
 ];
 
 export function ToolCustomization() {
