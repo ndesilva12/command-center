@@ -4,8 +4,10 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { SearchBar } from "@/components/search/SearchBar";
+import { TrendingTopics } from "@/components/home/TrendingTopics";
+import { DigitalClock } from "@/components/home/DigitalClock";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Sparkles,
   TrendingUp,
@@ -249,6 +251,7 @@ const TOOL_CATEGORIES = [
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const { customizations, loading, getCustomization } = useToolCustomizations();
+  const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
@@ -256,6 +259,19 @@ export default function Home() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  const handleTrendingClick = (query: string) => {
+    // Scroll to search bar
+    const searchSection = document.getElementById('search-section');
+    if (searchSection) {
+      searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    // Populate search with query and set source to news
+    if (searchBarRef.current) {
+      searchBarRef.current.setQuery(query);
+      searchBarRef.current.setSource('news');
+    }
+  };
 
   // Apply customizations to tools
   const customizedCategories = TOOL_CATEGORIES.map(category => ({
@@ -288,28 +304,15 @@ export default function Home() {
         }}
       >
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Welcome Section */}
-          <div style={{ marginBottom: "40px" }}>
-            <div style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "8px"
-            }}>
-              <img
-                src="/signature.jpg"
-                alt="Norman C. de Silva"
-                style={{
-                  height: isMobile ? "48px" : "64px",
-                  width: "auto",
-                }}
-              />
-            </div>
-            <p style={{ fontSize: "16px", color: "var(--muted)", textAlign: "center", marginBottom: "40px" }}>
-              Your personal intelligence and productivity hub
-            </p>
+          {/* Clock Section */}
+          <DigitalClock />
 
-            {/* Multi-Source Search */}
-            <SearchBar />
+          {/* Trending Topics */}
+          <TrendingTopics onTagClick={handleTrendingClick} />
+
+          {/* Search Section */}
+          <div id="search-section" style={{ marginBottom: "40px" }}>
+            <SearchBar ref={searchBarRef} />
           </div>
 
           {/* Tool Categories */}
