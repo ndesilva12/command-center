@@ -47,7 +47,7 @@ export async function GET() {
       })
     );
 
-    const accounts = accountsData.filter((acc): acc is { email: string; name: string; picture?: string } => acc !== null);
+    const accounts = accountsData.filter((acc): acc is NonNullable<typeof acc> => acc !== null);
 
     return NextResponse.json({
       connected: accounts.length > 0,
