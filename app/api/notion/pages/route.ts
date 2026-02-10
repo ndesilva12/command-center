@@ -9,8 +9,8 @@ export async function GET(request: Request) {
     const databaseId = searchParams.get('databaseId');
 
     if (databaseId) {
-      // Fetch specific database entries
-      const response = await notion.databases.query({
+      // Fetch specific database entries using type assertion
+      const response = await (notion.databases as any).query({
         database_id: databaseId,
         sorts: [
           {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         next_cursor: response.next_cursor,
       });
     } else {
-      // Search for all pages and databases
+      // Search for all pages
       const response = await notion.search({
         filter: {
           property: 'object',
