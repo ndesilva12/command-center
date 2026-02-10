@@ -22,19 +22,32 @@ export default function TaskDetailPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Load task from localStorage
-    const savedTasks = localStorage.getItem("jimmy-tasks");
-    if (savedTasks) {
+    // Load task from Firestore
+    const loadTask = async () => {
       try {
-        const parsed = JSON.parse(savedTasks);
-        const foundTask = parsed.tasks?.find((t: Task) => t.id === params.id);
-        if (foundTask) {
-          setTask(foundTask);
+        const { doc, getDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        
+        const docRef = doc(db, "jimmy_deliverables", params.id as string);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setTask({
+            id: docSnap.id,
+            title: data.title,
+            date: data.date,
+            status: data.status,
+            preview: data.preview,
+            content: data.content,
+          });
         }
       } catch (e) {
         console.error("Failed to load task:", e);
       }
-    }
+    };
+    
+    loadTask();
   }, [params.id]);
 
   const handleCopy = () => {
