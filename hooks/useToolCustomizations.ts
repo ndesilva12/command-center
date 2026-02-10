@@ -4,6 +4,7 @@ export interface ToolCustomization {
   name: string;
   color: string;
   visible: boolean;
+  mobileVisible: boolean;
   order: number;
 }
 
@@ -34,6 +35,7 @@ export function useToolCustomizations() {
       name: defaultName,
       color: defaultColor,
       visible: true,
+      mobileVisible: true,
       order: 0,
     };
   };
