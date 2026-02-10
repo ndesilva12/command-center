@@ -397,11 +397,17 @@ export default function MealDetailPage() {
               Ingredients
             </h2>
             <ul style={{ paddingLeft: "20px", display: "flex", flexDirection: "column", gap: "8px" }}>
-              {displayMeal?.ingredients.map((ing, idx) => (
-                <li key={idx} style={{ fontSize: "15px", color: "var(--foreground)" }}>
-                  {typeof ing === 'string' ? ing : `${ing.quantity} ${ing.unit} ${ing.item}`}
-                </li>
-              ))}
+              {displayMeal?.ingredients.map((ing, idx) => {
+                if (typeof ing === 'string') {
+                  return <li key={idx} style={{ fontSize: "15px", color: "var(--foreground)" }}>{ing}</li>;
+                }
+                const ingredient = ing as { quantity: number; unit: string; item: string };
+                return (
+                  <li key={idx} style={{ fontSize: "15px", color: "var(--foreground)" }}>
+                    {ingredient.quantity} {ingredient.unit} {ingredient.item}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
