@@ -242,14 +242,6 @@ const TOOL_CATEGORIES = [
         href: "/tools/corporate",
         color: "#10b981",
       },
-      {
-        id: "jimmy",
-        name: "Jimmy",
-        description: "AI work dashboard",
-        icon: Sparkles,
-        href: "/jimmy",
-        color: "#667eea",
-      },
     ],
   },
 ];
