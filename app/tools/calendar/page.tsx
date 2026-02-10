@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Plus, RefreshCw, ExternalLink, Clock, MapPin, Users } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, RefreshCw, ExternalLink, Clock, MapPin, Users, List, Grid3x3 } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -22,9 +22,27 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<"today" | "week" | "month">("week");
+  const [viewMode, setViewMode] = useState<"event" | "full">("event");
 
   useEffect(() => {
+    // Load preferences from localStorage
+    const savedTimeRange = localStorage.getItem("calendar_timeRange");
+    const savedViewMode = localStorage.getItem("calendar_viewMode");
+
+    if (savedTimeRange) setTimeRange(savedTimeRange as "today" | "week" | "month");
+    if (savedViewMode) setViewMode(savedViewMode as "event" | "full");
+
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    // Save preferences to localStorage
+    localStorage.setItem("calendar_timeRange", timeRange);
+    localStorage.setItem("calendar_viewMode", viewMode);
+  }, [timeRange, viewMode]);
+
+  useEffect(() => {
+    if (timeRange) fetchEvents();
   }, [timeRange]);
 
   const fetchEvents = async () => {
@@ -133,6 +151,266 @@ export default function CalendarPage() {
     return null;
   };
 
+  const getEventsForDate = (date: Date) => {
+    return events.filter((event) => {
+      const start = event.start.dateTime || event.start.date;
+      if (!start) return false;
+      const eventDate = new Date(start);
+      return eventDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const getEventsForHour = (date: Date, hour: number) => {
+    return events.filter((event) => {
+      const start = event.start.dateTime;
+      if (!start) return false;
+      const eventDate = new Date(start);
+      return (
+        eventDate.toDateString() === date.toDateString() &&
+        eventDate.getHours() === hour
+      );
+    });
+  };
+
+  const renderFullDayView = () => {
+    const today = new Date();
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {hours.map((hour) => {
+          const hourEvents = getEventsForHour(today, hour);
+          return (
+            <div
+              key={hour}
+              style={{
+                display: "flex",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                minHeight: "60px",
+              }}
+            >
+              <div
+                style={{
+                  width: "80px",
+                  padding: "12px",
+                  fontSize: "13px",
+                  color: "var(--foreground-muted)",
+                  fontWeight: 500,
+                  borderRight: "1px solid rgba(255, 255, 255, 0.05)",
+                  flexShrink: 0,
+                }}
+              >
+                {hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`}
+              </div>
+              <div style={{ flex: 1, padding: "8px 12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                {hourEvents.length > 0 ? (
+                  hourEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
+                      style={{
+                        padding: "8px 10px",
+                        background: "rgba(0, 170, 255, 0.15)",
+                        border: "1px solid rgba(0, 170, 255, 0.3)",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)")}
+                    >
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#00aaff", marginBottom: "2px" }}>
+                        {event.summary}
+                      </div>
+                      {event.location && (
+                        <div style={{ fontSize: "11px", color: "var(--foreground-muted)" }}>
+                          {event.location}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderFullWeekView = () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
+
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px", background: "rgba(255, 255, 255, 0.05)" }}>
+        {days.map((date) => {
+          const dayEvents = getEventsForDate(date);
+          const isToday = date.toDateString() === today.toDateString();
+
+          return (
+            <div
+              key={date.toISOString()}
+              style={{
+                background: "rgba(255, 255, 255, 0.02)",
+                padding: "12px",
+                minHeight: "150px",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  marginBottom: "8px",
+                  color: isToday ? "#00aaff" : "var(--foreground)",
+                }}
+              >
+                <div>{date.toLocaleDateString("en-US", { weekday: "short" })}</div>
+                <div style={{ fontSize: "18px", marginTop: "2px" }}>{date.getDate()}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {dayEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
+                    style={{
+                      padding: "6px 8px",
+                      background: "rgba(0, 170, 255, 0.15)",
+                      border: "1px solid rgba(0, 170, 255, 0.3)",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      color: "#00aaff",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)")}
+                  >
+                    {event.summary}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderFullMonthView = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+    const days: Date[] = [];
+    const currentDate = new Date(startDate);
+
+    while (days.length < 35) {
+      days.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return (
+      <div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px", background: "rgba(255, 255, 255, 0.1)", marginBottom: "1px" }}>
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            <div
+              key={day}
+              style={{
+                padding: "12px",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "var(--foreground-muted)",
+                textAlign: "center",
+                background: "rgba(255, 255, 255, 0.03)",
+              }}
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px", background: "rgba(255, 255, 255, 0.05)" }}>
+          {days.map((date) => {
+            const dayEvents = getEventsForDate(date);
+            const isToday = date.toDateString() === today.toDateString();
+            const isCurrentMonth = date.getMonth() === month;
+
+            return (
+              <div
+                key={date.toISOString()}
+                style={{
+                  background: "rgba(255, 255, 255, 0.02)",
+                  padding: "8px",
+                  minHeight: "100px",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: isCurrentMonth ? 1 : 0.5,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    marginBottom: "6px",
+                    color: isToday ? "#00aaff" : "var(--foreground)",
+                  }}
+                >
+                  {date.getDate()}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <div
+                      key={event.id}
+                      onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
+                      style={{
+                        padding: "4px 6px",
+                        background: "rgba(0, 170, 255, 0.15)",
+                        border: "1px solid rgba(0, 170, 255, 0.3)",
+                        borderRadius: "3px",
+                        fontSize: "10px",
+                        fontWeight: 500,
+                        color: "#00aaff",
+                        cursor: "pointer",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)")}
+                    >
+                      {event.summary}
+                    </div>
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <div style={{ fontSize: "10px", color: "var(--foreground-muted)", paddingLeft: "6px" }}>
+                      +{dayEvents.length - 3} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <TopNav />
@@ -195,28 +473,76 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Time Range Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginBottom: "16px" }}>
-          {(["today", "week", "month"] as const).map((range) => (
+        {/* Time Range Tabs and View Toggle */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "16px", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "4px" }}>
+            {(["today", "week", "month"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: timeRange === range ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                  color: timeRange === range ? "#00aaff" : "var(--foreground-muted)",
+                  border: timeRange === range ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: timeRange === range ? 500 : 400,
+                  textTransform: "capitalize",
+                  transition: "all 0.15s",
+                }}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+
+          {/* View Mode Toggle */}
+          <div style={{ display: "flex", gap: "4px", padding: "4px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
             <button
-              key={range}
-              onClick={() => setTimeRange(range)}
+              onClick={() => setViewMode("event")}
+              title="Event View"
               style={{
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: timeRange === range ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                color: timeRange === range ? "#00aaff" : "var(--foreground-muted)",
-                border: timeRange === range ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                backgroundColor: viewMode === "event" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === "event" ? "#00aaff" : "var(--foreground-muted)",
+                border: "none",
                 cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: timeRange === range ? 500 : 400,
-                textTransform: "capitalize",
                 transition: "all 0.15s",
+                fontSize: "12px",
+                gap: "4px",
               }}
             >
-              {range}
+              <List style={{ width: "14px", height: "14px" }} />
+              Events
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode("full")}
+              title="Full View"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                backgroundColor: viewMode === "full" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === "full" ? "#00aaff" : "var(--foreground-muted)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                fontSize: "12px",
+                gap: "4px",
+              }}
+            >
+              <Grid3x3 style={{ width: "14px", height: "14px" }} />
+              Full
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -242,6 +568,12 @@ export default function CalendarPage() {
               >
                 Try Again
               </button>
+            </div>
+          ) : viewMode === "full" ? (
+            <div>
+              {timeRange === "today" && renderFullDayView()}
+              {timeRange === "week" && renderFullWeekView()}
+              {timeRange === "month" && renderFullMonthView()}
             </div>
           ) : events.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
@@ -283,7 +615,7 @@ export default function CalendarPage() {
                           <span>{formatEventTime(event)}</span>
                         </div>
                       </div>
-                      
+
                       {status && (
                         <span
                           style={{

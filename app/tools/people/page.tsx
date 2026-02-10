@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Plus, RefreshCw, ExternalLink, Search, X, Mail, Phone, MapPin, Briefcase, Grid, List } from "lucide-react";
+import { Users, Plus, RefreshCw, ExternalLink, Search, X, Mail, Phone, MapPin, Briefcase, Grid, List, ArrowUpDown, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -32,28 +32,79 @@ export default function PeoplePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<"name" | "relationship" | "location" | "profession">("name");
+  const [filterRelationship, setFilterRelationship] = useState<string>("all");
 
   useEffect(() => {
+    // Load preferences from localStorage
+    const savedViewMode = localStorage.getItem("people_viewMode");
+    const savedSortBy = localStorage.getItem("people_sortBy");
+    const savedFilter = localStorage.getItem("people_filterRelationship");
+
+    if (savedViewMode) setViewMode(savedViewMode as "grid" | "list");
+    if (savedSortBy) setSortBy(savedSortBy as "name" | "relationship" | "location" | "profession");
+    if (savedFilter) setFilterRelationship(savedFilter);
+
     fetchPeople();
   }, []);
 
   useEffect(() => {
+    // Save preferences to localStorage
+    localStorage.setItem("people_viewMode", viewMode);
+    localStorage.setItem("people_sortBy", sortBy);
+    localStorage.setItem("people_filterRelationship", filterRelationship);
+  }, [viewMode, sortBy, filterRelationship]);
+
+  useEffect(() => {
+    let filtered = people;
+
+    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      setFilteredPeople(
-        people.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query) ||
-            p.nickname?.toLowerCase().includes(query) ||
-            p.email?.toLowerCase().includes(query) ||
-            p.profession?.toLowerCase().includes(query) ||
-            p.location?.toLowerCase().includes(query)
-        )
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.nickname?.toLowerCase().includes(query) ||
+          p.email?.toLowerCase().includes(query) ||
+          p.profession?.toLowerCase().includes(query) ||
+          p.location?.toLowerCase().includes(query)
       );
-    } else {
-      setFilteredPeople(people);
     }
-  }, [searchQuery, people]);
+
+    // Apply relationship filter
+    if (filterRelationship !== "all") {
+      filtered = filtered.filter((p) => p.relationship === filterRelationship);
+    }
+
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      let aVal = "";
+      let bVal = "";
+
+      switch (sortBy) {
+        case "name":
+          aVal = a.name || "";
+          bVal = b.name || "";
+          break;
+        case "relationship":
+          aVal = a.relationship || "";
+          bVal = b.relationship || "";
+          break;
+        case "location":
+          aVal = a.location || "";
+          bVal = b.location || "";
+          break;
+        case "profession":
+          aVal = a.profession || "";
+          bVal = b.profession || "";
+          break;
+      }
+
+      return aVal.localeCompare(bVal);
+    });
+
+    setFilteredPeople(filtered);
+  }, [searchQuery, people, sortBy, filterRelationship]);
 
   const fetchPeople = async () => {
     setLoading(true);
@@ -156,9 +207,9 @@ export default function PeoplePage() {
           </div>
         </div>
 
-        {/* Search Bar and View Toggle */}
-        <div style={{ marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", flex: 1 }}>
+        {/* Search Bar and Controls */}
+        <div style={{ marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", flex: "1 1 300px", minWidth: "250px" }}>
             <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
             <input
               type="text"
@@ -186,6 +237,63 @@ export default function PeoplePage() {
                 <X style={{ width: "12px", height: "12px" }} />
               </button>
             )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div style={{ position: "relative" }}>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "name" | "relationship" | "location" | "profession")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "10px 32px 10px 36px",
+                borderRadius: "10px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "var(--foreground)",
+                fontSize: "13px",
+                cursor: "pointer",
+                appearance: "none",
+                outline: "none",
+              }}
+            >
+              <option value="name">Sort: Name</option>
+              <option value="relationship">Sort: Relationship</option>
+              <option value="location">Sort: Location</option>
+              <option value="profession">Sort: Profession</option>
+            </select>
+            <ArrowUpDown style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--foreground-muted)", pointerEvents: "none" }} />
+          </div>
+
+          {/* Filter Dropdown */}
+          <div style={{ position: "relative" }}>
+            <select
+              value={filterRelationship}
+              onChange={(e) => setFilterRelationship(e.target.value)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "10px 32px 10px 36px",
+                borderRadius: "10px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "var(--foreground)",
+                fontSize: "13px",
+                cursor: "pointer",
+                appearance: "none",
+                outline: "none",
+              }}
+            >
+              <option value="all">All Relationships</option>
+              <option value="Family">Family</option>
+              <option value="Friend">Friend</option>
+              <option value="Professional">Professional</option>
+              <option value="Acquaintance">Acquaintance</option>
+            </select>
+            <Filter style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", width: "16px", height: "16px", color: "var(--foreground-muted)", pointerEvents: "none" }} />
           </div>
 
           {/* View Toggle */}
