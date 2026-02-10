@@ -4,6 +4,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { SearchBar } from "@/components/search/SearchBar";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { useEffect, useState } from "react";
 import {
   Sparkles,
@@ -255,6 +256,7 @@ const TOOL_CATEGORIES = [
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
+  const { customizations, loading, getCustomization } = useToolCustomizations();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
@@ -262,6 +264,24 @@ export default function Home() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Apply customizations to tools
+  const customizedCategories = TOOL_CATEGORIES.map(category => ({
+    ...category,
+    tools: category.tools
+      .map(tool => {
+        const custom = getCustomization(tool.id, tool.name, tool.color);
+        return {
+          ...tool,
+          name: custom.name,
+          color: custom.color,
+          visible: custom.visible,
+          order: custom.order,
+        };
+      })
+      .filter(tool => tool.visible)
+      .sort((a, b) => a.order - b.order),
+  }));
 
   return (
     <>
@@ -278,10 +298,10 @@ export default function Home() {
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
           {/* Welcome Section */}
           <div style={{ marginBottom: "40px" }}>
-            <div style={{ 
-              display: "flex", 
-              justifyContent: "center", 
-              marginBottom: "8px" 
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "8px"
             }}>
               <img
                 src="/signature.png"
@@ -295,41 +315,45 @@ export default function Home() {
             <p style={{ fontSize: "16px", color: "var(--muted)", textAlign: "center", marginBottom: "40px" }}>
               Your personal intelligence and productivity hub
             </p>
-            
+
             {/* Multi-Source Search */}
             <SearchBar />
           </div>
 
           {/* Tool Categories */}
-          {TOOL_CATEGORIES.map((category) => (
-            <div key={category.name} style={{ marginBottom: "48px" }}>
-              <h2
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "var(--muted)",
-                  marginBottom: "16px",
-                }}
-              >
-                {category.name}
-              </h2>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: isMobile
-                    ? "repeat(2, 1fr)"
-                    : "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: "16px",
-                }}
-              >
-                {category.tools.map((tool) => (
-                  <ToolCard key={tool.id} {...tool} />
-                ))}
+          {!loading && customizedCategories.map((category) => {
+            if (category.tools.length === 0) return null;
+
+            return (
+              <div key={category.name} style={{ marginBottom: "48px" }}>
+                <h2
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: "var(--muted)",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {category.name}
+                </h2>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile
+                      ? "repeat(2, 1fr)"
+                      : "repeat(auto-fit, minmax(240px, 1fr))",
+                    gap: "16px",
+                  }}
+                >
+                  {category.tools.map((tool) => (
+                    <ToolCard key={tool.id} {...tool} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </main>
     </>
