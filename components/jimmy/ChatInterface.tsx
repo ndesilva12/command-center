@@ -41,8 +41,7 @@ export function ChatInterface() {
     const messagesRef = collection(db, "jimmy_chat_messages");
     const q = query(
       messagesRef,
-      where("userId", "==", user.uid),
-      orderBy("timestamp", "asc")
+      where("userId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -54,6 +53,14 @@ export function ChatInterface() {
           loadedMessages.push({ id: doc.id, ...data } as Message);
         }
       });
+      
+      // Sort client-side by timestamp
+      loadedMessages.sort((a, b) => {
+        const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+        const bTime = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+        return aTime - bTime;
+      });
+      
       setMessages(loadedMessages);
       
       // Check if there's a processing message (show loading indicator)
