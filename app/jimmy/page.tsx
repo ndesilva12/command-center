@@ -138,7 +138,7 @@ export default function JimmyPage() {
 
           {/* Telegram Chat Button */}
           <a
-            href="https://t.me/JimmyOpenClaw_bot"
+            href="https://t.me/jimmy_chief_bot"
             target="_blank"
             rel="noopener noreferrer"
             style={{
