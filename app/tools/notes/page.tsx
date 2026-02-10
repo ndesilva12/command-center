@@ -56,7 +56,7 @@ export default function NotesPage() {
 
   const getPageTitle = (page: NotionPage): string => {
     if (page.properties) {
-      const titleProp = Object.values(page.properties).find((prop: any) => prop.type === 'title');
+      const titleProp = Object.values(page.properties).find((prop: any) => prop.type === 'title') as any;
       if (titleProp && titleProp.title && titleProp.title[0]) {
         return titleProp.title[0].plain_text;
       }
