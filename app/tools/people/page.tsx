@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Plus, RefreshCw, ExternalLink, Search, X, Mail, Phone, MapPin, Briefcase } from "lucide-react";
+import { Users, Plus, RefreshCw, ExternalLink, Search, X, Mail, Phone, MapPin, Briefcase, Grid, List } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -23,12 +24,14 @@ interface Person {
 }
 
 export default function PeoplePage() {
+  const router = useRouter();
   const [people, setPeople] = useState<Person[]>([]);
   const [filteredPeople, setFilteredPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
     fetchPeople();
@@ -153,9 +156,9 @@ export default function PeoplePage() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div style={{ marginBottom: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+        {/* Search Bar and View Toggle */}
+        <div style={{ marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)", flex: 1 }}>
             <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
             <input
               type="text"
@@ -183,6 +186,44 @@ export default function PeoplePage() {
                 <X style={{ width: "12px", height: "12px" }} />
               </button>
             )}
+          </div>
+
+          {/* View Toggle */}
+          <div style={{ display: "flex", gap: "4px", padding: "4px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+            <button
+              onClick={() => setViewMode("grid")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px",
+                borderRadius: "6px",
+                backgroundColor: viewMode === "grid" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === "grid" ? "#00aaff" : "var(--foreground-muted)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              <Grid style={{ width: "16px", height: "16px" }} />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px",
+                borderRadius: "6px",
+                backgroundColor: viewMode === "list" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === "list" ? "#00aaff" : "var(--foreground-muted)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              <List style={{ width: "16px", height: "16px" }} />
+            </button>
           </div>
         </div>
 
@@ -220,11 +261,12 @@ export default function PeoplePage() {
                 {searchQuery ? "Try a different search" : "Click 'Sync from Notion' to import your contacts"}
               </p>
             </div>
-          ) : (
+          ) : viewMode === "grid" ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px", padding: "20px" }}>
               {displayPeople.map((person) => (
                 <div
                   key={person.id}
+                  onClick={() => router.push(`/tools/people/${person.id}`)}
                   style={{
                     background: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -260,7 +302,7 @@ export default function PeoplePage() {
                         {person.relationshipDetail && <span> • {person.relationshipDetail}</span>}
                       </div>
                     )}
-                    
+
                     {person.profession && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
                         <Briefcase style={{ width: "13px", height: "13px", flexShrink: 0 }} />
@@ -278,24 +320,95 @@ export default function PeoplePage() {
                     {person.email && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
                         <Mail style={{ width: "13px", height: "13px", flexShrink: 0 }} />
-                        <a href={`mailto:${person.email}`} style={{ color: "#00aaff", textDecoration: "none" }}>
+                        <span style={{ color: "#00aaff" }}>
                           {person.email}
-                        </a>
+                        </span>
                       </div>
                     )}
 
                     {person.phone && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
                         <Phone style={{ width: "13px", height: "13px", flexShrink: 0 }} />
-                        <a href={`tel:${person.phone}`} style={{ color: "#00aaff", textDecoration: "none" }}>
+                        <span style={{ color: "#00aaff" }}>
                           {person.phone}
-                        </a>
+                        </span>
                       </div>
                     )}
 
                     {person.interests && (
                       <div style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255, 255, 255, 0.05)" }}>
                         <span style={{ fontWeight: 500 }}>Interests:</span> {person.interests}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+              {displayPeople.map((person, index) => (
+                <div
+                  key={person.id}
+                  onClick={() => router.push(`/tools/people/${person.id}`)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "20px",
+                    padding: "16px 20px",
+                    borderBottom: index < displayPeople.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
+                    transition: "all 0.15s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  <div style={{ flex: "0 0 200px" }}>
+                    <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
+                      {person.name}
+                    </h3>
+                    {person.nickname && (
+                      <p style={{ fontSize: "12px", color: "var(--foreground-muted)", fontStyle: "italic" }}>
+                        "{person.nickname}"
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={{ flex: "0 0 150px", fontSize: "13px", color: "var(--foreground-muted)" }}>
+                    {person.relationship && (
+                      <span style={{ color: "#00aaff", fontWeight: 500 }}>{person.relationship}</span>
+                    )}
+                  </div>
+
+                  <div style={{ flex: "1 1 auto", display: "flex", alignItems: "center", gap: "16px", fontSize: "13px", color: "var(--foreground-muted)" }}>
+                    {person.profession && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Briefcase style={{ width: "13px", height: "13px", flexShrink: 0 }} />
+                        <span>{person.profession}</span>
+                      </div>
+                    )}
+
+                    {person.location && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <MapPin style={{ width: "13px", height: "13px", flexShrink: 0 }} />
+                        <span>{person.location}</span>
+                      </div>
+                    )}
+
+                    {person.email && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Mail style={{ width: "13px", height: "13px", flexShrink: 0 }} />
+                        <span style={{ color: "#00aaff" }}>{person.email}</span>
+                      </div>
+                    )}
+
+                    {person.phone && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Phone style={{ width: "13px", height: "13px", flexShrink: 0 }} />
+                        <span style={{ color: "#00aaff" }}>{person.phone}</span>
                       </div>
                     )}
                   </div>

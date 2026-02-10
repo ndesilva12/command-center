@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Home, Search, Settings } from "lucide-react";
+import { Home, Search, Settings, Sparkles } from "lucide-react";
 
 export function TopNav() {
   const pathname = usePathname();
@@ -64,6 +64,23 @@ export function TopNav() {
           Norman C. de Silva
         </Link>
 
+        {/* Center Image */}
+        <div style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}>
+          <img
+            src="/signature.jpg"
+            alt="Norman C. de Silva"
+            style={{
+              height: "40px",
+              width: "auto",
+            }}
+          />
+        </div>
+
         {/* Main Nav - Hidden on mobile (uses BottomNav instead) */}
         {!isMobile && (
           <div
@@ -73,7 +90,7 @@ export function TopNav() {
               gap: "8px",
             }}
           >
-            <NavLink href="/" icon={Home} label="Dashboard" active={isActive("/")} />
+            <NavLink href="/" icon={Home} label="Home" active={isActive("/")} />
             <button
               style={{
                 display: "flex",
@@ -102,6 +119,7 @@ export function TopNav() {
               <Search style={{ width: "18px", height: "18px" }} />
               <span>Search</span>
             </button>
+            <NavLink href="/jimmy" icon={Sparkles} label="Jimmy" active={isActive("/jimmy")} />
             <NavLink href="/settings" icon={Settings} label="Settings" active={isActive("/settings")} />
           </div>
         )}

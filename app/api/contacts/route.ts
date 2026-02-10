@@ -23,17 +23,10 @@ async function getValidAccessToken(tokens: any): Promise<string> {
   return data.access_token;
 }
 
-async function fetchCalendarEvents(
-  accessToken: string,
-  timeMin: string,
-  timeMax: string
-): Promise<any[]> {
-  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
-  url.searchParams.append('timeMin', timeMin);
-  url.searchParams.append('timeMax', timeMax);
-  url.searchParams.append('singleEvents', 'true');
-  url.searchParams.append('orderBy', 'startTime');
-  url.searchParams.append('maxResults', '50');
+async function fetchGoogleContacts(accessToken: string): Promise<any[]> {
+  const url = new URL('https://people.googleapis.com/v1/people/me/connections');
+  url.searchParams.append('personFields', 'names,emailAddresses,phoneNumbers,photos,organizations,addresses,birthdays');
+  url.searchParams.append('pageSize', '100');
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -42,18 +35,16 @@ async function fetchCalendarEvents(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch calendar events');
+    throw new Error('Failed to fetch contacts');
   }
 
   const data = await response.json();
-  return data.items || [];
+  return data.connections || [];
 }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const timeMin = searchParams.get('timeMin') || new Date().toISOString();
-    const timeMax = searchParams.get('timeMax') || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const account = searchParams.get('account');
 
     const cookieStore = await cookies();
@@ -69,17 +60,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No Google accounts connected' }, { status: 401 });
     }
 
-    // Fetch events from all accounts (or specific account if requested)
+    // Fetch contacts from all accounts (or specific account if requested)
     const accountsToFetch = account ? accountEmails.filter(email => email === account) : accountEmails;
 
-    const eventsFromAllAccounts = await Promise.all(
+    const contactsFromAllAccounts = await Promise.all(
       accountsToFetch.map(async (email) => {
         try {
           const accountId = email.replace(/[^a-zA-Z0-9@.]/g, "_");
           const doc = await adminDb.collection("google-accounts").doc(accountId).get();
 
           if (!doc.exists) {
-            return { events: [], account: { email, name: email } };
+            return { contacts: [], account: { email, name: email } };
           }
 
           const data = doc.data();
@@ -90,11 +81,17 @@ export async function GET(request: Request) {
           };
 
           const accessToken = await getValidAccessToken(tokens);
-          const events = await fetchCalendarEvents(accessToken, timeMin, timeMax);
+          const contacts = await fetchGoogleContacts(accessToken);
 
           return {
-            events: events.map(event => ({
-              ...event,
+            contacts: contacts.map(contact => ({
+              id: contact.resourceName,
+              name: contact.names?.[0]?.displayName || 'Unknown',
+              email: contact.emailAddresses?.[0]?.value,
+              phone: contact.phoneNumbers?.[0]?.value,
+              photo: contact.photos?.[0]?.url,
+              organization: contact.organizations?.[0]?.name,
+              title: contact.organizations?.[0]?.title,
               accountEmail: data?.email,
               accountName: data?.name,
             })),
@@ -104,28 +101,24 @@ export async function GET(request: Request) {
             },
           };
         } catch (error) {
-          console.error(`Error fetching calendar for ${email}:`, error);
-          return { events: [], account: { email, name: email } };
+          console.error(`Error fetching contacts for ${email}:`, error);
+          return { contacts: [], account: { email, name: email } };
         }
       })
     );
 
-    // Merge all events and sort by start time
-    const allEvents = eventsFromAllAccounts.flatMap(result => result.events);
-    allEvents.sort((a, b) => {
-      const aTime = new Date(a.start?.dateTime || a.start?.date || 0).getTime();
-      const bTime = new Date(b.start?.dateTime || b.start?.date || 0).getTime();
-      return aTime - bTime;
-    });
+    // Merge all contacts and sort alphabetically
+    const allContacts = contactsFromAllAccounts.flatMap(result => result.contacts);
+    allContacts.sort((a, b) => a.name.localeCompare(b.name));
 
     return NextResponse.json({
-      events: allEvents,
-      accounts: eventsFromAllAccounts.map(r => r.account),
+      contacts: allContacts,
+      accounts: contactsFromAllAccounts.map(r => r.account),
     });
   } catch (error) {
-    console.error('Calendar events error:', error);
+    console.error('Contacts error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch calendar events' },
+      { error: 'Failed to fetch contacts' },
       { status: 500 }
     );
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Globe, Sparkles } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { UNIFIED_SOURCES, UnifiedSourceId, UnifiedSourceConfig } from "@/lib/unified-sources";
 
 interface SourceSelectorProps {
@@ -64,11 +64,6 @@ export function SourceSelector({ selectedSource, onSelectSource }: SourceSelecto
         }
       }}
     >
-      {source.type === "web" ? (
-        <Globe style={{ width: "16px", height: "16px", flexShrink: 0 }} />
-      ) : (
-        <Sparkles style={{ width: "16px", height: "16px", flexShrink: 0 }} />
-      )}
       <span style={{ flex: 1 }}>{source.name}</span>
     </button>
   );
@@ -93,11 +88,6 @@ export function SourceSelector({ selectedSource, onSelectSource }: SourceSelecto
           minWidth: "140px",
         }}
       >
-        {selectedConfig?.type === "web" ? (
-          <Globe style={{ width: "16px", height: "16px" }} />
-        ) : (
-          <Sparkles style={{ width: "16px", height: "16px" }} />
-        )}
         <span style={{ flex: 1 }}>{selectedConfig?.name || "Select"}</span>
         <ChevronDown
           style={{

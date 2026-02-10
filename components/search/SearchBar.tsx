@@ -90,7 +90,7 @@ export function SearchBar() {
             alignItems: "center",
             gap: "12px",
             padding: "14px 20px",
-            borderRadius: "14px",
+            borderRadius: "50px",
             border: "1px solid var(--glass-border)",
             transition: "all 0.3s ease",
             boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
@@ -123,8 +123,6 @@ export function SearchBar() {
             }}
           />
 
-          <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
-
           <button
             type="submit"
             disabled={!query.trim()}
@@ -155,6 +153,8 @@ export function SearchBar() {
           >
             Search
           </button>
+
+          <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
         </div>
 
         {/* Recent Searches Dropdown */}
