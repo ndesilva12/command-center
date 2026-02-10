@@ -5,20 +5,19 @@ const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export async function GET() {
   try {
-    // Fetch databases
+    // Fetch all results and filter for databases
     const response = await notion.search({
-      filter: {
-        property: 'object',
-        value: 'database',
-      },
       sort: {
         direction: 'descending',
         timestamp: 'last_edited_time',
       },
     });
 
+    // Filter results to only include databases
+    const databases = response.results.filter((result: any) => result.object === 'database');
+
     return NextResponse.json({
-      databases: response.results,
+      databases,
     });
   } catch (error) {
     console.error('Notion databases error:', error);
