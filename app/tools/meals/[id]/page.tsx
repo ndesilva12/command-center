@@ -6,6 +6,8 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ArrowLeft, Clock, Flame, Star, ExternalLink, Edit2, Save } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 interface Meal {
   id: string;
@@ -48,13 +50,11 @@ export default function MealDetailPage() {
 
   const fetchMeal = async (id: string) => {
     try {
-      const response = await fetch(`https://the-dashboard-50be1-default-rtdb.firebaseio.com/meals/${id}.json`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data) {
-          setMeal({ id, ...data });
-          setEditedMeal({ id, ...data });
-        }
+      const mealDoc = await getDoc(doc(db, 'meals', id));
+      if (mealDoc.exists()) {
+        const data = mealDoc.data();
+        setMeal({ id, ...data } as Meal);
+        setEditedMeal({ id, ...data } as Meal);
       }
     } catch (error) {
       console.error("Error fetching meal:", error);
@@ -67,12 +67,10 @@ export default function MealDetailPage() {
     if (!editedMeal) return;
 
     try {
-      await fetch(`https://the-dashboard-50be1-default-rtdb.firebaseio.com/meals/${editedMeal.id}.json`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          ...editedMeal,
-          updatedAt: new Date().toISOString()
-        })
+      const mealRef = doc(db, 'meals', editedMeal.id);
+      await updateDoc(mealRef, {
+        ...editedMeal,
+        updatedAt: new Date().toISOString()
       });
 
       setMeal(editedMeal);
