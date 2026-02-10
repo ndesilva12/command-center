@@ -195,8 +195,9 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
           ),
 
           // Code blocks
-          code: ({ node, inline, ...props }) => {
-            if (inline) {
+          code: ({ node, className, ...props }) => {
+            const isInline = !className;
+            if (isInline) {
               return (
                 <code
                   style={{
@@ -214,6 +215,7 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
             }
             return (
               <code
+                className={className}
                 style={{
                   fontFamily: "'Fira Code', 'Courier New', monospace",
                   fontSize: "14px",
