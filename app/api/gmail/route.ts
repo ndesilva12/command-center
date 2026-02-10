@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     let tokens;
-    let userInfo;
+    let userInfo: { email: string; name?: string; picture?: string } | undefined;
     try {
       tokens = JSON.parse(googleTokensCookie.value);
       if (googleUserCookie && googleUserCookie.value) {
