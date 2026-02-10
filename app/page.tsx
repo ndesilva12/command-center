@@ -6,7 +6,6 @@ import { ToolCard } from "@/components/tools/ToolCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics } from "@/components/home/TrendingTopics";
 import { DigitalClock } from "@/components/home/DigitalClock";
-import { ToolGridOverlay } from "@/components/mobile/ToolGridOverlay";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
@@ -130,7 +129,6 @@ const TOOL_CATEGORIES = [
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
-  const [showToolGrid, setShowToolGrid] = useState(false);
   const { customizations, loading, getCustomization } = useToolCustomizations();
   const { hasPermission, isAdmin, loading: authLoading } = useAuth();
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
@@ -245,55 +243,6 @@ export default function Home() {
         </div>
         )}
       </main>
-
-      {/* FAB Button - Mobile Only */}
-      {isMobile && (
-        <button
-          onClick={() => setShowToolGrid(true)}
-          style={{
-            position: "fixed",
-            bottom: "80px",
-            right: "20px",
-            width: "56px",
-            height: "56px",
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #00aaff 0%, #0088cc 100%)",
-            border: "none",
-            boxShadow: "0 4px 12px rgba(0, 170, 255, 0.4)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-            transition: "all 0.2s",
-          }}
-          onTouchStart={(e) => {
-            e.currentTarget.style.transform = "scale(0.9)";
-          }}
-          onTouchEnd={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        </button>
-      )}
-
-      {/* Tool Grid Overlay */}
-      <ToolGridOverlay isOpen={showToolGrid} onClose={() => setShowToolGrid(false)} />
     </ProtectedRoute>
   );
 }
