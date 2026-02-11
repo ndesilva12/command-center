@@ -31,7 +31,7 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
 
 export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'curate', name: 'Curate', href: '/tools/curate', description: 'Content curation' },
-  { id: 'l3d', name: 'L3D', href: '/tools/l3d', description: 'Research assistant' },
+  { id: 'l3d', name: 'L3D Research', href: '/tools/l3d', description: 'Research any topic from the last 30 days across Reddit, X, and web' },
   { id: 'deep-search', name: 'Deep Search', href: '/tools/deep-search', description: 'Deep web search' },
   { id: 'dark-search', name: 'Dark Search', href: '/tools/dark-search', description: 'Dark web search' },
   { id: 'image-lookup', name: 'Image Lookup', href: '/tools/image-lookup', description: 'Reverse image search' },

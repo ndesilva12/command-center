@@ -5,21 +5,22 @@ export async function GET() {
   try {
     const snapshot = await adminDb
       .collection('l3d_history')
-      .orderBy('createdAt', 'desc')
-      .limit(20)
+      .orderBy('timestamp', 'desc')
+      .limit(50)
       .get();
 
     const items = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().createdAt?.toMillis() || Date.now(),
+      timestamp: doc.data().timestamp?.toMillis() || Date.now(),
+      completed_at: doc.data().completed_at?.toMillis() || null,
     }));
 
-    return NextResponse.json({ items });
+    return NextResponse.json({ history: items });
   } catch (error) {
     console.error('Error fetching L3D history:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch history' },
+      { error: 'Failed to fetch history', history: [] },
       { status: 500 }
     );
   }
