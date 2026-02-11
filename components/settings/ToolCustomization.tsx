@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
 import {
   ChevronUp,
   ChevronDown,
@@ -18,9 +19,7 @@ import {
   StickyNote,
   Droplets,
   Music,
-  Newspaper,
   DollarSign,
-  BookOpen,
   Briefcase,
   Building2,
   Image,
@@ -30,6 +29,9 @@ import {
   Target,
   TrendingDown,
   Handshake,
+  Scale,
+  ChefHat,
+  Rss,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -50,16 +52,16 @@ const ICON_MAP: Record<string, any> = {
   "contacts": Users,
   "people": Users,
   "recommendations": Handshake,
-  "news": Newspaper,
-  "rss": BookOpen,
+  "read": Rss,
   "bookmarks": Droplets,
   "market": DollarSign,
   "notes": StickyNote,
   "files": FolderOpen,
+  "legal": Scale,
   "spotify": Music,
   "trending": TrendingUp,
   "rosters": BarChart3,
-  "meals": Calendar,
+  "meals": ChefHat,
 };
 
 interface ToolCustomization {
@@ -76,34 +78,50 @@ interface Tool {
   category: string;
 }
 
+// Default colors for tools
+const DEFAULT_COLORS: Record<string, string> = {
+  "curate": "#8b5cf6",
+  "l3d": "#10b981",
+  "deep-search": "#6366f1",
+  "dark-search": "#dc2626",
+  "image-lookup": "#a78bfa",
+  "contact-finder": "#6366f1",
+  "relationships": "#14b8a6",
+  "mission": "#f59e0b",
+  "investors": "#3b82f6",
+  "business-info": "#8b5cf6",
+  "corporate": "#10b981",
+  "emails": "#3b82f6",
+  "calendar": "#10b981",
+  "contacts": "#8b5cf6",
+  "people": "#06b6d4",
+  "recommendations": "#ec4899",
+  "read": "#10b981",
+  "bookmarks": "#06b6d4",
+  "market": "#3b82f6",
+  "notes": "#a78bfa",
+  "files": "#6366f1",
+  "legal": "#f59e0b",
+  "spotify": "#1DB954",
+  "trending": "#14b8a6",
+  "rosters": "#3b82f6",
+  "meals": "#10b981",
+};
+
+// Build DEFAULT_TOOLS from tool-categories.ts
 const DEFAULT_TOOLS: Tool[] = [
-  { id: "curate", name: "Curate", color: "#8b5cf6", category: "Intelligence" },
-  { id: "l3d", name: "L3D", color: "#10b981", category: "Intelligence" },
-  { id: "deep-search", name: "Deep Search", color: "#6366f1", category: "Intelligence" },
-  { id: "dark-search", name: "Dark Search", color: "#dc2626", category: "Intelligence" },
-  { id: "image-lookup", name: "Image Lookup", color: "#a78bfa", category: "Intelligence" },
-  { id: "contact-finder", name: "Contact Finder", color: "#6366f1", category: "Intelligence" },
-  { id: "relationships", name: "Relationships", color: "#14b8a6", category: "Intelligence" },
-  { id: "mission", name: "Mission", color: "#f59e0b", category: "Intelligence" },
-  { id: "investors", name: "Investors", color: "#3b82f6", category: "Intelligence" },
-  { id: "business-info", name: "Business Info", color: "#8b5cf6", category: "Intelligence" },
-  { id: "corporate", name: "Corporate", color: "#10b981", category: "Intelligence" },
-  { id: "jimmy", name: "Jimmy", color: "#667eea", category: "Intelligence" },
-  { id: "emails", name: "Emails", color: "#3b82f6", category: "Productivity" },
-  { id: "calendar", name: "Calendar", color: "#10b981", category: "Productivity" },
-  { id: "contacts", name: "Contacts", color: "#8b5cf6", category: "Productivity" },
-  { id: "people", name: "People", color: "#06b6d4", category: "Productivity" },
-  { id: "recommendations", name: "Recommendations", color: "#ec4899", category: "Productivity" },
-  { id: "news", name: "News", color: "#64748b", category: "Productivity" },
-  { id: "rss", name: "RSS", color: "#10b981", category: "Productivity" },
-  { id: "bookmarks", name: "Bookmarks", color: "#06b6d4", category: "Productivity" },
-  { id: "market", name: "Market", color: "#3b82f6", category: "Productivity" },
-  { id: "notes", name: "Notes", color: "#a78bfa", category: "Productivity" },
-  { id: "files", name: "Files", color: "#6366f1", category: "Productivity" },
-  { id: "spotify", name: "Spotify", color: "#1DB954", category: "Productivity" },
-  { id: "trending", name: "Trending", color: "#14b8a6", category: "Productivity" },
-  { id: "rosters", name: "Rosters", color: "#3b82f6", category: "Productivity" },
-  { id: "meals", name: "Meal Plan", color: "#10b981", category: "Productivity" },
+  ...PRODUCTIVITY_TOOLS.map(tool => ({
+    id: tool.id,
+    name: tool.name,
+    color: DEFAULT_COLORS[tool.id] || "#3b82f6",
+    category: "Productivity"
+  })),
+  ...INTELLIGENCE_TOOLS.map(tool => ({
+    id: tool.id,
+    name: tool.name,
+    color: DEFAULT_COLORS[tool.id] || "#8b5cf6",
+    category: "Intelligence"
+  }))
 ];
 
 export function ToolCustomization() {
