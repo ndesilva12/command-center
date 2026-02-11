@@ -150,39 +150,21 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         left: 0,
         right: 0,
         bottom: 0,
-        width: "100vw",
-        height: "100vh",
         zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
+        backgroundColor: "rgba(0, 0, 0, 0.95)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
       onClick={onClose}
     >
-      {/* Backdrop */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.85)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-        }}
-      />
-
       {/* Content */}
       <div
         style={{
-          position: "relative",
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
+          minHeight: "100vh",
           padding: "20px",
-          paddingBottom: "92px", // Space for bottom nav (72px + 20px)
-          overflowY: "auto",
-          animation: "slideUp 0.25s ease-out",
+          paddingBottom: "100px",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -199,7 +181,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
             style={{
               fontSize: "24px",
               fontWeight: 700,
-              color: "var(--foreground)",
+              color: "white",
               display: "flex",
               alignItems: "center",
               gap: "8px",
@@ -220,7 +202,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "var(--foreground)",
+              color: "white",
               transition: "all 0.15s",
             }}
           >
@@ -232,7 +214,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: "16px",
           }}
         >

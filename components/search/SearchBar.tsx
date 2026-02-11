@@ -103,8 +103,8 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               display: "flex",
               alignItems: "center",
               gap: "10px",
-              padding: isMobile ? "10px 16px" : "14px 20px",
-              borderRadius: "50px",
+              padding: isMobile ? "12px 16px" : "14px 20px",
+              borderRadius: isMobile ? "30px" : "50px",
               border: "1px solid var(--glass-border)",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
@@ -119,7 +119,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
             }}
           >
-            <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+            {!isMobile && <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />}
 
             <input
               type="text"
@@ -142,34 +142,32 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               type="submit"
               disabled={!query.trim()}
               style={{
-                padding: isMobile ? "6px 12px" : "0 8px",
-                borderRadius: isMobile ? "20px" : "0",
+                padding: "6px",
+                borderRadius: "50%",
                 border: "none",
-                background: isMobile && query.trim() ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                background: query.trim() ? "rgba(0, 170, 255, 0.2)" : "transparent",
                 color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
-                fontSize: "14px",
-                fontWeight: 600,
                 cursor: query.trim() ? "pointer" : "not-allowed",
-                transition: "all 0.3s ease",
-                textDecoration: "none",
+                transition: "all 0.2s ease",
                 flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
               }}
               onMouseEnter={(e) => {
                 if (query.trim()) {
-                  e.currentTarget.style.textDecoration = isMobile ? "none" : "underline";
-                  if (isMobile) {
-                    e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)";
-                  }
+                  e.currentTarget.style.background = "rgba(0, 170, 255, 0.3)";
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.textDecoration = "none";
-                if (isMobile && query.trim()) {
-                  e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)";
+                if (query.trim()) {
+                  e.currentTarget.style.background = "rgba(0, 170, 255, 0.2)";
                 }
               }}
             >
-              {isMobile ? <Search style={{ width: "16px", height: "16px" }} /> : "Search"}
+              <Search style={{ width: "18px", height: "18px" }} />
             </button>
           </div>
 
