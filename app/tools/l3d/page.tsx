@@ -340,7 +340,7 @@ export default function L3DPage() {
         paddingRight: '24px',
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
           <TrendingUp size={48} style={{ color: '#00aaff' }} />

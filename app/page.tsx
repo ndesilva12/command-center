@@ -203,76 +203,15 @@ export default function Home() {
           </div>
         ) : (
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Clock Section - Centered with Settings & Refresh Icons on Mobile */}
+          {/* Clock Section - Centered */}
           <div style={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             marginBottom: isMobile ? "16px" : "32px",
-            position: "relative",
           }}>
             <DigitalClock />
-            {isMobile && (
-              <div style={{
-                position: "absolute",
-                right: "0",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                gap: "8px",
-              }}>
-                <button
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "8px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid var(--glass-border)",
-                    color: "var(--muted)",
-                    transition: "all 0.2s",
-                    cursor: refreshing ? "not-allowed" : "pointer",
-                    opacity: refreshing ? 0.5 : 1,
-                  }}
-                >
-                  <RefreshCw 
-                    style={{ 
-                      width: "16px", 
-                      height: "16px",
-                      animation: refreshing ? "spin 1s linear infinite" : "none",
-                    }} 
-                  />
-                </button>
-                <Link
-                  href="/settings"
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "8px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid var(--glass-border)",
-                    color: "var(--muted)",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <Settings style={{ width: "16px", height: "16px" }} />
-                </Link>
-              </div>
-            )}
           </div>
-          <style jsx>{`
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
 
           {/* Search Section - Above on Mobile */}
           <div id="search-section" style={{ marginBottom: isMobile ? "16px" : "40px" }}>
@@ -316,6 +255,76 @@ export default function Home() {
               </div>
             );
           })}
+
+          {/* Settings & Refresh - Bottom on Mobile */}
+          {isMobile && (
+            <div style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "12px",
+              marginTop: "32px",
+              marginBottom: "32px",
+            }}>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                style={{
+                  flex: 1,
+                  maxWidth: "200px",
+                  padding: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  borderRadius: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid var(--glass-border)",
+                  color: "var(--foreground)",
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  cursor: refreshing ? "not-allowed" : "pointer",
+                  opacity: refreshing ? 0.5 : 1,
+                }}
+              >
+                <RefreshCw 
+                  style={{ 
+                    width: "20px", 
+                    height: "20px",
+                    animation: refreshing ? "spin 1s linear infinite" : "none",
+                  }} 
+                />
+                Refresh
+              </button>
+              <Link
+                href="/settings"
+                style={{
+                  flex: 1,
+                  maxWidth: "200px",
+                  padding: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  borderRadius: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid var(--glass-border)",
+                  color: "var(--foreground)",
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                }}
+              >
+                <Settings style={{ width: "20px", height: "20px" }} />
+                Settings
+              </Link>
+            </div>
+          )}
+          <style jsx>{`
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
         )}
       </main>

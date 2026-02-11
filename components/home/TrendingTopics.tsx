@@ -119,7 +119,7 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
         flexWrap: "wrap",
         justifyContent: "center",
         gap: isMobile ? "6px" : "8px",
-        maxWidth: "900px",
+        maxWidth: "1200px",
         margin: "0 auto"
       }}>
         {topics.map((topic, index) => (
