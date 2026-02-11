@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Sacramento, Orbitron } from "next/font/google";
 import "./globals.css";
+import "../styles/mobile.css";
 
 const inter = Inter({
   variable: "--font-sans",

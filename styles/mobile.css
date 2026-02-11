@@ -1,0 +1,105 @@
+/* Mobile-specific utility classes */
+
+@media (max-width: 768px) {
+  /* Full width mobile container */
+  .mobile-full-width {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    max-width: 100% !important;
+  }
+
+  /* Mobile tool page wrapper */
+  .mobile-tool-page {
+    padding-top: 72px !important; /* Top nav height */
+    padding-bottom: 80px !important; /* Bottom nav height + buffer */
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    min-height: 100vh;
+  }
+
+  /* Mobile content area */
+  .mobile-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Mobile card adjustments */
+  .glass,
+  .card {
+    border-radius: 12px !important;
+    padding: 16px !important;
+  }
+
+  /* Mobile button sizing */
+  button,
+  .mobile-button {
+    min-height: 44px !important;
+    padding: 12px 16px !important;
+    font-size: 15px !important;
+  }
+
+  /* Mobile form inputs */
+  input,
+  textarea,
+  select {
+    min-height: 44px !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 12px !important;
+  }
+
+  /* Mobile grid adjustments */
+  .mobile-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Mobile spacing */
+  .mobile-spacing {
+    margin-bottom: 16px !important;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Mobile-only elements */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Mobile table responsiveness */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Mobile modal adjustments */
+  .mobile-modal {
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 100px) !important;
+    margin: 50px 16px !important;
+  }
+
+  /* Mobile scrollable content */
+  .mobile-scroll {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Desktop-only by default */
+.mobile-only {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .desktop-only {
+    display: block;
+  }
+}
