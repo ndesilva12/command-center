@@ -116,7 +116,7 @@ export default function JimmyPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: "32px",
+            marginBottom: "48px",
             flexWrap: "wrap",
             gap: "16px",
           }}
@@ -137,14 +137,10 @@ export default function JimmyPage() {
           </div>
 
           {/* Telegram Chat Button */}
-          <button
-            onClick={() => {
-              // Try Telegram app protocol first, fallback to web
-              window.location.href = "tg://resolve?domain=jimmy_chief_bot";
-              setTimeout(() => {
-                window.open("https://t.me/jimmy_chief_bot", "_blank");
-              }, 500);
-            }}
+          <a
+            href="https://t.me/jimmy_chief_bot"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               padding: "12px 24px",
               borderRadius: "12px",
@@ -171,18 +167,16 @@ export default function JimmyPage() {
           >
             <MessageSquare style={{ width: "18px", height: "18px" }} />
             Chat with Jimmy
-          </button>
+          </a>
         </div>
 
-        {/* View Toggle & Filter */}
+        {/* View Toggle - moved to right */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             marginBottom: "24px",
-            flexWrap: "wrap",
-            gap: "16px",
           }}
         >
           <div style={{ display: "flex", gap: "8px" }}>
