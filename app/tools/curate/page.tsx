@@ -29,9 +29,9 @@ interface HistoryItem {
   status: 'running' | 'completed' | 'failed';
   results?: {
     'short-unique': ContentItem[];
-    'short-trending': ContentItem[];
+    'short-popular': ContentItem[];
     'long-unique': ContentItem[];
-    'long-trending': ContentItem[];
+    'long-popular': ContentItem[];
   };
   error?: string;
 }
@@ -194,9 +194,9 @@ export default function CuratePage() {
   const getCategoryDisplay = (category: string) => {
     const map: Record<string, string> = {
       'short-unique': 'Short & Unique',
-      'short-trending': 'Short & Trending',
+      'short-popular': 'Short & Popular',
       'long-unique': 'Long & Unique',
-      'long-trending': 'Long & Trending',
+      'long-popular': 'Long & Popular',
     };
     return map[category] || category;
   };
@@ -206,7 +206,7 @@ export default function CuratePage() {
     
     // Count total items across categories
     let totalItems = 0;
-    const categories: Array<'short-unique' | 'short-trending' | 'long-unique' | 'long-trending'> = ['short-unique', 'short-trending', 'long-unique', 'long-trending'];
+    const categories: Array<'short-unique' | 'short-popular' | 'long-unique' | 'long-popular'> = ['short-unique', 'short-popular', 'long-unique', 'long-popular'];
     categories.forEach(cat => {
       const items = results[cat];
       if (items && Array.isArray(items)) {
@@ -245,9 +245,9 @@ export default function CuratePage() {
 
     const categories = [
       { key: 'short-unique', emoji: '⚡', color: '#a78bfa' },
-      { key: 'short-trending', emoji: '🔥', color: '#f59e0b' },
+      { key: 'short-popular', emoji: '🔥', color: '#f59e0b' },
       { key: 'long-unique', emoji: '📚', color: '#3b82f6' },
-      { key: 'long-trending', emoji: '🌟', color: '#10b981' },
+      { key: 'long-popular', emoji: '🌟', color: '#10b981' },
     ];
 
     return (
@@ -433,100 +433,99 @@ export default function CuratePage() {
             </select>
           </div>
 
-          {/* Count Selector */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-              Number of Items (evenly distributed across 4 categories)
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '8px' }}>
-              {[8, 12, 16, 24].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setCount(c)}
-                  disabled={loading}
-                  style={{
-                    padding: isMobile ? '16px' : '12px',
-                    background: count === c ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                    border: count === c ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    color: count === c ? '#00aaff' : 'white',
-                    fontSize: isMobile ? '16px' : '14px',
-                    fontWeight: 500,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.6 : 1,
-                    minHeight: '44px',
-                  }}
-                >
-                  {c}
-                </button>
-              ))}
+          {/* Compact row: Time Range + Count + Min Score */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+            
+            {/* Time Range Dropdown */}
+            <div>
+              <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+                Time Range
+              </label>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  outline: 'none',
+                  opacity: loading ? 0.6 : 1,
+                }}
+              >
+                <option value="day">1 Day</option>
+                <option value="week">1 Week</option>
+                <option value="month">1 Month</option>
+                <option value="year">1 Year</option>
+                <option value="decade">10 Years</option>
+                <option value="any">Any Time</option>
+              </select>
             </div>
-          </div>
 
-          {/* Min Score Selector */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-              Minimum Intellectual Rigor Score (0-10)
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)', gap: '8px' }}>
-              {[4.0, 5.0, 6.0, 7.0, 8.0].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setMinScore(s)}
-                  disabled={loading}
-                  style={{
-                    padding: isMobile ? '16px' : '12px',
-                    background: minScore === s ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                    border: minScore === s ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    color: minScore === s ? '#00aaff' : 'white',
-                    fontSize: isMobile ? '16px' : '14px',
-                    fontWeight: 500,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.6 : 1,
-                    minHeight: '44px',
-                  }}
-                >
-                  {s}+
-                </button>
-              ))}
+            {/* Count Dropdown */}
+            <div>
+              <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+                Total Items
+              </label>
+              <select
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  outline: 'none',
+                  opacity: loading ? 0.6 : 1,
+                }}
+              >
+                <option value="4">4 items</option>
+                <option value="8">8 items</option>
+                <option value="12">12 items</option>
+                <option value="16">16 items</option>
+                <option value="20">20 items</option>
+              </select>
             </div>
-          </div>
 
-          {/* Time Range Selector */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-              Time Range (how far back to search)
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '8px' }}>
-              {[
-                { value: 'day', label: '1 Day' },
-                { value: 'week', label: '1 Week' },
-                { value: 'month', label: '1 Month' },
-                { value: 'year', label: '1 Year' },
-                { value: 'decade', label: '10 Years' },
-                { value: 'any', label: 'Any Time' },
-              ].map((t) => (
-                <button
-                  key={t.value}
-                  onClick={() => setTimeRange(t.value)}
-                  disabled={loading}
-                  style={{
-                    padding: isMobile ? '16px' : '12px',
-                    background: timeRange === t.value ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                    border: timeRange === t.value ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    color: timeRange === t.value ? '#00aaff' : 'white',
-                    fontSize: isMobile ? '16px' : '14px',
-                    fontWeight: 500,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.6 : 1,
-                    minHeight: '44px',
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
+            {/* Min Score Dropdown */}
+            <div>
+              <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+                Min Score
+              </label>
+              <select
+                value={minScore}
+                onChange={(e) => setMinScore(Number(e.target.value))}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  outline: 'none',
+                  opacity: loading ? 0.6 : 1,
+                }}
+              >
+                <option value="3.0">3.0+ (Low bar)</option>
+                <option value="4.0">4.0+ (Decent)</option>
+                <option value="5.0">5.0+ (Good)</option>
+                <option value="6.0">6.0+ (Strong)</option>
+                <option value="7.0">7.0+ (Excellent)</option>
+                <option value="8.0">8.0+ (Exceptional)</option>
+              </select>
             </div>
           </div>
 
