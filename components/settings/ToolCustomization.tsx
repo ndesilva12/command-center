@@ -397,8 +397,10 @@ export function ToolCustomization() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "6px",
-                    border: "1px solid var(--glass-border)",
+                    border: "none",
                     cursor: "pointer",
+                    background: "transparent",
+                    padding: 0,
                   }}
                 />
                 <span style={{ fontSize: "12px", color: "var(--muted)", fontFamily: "monospace" }}>
