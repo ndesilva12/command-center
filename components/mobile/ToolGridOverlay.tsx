@@ -156,15 +156,18 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         WebkitBackdropFilter: "blur(12px)",
         overflowY: "auto",
         WebkitOverflowScrolling: "touch",
+        display: "flex",
+        flexDirection: "column",
       }}
       onClick={onClose}
     >
       {/* Content */}
       <div
         style={{
-          minHeight: "100vh",
+          width: "100%",
           padding: "20px",
-          paddingBottom: "100px",
+          paddingBottom: "92px",
+          flex: "0 0 auto",
         }}
         onClick={(e) => e.stopPropagation()}
       >
