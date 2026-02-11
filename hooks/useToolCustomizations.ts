@@ -31,12 +31,13 @@ export function useToolCustomizations() {
   }, []);
 
   const getCustomization = (toolId: string, defaultName: string, defaultColor: string): ToolCustomization => {
-    return customizations[toolId] || {
-      name: defaultName,
-      color: defaultColor,
-      visible: true,
-      mobileVisible: true,
-      order: 0,
+    const existing = customizations[toolId];
+    return {
+      name: existing?.name ?? defaultName,
+      color: existing?.color ?? defaultColor,
+      visible: existing?.visible ?? true,
+      mobileVisible: existing?.mobileVisible ?? true,
+      order: existing?.order ?? 0,
     };
   };
 

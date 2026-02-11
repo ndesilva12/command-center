@@ -30,24 +30,63 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { customizations } = await request.json();
-
-    await adminDb
-      .collection('user-settings')
-      .doc(DEFAULT_USER_ID)
-      .set(
-        {
-          toolCustomizations: customizations,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
+    const body = await request.json();
+    
+    if (!body || typeof body.customizations !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid request: customizations object required' },
+        { status: 400 }
       );
+    }
+
+    const { customizations } = body;
+
+    // Validate customizations structure
+    for (const [toolId, config] of Object.entries(customizations)) {
+      const c = config as any;
+      if (
+        typeof c.name !== 'string' ||
+        typeof c.color !== 'string' ||
+        typeof c.visible !== 'boolean' ||
+        typeof c.mobileVisible !== 'boolean' ||
+        typeof c.order !== 'number'
+      ) {
+        return NextResponse.json(
+          { error: `Invalid customization format for tool: ${toolId}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Get existing settings and merge
+    const docRef = adminDb.collection('user-settings').doc(DEFAULT_USER_ID);
+    const existingDoc = await docRef.get();
+    const existingCustomizations = existingDoc.exists 
+      ? (existingDoc.data()?.toolCustomizations || {})
+      : {};
+
+    // Merge new customizations with existing ones (preserving fields)
+    const mergedCustomizations: Record<string, any> = { ...existingCustomizations };
+    for (const [toolId, config] of Object.entries(customizations)) {
+      mergedCustomizations[toolId] = {
+        ...(existingCustomizations[toolId] || {}),
+        ...(config as Record<string, any>),
+      };
+    }
+
+    await docRef.set(
+      {
+        toolCustomizations: mergedCustomizations,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error saving tool settings:', error);
     return NextResponse.json(
-      { error: 'Failed to save settings' },
+      { error: error instanceof Error ? error.message : 'Failed to save settings' },
       { status: 500 }
     );
   }

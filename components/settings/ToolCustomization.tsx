@@ -32,6 +32,8 @@ import {
   Scale,
   ChefHat,
   Rss,
+  Smartphone,
+  Check,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -68,6 +70,7 @@ interface ToolCustomization {
   name: string;
   color: string;
   visible: boolean;
+  mobileVisible: boolean;
   order: number;
 }
 
@@ -129,9 +132,17 @@ export function ToolCustomization() {
   const [customizations, setCustomizations] = useState<Record<string, ToolCustomization>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     loadCustomizations();
+    
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const loadCustomizations = async () => {
@@ -164,6 +175,7 @@ export function ToolCustomization() {
       name: tool?.name || toolId,
       color: tool?.color || "#3b82f6",
       visible: true,
+      mobileVisible: true,
       order: DEFAULT_TOOLS.findIndex(t => t.id === toolId),
     };
   };
@@ -222,6 +234,9 @@ export function ToolCustomization() {
 
   const handleSave = async () => {
     setSaving(true);
+    setError(null);
+    setSaved(false);
+    
     try {
       const res = await fetch('/api/settings/tools', {
         method: 'POST',
@@ -230,13 +245,16 @@ export function ToolCustomization() {
       });
 
       if (res.ok) {
-        alert('Settings saved successfully!');
+        setSaved(true);
+        // Clear saved message after 3 seconds
+        setTimeout(() => setSaved(false), 3000);
       } else {
-        alert('Failed to save settings');
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+        setError(errorData.error || 'Failed to save settings');
       }
     } catch (error) {
       console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
+      setError('Network error: Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -278,7 +296,9 @@ export function ToolCustomization() {
               style={{
                 padding: "16px",
                 display: "grid",
-                gridTemplateColumns: "40px 1fr 120px 80px 80px",
+                gridTemplateColumns: isMobile 
+                  ? "40px 1fr 120px 80px 80px"
+                  : "40px 1fr 120px 80px 80px 80px",
                 gap: "12px",
                 alignItems: "center",
                 background: customization.visible
@@ -385,6 +405,7 @@ export function ToolCustomization() {
                   alignItems: "center",
                   justifyContent: "center",
                 }}
+                title="Toggle desktop visibility"
               >
                 {customization.visible ? (
                   <Eye style={{ width: "16px", height: "16px" }} />
@@ -392,6 +413,29 @@ export function ToolCustomization() {
                   <EyeOff style={{ width: "16px", height: "16px" }} />
                 )}
               </button>
+
+              {/* Mobile Visibility Toggle (Desktop Only) */}
+              {!isMobile && (
+                <button
+                  onClick={() => updateCustomization(tool.id, { mobileVisible: !customization.mobileVisible })}
+                  style={{
+                    padding: "8px",
+                    background: customization.mobileVisible
+                      ? "rgba(59, 130, 246, 0.1)"
+                      : "rgba(220, 38, 38, 0.1)",
+                    border: `1px solid ${customization.mobileVisible ? 'rgba(59, 130, 246, 0.2)' : 'rgba(220, 38, 38, 0.2)'}`,
+                    borderRadius: "6px",
+                    color: customization.mobileVisible ? "#3b82f6" : "#dc2626",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Toggle mobile visibility"
+                >
+                  <Smartphone style={{ width: "16px", height: "16px" }} />
+                </button>
+              )}
             </div>
           );
         })}
@@ -405,7 +449,9 @@ export function ToolCustomization() {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: "24px"
+        marginBottom: "16px",
+        flexWrap: "wrap",
+        gap: "12px"
       }}>
         <div>
           <h2 style={{
@@ -417,7 +463,7 @@ export function ToolCustomization() {
             Tool Customization
           </h2>
           <p style={{ fontSize: "14px", color: "var(--muted)" }}>
-            Rename, reorder, change colors, and toggle visibility of tools
+            Rename, reorder, change colors, and toggle visibility{!isMobile && " (desktop & mobile)"}
           </p>
         </div>
 
@@ -426,7 +472,9 @@ export function ToolCustomization() {
           disabled={saving}
           style={{
             padding: "10px 20px",
-            background: "linear-gradient(135deg, #10b981, #059669)",
+            background: saved 
+              ? "linear-gradient(135deg, #10b981, #059669)"
+              : "linear-gradient(135deg, #00aaff, #0088cc)",
             border: "none",
             borderRadius: "8px",
             color: "white",
@@ -437,12 +485,37 @@ export function ToolCustomization() {
             alignItems: "center",
             gap: "8px",
             opacity: saving ? 0.6 : 1,
+            transition: "all 0.3s ease",
           }}
         >
-          <Save style={{ width: "16px", height: "16px" }} />
-          {saving ? "Saving..." : "Save Changes"}
+          {saved ? (
+            <>
+              <Check style={{ width: "16px", height: "16px" }} />
+              Saved!
+            </>
+          ) : (
+            <>
+              <Save style={{ width: "16px", height: "16px" }} />
+              {saving ? "Saving..." : "Save Changes"}
+            </>
+          )}
         </button>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{
+          padding: "12px 16px",
+          background: "rgba(220, 38, 38, 0.1)",
+          border: "1px solid rgba(220, 38, 38, 0.2)",
+          borderRadius: "8px",
+          color: "#dc2626",
+          fontSize: "14px",
+          marginBottom: "16px",
+        }}>
+          {error}
+        </div>
+      )}
 
       {renderToolSection("Productivity", productivityTools)}
       {renderToolSection("Intelligence", intelligenceTools)}
