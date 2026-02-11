@@ -4,7 +4,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { SearchBar } from "@/components/search/SearchBar";
-import { TrendingTopics } from "@/components/home/TrendingTopics";
+import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
 import { DigitalClock } from "@/components/home/DigitalClock";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -40,6 +40,7 @@ import {
   Rss,
   ChefHat,
   Settings,
+  RefreshCw,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -134,6 +135,8 @@ export default function Home() {
   const { customizations, loading, getCustomization } = useToolCustomizations();
   const { hasPermission, isAdmin, loading: authLoading } = useAuth();
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
+  const trendingTopicsRef = useRef<TrendingTopicsRef>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -153,6 +156,14 @@ export default function Home() {
       searchBarRef.current.setQuery(query);
       searchBarRef.current.setSource('news');
     }
+  };
+
+  const handleRefresh = async () => {
+    if (refreshing || !trendingTopicsRef.current) return;
+    setRefreshing(true);
+    trendingTopicsRef.current.refresh();
+    // Reset refreshing state after animation completes
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
   // Apply customizations and filter by permissions
@@ -192,7 +203,7 @@ export default function Home() {
           </div>
         ) : (
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Clock Section - Centered with Settings Icon on Mobile */}
+          {/* Clock Section - Centered with Settings & Refresh Icons on Mobile */}
           <div style={{
             display: "flex",
             justifyContent: "center",
@@ -202,29 +213,66 @@ export default function Home() {
           }}>
             <DigitalClock />
             {isMobile && (
-              <Link
-                href="/settings"
-                style={{
-                  position: "absolute",
-                  right: "0",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "32px",
-                  height: "32px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid var(--glass-border)",
-                  color: "var(--muted)",
-                  transition: "all 0.2s",
-                }}
-              >
-                <Settings style={{ width: "16px", height: "16px" }} />
-              </Link>
+              <div style={{
+                position: "absolute",
+                right: "0",
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                gap: "8px",
+              }}>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid var(--glass-border)",
+                    color: "var(--muted)",
+                    transition: "all 0.2s",
+                    cursor: refreshing ? "not-allowed" : "pointer",
+                    opacity: refreshing ? 0.5 : 1,
+                  }}
+                >
+                  <RefreshCw 
+                    style={{ 
+                      width: "16px", 
+                      height: "16px",
+                      animation: refreshing ? "spin 1s linear infinite" : "none",
+                    }} 
+                  />
+                </button>
+                <Link
+                  href="/settings"
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid var(--glass-border)",
+                    color: "var(--muted)",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <Settings style={{ width: "16px", height: "16px" }} />
+                </Link>
+              </div>
             )}
           </div>
+          <style jsx>{`
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
 
           {/* Search Section - Above on Mobile */}
           <div id="search-section" style={{ marginBottom: isMobile ? "16px" : "40px" }}>
@@ -233,7 +281,7 @@ export default function Home() {
 
           {/* Trending Topics - Below on Mobile */}
           <div style={{ marginBottom: isMobile ? "20px" : "0" }}>
-            <TrendingTopics onTagClick={handleTrendingClick} />
+            <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
           </div>
 
           {/* Tool Categories - Hidden on Mobile */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { TrendingUp, Loader2 } from "lucide-react";
 
 interface TrendingTopic {
@@ -8,7 +8,12 @@ interface TrendingTopic {
   source: "x" | "google";
 }
 
-export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => void }) {
+export interface TrendingTopicsRef {
+  refresh: () => void;
+}
+
+export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query: string) => void }>(
+  ({ onTagClick }, ref) => {
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -24,6 +29,10 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
   useEffect(() => {
     fetchTrending();
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    refresh: fetchTrending,
+  }));
 
   const fetchTrending = async () => {
     setLoading(true);
@@ -155,4 +164,6 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
       </div>
     </div>
   );
-}
+});
+
+TrendingTopics.displayName = "TrendingTopics";
