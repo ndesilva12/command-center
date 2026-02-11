@@ -95,7 +95,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
     <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 12px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative" }}>
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "0", alignItems: isMobile ? "stretch" : "center" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "12px", alignItems: isMobile ? "stretch" : "center" }}>
           {/* Search Input */}
           <div
             className="glass"
@@ -138,43 +138,42 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               }}
             />
 
-            {!isMobile && (
-              <button
-                type="submit"
-                disabled={!query.trim()}
-                style={{
-                  padding: "0 8px",
-                  border: "none",
-                  background: "transparent",
-                  color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: query.trim() ? "pointer" : "not-allowed",
-                  transition: "all 0.3s ease",
-                  textDecoration: "none",
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  if (query.trim()) {
-                    e.currentTarget.style.textDecoration = "underline";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.textDecoration = "none";
-                }}
-              >
-                Search
-              </button>
-            )}
-
-            {!isMobile && <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />}
+            <button
+              type="submit"
+              disabled={!query.trim()}
+              style={{
+                padding: "0 8px",
+                border: "none",
+                background: "transparent",
+                color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: query.trim() ? "pointer" : "not-allowed",
+                transition: "all 0.3s ease",
+                textDecoration: "none",
+                flexShrink: 0,
+                display: isMobile ? "none" : "block",
+              }}
+              onMouseEnter={(e) => {
+                if (query.trim()) {
+                  e.currentTarget.style.textDecoration = "underline";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.textDecoration = "none";
+              }}
+            >
+              Search
+            </button>
           </div>
 
-          {/* Source Selector - Separate row on mobile only */}
-          {isMobile && (
+          {/* Source Selector - Outside search bar on desktop, separate row on mobile */}
+          {isMobile ? (
             <div style={{ display: "flex", justifyContent: "center" }}>
               <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
             </div>
+          ) : (
+            <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
           )}
         </div>
 
