@@ -427,10 +427,10 @@ export default function CuratePage() {
           {/* Count Selector */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-              Number of Items (total across 4 categories)
+              Number of Items (evenly distributed across 4 categories)
             </label>
             <div style={{ display: 'flex', gap: '8px' }}>
-              {[6, 12, 18, 24].map((c) => (
+              {[8, 12, 16, 24].map((c) => (
                 <button
                   key={c}
                   onClick={() => setCount(c)}
