@@ -11,6 +11,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef } from "react";
 import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
+import Link from "next/link";
 import {
   Sparkles,
   TrendingUp,
@@ -38,6 +39,7 @@ import {
   LucideIcon,
   Rss,
   ChefHat,
+  Settings,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -190,14 +192,38 @@ export default function Home() {
           </div>
         ) : (
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Clock Section - Centered */}
+          {/* Clock Section - Centered with Settings Icon on Mobile */}
           <div style={{
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             marginBottom: isMobile ? "16px" : "32px",
+            position: "relative",
           }}>
             <DigitalClock />
+            {isMobile && (
+              <Link
+                href="/settings"
+                style={{
+                  position: "absolute",
+                  right: "0",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid var(--glass-border)",
+                  color: "var(--muted)",
+                  transition: "all 0.2s",
+                }}
+              >
+                <Settings style={{ width: "16px", height: "16px" }} />
+              </Link>
+            )}
           </div>
 
           {/* Search Section - Above on Mobile */}
