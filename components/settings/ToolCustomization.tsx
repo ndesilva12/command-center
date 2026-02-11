@@ -219,9 +219,16 @@ export function ToolCustomization() {
 
     setTools(newTools);
 
-    // Update order in customizations
+    // Update order in customizations - ensure complete objects
     newTools.forEach((tool, i) => {
-      updateCustomization(tool.id, { order: i });
+      const existing = getToolCustomization(tool.id);
+      updateCustomization(tool.id, { 
+        name: existing.name,
+        color: existing.color,
+        visible: existing.visible,
+        mobileVisible: existing.mobileVisible,
+        order: i 
+      });
     });
   };
 
@@ -240,9 +247,16 @@ export function ToolCustomization() {
 
     setTools(newTools);
 
-    // Update order in customizations
+    // Update order in customizations - ensure complete objects
     newTools.forEach((tool, i) => {
-      updateCustomization(tool.id, { order: i });
+      const existing = getToolCustomization(tool.id);
+      updateCustomization(tool.id, { 
+        name: existing.name,
+        color: existing.color,
+        visible: existing.visible,
+        mobileVisible: existing.mobileVisible,
+        order: i 
+      });
     });
   };
 
@@ -258,7 +272,15 @@ export function ToolCustomization() {
       
       for (const [toolId, customization] of Object.entries(customizations)) {
         if (validToolIds.has(toolId)) {
-          filteredCustomizations[toolId] = customization;
+          // Ensure all required fields are present
+          const tool = DEFAULT_TOOLS.find(t => t.id === toolId);
+          filteredCustomizations[toolId] = {
+            name: customization.name || tool?.name || toolId,
+            color: customization.color || tool?.color || "#3b82f6",
+            visible: typeof customization.visible === 'boolean' ? customization.visible : true,
+            mobileVisible: typeof customization.mobileVisible === 'boolean' ? customization.mobileVisible : true,
+            order: typeof customization.order === 'number' ? customization.order : 0,
+          };
         }
       }
       

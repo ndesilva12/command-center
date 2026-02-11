@@ -65,12 +65,12 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
           }}
         />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", minHeight: "44px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "64px" }}>
             <div
               style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "8px",
+                width: "48px",
+                height: "48px",
+                borderRadius: "12px",
                 background: `${color}20`,
                 display: "flex",
                 alignItems: "center",
@@ -78,12 +78,12 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
                 flexShrink: 0,
               }}
             >
-              <Icon style={{ width: "16px", height: "16px", color: color }} />
+              <Icon style={{ width: "24px", height: "24px", color: color }} />
             </div>
             <div style={{ flex: 1 }}>
               <div
                 style={{
-                  fontSize: "14px",
+                  fontSize: "18px",
                   fontWeight: 700,
                   color: "var(--foreground)",
                 }}
