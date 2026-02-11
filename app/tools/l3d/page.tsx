@@ -26,6 +26,15 @@ export default function L3DPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // History state
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -382,24 +391,24 @@ export default function L3DPage() {
           />
 
           {/* Mode Selector */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
             {(["quick", "balanced", "deep"] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 disabled={loading}
                 style={{
-                  flex: 1,
-                  padding: '12px',
+                  padding: isMobile ? '16px' : '12px',
                   background: mode === m ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                   border: mode === m ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '8px',
                   color: mode === m ? '#00aaff' : 'white',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '16px' : '14px',
                   fontWeight: 500,
                   cursor: loading ? 'not-allowed' : 'pointer',
                   textTransform: 'capitalize',
                   opacity: loading ? 0.6 : 1,
+                  minHeight: '44px',
                 }}
               >
                 {m}
@@ -408,23 +417,23 @@ export default function L3DPage() {
           </div>
 
           {/* Days Selector */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
             {[7, 14, 30, 60].map((d) => (
               <button
                 key={d}
                 onClick={() => setDays(d)}
                 disabled={loading}
                 style={{
-                  flex: 1,
-                  padding: '12px',
+                  padding: isMobile ? '16px' : '12px',
                   background: days === d ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                   border: days === d ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                   borderRadius: '8px',
                   color: days === d ? '#00aaff' : 'white',
-                  fontSize: '14px',
+                  fontSize: isMobile ? '16px' : '14px',
                   fontWeight: 500,
                   cursor: loading ? 'not-allowed' : 'pointer',
                   opacity: loading ? 0.6 : 1,
+                  minHeight: '44px',
                 }}
               >
                 {d} days

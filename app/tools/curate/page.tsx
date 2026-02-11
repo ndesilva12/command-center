@@ -46,6 +46,15 @@ export default function CuratePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // History state
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -429,23 +438,23 @@ export default function CuratePage() {
             <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
               Number of Items (evenly distributed across 4 categories)
             </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '8px' }}>
               {[8, 12, 16, 24].map((c) => (
                 <button
                   key={c}
                   onClick={() => setCount(c)}
                   disabled={loading}
                   style={{
-                    flex: 1,
-                    padding: '12px',
+                    padding: isMobile ? '16px' : '12px',
                     background: count === c ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                     border: count === c ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     color: count === c ? '#00aaff' : 'white',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '16px' : '14px',
                     fontWeight: 500,
                     cursor: loading ? 'not-allowed' : 'pointer',
                     opacity: loading ? 0.6 : 1,
+                    minHeight: '44px',
                   }}
                 >
                   {c}
@@ -459,23 +468,23 @@ export default function CuratePage() {
             <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
               Minimum Intellectual Rigor Score (0-10)
             </label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)', gap: '8px' }}>
               {[4.0, 5.0, 6.0, 7.0, 8.0].map((s) => (
                 <button
                   key={s}
                   onClick={() => setMinScore(s)}
                   disabled={loading}
                   style={{
-                    flex: 1,
-                    padding: '12px',
+                    padding: isMobile ? '16px' : '12px',
                     background: minScore === s ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                     border: minScore === s ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     color: minScore === s ? '#00aaff' : 'white',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '16px' : '14px',
                     fontWeight: 500,
                     cursor: loading ? 'not-allowed' : 'pointer',
                     opacity: loading ? 0.6 : 1,
+                    minHeight: '44px',
                   }}
                 >
                   {s}+
@@ -489,7 +498,7 @@ export default function CuratePage() {
             <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
               Time Range (how far back to search)
             </label>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '8px' }}>
               {[
                 { value: 'day', label: '1 Day' },
                 { value: 'week', label: '1 Week' },
@@ -503,17 +512,16 @@ export default function CuratePage() {
                   onClick={() => setTimeRange(t.value)}
                   disabled={loading}
                   style={{
-                    flex: '1 1 calc(33.333% - 8px)',
-                    minWidth: '120px',
-                    padding: '12px',
+                    padding: isMobile ? '16px' : '12px',
                     background: timeRange === t.value ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                     border: timeRange === t.value ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                     borderRadius: '8px',
                     color: timeRange === t.value ? '#00aaff' : 'white',
-                    fontSize: '14px',
+                    fontSize: isMobile ? '16px' : '14px',
                     fontWeight: 500,
                     cursor: loading ? 'not-allowed' : 'pointer',
                     opacity: loading ? 0.6 : 1,
+                    minHeight: '44px',
                   }}
                 >
                   {t.label}
