@@ -57,6 +57,15 @@ export default function EmailsPage() {
   const [composeBody, setComposeBody] = useState("");
   const [sending, setSending] = useState(false);
   const [emailViewMode, setEmailViewMode] = useState<"html" | "text">("html");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Load email view preference from localStorage
   useEffect(() => {
@@ -783,7 +792,15 @@ export default function EmailsPage() {
         </div>
       )}
 
-      <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "1400px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
+      <main style={{ 
+        paddingTop: isMobile ? "80px" : "136px",
+        paddingBottom: isMobile ? "80px" : "32px",
+        paddingLeft: isMobile ? "12px" : "24px",
+        paddingRight: isMobile ? "12px" : "24px",
+        minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
+        maxWidth: "1400px",
+        margin: "0 auto"
+      }}>
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

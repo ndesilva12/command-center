@@ -41,6 +41,15 @@ export default function MealsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [addingMealId, setAddingMealId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Mobile detection
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchMeals();
@@ -127,8 +136,16 @@ export default function MealsPage() {
       <BottomNav />
       <ToolNav currentToolId="meals" />
 
-      <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
-        <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 24px" }}>
+      <main style={{
+        paddingTop: isMobile ? "80px" : "136px",
+        paddingBottom: isMobile ? "80px" : "96px",
+        minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
+      }}>
+        <div style={{
+          maxWidth: "1400px",
+          margin: "0 auto",
+          padding: isMobile ? "0 12px" : "0 24px"
+        }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
             <div>

@@ -58,6 +58,15 @@ function MealPlanContent() {
   const [showMealSelector, setShowMealSelector] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   
   // Calculate next week's Monday
   const getNextWeekMonday = () => {
@@ -333,8 +342,16 @@ function MealPlanContent() {
       <BottomNav />
       <ToolNav currentToolId="meals" />
 
-      <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
-        <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 24px" }}>
+      <main style={{
+        paddingTop: isMobile ? "80px" : "136px",
+        paddingBottom: isMobile ? "80px" : "96px",
+        minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
+      }}>
+        <div style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: isMobile ? "0 12px" : "0 24px"
+        }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
             <div>
@@ -602,7 +619,7 @@ export default function MealPlanPage() {
         <TopNav />
         <BottomNav />
         <ToolNav currentToolId="meals" />
-        <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
+        <main style={{ paddingTop: "80px", paddingBottom: "80px", minHeight: "calc(100vh - 160px)" }}>
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <p style={{ color: "var(--foreground-muted)" }}>Loading...</p>
           </div>

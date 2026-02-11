@@ -24,6 +24,15 @@ export default function CalendarPage() {
   const [timeRange, setTimeRange] = useState<"today" | "week" | "month">("week");
   const [viewMode, setViewMode] = useState<"event" | "full">("event");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Mobile detection
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     // Load preferences from localStorage
@@ -428,7 +437,15 @@ export default function CalendarPage() {
       <BottomNav />
       <ToolNav currentToolId="calendar" />
 
-      <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "1400px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
+      <main style={{
+        paddingTop: isMobile ? "80px" : "136px",
+        paddingBottom: isMobile ? "80px" : "32px",
+        paddingLeft: isMobile ? "12px" : "24px",
+        paddingRight: isMobile ? "12px" : "24px",
+        minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
+        maxWidth: "1400px",
+        margin: "0 auto"
+      }}>
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

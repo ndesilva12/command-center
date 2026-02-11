@@ -45,6 +45,15 @@ export default function NotesPage() {
   const [editing, setEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [loadingChildren, setLoadingChildren] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Mobile detection
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchNotionTree();
@@ -389,9 +398,9 @@ export default function NotesPage() {
       <ToolNav currentToolId="notes" />
 
       <main style={{
-        paddingTop: "88px",
-        paddingBottom: "32px",
-        minHeight: "100vh",
+        paddingTop: isMobile ? "80px" : "88px",
+        paddingBottom: isMobile ? "80px" : "32px",
+        minHeight: `calc(100vh - ${isMobile ? "160px" : "120px"})`,
         display: "flex",
         gap: "0",
       }}>
