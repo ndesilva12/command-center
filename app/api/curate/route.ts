@@ -7,7 +7,7 @@ const execAsync = promisify(exec);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, source, count, minScore } = body;
+    const { topic, source, count, minScore, timeRange } = body;
 
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
       return NextResponse.json(
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
       '--topic', `"${topic.trim()}"`,
       '--count', String(count || 12),
       '--min-score', String(minScore || 5.0),
+      '--time-range', timeRange || 'month',
       '--mode', 'manual',
       '--triggered-by', 'cc_tool',
       '--output', 'json',

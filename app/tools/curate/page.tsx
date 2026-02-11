@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, Search, Filter, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, AlertCircle, ExternalLink } from "lucide-react";
+import { TopNav } from "@/components/navigation/TopNav";
+import { BottomNav } from "@/components/navigation/BottomNav";
+import { ToolNav } from "@/components/tools/ToolNav";
 
 interface ContentItem {
   title: string;
@@ -39,6 +42,7 @@ export default function CuratePage() {
   const [source, setSource] = useState<string>("mixed");
   const [count, setCount] = useState(12);
   const [minScore, setMinScore] = useState(5.0);
+  const [timeRange, setTimeRange] = useState<string>("month");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -88,7 +92,8 @@ export default function CuratePage() {
           topic: topic.trim(), 
           source: source === "mixed" ? null : source,
           count,
-          minScore
+          minScore,
+          timeRange
         }),
       });
 
@@ -323,16 +328,19 @@ export default function CuratePage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0a0e27',
-      paddingTop: '136px',
-      paddingBottom: '32px',
-      paddingLeft: '24px',
-      paddingRight: '24px',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <>
+      <TopNav />
+      <ToolNav currentToolId="curate" />
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0e27',
+        paddingTop: '136px',
+        paddingBottom: '32px',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
           <Sparkles size={48} style={{ color: '#00aaff' }} />
@@ -471,6 +479,44 @@ export default function CuratePage() {
                   }}
                 >
                   {s}+
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Time Range Selector */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+              Time Range (how far back to search)
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {[
+                { value: 'day', label: '1 Day' },
+                { value: 'week', label: '1 Week' },
+                { value: 'month', label: '1 Month' },
+                { value: 'year', label: '1 Year' },
+                { value: 'decade', label: '10 Years' },
+                { value: 'any', label: 'Any Time' },
+              ].map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setTimeRange(t.value)}
+                  disabled={loading}
+                  style={{
+                    flex: '1 1 calc(33.333% - 8px)',
+                    minWidth: '120px',
+                    padding: '12px',
+                    background: timeRange === t.value ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                    border: timeRange === t.value ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    color: timeRange === t.value ? '#00aaff' : 'white',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    opacity: loading ? 0.6 : 1,
+                  }}
+                >
+                  {t.label}
                 </button>
               ))}
             </div>
@@ -856,5 +902,7 @@ export default function CuratePage() {
         )}
       </div>
     </div>
+    <BottomNav />
+  </>
   );
 }

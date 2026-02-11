@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { TrendingUp, Search, Filter, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { TopNav } from "@/components/navigation/TopNav";
+import { BottomNav } from "@/components/navigation/BottomNav";
+import { ToolNav } from "@/components/tools/ToolNav";
 
 interface HistoryItem {
   id: string;
@@ -316,16 +319,19 @@ export default function L3DPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#0a0e27',
-      paddingTop: '136px',
-      paddingBottom: '32px',
-      paddingLeft: '24px',
-      paddingRight: '24px',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <>
+      <TopNav />
+      <ToolNav currentToolId="l3d" />
+      <div style={{
+        minHeight: '100vh',
+        background: '#0a0e27',
+        paddingTop: '136px',
+        paddingBottom: '32px',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
           <TrendingUp size={48} style={{ color: '#00aaff' }} />
@@ -806,5 +812,7 @@ export default function L3DPage() {
         )}
       </div>
     </div>
+    <BottomNav />
+  </>
   );
 }
