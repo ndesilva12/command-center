@@ -20,6 +20,14 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const fetchTrends = async () => {
     setRefreshing(true);
@@ -126,12 +134,12 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "20px",
+                padding: isMobile ? "6px 12px" : "8px 14px",
+                borderRadius: isMobile ? "16px" : "20px",
                 border: "1px solid var(--glass-border)",
                 background: "rgba(255, 255, 255, 0.03)",
                 color: "var(--foreground)",
-                fontSize: "13px",
+                fontSize: isMobile ? "12px" : "13px",
                 cursor: "pointer",
                 transition: "all 0.15s",
                 maxWidth: "200px",

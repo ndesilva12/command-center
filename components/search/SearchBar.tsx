@@ -102,13 +102,14 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "10px",
-              padding: isMobile ? "10px 18px" : "12px 20px",
-              borderRadius: "9999px",
+              gap: isMobile ? "8px" : "10px",
+              padding: isMobile ? "6px 14px" : "12px 20px",
+              borderRadius: isMobile ? "100px" : "50px",
               border: "1px solid var(--glass-border)",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
               flex: 1,
+              height: isMobile ? "40px" : "auto",
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
@@ -133,7 +134,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
                 border: "none",
                 outline: "none",
                 color: "var(--foreground)",
-                fontSize: "15px",
+                fontSize: isMobile ? "14px" : "15px",
                 fontWeight: 400,
               }}
             />
@@ -142,7 +143,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               type="submit"
               disabled={!query.trim()}
               style={{
-                padding: "6px",
+                padding: isMobile ? "4px" : "6px",
                 borderRadius: "50%",
                 border: "none",
                 background: query.trim() ? "rgba(0, 170, 255, 0.2)" : "transparent",
@@ -153,8 +154,8 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "32px",
-                height: "32px",
+                width: isMobile ? "28px" : "32px",
+                height: isMobile ? "28px" : "32px",
               }}
               onMouseEnter={(e) => {
                 if (query.trim()) {
@@ -167,7 +168,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
                 }
               }}
             >
-              <Search style={{ width: "18px", height: "18px" }} />
+              <Search style={{ width: isMobile ? "16px" : "18px", height: isMobile ? "16px" : "18px" }} />
             </button>
           </div>
 

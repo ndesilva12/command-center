@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Sparkles, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
@@ -142,7 +143,10 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
 
   if (!isOpen) return null;
 
-  return (
+  // Use portal to render at document body level (not as child of nav)
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       style={{
         position: "fixed",
@@ -291,6 +295,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
           }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
