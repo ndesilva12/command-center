@@ -92,24 +92,27 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 12px" : "0" }}>
+    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
       {/* Search Form */}
-      <form onSubmit={handleSearch} style={{ position: "relative" }}>
+      <form onSubmit={handleSearch} style={{ position: "relative", width: "100%" }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "12px", alignItems: isMobile ? "stretch" : "center" }}>
           {/* Search Input */}
           <div
-            className="glass"
+            className={isMobile ? "" : "glass"}
             style={{
               display: "flex",
               alignItems: "center",
               gap: isMobile ? "8px" : "10px",
-              padding: isMobile ? "6px 14px" : "12px 20px",
-              borderRadius: isMobile ? "100px" : "50px",
+              padding: isMobile ? "8px 16px" : "12px 20px",
+              borderRadius: isMobile ? "25px" : "50px",
               border: "1px solid var(--glass-border)",
+              background: isMobile ? "rgba(255, 255, 255, 0.05)" : undefined,
+              backdropFilter: isMobile ? "blur(12px)" : undefined,
+              WebkitBackdropFilter: isMobile ? "blur(12px)" : undefined,
               transition: "all 0.3s ease",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
               flex: 1,
-              height: isMobile ? "40px" : "auto",
+              width: isMobile ? "100%" : undefined,
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";

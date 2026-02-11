@@ -170,6 +170,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         style={{
           width: "100%",
           padding: "20px",
+          paddingTop: "calc(env(safe-area-inset-top) + 20px)",
           paddingBottom: "92px",
           flex: "0 0 auto",
         }}
