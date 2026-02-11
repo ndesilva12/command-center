@@ -95,7 +95,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
     <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative" }}>
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "12px" : "0" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "12px" : "0", alignItems: isMobile ? "stretch" : "center" }}>
           {/* Search Input */}
           <div
             className="glass"
@@ -164,15 +164,13 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
             >
               Search
             </button>
+
+            {!isMobile && <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />}
           </div>
 
-          {/* Source Selector - Separate row on mobile */}
-          {isMobile ? (
+          {/* Source Selector - Separate row on mobile only */}
+          {isMobile && (
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
-            </div>
-          ) : (
-            <div style={{ marginLeft: "12px" }}>
               <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
             </div>
           )}

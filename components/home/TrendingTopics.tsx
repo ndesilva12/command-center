@@ -112,15 +112,15 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "4px",
-              padding: "6px 14px",
-              borderRadius: "20px",
+              gap: "6px",
+              padding: "8px 18px",
+              borderRadius: "24px",
               border: "1px solid rgba(255, 255, 255, 0.1)",
               background: topic.source === "x"
                 ? "rgba(0, 170, 255, 0.08)"
                 : "rgba(167, 139, 250, 0.08)",
               color: "var(--foreground)",
-              fontSize: "13px",
+              fontSize: "15px",
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.2s",
@@ -140,7 +140,7 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
             }}
           >
-            <TrendingUp style={{ width: "12px", height: "12px" }} />
+            <TrendingUp style={{ width: "14px", height: "14px" }} />
             {topic.text}
           </button>
         ))}
