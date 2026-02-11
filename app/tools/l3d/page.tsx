@@ -1,260 +1,399 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp, RefreshCw, ChevronDown, ChevronRight, ExternalLink, Clock, Hash, MessageCircle, ThumbsUp, BarChart3 } from "lucide-react";
-import { TopNav } from "@/components/navigation/TopNav";
-import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
-
-interface L3DResults {
-  topic: string;
-  targetTool?: string;
-  queryType: string;
-  parsed: {
-    topic: string;
-    targetTool: string;
-    queryType: string;
-  };
-  learned: Array<{
-    title: string;
-    content: string;
-    sources?: string[];
-  }>;
-  keyPatterns: string[];
-  stats: {
-    reddit: { threads: number; upvotes: number; comments: number };
-    x: { posts: number; likes: number; reposts: number };
-    web: { pages: number };
-    topVoices: string[];
-  };
-  sources: {
-    reddit: Array<{
-      title: string;
-      url: string;
-      upvotes: number;
-      comments: number;
-      subreddit: string;
-    }>;
-    x: Array<{
-      author: string;
-      content: string;
-      url: string;
-      likes: number;
-      reposts: number;
-    }>;
-    web: Array<{
-      title: string;
-      url: string;
-      snippet: string;
-    }>;
-  };
-  invitation: string;
-  rawOutput?: string;
-}
+import { TrendingUp, Search, Filter, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 
 interface HistoryItem {
   id: string;
-  topic: string;
-  targetTool?: string;
+  query: string;
   mode: string;
   days: number;
-  queryType: string;
-  results: L3DResults;
-  createdAt: number;
+  status: 'running' | 'completed' | 'failed';
+  timestamp: number;
+  completed_at?: number;
+  results?: any;
+  error?: string;
 }
 
 export default function L3DPage() {
+  // Input state
   const [topic, setTopic] = useState("");
-  const [targetTool, setTargetTool] = useState("");
   const [mode, setMode] = useState<"quick" | "balanced" | "deep">("balanced");
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<L3DResults | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // History state
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [expandedSources, setExpandedSources] = useState<{ reddit: boolean; x: boolean; web: boolean }>({
-    reddit: false,
-    x: false,
-    web: false,
-  });
-  const [isMobile, setIsMobile] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [fullReportItem, setFullReportItem] = useState<HistoryItem | null>(null);
 
-  // Mobile detection
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Load history on mount
+  // Load history on mount and poll every 5 seconds
   useEffect(() => {
     loadHistory();
+    const interval = setInterval(loadHistory, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadHistory = async () => {
     try {
-      const response = await fetch('/api/l3d/history');
-      const data = await response.json();
-      setHistory(data.items || []);
+      const res = await fetch('/api/l3d/history');
+      const data = await res.json();
+      setHistory(data.history || []);
+      setHistoryLoading(false);
     } catch (err) {
       console.error('Failed to load history:', err);
+      setHistoryLoading(false);
     }
   };
 
-  const handleResearch = async () => {
+  const handleSearch = async () => {
     if (!topic.trim()) return;
-
+    
     setLoading(true);
-    setError(null);
-    setResults(null);
+    setError("");
+    setSuccess("");
 
     try {
-      const response = await fetch('/api/l3d', {
+      const res = await fetch('/api/l3d', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: topic.trim(),
-          targetTool: targetTool.trim() || undefined,
-          mode,
-          days,
-        }),
+        body: JSON.stringify({ topic: topic.trim(), mode, days }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Research failed');
+      if (res.ok) {
+        setSuccess(`Research started! Processing: "${topic.trim()}". Check history below for results.`);
+        setTopic('');
+        
+        // Reload history immediately to show the new "running" item
+        loadHistory();
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccess(""), 5000);
+      } else {
+        setError(data.error || 'Failed to start research');
       }
-
-      setResults(data.results);
-      loadHistory(); // Refresh history
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to execute research');
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadHistoryItem = (item: HistoryItem) => {
-    setTopic(item.topic);
-    setTargetTool(item.targetTool || "");
-    setMode(item.mode as any);
-    setDays(item.days);
-    setResults(item.results);
-    setError(null);
+  const filteredHistory = history.filter(item => {
+    if (statusFilter !== "all" && item.status !== statusFilter) {
+      return false;
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const itemQuery = item.query?.toLowerCase() || "";
+      const resultsStr = JSON.stringify(item.results || "").toLowerCase();
+      const errorStr = (item.error || "").toLowerCase();
+      
+      return itemQuery.includes(query) || resultsStr.includes(query) || errorStr.includes(query);
+    }
+    
+    return true;
+  });
+
+  const formatTimestamp = (timestamp: number) => {
+    if (!timestamp) return "Unknown";
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return "Unknown";
+      
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }).format(date);
+    } catch (error) {
+      return "Unknown";
+    }
   };
 
-  const toggleSource = (source: 'reddit' | 'x' | 'web') => {
-    setExpandedSources(prev => ({ ...prev, [source]: !prev[source] }));
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'running':
+        return <Clock size={16} className="animate-spin" style={{ color: '#3b82f6' }} />;
+      case 'completed':
+        return <CheckCircle size={16} style={{ color: '#10b981' }} />;
+      case 'failed':
+        return <XCircle size={16} style={{ color: '#ef4444' }} />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'running': return '#3b82f6';
+      case 'completed': return '#10b981';
+      case 'failed': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  const getSummary = (results: any) => {
+    if (!results) return "No results available";
+    
+    // Handle different result structures
+    if (results.learned && Array.isArray(results.learned) && results.learned.length > 0) {
+      const firstSection = results.learned[0];
+      if (firstSection.content) {
+        const text = firstSection.content;
+        return text.substring(0, 300) + (text.length > 300 ? '...' : '');
+      }
+    }
+    
+    if (results.summary) {
+      return results.summary.substring(0, 300) + (results.summary.length > 300 ? '...' : '');
+    }
+    
+    if (typeof results === 'string') {
+      return results.substring(0, 300) + (results.length > 300 ? '...' : '');
+    }
+    
+    // Fallback: stringify and truncate
+    const str = JSON.stringify(results);
+    return str.substring(0, 300) + (str.length > 300 ? '...' : '');
+  };
+
+  const renderFullResults = (results: any) => {
+    if (!results) return <div style={{ color: '#64748b' }}>No results available</div>;
+
+    // L3D specific structure
+    if (results.parsed || results.learned || results.keyPatterns) {
+      return (
+        <div>
+          {/* Parsed Intent */}
+          {results.parsed && (
+            <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(0, 170, 255, 0.1)', borderRadius: '8px', border: '1px solid rgba(0, 170, 255, 0.3)' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#00aaff', marginBottom: '8px' }}>Parsed Intent</h3>
+              <div style={{ fontSize: '13px', color: '#cbd5e1' }}>
+                <div><strong>Topic:</strong> {results.parsed.topic}</div>
+                {results.parsed.targetTool && <div><strong>Target Tool:</strong> {results.parsed.targetTool}</div>}
+                <div><strong>Query Type:</strong> {results.parsed.queryType}</div>
+              </div>
+            </div>
+          )}
+
+          {/* What I Learned */}
+          {results.learned && results.learned.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#3b82f6', marginBottom: '12px' }}>📚 What I Learned</h3>
+              {results.learned.map((section: any, idx: number) => (
+                <div key={idx} style={{ marginBottom: '16px', padding: '14px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#60a5fa', marginBottom: '8px' }}>{section.title}</h4>
+                  <div style={{ fontSize: '13px', color: '#cbd5e1', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>{section.content}</div>
+                  {section.sources && section.sources.length > 0 && (
+                    <div style={{ marginTop: '10px', fontSize: '11px', color: '#64748b' }}>
+                      Sources: {section.sources.join(', ')}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Key Patterns */}
+          {results.keyPatterns && results.keyPatterns.length > 0 && (
+            <div style={{ marginBottom: '24px', padding: '14px', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#a78bfa', marginBottom: '8px' }}>🔑 Key Patterns</h3>
+              <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                {results.keyPatterns.map((pattern: string, idx: number) => (
+                  <li key={idx} style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: '6px' }}>{pattern}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* Stats */}
+          {results.stats && (
+            <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(0, 0, 0, 0.3)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#00aaff', marginBottom: '12px' }}>📊 Stats</h3>
+              <div style={{ fontFamily: 'monospace', fontSize: '12px', color: '#cbd5e1', lineHeight: '1.8' }}>
+                {results.stats.reddit && (
+                  <div>├─ 🟠 Reddit: {results.stats.reddit.threads} threads │ {results.stats.reddit.upvotes} upvotes │ {results.stats.reddit.comments} comments</div>
+                )}
+                {results.stats.x && (
+                  <div>├─ 🔵 X: {results.stats.x.posts} posts │ {results.stats.x.likes} likes │ {results.stats.x.reposts} reposts</div>
+                )}
+                {results.stats.web && (
+                  <div>├─ 🌐 Web: {results.stats.web.pages} pages</div>
+                )}
+                {results.stats.topVoices && results.stats.topVoices.length > 0 && (
+                  <div>└─ 🗣️ Top voices: {results.stats.topVoices.join(', ')}</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Invitation */}
+          {results.invitation && (
+            <div style={{ marginBottom: '24px', padding: '14px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div style={{ fontSize: '13px', color: '#86efac', lineHeight: '1.6' }}>💬 {results.invitation}</div>
+            </div>
+          )}
+
+          {/* Sources */}
+          {results.sources && (
+            <div style={{ marginTop: '24px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#00aaff', marginBottom: '10px' }}>Sources</h3>
+              
+              {results.sources.reddit && results.sources.reddit.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '12px', color: '#fb923c', marginBottom: '8px' }}>🟠 Reddit ({results.sources.reddit.length})</h4>
+                  {results.sources.reddit.map((source: any, idx: number) => (
+                    <div key={idx} style={{ marginBottom: '8px', padding: '10px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', fontSize: '12px', textDecoration: 'none' }}>
+                        {source.title}
+                      </a>
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                        r/{source.subreddit} │ {source.upvotes} upvotes │ {source.comments} comments
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {results.sources.x && results.sources.x.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '8px' }}>🔵 X Posts ({results.sources.x.length})</h4>
+                  {results.sources.x.map((source: any, idx: number) => (
+                    <div key={idx} style={{ marginBottom: '8px', padding: '10px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      <div style={{ fontSize: '12px', color: '#cbd5e1', marginBottom: '6px' }}>{source.content}</div>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>
+                        @{source.author} │ {source.likes} likes │ {source.reposts} reposts
+                      </div>
+                      {source.url && (
+                        <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', fontSize: '11px', textDecoration: 'none' }}>
+                          View post →
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {results.sources.web && results.sources.web.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <h4 style={{ fontSize: '12px', color: '#10b981', marginBottom: '8px' }}>🌐 Web Pages ({results.sources.web.length})</h4>
+                  {results.sources.web.map((source: any, idx: number) => (
+                    <div key={idx} style={{ marginBottom: '8px', padding: '10px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '6px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa', fontSize: '12px', textDecoration: 'none' }}>
+                        {source.title}
+                      </a>
+                      {source.snippet && (
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>{source.snippet}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Fallback: Show as formatted JSON
+    return (
+      <div style={{ fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', color: '#94a3b8' }}>
+        {JSON.stringify(results, null, 2)}
+      </div>
+    );
   };
 
   return (
-    <>
-      <TopNav />
-      <ToolNav currentToolId="l3d" />
-
-      <main
-        style={{
-          paddingTop: isMobile ? "80px" : "136px",
-          paddingBottom: isMobile ? "80px" : "32px",
-          paddingLeft: isMobile ? "12px" : "24px",
-          paddingRight: isMobile ? "12px" : "24px",
-          minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
-          maxWidth: "1200px",
-          margin: "0 auto",
-        }}
-      >
+    <div style={{
+      minHeight: '100vh',
+      background: '#0a0e27',
+      paddingTop: '136px',
+      paddingBottom: '32px',
+      paddingLeft: '24px',
+      paddingRight: '24px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ marginBottom: "32px" }}>
-          <h1 style={{
-            fontSize: "32px",
-            fontWeight: 700,
-            marginBottom: "8px",
-            background: "linear-gradient(135deg, #00aaff, #00ddaa)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
+          <TrendingUp size={48} style={{ color: '#00aaff' }} />
+          <h1 style={{ 
+            fontSize: '48px', 
+            fontWeight: 'bold', 
+            color: 'white',
+            margin: 0,
           }}>
-            <TrendingUp style={{ width: "32px", height: "32px", color: "#00aaff" }} />
             L3D Research
           </h1>
-          <p style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: "16px" }}>
-            Research any topic from the last 30 days across Reddit, X, and the web
-          </p>
         </div>
+        
+        <p style={{ fontSize: '18px', color: '#94a3b8', marginBottom: '40px' }}>
+          Research any topic from the last 30 days across Reddit, X, and web
+        </p>
 
-        {/* Input Form */}
+        {/* Input Section */}
         <div style={{
-          background: "rgba(255, 255, 255, 0.03)",
-          padding: isMobile ? "16px" : "24px",
-          borderRadius: "12px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          marginBottom: "24px",
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '32px',
+          marginBottom: '24px',
         }}>
           {/* Topic Input */}
           <input
             type="text"
-            placeholder="What do you want to research? (e.g., 'best Claude Code skills', 'kanye west')"
+            placeholder="Enter topic to research recent trends..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleResearch()}
+            onKeyPress={(e) => e.key === 'Enter' && !loading && handleSearch()}
             disabled={loading}
             style={{
-              width: "100%",
-              padding: "16px",
-              fontSize: "16px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
-              color: "var(--foreground)",
-              marginBottom: "16px",
-              outline: "none",
-            }}
-          />
-
-          {/* Target Tool (Optional) */}
-          <input
-            type="text"
-            placeholder="Target tool (optional, e.g., 'Midjourney', 'ChatGPT')"
-            value={targetTool}
-            onChange={(e) => setTargetTool(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleResearch()}
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "12px 16px",
-              fontSize: "14px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
-              color: "var(--foreground)",
-              marginBottom: "16px",
-              outline: "none",
+              width: '100%',
+              padding: '20px 24px',
+              fontSize: '16px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(0, 170, 255, 0.3)',
+              borderRadius: '12px',
+              color: 'white',
+              outline: 'none',
+              marginBottom: '16px',
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'text',
             }}
           />
 
           {/* Mode Selector */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             {(["quick", "balanced", "deep"] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 disabled={loading}
                 style={{
-                  flex: isMobile ? "1 1 calc(33.33% - 6px)" : 1,
-                  padding: "10px",
-                  background: mode === m ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                  border: mode === m ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  color: mode === m ? "#00aaff" : "var(--foreground)",
-                  fontSize: "14px",
+                  flex: 1,
+                  padding: '12px',
+                  background: mode === m ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  border: mode === m ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: mode === m ? '#00aaff' : 'white',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  textTransform: "capitalize",
-                  opacity: loading ? 0.5 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  textTransform: 'capitalize',
+                  opacity: loading ? 0.6 : 1,
                 }}
               >
                 {m}
@@ -263,23 +402,23 @@ export default function L3DPage() {
           </div>
 
           {/* Days Selector */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             {[7, 14, 30, 60].map((d) => (
               <button
                 key={d}
                 onClick={() => setDays(d)}
                 disabled={loading}
                 style={{
-                  flex: isMobile ? "1 1 calc(25% - 6px)" : 1,
-                  padding: "10px",
-                  background: days === d ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.05)",
-                  border: days === d ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  color: days === d ? "#00aaff" : "var(--foreground)",
-                  fontSize: "14px",
+                  flex: 1,
+                  padding: '12px',
+                  background: days === d ? 'rgba(0, 170, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  border: days === d ? '1px solid rgba(0, 170, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: days === d ? '#00aaff' : 'white',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  opacity: loading ? 0.5 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1,
                 }}
               >
                 {d} days
@@ -289,485 +428,383 @@ export default function L3DPage() {
 
           {/* Research Button */}
           <button
-            onClick={handleResearch}
+            onClick={handleSearch}
             disabled={loading || !topic.trim()}
             style={{
-              width: "100%",
-              padding: "16px",
-              background: loading || !topic.trim()
-                ? "rgba(0, 170, 255, 0.3)"
-                : "linear-gradient(135deg, #00aaff, #0088cc)",
-              border: "none",
-              borderRadius: "8px",
-              color: "white",
-              fontSize: "16px",
+              width: '100%',
+              padding: '16px',
+              background: loading || !topic.trim() 
+                ? 'rgba(0, 170, 255, 0.5)' 
+                : 'linear-gradient(135deg, #00aaff, #0088cc)',
+              border: 'none',
+              borderRadius: '12px',
+              color: 'white',
+              fontSize: '16px',
               fontWeight: 600,
-              cursor: loading || !topic.trim() ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
+              cursor: loading || !topic.trim() ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
             }}
           >
-            {loading ? (
-              <>
-                <RefreshCw style={{ width: "20px", height: "20px", animation: "spin 1s linear infinite" }} />
-                Researching... (2-8 minutes)
-              </>
-            ) : (
-              <>
-                <TrendingUp style={{ width: "20px", height: "20px" }} />
-                Research
-              </>
-            )}
+            <TrendingUp size={20} />
+            {loading ? 'Researching...' : 'Research'}
           </button>
         </div>
 
-        {/* Error */}
+        {/* Status Messages */}
         {error && (
           <div style={{
-            padding: "16px",
-            background: "rgba(255, 0, 0, 0.1)",
-            border: "1px solid rgba(255, 0, 0, 0.3)",
-            borderRadius: "8px",
-            color: "#ff6b6b",
-            marginBottom: "24px",
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
           }}>
-            {error}
+            <AlertCircle size={20} style={{ color: '#fca5a5', flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ color: '#fca5a5', fontSize: '14px' }}>
+              {error}
+            </div>
           </div>
         )}
 
-        {/* Results */}
-        {results && (
-          <div style={{ marginBottom: "32px" }}>
-            {/* Parsed Intent */}
-            <div style={{
-              background: "rgba(255, 255, 255, 0.03)",
-              padding: isMobile ? "16px" : "24px",
-              borderRadius: "12px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              marginBottom: "16px",
+        {success && (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '24px',
+            color: '#86efac',
+            fontSize: '14px',
+          }}>
+            ✓ {success}
+          </div>
+        )}
+
+        {/* History Section */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '16px',
+          padding: '32px',
+        }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: 'white',
+              marginBottom: '8px',
             }}>
-              <h2 style={{ fontSize: "18px", fontWeight: 600, marginBottom: "12px", color: "#00aaff" }}>
-                Research Summary
-              </h2>
-              <div style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.8)", lineHeight: "1.6" }}>
-                <p><strong>Topic:</strong> {results.parsed.topic}</p>
-                {results.parsed.targetTool && <p><strong>Target Tool:</strong> {results.parsed.targetTool}</p>}
-                <p><strong>Query Type:</strong> {results.queryType}</p>
-              </div>
+              History
+            </h2>
+            <p style={{ fontSize: '14px', color: '#94a3b8' }}>
+              Past L3D searches and results
+            </p>
+          </div>
+
+          {/* Search + Filter Row */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            marginBottom: '20px',
+            flexWrap: 'wrap',
+          }}>
+            <div style={{ flex: '1 1 300px', position: 'relative' }}>
+              <Search size={18} style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#64748b',
+              }} />
+              <input
+                type="text"
+                placeholder="Search history..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px 10px 44px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
             </div>
 
-            {/* What I Learned */}
-            {results.learned && results.learned.length > 0 && (
-              <div style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                padding: isMobile ? "16px" : "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                marginBottom: "16px",
-              }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "#00aaff" }}>
-                  📚 What I Learned
-                </h2>
-                {results.learned.map((section, idx) => (
-                  <div key={idx} style={{ marginBottom: idx < results.learned.length - 1 ? "20px" : "0" }}>
-                    <h3 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "8px", color: "rgba(255, 255, 255, 0.9)" }}>
-                      {section.title}
-                    </h3>
-                    <p style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
-                      {section.content}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Key Patterns */}
-            {results.keyPatterns && results.keyPatterns.length > 0 && (
-              <div style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                padding: isMobile ? "16px" : "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                marginBottom: "16px",
-              }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "#00aaff" }}>
-                  🔑 Key Patterns
-                </h2>
-                <ol style={{ paddingLeft: "20px", margin: 0 }}>
-                  {results.keyPatterns.map((pattern, idx) => (
-                    <li key={idx} style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)", lineHeight: "1.6", marginBottom: "8px" }}>
-                      {pattern}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
-
-            {/* Stats */}
-            {results.stats && (
-              <div style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                padding: isMobile ? "16px" : "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                marginBottom: "16px",
-              }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "#00aaff" }}>
-                  📊 Stats
-                </h2>
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "16px", marginBottom: "16px" }}>
-                  {/* Reddit */}
-                  <div style={{
-                    background: "rgba(255, 255, 255, 0.05)",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}>
-                    <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#ff4500" }}>Reddit</div>
-                    <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.7)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                        <Hash style={{ width: "14px", height: "14px" }} />
-                        {results.stats.reddit.threads} threads
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                        <ThumbsUp style={{ width: "14px", height: "14px" }} />
-                        {results.stats.reddit.upvotes} upvotes
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <MessageCircle style={{ width: "14px", height: "14px" }} />
-                        {results.stats.reddit.comments} comments
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* X */}
-                  <div style={{
-                    background: "rgba(255, 255, 255, 0.05)",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}>
-                    <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#1da1f2" }}>X (Twitter)</div>
-                    <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.7)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                        <Hash style={{ width: "14px", height: "14px" }} />
-                        {results.stats.x.posts} posts
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                        <ThumbsUp style={{ width: "14px", height: "14px" }} />
-                        {results.stats.x.likes} likes
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <RefreshCw style={{ width: "14px", height: "14px" }} />
-                        {results.stats.x.reposts} reposts
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Web */}
-                  <div style={{
-                    background: "rgba(255, 255, 255, 0.05)",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}>
-                    <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#00aaff" }}>Web</div>
-                    <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.7)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <BarChart3 style={{ width: "14px", height: "14px" }} />
-                        {results.stats.web.pages} pages
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Top Voices */}
-                {results.stats.topVoices && results.stats.topVoices.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "rgba(255, 255, 255, 0.9)" }}>
-                      Top Voices
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                      {results.stats.topVoices.map((voice, idx) => (
-                        <span key={idx} style={{
-                          background: "rgba(0, 170, 255, 0.15)",
-                          border: "1px solid rgba(0, 170, 255, 0.3)",
-                          borderRadius: "6px",
-                          padding: "4px 12px",
-                          fontSize: "13px",
-                          color: "#00aaff",
-                        }}>
-                          {voice}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Invitation */}
-            {results.invitation && (
-              <div style={{
-                background: "rgba(0, 170, 255, 0.1)",
-                padding: isMobile ? "16px" : "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(0, 170, 255, 0.3)",
-                marginBottom: "16px",
-              }}>
-                <div style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.8)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
-                  {results.invitation}
-                </div>
-              </div>
-            )}
-
-            {/* Sources (Expandable) */}
-            {results.sources && (
-              <div style={{
-                background: "rgba(255, 255, 255, 0.03)",
-                padding: isMobile ? "16px" : "24px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-              }}>
-                <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "#00aaff" }}>
-                  Sources
-                </h2>
-
-                {/* Reddit Sources */}
-                {results.sources.reddit && results.sources.reddit.length > 0 && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <button
-                      onClick={() => toggleSource('reddit')}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "12px",
-                        background: "rgba(255, 69, 0, 0.1)",
-                        border: "1px solid rgba(255, 69, 0, 0.3)",
-                        borderRadius: "8px",
-                        color: "#ff4500",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span>Reddit Sources ({results.sources.reddit.length})</span>
-                      {expandedSources.reddit ? <ChevronDown style={{ width: "16px", height: "16px" }} /> : <ChevronRight style={{ width: "16px", height: "16px" }} />}
-                    </button>
-                    {expandedSources.reddit && (
-                      <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                        {results.sources.reddit.map((source, idx) => (
-                          <a
-                            key={idx}
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: "block",
-                              padding: "12px",
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              borderRadius: "6px",
-                              textDecoration: "none",
-                              color: "inherit",
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "start", gap: "8px" }}>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "4px", color: "rgba(255, 255, 255, 0.9)" }}>
-                                  {source.title}
-                                </div>
-                                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)" }}>
-                                  r/{source.subreddit} • ↑{source.upvotes} • 💬{source.comments}
-                                </div>
-                              </div>
-                              <ExternalLink style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.4)", flexShrink: 0 }} />
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* X Posts */}
-                {results.sources.x && results.sources.x.length > 0 && (
-                  <div style={{ marginBottom: "16px" }}>
-                    <button
-                      onClick={() => toggleSource('x')}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "12px",
-                        background: "rgba(29, 161, 242, 0.1)",
-                        border: "1px solid rgba(29, 161, 242, 0.3)",
-                        borderRadius: "8px",
-                        color: "#1da1f2",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span>X Posts ({results.sources.x.length})</span>
-                      {expandedSources.x ? <ChevronDown style={{ width: "16px", height: "16px" }} /> : <ChevronRight style={{ width: "16px", height: "16px" }} />}
-                    </button>
-                    {expandedSources.x && (
-                      <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                        {results.sources.x.map((source, idx) => (
-                          <a
-                            key={idx}
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: "block",
-                              padding: "12px",
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              borderRadius: "6px",
-                              textDecoration: "none",
-                              color: "inherit",
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "start", gap: "8px" }}>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: "13px", fontWeight: 500, marginBottom: "4px", color: "#1da1f2" }}>
-                                  {source.author}
-                                </div>
-                                <div style={{ fontSize: "13px", marginBottom: "4px", color: "rgba(255, 255, 255, 0.8)", lineHeight: "1.4" }}>
-                                  {source.content}
-                                </div>
-                                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)" }}>
-                                  ♥{source.likes} • ↻{source.reposts}
-                                </div>
-                              </div>
-                              <ExternalLink style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.4)", flexShrink: 0 }} />
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Web Pages */}
-                {results.sources.web && results.sources.web.length > 0 && (
-                  <div>
-                    <button
-                      onClick={() => toggleSource('web')}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "12px",
-                        background: "rgba(0, 170, 255, 0.1)",
-                        border: "1px solid rgba(0, 170, 255, 0.3)",
-                        borderRadius: "8px",
-                        color: "#00aaff",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span>Web Pages ({results.sources.web.length})</span>
-                      {expandedSources.web ? <ChevronDown style={{ width: "16px", height: "16px" }} /> : <ChevronRight style={{ width: "16px", height: "16px" }} />}
-                    </button>
-                    {expandedSources.web && (
-                      <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                        {results.sources.web.map((source, idx) => (
-                          <a
-                            key={idx}
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: "block",
-                              padding: "12px",
-                              background: "rgba(255, 255, 255, 0.05)",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              borderRadius: "6px",
-                              textDecoration: "none",
-                              color: "inherit",
-                            }}
-                          >
-                            <div style={{ display: "flex", alignItems: "start", gap: "8px" }}>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "4px", color: "rgba(255, 255, 255, 0.9)" }}>
-                                  {source.title}
-                                </div>
-                                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)", lineHeight: "1.4" }}>
-                                  {source.snippet}
-                                </div>
-                              </div>
-                              <ExternalLink style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.4)", flexShrink: 0 }} />
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+            <div style={{ position: 'relative' }}>
+              <Filter size={18} style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#64748b',
+                pointerEvents: 'none',
+              }} />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={{
+                  padding: '10px 40px 10px 44px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+              >
+                <option value="all">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="running">Running</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
           </div>
-        )}
 
-        {/* History */}
-        {history.length > 0 && (
-          <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            padding: isMobile ? "16px" : "24px",
-            borderRadius: "12px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-          }}>
-            <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "#00aaff" }}>
-              <Clock style={{ width: "20px", height: "20px", display: "inline", marginRight: "8px" }} />
-              Recent Researches
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {history.slice(0, 10).map((item) => (
-                <button
+          {/* History Items */}
+          {historyLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              Loading history...
+            </div>
+          ) : filteredHistory.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              No history found
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {filteredHistory.map((item) => (
+                <div
                   key={item.id}
-                  onClick={() => loadHistoryItem(item)}
                   style={{
-                    width: "100%",
-                    padding: "12px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "8px",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    color: "inherit",
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ fontSize: "14px", fontWeight: 500, marginBottom: "4px", color: "rgba(255, 255, 255, 0.9)" }}>
-                    {item.topic}
+                  {/* Collapsed View */}
+                  <div
+                    style={{
+                      padding: '14px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                  >
+                    <div style={{ flexShrink: 0 }}>
+                      {getStatusIcon(item.status)}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: 'white',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {item.query}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      flexShrink: 0,
+                    }}>
+                      {formatTimestamp(item.timestamp)}
+                    </div>
+
+                    <div style={{
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      background: `${getStatusColor(item.status)}20`,
+                      color: getStatusColor(item.status),
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      textTransform: 'capitalize',
+                      flexShrink: 0,
+                    }}>
+                      {item.status}
+                    </div>
+
+                    <div style={{ flexShrink: 0, color: '#64748b' }}>
+                      {expandedId === item.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </div>
                   </div>
-                  <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)" }}>
-                    {item.queryType} • {item.mode} • {item.days} days • {new Date(item.createdAt).toLocaleDateString()}
-                  </div>
-                </button>
+
+                  {/* Expanded View */}
+                  {expandedId === item.id && (
+                    <div style={{
+                      padding: '16px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                      background: 'rgba(0, 0, 0, 0.2)',
+                    }}>
+                      {item.status === 'failed' && item.error && (
+                        <div style={{
+                          padding: '12px',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: '6px',
+                          color: '#fca5a5',
+                          fontSize: '13px',
+                          marginBottom: '12px',
+                        }}>
+                          <strong>Error:</strong> {item.error}
+                        </div>
+                      )}
+
+                      {item.status === 'completed' && item.results && (
+                        <div>
+                          <div style={{
+                            fontSize: '13px',
+                            color: '#cbd5e1',
+                            lineHeight: '1.6',
+                            marginBottom: '12px',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            background: 'rgba(0, 0, 0, 0.2)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                          }}>
+                            {getSummary(item.results)}
+                          </div>
+                          <button
+                            onClick={() => setFullReportItem(item)}
+                            style={{
+                              padding: '8px 16px',
+                              background: 'linear-gradient(135deg, #00aaff, #0088cc)',
+                              border: 'none',
+                              borderRadius: '6px',
+                              color: 'white',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            View Full Report →
+                          </button>
+                        </div>
+                      )}
+
+                      {item.status === 'running' && (
+                        <div style={{
+                          textAlign: 'center',
+                          padding: '20px',
+                          color: '#64748b',
+                        }}>
+                          Processing... check back in a moment
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Full Report Modal */}
+        {fullReportItem && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '20px',
+            }}
+            onClick={() => setFullReportItem(null)}
+          >
+            <div
+              style={{
+                background: 'rgba(30, 41, 59, 0.95)',
+                borderRadius: '16px',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '32px',
+                backdropFilter: 'blur(20px)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '24px',
+              }}>
+                <div>
+                  <h2 style={{
+                    fontSize: '24px',
+                    fontWeight: '700',
+                    color: 'white',
+                    margin: 0,
+                    marginBottom: '4px',
+                  }}>
+                    Full Report
+                  </h2>
+                  <p style={{
+                    fontSize: '13px',
+                    color: '#94a3b8',
+                    margin: 0,
+                  }}>
+                    {fullReportItem.query}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFullReportItem(null)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontSize: '20px',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{
+                fontSize: '14px',
+                color: '#cbd5e1',
+                lineHeight: '1.8',
+                maxHeight: '60vh',
+                overflowY: 'auto',
+              }}>
+                {renderFullResults(fullReportItem.results)}
+              </div>
             </div>
           </div>
         )}
-      </main>
-
-      <style jsx>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
-      <BottomNav />
-    </>
+      </div>
+    </div>
   );
 }
