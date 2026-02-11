@@ -84,3 +84,33 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 170, 255, 0.7);
 }
+
+/* Glass theme styles */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 170, 255, 0.3);
+}
+
+.card {
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+}
+
+/* CSS variables for glass theme */
+:root {
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --foreground: rgb(255, 255, 255);
+  --muted: rgba(255, 255, 255, 0.6);
+}
