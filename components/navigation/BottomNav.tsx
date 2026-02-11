@@ -2,10 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Mail, Calendar, Users, Settings } from "lucide-react";
+import { useState } from "react";
+import { Home, Sparkles, Settings, Grid3X3 } from "lucide-react";
+import { ToolGridOverlay } from "@/components/mobile/ToolGridOverlay";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [showToolGrid, setShowToolGrid] = useState(false);
 
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -32,18 +35,50 @@ export function BottomNav() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
+          gridTemplateColumns: "repeat(4, 1fr)",
           height: "100%",
           maxWidth: "600px",
           margin: "0 auto",
         }}
       >
         <NavItem href="/" icon={Home} label="Home" active={isActive("/")} />
-        <NavItem href="/tools/emails" icon={Mail} label="Email" active={isActive("/tools/emails")} />
-        <NavItem href="/tools/calendar" icon={Calendar} label="Calendar" active={isActive("/tools/calendar")} />
-        <NavItem href="/tools/people" icon={Users} label="People" active={isActive("/tools/people")} />
+        <NavItem href="/jimmy" icon={Sparkles} label="Jimmy" active={isActive("/jimmy")} />
         <NavItem href="/settings" icon={Settings} label="Settings" active={isActive("/settings")} />
+        <button
+          onClick={() => setShowToolGrid(true)}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "4px",
+            color: "var(--muted)",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.2s",
+            padding: "8px",
+          }}
+        >
+          <Grid3X3
+            style={{
+              width: "24px",
+              height: "24px",
+              strokeWidth: 2,
+            }}
+          />
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+            }}
+          >
+            Tools
+          </span>
+        </button>
       </div>
+
+      <ToolGridOverlay isOpen={showToolGrid} onClose={() => setShowToolGrid(false)} />
 
       <style jsx>{`
         @media (max-width: 640px) {

@@ -3,9 +3,8 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Home, Search, Settings, Sparkles, LogOut, Shield, Grid3X3 } from "lucide-react";
+import { Home, Search, Settings, Sparkles, LogOut } from "lucide-react";
 import { UniversalSearch } from "@/components/search/UniversalSearch";
-import { ToolGridOverlay } from "@/components/mobile/ToolGridOverlay";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -14,7 +13,6 @@ export function TopNav() {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const [showUniversalSearch, setShowUniversalSearch] = useState(false);
-  const [showToolGrid, setShowToolGrid] = useState(false);
   const { user, userData, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -77,91 +75,60 @@ export function TopNav() {
             justifyContent: "space-between",
           }}
         >
-          {/* Left Side - Search Icon + Command Center Text */}
+          {/* Left Side - Command Center Text (Desktop) or Empty (Mobile) */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <button
-              onClick={() => setShowUniversalSearch(true)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "40px",
-                height: "40px",
-                borderRadius: "8px",
-                background: "transparent",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                color: "var(--foreground-muted)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-                e.currentTarget.style.color = "#00aaff";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                e.currentTarget.style.color = "var(--foreground-muted)";
-              }}
-            >
-              <Search style={{ width: "18px", height: "18px" }} />
-            </button>
-            
-            {/* Tool Grid Button - Mobile Only */}
-            {isMobile && (
-              <button
-                onClick={() => setShowToolGrid(true)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "8px",
-                  background: "transparent",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  color: "var(--foreground-muted)",
-                }}
-                onTouchStart={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                  e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-                  e.currentTarget.style.color = "#00aaff";
-                }}
-                onTouchEnd={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.color = "var(--foreground-muted)";
-                }}
-              >
-                <Grid3X3 style={{ width: "18px", height: "18px" }} />
-              </button>
-            )}
-            
             {!isMobile && (
-              <Link
-                href="/"
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  color: "var(--foreground)",
-                  letterSpacing: "0.02em",
-                  fontFamily: "var(--font-orbitron, 'Orbitron', system-ui)",
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#00aaff";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--foreground)";
-                }}
-              >
-                Command Center
-              </Link>
+              <>
+                <button
+                  onClick={() => setShowUniversalSearch(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    color: "var(--foreground-muted)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
+                    e.currentTarget.style.color = "#00aaff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.color = "var(--foreground-muted)";
+                  }}
+                >
+                  <Search style={{ width: "18px", height: "18px" }} />
+                </button>
+                <Link
+                  href="/"
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 700,
+                    color: "var(--foreground)",
+                    letterSpacing: "0.02em",
+                    fontFamily: "var(--font-orbitron, 'Orbitron', system-ui)",
+                    textDecoration: "none",
+                    transition: "all 0.2s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#00aaff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "var(--foreground)";
+                  }}
+                >
+                  Command Center
+                </Link>
+              </>
             )}
           </div>
 
@@ -218,14 +185,6 @@ export function TopNav() {
         isOpen={showUniversalSearch}
         onClose={() => setShowUniversalSearch(false)}
       />
-
-      {/* Tool Grid Overlay - Mobile Only */}
-      {isMobile && (
-        <ToolGridOverlay
-          isOpen={showToolGrid}
-          onClose={() => setShowToolGrid(false)}
-        />
-      )}
     </>
   );
 }
