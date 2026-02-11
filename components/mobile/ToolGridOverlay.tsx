@@ -146,11 +146,15 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
     <div
       style={{
         position: "fixed",
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
         zIndex: 9999,
         display: "flex",
         flexDirection: "column",
-        paddingBottom: "72px", // Space for bottom nav
       }}
       onClick={onClose}
     >
@@ -158,7 +162,10 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
       <div
         style={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           backgroundColor: "rgba(0, 0, 0, 0.85)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
@@ -173,6 +180,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
           display: "flex",
           flexDirection: "column",
           padding: "20px",
+          paddingBottom: "92px", // Space for bottom nav (72px + 20px)
           overflowY: "auto",
           animation: "slideUp 0.25s ease-out",
         }}
@@ -226,7 +234,6 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
             gap: "16px",
-            paddingBottom: "80px", // Space for bottom nav
           }}
         >
           {tools.map((tool) => {
