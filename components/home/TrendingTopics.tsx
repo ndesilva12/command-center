@@ -12,6 +12,14 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchTrending();
@@ -71,7 +79,7 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
   // Show loading spinner briefly (improves perceived performance)
   if (loading) {
     return (
-      <div style={{ marginBottom: "32px", display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
         <Loader2 
           style={{ 
             width: "20px", 
@@ -96,12 +104,12 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
   }
 
   return (
-    <div style={{ marginBottom: "32px" }}>
+    <div>
       <div style={{
         display: "flex",
         flexWrap: "wrap",
         justifyContent: "center",
-        gap: "8px",
+        gap: isMobile ? "6px" : "8px",
         maxWidth: "900px",
         margin: "0 auto"
       }}>
@@ -112,15 +120,15 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
-              padding: "8px 18px",
+              gap: isMobile ? "4px" : "6px",
+              padding: isMobile ? "6px 12px" : "8px 18px",
               borderRadius: "24px",
               border: "1px solid rgba(255, 255, 255, 0.1)",
               background: topic.source === "x"
                 ? "rgba(0, 170, 255, 0.08)"
                 : "rgba(167, 139, 250, 0.08)",
               color: "var(--foreground)",
-              fontSize: "15px",
+              fontSize: isMobile ? "13px" : "15px",
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.2s",
@@ -140,7 +148,7 @@ export function TrendingTopics({ onTagClick }: { onTagClick: (query: string) => 
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
             }}
           >
-            <TrendingUp style={{ width: "14px", height: "14px" }} />
+            <TrendingUp style={{ width: isMobile ? "12px" : "14px", height: isMobile ? "12px" : "14px" }} />
             {topic.text}
           </button>
         ))}

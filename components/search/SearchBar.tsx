@@ -92,19 +92,19 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
+    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 12px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative" }}>
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "12px" : "0", alignItems: isMobile ? "stretch" : "center" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "0", alignItems: isMobile ? "stretch" : "center" }}>
           {/* Search Input */}
           <div
             className="glass"
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "12px",
-              padding: isMobile ? "12px 16px" : "14px 20px",
-              borderRadius: isMobile ? "16px" : "50px",
+              gap: "10px",
+              padding: isMobile ? "10px 16px" : "14px 20px",
+              borderRadius: "50px",
               border: "1px solid var(--glass-border)",
               transition: "all 0.3s ease",
               boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
@@ -119,51 +119,53 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
             }}
           >
-            <Search style={{ width: "20px", height: "20px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+            <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
 
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onFocus={() => setShowRecent(true)}
-              placeholder="Search anything..."
+              placeholder={isMobile ? "Search..." : "Search anything..."}
               style={{
                 flex: 1,
                 background: "transparent",
                 border: "none",
                 outline: "none",
                 color: "var(--foreground)",
-                fontSize: "16px",
+                fontSize: "15px",
                 fontWeight: 400,
               }}
             />
 
-            <button
-              type="submit"
-              disabled={!query.trim()}
-              style={{
-                padding: "0 8px",
-                border: "none",
-                background: "transparent",
-                color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: query.trim() ? "pointer" : "not-allowed",
-                transition: "all 0.3s ease",
-                textDecoration: "none",
-                flexShrink: 0,
-              }}
-              onMouseEnter={(e) => {
-                if (query.trim()) {
-                  e.currentTarget.style.textDecoration = "underline";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.textDecoration = "none";
-              }}
-            >
-              Search
-            </button>
+            {!isMobile && (
+              <button
+                type="submit"
+                disabled={!query.trim()}
+                style={{
+                  padding: "0 8px",
+                  border: "none",
+                  background: "transparent",
+                  color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: query.trim() ? "pointer" : "not-allowed",
+                  transition: "all 0.3s ease",
+                  textDecoration: "none",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  if (query.trim()) {
+                    e.currentTarget.style.textDecoration = "underline";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.textDecoration = "none";
+                }}
+              >
+                Search
+              </button>
+            )}
 
             {!isMobile && <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />}
           </div>

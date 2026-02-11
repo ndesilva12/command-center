@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 
 export function DigitalClock() {
   const [time, setTime] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -34,21 +42,20 @@ export function DigitalClock() {
   return (
     <div style={{
       textAlign: "center",
-      marginBottom: "40px"
     }}>
       <div style={{
-        fontSize: "64px",
+        fontSize: isMobile ? "48px" : "64px",
         fontWeight: 700,
         fontFamily: "'Orbitron', monospace",
         color: "var(--foreground)",
         letterSpacing: "0.05em",
-        marginBottom: "8px",
+        marginBottom: isMobile ? "6px" : "8px",
         fontVariantNumeric: "tabular-nums"
       }}>
         {formatTime(time)}
       </div>
       <div style={{
-        fontSize: "16px",
+        fontSize: isMobile ? "14px" : "16px",
         color: "var(--foreground-muted)",
         fontWeight: 400
       }}>

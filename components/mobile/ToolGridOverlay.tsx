@@ -150,6 +150,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         zIndex: 9999,
         display: "flex",
         flexDirection: "column",
+        paddingBottom: "72px", // Space for bottom nav
       }}
       onClick={onClose}
     >
@@ -158,9 +159,9 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         style={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          backgroundColor: "rgba(0, 0, 0, 0.85)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
         }}
       />
 
@@ -173,7 +174,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
           flexDirection: "column",
           padding: "20px",
           overflowY: "auto",
-          animation: "slideUp 0.2s ease-out",
+          animation: "slideUp 0.25s ease-out",
         }}
         onClick={(e) => e.stopPropagation()}
       >
