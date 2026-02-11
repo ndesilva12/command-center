@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { customizations } = body;
+    const { customizations, cleanupOldTools } = body;
 
     // Validate customizations structure
     for (const [toolId, config] of Object.entries(customizations)) {
@@ -58,29 +58,41 @@ export async function POST(request: Request) {
       }
     }
 
-    // Get existing settings and merge
     const docRef = adminDb.collection('user-settings').doc(DEFAULT_USER_ID);
-    const existingDoc = await docRef.get();
-    const existingCustomizations = existingDoc.exists 
-      ? (existingDoc.data()?.toolCustomizations || {})
-      : {};
+    
+    if (cleanupOldTools) {
+      // Replace entire customizations object (cleanup mode)
+      await docRef.set(
+        {
+          toolCustomizations: customizations,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } else {
+      // Get existing settings and merge (backward compatibility)
+      const existingDoc = await docRef.get();
+      const existingCustomizations = existingDoc.exists 
+        ? (existingDoc.data()?.toolCustomizations || {})
+        : {};
 
-    // Merge new customizations with existing ones (preserving fields)
-    const mergedCustomizations: Record<string, any> = { ...existingCustomizations };
-    for (const [toolId, config] of Object.entries(customizations)) {
-      mergedCustomizations[toolId] = {
-        ...(existingCustomizations[toolId] || {}),
-        ...(config as Record<string, any>),
-      };
+      // Merge new customizations with existing ones (preserving fields)
+      const mergedCustomizations: Record<string, any> = { ...existingCustomizations };
+      for (const [toolId, config] of Object.entries(customizations)) {
+        mergedCustomizations[toolId] = {
+          ...(existingCustomizations[toolId] || {}),
+          ...(config as Record<string, any>),
+        };
+      }
+
+      await docRef.set(
+        {
+          toolCustomizations: mergedCustomizations,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
     }
-
-    await docRef.set(
-      {
-        toolCustomizations: mergedCustomizations,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

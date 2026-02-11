@@ -150,16 +150,30 @@ export function ToolCustomization() {
       const res = await fetch('/api/settings/tools');
       if (res.ok) {
         const data = await res.json();
-        setCustomizations(data.customizations || {});
+        
+        // Filter customizations to ONLY include tools that exist in DEFAULT_TOOLS
+        const validToolIds = new Set(DEFAULT_TOOLS.map(t => t.id));
+        const filteredCustomizations: Record<string, ToolCustomization> = {};
+        
+        for (const [toolId, customization] of Object.entries(data.customizations || {})) {
+          if (validToolIds.has(toolId)) {
+            filteredCustomizations[toolId] = customization as ToolCustomization;
+          }
+        }
+        
+        setCustomizations(filteredCustomizations);
 
         // Apply saved order if available
-        if (data.customizations && Object.keys(data.customizations).length > 0) {
+        if (Object.keys(filteredCustomizations).length > 0) {
           const sortedTools = [...DEFAULT_TOOLS].sort((a, b) => {
-            const orderA = data.customizations[a.id]?.order ?? DEFAULT_TOOLS.findIndex(t => t.id === a.id);
-            const orderB = data.customizations[b.id]?.order ?? DEFAULT_TOOLS.findIndex(t => t.id === b.id);
+            const orderA = filteredCustomizations[a.id]?.order ?? DEFAULT_TOOLS.findIndex(t => t.id === a.id);
+            const orderB = filteredCustomizations[b.id]?.order ?? DEFAULT_TOOLS.findIndex(t => t.id === b.id);
             return orderA - orderB;
           });
           setTools(sortedTools);
+        } else {
+          // No customizations, use default order
+          setTools(DEFAULT_TOOLS);
         }
       }
     } catch (error) {
@@ -238,10 +252,23 @@ export function ToolCustomization() {
     setSaved(false);
     
     try {
+      // Only save customizations for tools that currently exist
+      const validToolIds = new Set(DEFAULT_TOOLS.map(t => t.id));
+      const filteredCustomizations: Record<string, ToolCustomization> = {};
+      
+      for (const [toolId, customization] of Object.entries(customizations)) {
+        if (validToolIds.has(toolId)) {
+          filteredCustomizations[toolId] = customization;
+        }
+      }
+      
       const res = await fetch('/api/settings/tools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customizations }),
+        body: JSON.stringify({ 
+          customizations: filteredCustomizations,
+          cleanupOldTools: true // Signal to API to remove old tools
+        }),
       });
 
       if (res.ok) {
