@@ -150,7 +150,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 9999,
+        zIndex: 10000,
         backgroundColor: "rgba(0, 0, 0, 0.95)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
