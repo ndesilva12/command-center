@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { getToolsInCategory } from "@/lib/tool-categories";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { useAuth } from "@/hooks/useAuth";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState, useEffect } from "react";
 
 interface ToolNavProps {
   currentToolId: string;
@@ -14,6 +14,14 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
   const router = useRouter();
   const { getCustomization } = useToolCustomizations();
   const { hasPermission, isAdmin } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   
   const allTools = getToolsInCategory(currentToolId);
   
@@ -36,6 +44,9 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
     router.push(href);
   }, [router]);
 
+  // Hide on mobile
+  if (isMobile) return null;
+  
   if (tools.length === 0) return null;
 
   return (

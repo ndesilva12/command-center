@@ -18,6 +18,14 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
   const [selectedSource, setSelectedSource] = useState<UnifiedSourceId>("google");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecent, setShowRecent] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
@@ -84,76 +92,90 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: "800px", margin: "0 auto" }}>
+    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative" }}>
-        <div
-          className="glass"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "14px 20px",
-            borderRadius: "50px",
-            border: "1px solid var(--glass-border)",
-            transition: "all 0.3s ease",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 170, 255, 0.15)";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "var(--glass-border)";
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
-          }}
-        >
-          <Search style={{ width: "20px", height: "20px", color: "var(--foreground-muted)", flexShrink: 0 }} />
-
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => setShowRecent(true)}
-            placeholder="Search anything..."
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "12px" : "0" }}>
+          {/* Search Input */}
+          <div
+            className="glass"
             style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "var(--foreground)",
-              fontSize: "16px",
-              fontWeight: 400,
-            }}
-          />
-
-          <button
-            type="submit"
-            disabled={!query.trim()}
-            style={{
-              padding: "0",
-              border: "none",
-              background: "transparent",
-              color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: query.trim() ? "pointer" : "not-allowed",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: isMobile ? "12px 16px" : "14px 20px",
+              borderRadius: isMobile ? "16px" : "50px",
+              border: "1px solid var(--glass-border)",
               transition: "all 0.3s ease",
-              textDecoration: "none",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
+              flex: 1,
             }}
-            onMouseEnter={(e) => {
-              if (query.trim()) {
-                e.currentTarget.style.textDecoration = "underline";
-              }
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 170, 255, 0.15)";
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.textDecoration = "none";
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--glass-border)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
             }}
           >
-            Search
-          </button>
+            <Search style={{ width: "20px", height: "20px", color: "var(--foreground-muted)", flexShrink: 0 }} />
 
-          <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowRecent(true)}
+              placeholder="Search anything..."
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "var(--foreground)",
+                fontSize: "16px",
+                fontWeight: 400,
+              }}
+            />
+
+            <button
+              type="submit"
+              disabled={!query.trim()}
+              style={{
+                padding: "0 8px",
+                border: "none",
+                background: "transparent",
+                color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: query.trim() ? "pointer" : "not-allowed",
+                transition: "all 0.3s ease",
+                textDecoration: "none",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                if (query.trim()) {
+                  e.currentTarget.style.textDecoration = "underline";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.textDecoration = "none";
+              }}
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Source Selector - Separate row on mobile */}
+          {isMobile ? (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
+            </div>
+          ) : (
+            <div style={{ marginLeft: "12px" }}>
+              <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
+            </div>
+          )}
         </div>
 
         {/* Recent Searches Dropdown */}

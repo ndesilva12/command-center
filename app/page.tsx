@@ -195,18 +195,18 @@ export default function Home() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            marginBottom: "32px",
+            marginBottom: isMobile ? "20px" : "32px",
           }}>
             <DigitalClock />
           </div>
 
-          {/* Trending Topics */}
-          <TrendingTopics onTagClick={handleTrendingClick} />
-
-          {/* Search Section */}
-          <div id="search-section" style={{ marginBottom: "40px" }}>
+          {/* Search Section - Above on Mobile */}
+          <div id="search-section" style={{ marginBottom: isMobile ? "24px" : "40px" }}>
             <SearchBar ref={searchBarRef} />
           </div>
+
+          {/* Trending Topics - Below on Mobile */}
+          <TrendingTopics onTagClick={handleTrendingClick} />
 
           {/* Tool Categories - Hidden on Mobile */}
           {!isMobile && !loading && customizedCategories.map((category) => {
