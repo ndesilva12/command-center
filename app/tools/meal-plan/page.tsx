@@ -7,10 +7,10 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, ShoppingCart, RefreshCw, Check, ChefHat, X, ArrowLeft } from "lucide-react";
-import { ManualMealSelector } from "@/components/meals/ManualMealSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
+import { syncManualSelectionsToWeeklyPlan } from "@/lib/meal-plan-sync";
 
 interface Meal {
   id: string;
@@ -83,6 +83,12 @@ function MealPlanContent() {
 
   const fetchData = async () => {
     try {
+      // Sync manual selections to weekly plan for next week
+      if (user) {
+        const nextWeekMonday = getNextWeekMonday();
+        await syncManualSelectionsToWeeklyPlan(user.uid, nextWeekMonday);
+      }
+      
       // Fetch all plans from Firestore
       const plansSnapshot = await getDocs(collection(db, 'weekly_plans'));
       const plans: WeeklyPlan[] = [];
@@ -452,30 +458,29 @@ function MealPlanContent() {
               </div>
             )
           ) : activeTab === 'next-week' ? (
-            <>
-              {user && (
-                <ManualMealSelector 
-                  userId={user.uid} 
-                  weekOf={getNextWeekMonday()}
-                  onSelectionsChange={(selections) => {
-                    console.log('Manual selections updated:', selections);
-                  }}
-                />
-              )}
-              {nextWeek ? (
-                <WeekView week={nextWeek} title="Next Week" canEdit={nextWeek.status !== 'archived'} weekType="next" />
-              ) : (
-                <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
-                  <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-                  <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                    Next week's plan coming soon
-                  </h2>
-                  <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                    Will be proposed Friday at 6pm ET
+            nextWeek ? (
+              <div>
+                <div style={{ marginBottom: "16px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "rgba(0, 170, 255, 0.1)", border: "1px solid rgba(0, 170, 255, 0.3)" }}>
+                  <p style={{ fontSize: "13px", color: "var(--foreground)", margin: 0 }}>
+                    💡 <strong>Tip:</strong> Add meals from the <a href="/tools/meals" style={{ color: "#00aaff", textDecoration: "underline" }}>All Recipes</a> page
                   </p>
                 </div>
-              )}
-            </>
+                <WeekView week={nextWeek} title="Next Week" canEdit={nextWeek.status !== 'archived'} weekType="next" />
+              </div>
+            ) : (
+              <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+                <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+                <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                  Next week's plan coming soon
+                </h2>
+                <p style={{ color: "var(--foreground-muted)", fontSize: "14px", marginBottom: "16px" }}>
+                  Will be proposed Friday at 6pm ET
+                </p>
+                <p style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                  💡 You can add meals now from the <a href="/tools/meals" style={{ color: "#00aaff", textDecoration: "underline" }}>All Recipes</a> page
+                </p>
+              </div>
+            )
           ) : (
             <div>
               <a
