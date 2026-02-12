@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const OPENCLAW_GATEWAY = 'http://localhost:18789';
+const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';
 const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
 
 export async function POST(request: NextRequest) {
