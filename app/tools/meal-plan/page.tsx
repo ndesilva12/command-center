@@ -78,15 +78,19 @@ function MealPlanContent() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const fetchData = async () => {
     try {
       // Sync manual selections to weekly plan for next week
       if (user) {
         const nextWeekMonday = getNextWeekMonday();
-        await syncManualSelectionsToWeeklyPlan(user.uid, nextWeekMonday);
+        console.log('Syncing manual selections for', nextWeekMonday);
+        const result = await syncManualSelectionsToWeeklyPlan(user.uid, nextWeekMonday);
+        console.log('Sync result:', result);
       }
       
       // Fetch all plans from Firestore

@@ -1,5 +1,6 @@
 import { db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { syncManualSelectionsToWeeklyPlan } from "./meal-plan-sync";
 
 export function getNextMonday(): string {
   const now = new Date();
@@ -44,6 +45,9 @@ export async function addMealToNextWeek(
       mealIds: newSelections,
       updatedAt: new Date().toISOString()
     });
+    
+    // Immediately sync to weekly plan
+    await syncManualSelectionsToWeeklyPlan(userId, weekOf);
     
     return { success: true, message: "Added to next week!" };
   } catch (error) {
