@@ -36,8 +36,9 @@ interface WeeklyPlan {
     friday?: { mealId: string; mealName: string };
   };
   shoppingList?: {
-    wholefoods: any[];
-    traderjoes: any[];
+    wholefoods?: string[];
+    traderjoes?: string[];
+    either?: string[];
   };
   proposedAt?: string;
   approvedAt?: string;
@@ -61,6 +62,7 @@ function MealPlanContent() {
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [movingDay, setMovingDay] = useState<string | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   
   // Mobile detection
   useEffect(() => {
@@ -251,6 +253,84 @@ function MealPlanContent() {
       case 'current': return 'This Week';
       default: return status;
     }
+  };
+
+  const toggleItem = (itemKey: string) => {
+    setCheckedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemKey)) {
+        newSet.delete(itemKey);
+      } else {
+        newSet.add(itemKey);
+      }
+      return newSet;
+    });
+  };
+
+  const StoreSection = ({ title, items, keyPrefix }: { title: string; items: string[]; keyPrefix: string }) => {
+    const uncheckedCount = items.filter(item => !checkedItems.has(`${keyPrefix}_${item}`)).length;
+    
+    return (
+      <div className="glass" style={{ padding: isMobile ? "16px" : "24px", borderRadius: "12px", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "16px" }}>
+          {title} ({uncheckedCount} items)
+        </h2>
+        
+        {items.length === 0 ? (
+          <p style={{ color: "var(--foreground-muted)", fontSize: "14px", fontStyle: "italic" }}>
+            No items for this store
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {items.map((item, index) => {
+              const itemKey = `${keyPrefix}_${item}`;
+              const isChecked = checkedItems.has(itemKey);
+              
+              return (
+                <label
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "12px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: isChecked ? "rgba(16, 185, 129, 0.1)" : "rgba(255, 255, 255, 0.03)",
+                    border: `1px solid ${isChecked ? "rgba(16, 185, 129, 0.3)" : "rgba(255, 255, 255, 0.1)"}`,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleItem(itemKey)}
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      marginTop: "2px",
+                      cursor: "pointer",
+                      accentColor: "#10b981",
+                    }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      fontSize: "15px",
+                      color: isChecked ? "var(--foreground-muted)" : "var(--foreground)",
+                      textDecoration: isChecked ? "line-through" : "none",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {item}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const WeekView = ({ week, title, canEdit, weekType }: { week: WeeklyPlan | null; title: string; canEdit: boolean; weekType: 'current' | 'next' }) => (
@@ -540,35 +620,45 @@ function MealPlanContent() {
               </div>
             )
           ) : (
+            /* Shopping List Tab */
             <div>
-              <a
-                href="/tools/shopping-list"
-                className="glass"
-                style={{
-                  display: "block",
-                  padding: "40px",
-                  borderRadius: "12px",
-                  textAlign: "center",
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#00aaff";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                <ShoppingCart style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-                <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                  View Shopping List
-                </h2>
-                <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                  See your grocery list for this week →
-                </p>
-              </a>
+              {nextWeek?.shoppingList ? (
+                <>
+                  <div style={{ marginBottom: "20px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "rgba(0, 170, 255, 0.1)", border: "1px solid rgba(0, 170, 255, 0.3)" }}>
+                    <p style={{ fontSize: "13px", color: "var(--foreground)", margin: 0 }}>
+                      🛒 Shopping list for <strong>next week</strong> ({nextWeek.weekOf})
+                    </p>
+                  </div>
+                  
+                  <StoreSection 
+                    title="Whole Foods" 
+                    items={nextWeek.shoppingList.wholefoods || []} 
+                    keyPrefix="wholefoods" 
+                  />
+                  
+                  <StoreSection 
+                    title="Trader Joe's" 
+                    items={nextWeek.shoppingList.traderjoes || []} 
+                    keyPrefix="traderjoes" 
+                  />
+                  
+                  <StoreSection 
+                    title="Either Store" 
+                    items={nextWeek.shoppingList.either || []} 
+                    keyPrefix="either" 
+                  />
+                </>
+              ) : (
+                <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+                  <ShoppingCart style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+                  <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                    No shopping list yet
+                  </h2>
+                  <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
+                    Shopping list will be generated with next week's meal plan
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
