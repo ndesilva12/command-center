@@ -38,11 +38,12 @@ SPLIT YOUR RESULTS:
    - Establishment/conventional perspectives
 
 SEARCH STRATEGY:
-- Use web_search tool with intelligent queries
+- Use web_search tool with intelligent queries (2-4 searches MAX)
 - For "Iran-Contra": search "Iran-Contra affair", "Boland Amendment", "Oliver North", NOT "Iranian economy"
 - For "Austrian Economics": search "Mises", "Hayek", "praxeology", NOT "Austria GDP"
 - Think about what the topic ACTUALLY means
 - Validate relevance before including
+- OUTPUT JSON IMMEDIATELY after collecting 10 good papers (don't over-research)
 
 OUTPUT FORMAT (JSON):
 {
@@ -63,12 +64,14 @@ ${save ? 'IMPORTANT: After generating results, save to Firestore collection "whi
 
 Think step by step:
 1. What does "${topic}" actually mean?
-2. What are intelligent search queries for this topic?
-3. Search and validate relevance
-4. Split into worldview-aligned vs. general
-5. Return structured JSON
+2. What are 2-3 intelligent search queries for this topic?
+3. Search, collect ~15-20 results total
+4. Filter for quality and relevance (pick best 10)
+5. Split into worldview-aligned (5) vs. general (5)
+6. OUTPUT THE JSON IMMEDIATELY (don't do more research)
 
-Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent papers than 10 mediocre ones.`;
+CRITICAL: Output results after 2-4 searches. Don't exhaust token budget on research.
+Focus on QUALITY and RELEVANCE over quantity.`;
 
     // Call OpenClaw gateway to spawn sub-agent
     const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
@@ -83,7 +86,7 @@ Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent 
           task: prompt,
           label: `white-papers-${topic.slice(0, 30)}`,
           cleanup: 'keep',
-          runTimeoutSeconds: 120
+          runTimeoutSeconds: 180  // 3 minutes for research + output
         }
       })
     });
@@ -103,8 +106,8 @@ Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent 
       const runId = spawnResult.runId;
       const childSessionKey = spawnResult.childSessionKey;
       
-      // Poll for completion (max 2 minutes)
-      const maxWaitTime = 120000; // 2 minutes
+      // Poll for completion (max 3 minutes)
+      const maxWaitTime = 180000; // 3 minutes  
       const pollInterval = 3000; // 3 seconds
       const startTime = Date.now();
       
