@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
-const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const execAsync = promisify(exec);
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,69 +15,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ask Jimmy (OpenClaw main session) to generate the one-pager
-    const prompt = `Generate a comprehensive ONE-PAGER on: "${topic}"
+    // Call one-pager skill directly
+    const skillPath = '/home/ubuntu/openclaw/skills/one-pager/one_pager.py';
+    const command = `python3 ${skillPath} "${topic.replace(/"/g, '\\"')}" ${save ? '--save' : ''} --json`;
 
-The one-pager MUST include these exact sections in Markdown:
-
-1. **EXECUTIVE SUMMARY** (2-3 sentences)
-2. **KEY DATA TABLE** (one table with the most important metrics/data)
-3. **VISUAL DESCRIPTION** (describe an ideal chart/graph for this topic)
-4. **KEY POINTS** (8-12 bullet points)
-5. **CONTEXT & IMPLICATIONS** (2-3 sentences on why this matters)
-6. **FURTHER READING** (search Brave for 3-5 best links with descriptions)
-
-${save ? 'IMPORTANT: Save the result to Firestore collection "one_pagers_history" with fields: topic, timestamp, content, links.' : ''}
-
-Format as clean Markdown. Be concise, fact-dense, and actionable. Focus on what someone needs to know to understand this topic.
-
-Worldview: Individual liberty, Austrian economics, first-principles thinking, evidence-based analysis.`;
-
-    // Call OpenClaw tools/invoke API
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_send',
-        args: {
-          sessionKey: 'main',
-          message: prompt,
-          timeoutSeconds: 120
-        }
-      })
+    const { stdout, stderr } = await execAsync(command, {
+      timeout: 60000,  // 60 second timeout
+      maxBuffer: 5 * 1024 * 1024  // 5MB buffer
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenClaw API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    // Parse JSON output from skill
+    const result = JSON.parse(stdout);
     
-    // Check for timeout or error status
-    if (data?.result?.status === 'timeout') {
-      throw new Error('Request timed out - try again or use a simpler topic');
-    }
-    if (data?.result?.status === 'error') {
-      throw new Error(data?.result?.error || 'OpenClaw execution error');
-    }
-    
-    // Extract response from tools/invoke result structure
-    // Structure: { ok: true, result: { runId, status: "ok", reply: "..." } }
-    const content = data?.result?.reply || 'Generated content';
-    
-    // Return the generated content
-    return NextResponse.json({
-      topic,
-      timestamp: new Date().toISOString(),
-      content,
-      links: []
-    });
+    return NextResponse.json(result);
     
   } catch (error: any) {
     console.error('One-pager error:', error);
+    
+    // Handle timeout
+    if (error.killed || error.signal === 'SIGTERM') {
+      return NextResponse.json(
+        { error: 'Request timed out - try a simpler topic' },
+        { status: 504 }
+      );
+    }
+    
     return NextResponse.json(
       { error: error.message || 'Failed to generate one-pager' },
       { status: 500 }
