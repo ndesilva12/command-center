@@ -63,6 +63,7 @@ export default function CuratePage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [fullReportItem, setFullReportItem] = useState<HistoryItem | null>(null);
+  const [latestCompletedId, setLatestCompletedId] = useState<string | null>(null);
 
   // Load history on mount and poll every 5 seconds
   useEffect(() => {
@@ -75,7 +76,21 @@ export default function CuratePage() {
     try {
       const res = await fetch('/api/curate/history');
       const data = await res.json();
-      setHistory(data.history || []);
+      const newHistory = data.history || [];
+      
+      // Check if there's a newly completed item
+      if (newHistory.length > 0 && history.length > 0) {
+        const newest = newHistory[0];
+        const wasRunning = history.find(h => h.id === newest.id && h.status === 'running');
+        
+        if (wasRunning && newest.status === 'completed' && newest.id !== latestCompletedId) {
+          // Auto-show full report for newly completed item
+          setFullReportItem(newest);
+          setLatestCompletedId(newest.id);
+        }
+      }
+      
+      setHistory(newHistory);
       setHistoryLoading(false);
     } catch (err) {
       console.error('Failed to load history:', err);
@@ -136,21 +151,26 @@ export default function CuratePage() {
     }
   };
 
-  const filteredHistory = history.filter(item => {
-    if (statusFilter !== "all" && item.status !== statusFilter) {
-      return false;
-    }
-    
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const topicStr = (item.topic || "").toLowerCase();
-      const resultsStr = JSON.stringify(item.results || "").toLowerCase();
+  const hasActiveFilter = searchQuery.trim() !== "" || statusFilter !== "all";
+  const historyLimit = hasActiveFilter ? 25 : 10;
+  
+  const filteredHistory = history
+    .filter(item => {
+      if (statusFilter !== "all" && item.status !== statusFilter) {
+        return false;
+      }
       
-      return topicStr.includes(query) || resultsStr.includes(query);
-    }
-    
-    return true;
-  });
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const topicStr = (item.topic || "").toLowerCase();
+        const resultsStr = JSON.stringify(item.results || "").toLowerCase();
+        
+        return topicStr.includes(query) || resultsStr.includes(query);
+      }
+      
+      return true;
+    })
+    .slice(0, historyLimit);
 
   const formatTimestamp = (timestamp: string) => {
     if (!timestamp) return "Unknown";
@@ -664,16 +684,27 @@ export default function CuratePage() {
           padding: '32px',
         }}>
           <div style={{ marginBottom: '24px' }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: 'white',
-              marginBottom: '8px',
-            }}>
-              History
-            </h2>
-            <p style={{ fontSize: '14px', color: '#94a3b8' }}>
-              Past curations and results
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: 'white',
+                margin: 0,
+              }}>
+                History
+              </h2>
+              <div style={{ fontSize: '13px', color: '#64748b' }}>
+                {hasActiveFilter 
+                  ? `Showing ${filteredHistory.length}/${history.length} (max 25 with filter)`
+                  : `Showing ${filteredHistory.length}/${history.length} (most recent)`
+                }
+              </div>
+            </div>
+            <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
+              {hasActiveFilter 
+                ? 'Filtered results - up to 25 items'
+                : 'Most recent 10 curations - search or filter to expand to 25'
+              }
             </p>
           </div>
 
