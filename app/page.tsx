@@ -137,6 +137,7 @@ export default function Home() {
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
   const trendingTopicsRef = useRef<TrendingTopicsRef>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -192,9 +193,10 @@ export default function Home() {
       <main
         style={{
           minHeight: "100vh",
-          paddingTop: "80px",
-          paddingBottom: isMobile ? "96px" : "32px",
-          padding: isMobile ? "80px 16px 96px 16px" : "80px 24px 32px 24px",
+          paddingTop: isMobile ? "72px" : "76px",
+          paddingBottom: isMobile ? "88px" : "24px",
+          paddingLeft: isMobile ? "12px" : "20px",
+          paddingRight: isMobile ? "12px" : "20px",
         }}
       >
         {authLoading ? (
@@ -208,87 +210,239 @@ export default function Home() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            marginBottom: isMobile ? "16px" : "32px",
+            marginBottom: isMobile ? "12px" : "20px",
           }}>
             <DigitalClock />
           </div>
 
           {/* Search Section - Above on Mobile */}
-          <div id="search-section" style={{ marginBottom: isMobile ? "16px" : "40px" }}>
+          <div id="search-section" style={{ marginBottom: isMobile ? "12px" : "24px" }}>
             <SearchBar ref={searchBarRef} />
           </div>
 
           {/* Trending Topics - Below on Mobile */}
-          <div style={{ marginBottom: isMobile ? "20px" : "0" }}>
+          <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
             <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
           </div>
 
-          {/* Tool Categories - Desktop: Grid layout */}
+          {/* Tool Categories - Desktop: Compact with expandable */}
           {!isMobile && !loading && customizedCategories.map((category) => {
             if (category.tools.length === 0) return null;
 
-            return (
-              <div key={category.name} style={{ marginBottom: "40px" }}>
-                <h2
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                    color: "var(--muted)",
-                    marginBottom: "16px",
-                  }}
-                >
-                  {category.name}
-                </h2>
-                
-                {/* All Tools - Uniform Grid */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                    gap: "14px",
-                  }}
-                >
-                  {category.tools.map((tool) => (
-                    <ToolCard key={tool.id} {...tool} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Tool Categories - Mobile: Uniform Grid */}
-          {isMobile && !loading && customizedCategories.map((category) => {
-            if (category.tools.length === 0) return null;
+            const topTools = category.tools.slice(0, 5);
+            const remainingTools = category.tools.slice(5);
+            const expanded = expandedCategories[category.name] || false;
 
             return (
-              <div key={category.name} style={{ marginBottom: "28px" }}>
+              <div key={category.name} style={{ marginBottom: "32px" }}>
                 <h2
                   style={{
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 700,
                     textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                    color: "var(--muted)",
+                    letterSpacing: "0.15em",
+                    color: "rgba(255, 255, 255, 0.4)",
                     marginBottom: "12px",
                   }}
                 >
                   {category.name}
                 </h2>
                 
-                {/* All Tools - Uniform Grid */}
+                {/* Top Tools */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                    gap: "10px",
+                  }}
+                >
+                  {topTools.map((tool) => (
+                    <ToolCard key={tool.id} {...tool} compact />
+                  ))}
+                  
+                  {/* Show More Button as a card */}
+                  {remainingTools.length > 0 && !expanded && (
+                    <button
+                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: true})}
+                      style={{
+                        padding: "16px",
+                        borderRadius: "12px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        minHeight: "80px",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                      }}
+                    >
+                      <span style={{ fontSize: "24px", color: "rgba(255, 255, 255, 0.5)" }}>+</span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.7)" }}>
+                        {remainingTools.length} more
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Remaining Tools - Expanded */}
+                {expanded && remainingTools.length > 0 && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                      gap: "10px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {remainingTools.map((tool) => (
+                      <ToolCard key={tool.id} {...tool} compact />
+                    ))}
+                    <button
+                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: false})}
+                      style={{
+                        padding: "16px",
+                        borderRadius: "12px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        minHeight: "80px",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                      }}
+                    >
+                      <span style={{ fontSize: "24px", color: "rgba(255, 255, 255, 0.5)" }}>−</span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.7)" }}>
+                        Show less
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Tool Categories - Mobile: Compact with expandable */}
+          {isMobile && !loading && customizedCategories.map((category) => {
+            if (category.tools.length === 0) return null;
+
+            const topTools = category.tools.slice(0, 4);
+            const remainingTools = category.tools.slice(4);
+            const expanded = expandedCategories[category.name] || false;
+
+            return (
+              <div key={category.name} style={{ marginBottom: "24px" }}>
+                <h2
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.15em",
+                    color: "rgba(255, 255, 255, 0.4)",
+                    marginBottom: "10px",
+                  }}
+                >
+                  {category.name}
+                </h2>
+                
+                {/* Top Tools */}
                 <div
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: "10px",
+                    gap: "8px",
                   }}
                 >
-                  {category.tools.map((tool) => (
-                    <ToolCard key={tool.id} {...tool} />
+                  {topTools.map((tool) => (
+                    <ToolCard key={tool.id} {...tool} compact />
                   ))}
+                  
+                  {/* Show More Button */}
+                  {remainingTools.length > 0 && !expanded && (
+                    <button
+                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: true})}
+                      style={{
+                        padding: "12px",
+                        borderRadius: "10px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                        minHeight: "70px",
+                      }}
+                    >
+                      <span style={{ fontSize: "20px", color: "rgba(255, 255, 255, 0.5)" }}>+</span>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255, 255, 255, 0.6)" }}>
+                        {remainingTools.length} more
+                      </span>
+                    </button>
+                  )}
                 </div>
+
+                {/* Remaining Tools - Expanded */}
+                {expanded && remainingTools.length > 0 && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: "8px",
+                      marginTop: "8px",
+                    }}
+                  >
+                    {remainingTools.map((tool) => (
+                      <ToolCard key={tool.id} {...tool} compact />
+                    ))}
+                    <button
+                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: false})}
+                      style={{
+                        padding: "12px",
+                        borderRadius: "10px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                        minHeight: "70px",
+                      }}
+                    >
+                      <span style={{ fontSize: "20px", color: "rgba(255, 255, 255, 0.5)" }}>−</span>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255, 255, 255, 0.6)" }}>
+                        Show less
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

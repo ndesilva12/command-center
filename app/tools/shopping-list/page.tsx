@@ -293,7 +293,7 @@ export default function ShoppingListPage() {
       <ToolNav currentToolId="meals" />
 
       <main style={{
-        paddingTop: isMobile ? "80px" : "136px",
+        paddingTop: isMobile ? "64px" : "136px",
         paddingBottom: isMobile ? "calc(80px + env(safe-area-inset-bottom))" : "96px",
         paddingLeft: isMobile ? "8px" : "0",
         paddingRight: isMobile ? "8px" : "0",

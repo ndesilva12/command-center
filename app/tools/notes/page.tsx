@@ -403,7 +403,7 @@ export default function NotesPage() {
 
       <main style={{
         paddingTop: isMobile ? "80px" : "88px",
-        paddingBottom: isMobile ? "80px" : "32px",
+        paddingBottom: isMobile ? "88px" : "32px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "120px"})`,
         display: "flex",
         gap: "0",

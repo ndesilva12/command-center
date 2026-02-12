@@ -140,7 +140,7 @@ export default function MealsPage() {
       <ToolNav currentToolId="meals" />
 
       <main style={{
-        paddingTop: isMobile ? "80px" : "136px",
+        paddingTop: isMobile ? "64px" : "136px",
         paddingBottom: isMobile ? "80px" : "96px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>

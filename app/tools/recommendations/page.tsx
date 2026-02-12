@@ -182,8 +182,8 @@ function RecommendationsContent() {
       <ToolNav currentToolId="recommendations" />
       
       <main style={{
-        paddingTop: isMobile ? "80px" : "136px",
-        paddingBottom: isMobile ? "80px" : "32px",
+        paddingTop: isMobile ? "64px" : "136px",
+        paddingBottom: isMobile ? "88px" : "32px",
         paddingLeft: isMobile ? "12px" : "24px",
         paddingRight: isMobile ? "12px" : "24px",
         minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
