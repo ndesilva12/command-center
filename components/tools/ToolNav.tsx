@@ -11,7 +11,6 @@ interface ToolNavProps {
 }
 
 export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
-  const router = useRouter();
   const { getCustomization } = useToolCustomizations();
   const { hasPermission, isAdmin } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
