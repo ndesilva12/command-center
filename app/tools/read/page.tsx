@@ -145,10 +145,8 @@ export default function ReadPage() {
       // Remove from top feeds
       setTempTopFeeds(tempTopFeeds.filter(id => id !== feedId));
     } else {
-      // Add to top feeds (max 6)
-      if (tempTopFeeds.length < 6) {
-        setTempTopFeeds([...tempTopFeeds, feedId]);
-      }
+      // Add to top feeds (unlimited)
+      setTempTopFeeds([...tempTopFeeds, feedId]);
     }
   };
 
@@ -778,7 +776,7 @@ export default function ReadPage() {
             {tempTopFeeds.length > 0 && (
               <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
                 <div style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "12px" }}>
-                  QUICK ACCESS BUTTONS ({tempTopFeeds.length}/6)
+                  QUICK ACCESS BUTTONS ({tempTopFeeds.length})
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {tempTopFeeds.map((feedId, index) => {
@@ -872,20 +870,18 @@ export default function ReadPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {filteredFeeds.map(feed => {
                   const isSelected = tempTopFeeds.includes(feed.id);
-                  const canAdd = tempTopFeeds.length < 6;
                   return (
                     <button
                       key={feed.id}
                       onClick={() => toggleTopFeed(feed.id)}
-                      disabled={!isSelected && !canAdd}
                       style={{
                         padding: "12px 16px",
                         background: isSelected ? "rgba(0, 170, 255, 0.08)" : "rgba(255, 255, 255, 0.03)",
                         border: isSelected ? "1px solid rgba(0, 170, 255, 0.2)" : "1px solid rgba(255, 255, 255, 0.1)",
                         borderRadius: "8px",
                         textAlign: "left",
-                        cursor: (!isSelected && !canAdd) ? "not-allowed" : "pointer",
-                        opacity: (!isSelected && !canAdd) ? 0.5 : 1,
+                        cursor: "pointer",
+                        opacity: 1,
                       }}
                     >
                       <div style={{ fontSize: "14px", fontWeight: 600, color: isSelected ? "#00aaff" : "white", marginBottom: "2px" }}>
