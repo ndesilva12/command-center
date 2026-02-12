@@ -23,8 +23,6 @@ interface Recommendation {
 }
 
 export default function RecommendationsPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('recommendations', 'Recommendations', '#6366f1');
   return (
     <ProtectedRoute>
       <RecommendationsContent />
@@ -33,6 +31,8 @@ export default function RecommendationsPage() {
 }
 
 function RecommendationsContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('recommendations', 'Recommendations', '#6366f1');
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);

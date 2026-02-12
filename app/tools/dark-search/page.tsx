@@ -27,8 +27,6 @@ interface DarkSearchReport {
 }
 
 export default function DarkSearchPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('dark-search', 'Dark Search', '#6366f1');
   return (
     <ProtectedRoute>
       <DarkSearchContent />
@@ -37,6 +35,8 @@ export default function DarkSearchPage() {
 }
 
 function DarkSearchContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('dark-search', 'Dark Search', '#6366f1');
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState<"long" | "short" | "links">("long");
   const [loading, setLoading] = useState(false);

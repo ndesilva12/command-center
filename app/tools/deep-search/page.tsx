@@ -28,8 +28,6 @@ interface DeepSearchReport {
 }
 
 export default function DeepSearchPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
   return (
     <ProtectedRoute>
       <DeepSearchContent />
@@ -38,6 +36,8 @@ export default function DeepSearchPage() {
 }
 
 function DeepSearchContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<DeepSearchReport | null>(null);

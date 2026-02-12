@@ -49,6 +49,8 @@ interface WeeklyPlan {
 }
 
 function MealPlanContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('meal-plan', 'Meal Plan', '#6366f1');
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -774,8 +776,6 @@ function MealPlanContent() {
 }
 
 export default function MealPlanPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('meal-plan', 'Meal Plan', '#6366f1');
   return (
     <Suspense fallback={
       <>
