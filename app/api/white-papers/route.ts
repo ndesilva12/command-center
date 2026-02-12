@@ -57,12 +57,15 @@ OUTPUT FORMAT:
 }
 
 CRITICAL - FIRESTORE SAVE:
-After outputting the JSON above, IMMEDIATELY save to Firestore using exec tool:
+After outputting the JSON above, IMMEDIATELY save to Firestore:
 
-Run this command:
-node -e "const admin = require('firebase-admin'); const serviceAccount = require('/home/ubuntu/command-center/firebase-service-account.json'); if (!admin.apps.length) { admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }); } const db = admin.firestore(); const result = <YOUR_JSON_RESULT>; db.collection('white_papers_history').add({ ...result, timestamp: new Date().toISOString(), saved_by: 'sub-agent' }).then(() => { console.log('Saved to Firestore'); process.exit(0); }).catch(err => { console.error('Save error:', err); process.exit(1); });"
+1. Output your complete JSON result
+2. Use exec to run: node /home/ubuntu/command-center/scripts/save-to-firestore.js white_papers_history '{"topic":"${topic}","papers":...}'
 
-Replace <YOUR_JSON_RESULT> with your actual JSON result object.
+Replace the JSON string with your actual result. Make sure to escape quotes properly.
+
+Example:
+exec: node /home/ubuntu/command-center/scripts/save-to-firestore.js white_papers_history '{"topic":"Bitcoin","timestamp":"2024-01-01T00:00:00Z","papers":{"worldview_aligned":[...],"general_popular":[...]},"total":6}'
 
 This ensures results persist even if the API route times out.
 

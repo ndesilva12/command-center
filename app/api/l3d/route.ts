@@ -87,12 +87,15 @@ CRITICAL:
 - OUTPUT JSON IMMEDIATELY after research
 
 CRITICAL - FIRESTORE SAVE:
-After outputting the JSON above, IMMEDIATELY save to Firestore using exec tool:
+After outputting the JSON above, IMMEDIATELY save to Firestore:
 
-Run this command:
-node -e "const admin = require('firebase-admin'); const serviceAccount = require('/home/ubuntu/command-center/firebase-service-account.json'); if (!admin.apps.length) { admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }); } const db = admin.firestore(); const result = <YOUR_JSON_RESULT>; db.collection('l3d_history').add({ query: '${topic.trim()}', days: ${days}, timestamp: new Date().toISOString(), status: 'completed', saved_by: 'sub-agent', ...result }).then(() => { console.log('Saved to Firestore'); process.exit(0); }).catch(err => { console.error('Save error:', err); process.exit(1); });"
+1. Output your complete JSON result
+2. Use exec to run: node /home/ubuntu/command-center/scripts/save-to-firestore.js l3d_history '{"query":"${topic.trim()}","days":${days},"topic":"${topic}","categories":{...},"key_takeaways":[...],...}'
 
-Replace <YOUR_JSON_RESULT> with your actual JSON result object.
+Replace the JSON string with your actual result. Make sure to escape quotes properly.
+
+Example:
+exec: node /home/ubuntu/command-center/scripts/save-to-firestore.js l3d_history '{"query":"Bitcoin","days":30,"topic":"Bitcoin","timestamp":"2024-01-01T00:00:00Z","categories":{...},"key_takeaways":[...],"total_items":12,"status":"completed"}'
 
 This ensures results persist even if the API route times out.
 
