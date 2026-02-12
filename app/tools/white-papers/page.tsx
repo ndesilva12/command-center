@@ -12,7 +12,6 @@ export default function WhitePapersPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -112,25 +111,7 @@ export default function WhitePapersPage() {
                   cursor: loading ? "not-allowed" : "pointer"
                 }}
               >
-                {loading ? "Searching..." : "Find Papers"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowHistory(!showHistory)}
-                style={{
-                  marginLeft: "12px",
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--glass-border)",
-                  background: "transparent",
-                  color: "var(--foreground)",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  cursor: "pointer"
-                }}
-              >
-                {showHistory ? "Hide History" : "Show History"}
+                {loading ? "Researching..." : "Find Papers"}
               </button>
             </form>
           </div>
@@ -186,8 +167,8 @@ export default function WhitePapersPage() {
             </div>
           )}
 
-          {/* History */}
-          {showHistory && history.length > 0 && (
+          {/* History - Show by default when no result */}
+          {!result && history.length > 0 && (
             <div className="glass card" style={{ padding: "24px" }}>
               <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>
                 Recent Searches
