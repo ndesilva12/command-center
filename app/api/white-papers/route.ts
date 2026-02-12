@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const WHITE_PAPERS_SERVER = 'http://3.141.47.151:18791';
+const OPENCLAW_GATEWAY = 'http://localhost:18789';
+const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,26 +14,157 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call white-papers HTTP server on EC2
-    const response = await fetch(WHITE_PAPERS_SERVER, {
+    // Spawn intelligent sub-agent for research
+    const prompt = `Find 10 white papers, academic papers, and research on: "${topic}"
+
+CRITICAL CONTEXT UNDERSTANDING:
+- "Austrian Economics" refers to the Mises/Hayek/Rothbard SCHOOL OF THOUGHT, not Austria the country
+- "Iran-Contra" refers to the 1980s Reagan scandal (arms-for-hostages), not Iranian economics
+- Understand the topic's actual meaning before searching
+- Apply intelligence and context, not just keyword matching
+
+SPLIT YOUR RESULTS:
+
+1. WORLDVIEW-ALIGNED (5 papers):
+   - Libertarian perspective (Cato Institute, Reason Foundation, Mises Institute)
+   - Austrian economics analysis (Mises.org, individual liberty focus)
+   - Individualism, free market, skepticism of centralized power
+   - First-principles thinking
+   
+2. GENERAL/POPULAR (5 papers):
+   - Mainstream academic research
+   - Most cited or influential papers
+   - Standard peer-reviewed journals
+   - Establishment/conventional perspectives
+
+SEARCH STRATEGY:
+- Use web_search tool with intelligent queries
+- For "Iran-Contra": search "Iran-Contra affair", "Boland Amendment", "Oliver North", NOT "Iranian economy"
+- For "Austrian Economics": search "Mises", "Hayek", "praxeology", NOT "Austria GDP"
+- Think about what the topic ACTUALLY means
+- Validate relevance before including
+
+OUTPUT FORMAT (JSON):
+{
+  "topic": "${topic}",
+  "timestamp": "ISO-8601",
+  "papers": {
+    "worldview_aligned": [
+      {"title": "...", "url": "...", "description": "...", "source": "..."}
+    ],
+    "general_popular": [
+      {"title": "...", "url": "...", "description": "...", "source": "..."}
+    ]
+  },
+  "total": 10
+}
+
+${save ? 'IMPORTANT: After generating results, save to Firestore collection "white_papers_history" using your tools.' : ''}
+
+Think step by step:
+1. What does "${topic}" actually mean?
+2. What are intelligent search queries for this topic?
+3. Search and validate relevance
+4. Split into worldview-aligned vs. general
+5. Return structured JSON
+
+Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent papers than 10 mediocre ones.`;
+
+    // Call OpenClaw gateway to spawn sub-agent
+    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        topic,
-        count: 10,
-        save
+        tool: 'sessions_spawn',
+        args: {
+          task: prompt,
+          label: `white-papers-${topic.slice(0, 30)}`,
+          cleanup: 'keep',
+          runTimeoutSeconds: 120
+        }
       })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`White papers server error: ${response.status} - ${errorText}`);
+      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
     }
 
-    const result = await response.json();
-    return NextResponse.json(result);
+    const data = await response.json();
+    
+    // sessions_spawn returns immediately with status: "accepted"
+    // We need to poll or wait for completion
+    if (data?.result?.status === 'accepted') {
+      const runId = data.result.runId;
+      const childSessionKey = data.result.childSessionKey;
+      
+      // Poll for completion (max 2 minutes)
+      const maxWaitTime = 120000; // 2 minutes
+      const pollInterval = 3000; // 3 seconds
+      const startTime = Date.now();
+      
+      while (Date.now() - startTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+        // Check session history for results
+        const historyResponse = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tool: 'sessions_history',
+            args: {
+              sessionKey: childSessionKey,
+              limit: 5,
+              includeTools: false
+            }
+          })
+        });
+        
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          const messages = historyData?.result?.messages || [];
+          
+          // Find the last assistant message
+          const lastAssistant = messages.reverse().find((m: any) => m.role === 'assistant');
+          
+          if (lastAssistant && lastAssistant.content) {
+            // Try to extract JSON from the response
+            const content = Array.isArray(lastAssistant.content) 
+              ? lastAssistant.content.map((c: any) => c.text || c).join('\n')
+              : lastAssistant.content;
+            
+            const jsonMatch = content.match(/\{[\s\S]*"papers"[\s\S]*\}/);
+            
+            if (jsonMatch) {
+              try {
+                const result = JSON.parse(jsonMatch[0]);
+                return NextResponse.json(result);
+              } catch (e) {
+                // Continue polling if JSON parse fails
+              }
+            }
+          }
+        }
+      }
+      
+      // Timeout
+      return NextResponse.json(
+        { error: 'Research timed out - topic may be too complex or spawn failed' },
+        { status: 504 }
+      );
+    }
+    
+    // Unexpected response
+    return NextResponse.json(
+      { error: 'Unexpected spawn response', details: data },
+      { status: 500 }
+    );
     
   } catch (error: any) {
     console.error('White papers error:', error);
