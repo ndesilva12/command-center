@@ -11,9 +11,11 @@ interface ToolCardProps {
   icon: LucideIcon;
   href: string;
   color: string;
+  compact?: boolean; // For desktop smaller cards
+  lessProminent?: boolean; // For mobile less prominent styling
 }
 
-export function ToolCard({ id, name, description, icon: Icon, href, color }: ToolCardProps) {
+export function ToolCard({ id, name, description, icon: Icon, href, color, compact = false, lessProminent = false }: ToolCardProps) {
   const router = useRouter();
 
   return (
@@ -31,12 +33,13 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
       <div
         className="card glass-hover"
         style={{
-          padding: "20px",
+          padding: compact ? "14px" : "20px",
           transition: "all 0.3s ease",
-          borderColor: "var(--glass-border)",
-          background: "rgba(255, 255, 255, 0.03)",
+          borderColor: lessProminent ? "rgba(255, 255, 255, 0.05)" : "var(--glass-border)",
+          background: lessProminent ? "rgba(255, 255, 255, 0.02)" : "rgba(255, 255, 255, 0.03)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
+          opacity: lessProminent ? 0.8 : 1,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = color;
@@ -65,12 +68,12 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
           }}
         />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "64px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: compact ? "12px" : "16px", minHeight: compact ? "48px" : "64px" }}>
             <div
               style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
+                width: compact ? "40px" : "48px",
+                height: compact ? "40px" : "48px",
+                borderRadius: compact ? "10px" : "12px",
                 background: `${color}20`,
                 display: "flex",
                 alignItems: "center",
@@ -78,12 +81,12 @@ export function ToolCard({ id, name, description, icon: Icon, href, color }: Too
                 flexShrink: 0,
               }}
             >
-              <Icon style={{ width: "24px", height: "24px", color: color }} />
+              <Icon style={{ width: compact ? "20px" : "24px", height: compact ? "20px" : "24px", color: color }} />
             </div>
             <div style={{ flex: 1 }}>
               <div
                 style={{
-                  fontSize: "18px",
+                  fontSize: compact ? "15px" : "18px",
                   fontWeight: 700,
                   color: "var(--foreground)",
                 }}
