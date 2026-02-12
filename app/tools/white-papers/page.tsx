@@ -84,7 +84,7 @@ export default function WhitePapersPage() {
               📄 White Papers
             </h2>
             <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
-              Find the 10 most relevant white papers on any topic (5 general + 5 worldview-aligned)
+              Find 6 relevant white papers on any topic (3 general + 3 worldview-aligned)
             </p>
             
             <form onSubmit={handleSubmit}>
@@ -134,7 +134,7 @@ export default function WhitePapersPage() {
               
               {/* Worldview-Aligned */}
               <h4 style={{ marginBottom: "12px", fontSize: "16px", fontWeight: 600, color: "#00aaff" }}>
-                🎯 Worldview-Aligned (5)
+                🎯 Worldview-Aligned (3)
               </h4>
               {result.papers?.worldview_aligned?.map((paper: any, i: number) => (
                 <div key={i} style={{ marginBottom: "16px", paddingLeft: "12px", borderLeft: "2px solid #00aaff" }}>
@@ -155,7 +155,7 @@ export default function WhitePapersPage() {
 
               {/* General */}
               <h4 style={{ marginTop: "24px", marginBottom: "12px", fontSize: "16px", fontWeight: 600 }}>
-                📊 General / Popular (5)
+                📊 General / Popular (3)
               </h4>
               {result.papers?.general_popular?.map((paper: any, i: number) => (
                 <div key={i} style={{ marginBottom: "16px", paddingLeft: "12px", borderLeft: "2px solid var(--muted)" }}>

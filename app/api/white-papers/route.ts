@@ -16,65 +16,58 @@ export async function POST(request: NextRequest) {
     }
 
     // Spawn intelligent sub-agent for research
-    const prompt = `Find 10 white papers, academic papers, and research on: "${topic}"
+    const prompt = `Find 6 white papers on: "${topic}"
 
-CRITICAL CONTEXT UNDERSTANDING:
-- "Austrian Economics" refers to the Mises/Hayek/Rothbard SCHOOL OF THOUGHT, not Austria the country
-- "Iran-Contra" refers to the 1980s Reagan scandal (arms-for-hostages), not Iranian economics
-- Understand the topic's actual meaning before searching
-- Apply intelligence and context, not just keyword matching
+CRITICAL CONTEXT:
+- "Austrian Economics" = Mises/Hayek school, NOT Austria country
+- "Iran-Contra" = Reagan scandal, NOT Iranian economics
+- Understand topic meaning before searching
 
-SPLIT YOUR RESULTS:
+SPLIT (3 + 3):
 
-1. WORLDVIEW-ALIGNED (5 papers):
-   - **Think like Dr. Ron Paul politically** (this is the primary worldview reference)
-   - Libertarian/anarcho-capitalist perspective (Cato Institute, Reason Foundation, Mises Institute)
-   - Austrian economics analysis (Mises, Hayek, Rothbard, Friedman)
-   - Anti-war, anti-Fed, constitutional skepticism of government power
-   - First-principles thinking, individual liberty focus
+1. WORLDVIEW-ALIGNED (3):
+   - Ron Paul lens (libertarian, anti-war, anti-Fed)
+   - Austrian economics (Mises, Hayek, Cato, Reason)
    
-2. GENERAL/POPULAR (5 papers):
-   - Mainstream academic research
-   - Most cited or influential papers
-   - Standard peer-reviewed journals
-   - Establishment/conventional perspectives
+2. GENERAL (3):
+   - Mainstream/academic
+   - Most cited/influential
 
-SEARCH STRATEGY:
-- Use web_search tool with intelligent queries (2-4 searches MAX)
-- For "Iran-Contra": search "Iran-Contra affair", "Boland Amendment", "Oliver North", NOT "Iranian economy"
-- For "Austrian Economics": search "Mises", "Hayek", "praxeology", NOT "Austria GDP"
-- Think about what the topic ACTUALLY means
-- Validate relevance before including
-- OUTPUT JSON IMMEDIATELY after collecting 10 good papers (don't over-research)
+STRICT RESEARCH LIMITS:
+- **MAXIMUM 2 searches total**
+- Pick ONE search for worldview sources, ONE for general
+- Use ONLY web_search (no web_fetch)
+- Each search returns ~10 results - pick best 3 from each
+- **OUTPUT JSON IMMEDIATELY after 2 searches**
 
-OUTPUT FORMAT (JSON):
+EXAMPLE:
+Search 1: "${topic} site:mises.org OR site:cato.org OR site:reason.com" → pick 3
+Search 2: "${topic} academic paper OR research" → pick 3
+OUTPUT JSON NOW
+
+OUTPUT FORMAT:
 {
   "topic": "${topic}",
   "timestamp": "ISO-8601",
   "papers": {
-    "worldview_aligned": [
-      {"title": "...", "url": "...", "description": "...", "source": "..."}
-    ],
-    "general_popular": [
-      {"title": "...", "url": "...", "description": "...", "source": "..."}
-    ]
+    "worldview_aligned": [{"title":"","url":"","description":"","source":""}],
+    "general_popular": [{"title":"","url":"","description":"","source":""}]
   },
-  "total": 10
+  "total": 6
 }
 
-IMPORTANT: Just output the JSON. Do NOT try to save to Firestore yourself.
-The API will handle saving after you return results.
+DO NOT:
+- Do more than 2 searches
+- Fetch full articles
+- Over-research
+- Save to Firestore yourself
 
-Think step by step:
-1. What does "${topic}" actually mean?
-2. What are 2-3 intelligent search queries for this topic?
-3. Search, collect ~15-20 results total
-4. Filter for quality and relevance (pick best 10)
-5. Split into worldview-aligned (5) vs. general (5)
-6. OUTPUT THE JSON IMMEDIATELY (don't do more research)
-
-CRITICAL: Output results after 2-4 searches. Don't exhaust token budget on research.
-Focus on QUALITY and RELEVANCE over quantity.`;
+DO:
+1. Understand what "${topic}" means
+2. Search ONCE for worldview (Mises/Cato/Reason)
+3. Search ONCE for general/academic
+4. Pick 3 from each
+5. OUTPUT JSON NOW`;
 
     // Call OpenClaw gateway to spawn sub-agent
     const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
@@ -89,7 +82,7 @@ Focus on QUALITY and RELEVANCE over quantity.`;
           task: prompt,
           label: `white-papers-${topic.slice(0, 30)}`,
           cleanup: 'keep',
-          runTimeoutSeconds: 180  // 3 minutes for research + output
+          runTimeoutSeconds: 90  // 90s for 2 searches + output
         }
       })
     });
@@ -109,9 +102,9 @@ Focus on QUALITY and RELEVANCE over quantity.`;
       const runId = spawnResult.runId;
       const childSessionKey = spawnResult.childSessionKey;
       
-      // Poll for completion (max 3 minutes)
-      const maxWaitTime = 180000; // 3 minutes  
-      const pollInterval = 3000; // 3 seconds
+      // Poll for completion (max 90s)
+      const maxWaitTime = 90000; // 90 seconds
+      const pollInterval = 2000; // 2 seconds
       const startTime = Date.now();
       
       while (Date.now() - startTime < maxWaitTime) {
