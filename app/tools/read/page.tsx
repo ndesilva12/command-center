@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User } from "lucide-react";
+import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -43,12 +43,31 @@ export default function ReadPage() {
   const [selectedFeedId, setSelectedFeedId] = useState<number>(DEFAULT_TOP_FEEDS[0]);
   const [isMobile, setIsMobile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsSearch, setSettingsSearch] = useState("");
+  const [tempTopFeeds, setTempTopFeeds] = useState<number[]>(DEFAULT_TOP_FEEDS);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    // Load saved top feeds from localStorage
+    const saved = localStorage.getItem('read_top_feeds');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTopFeeds(parsed);
+          setTempTopFeeds(parsed);
+          setSelectedFeedId(parsed[0]);
+        }
+      } catch (e) {
+        console.error('Failed to parse saved top feeds:', e);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -102,9 +121,57 @@ export default function ReadPage() {
     return html.replace(/<[^>]*>/g, '').substring(0, 200);
   };
 
+  const handleSaveSettings = () => {
+    setTopFeeds(tempTopFeeds);
+    localStorage.setItem('read_top_feeds', JSON.stringify(tempTopFeeds));
+    setShowSettings(false);
+    // If current feed is not in top feeds anymore and not selected, switch to first top feed
+    if (!tempTopFeeds.includes(selectedFeedId)) {
+      const firstTopFeed = tempTopFeeds[0];
+      if (firstTopFeed) {
+        setSelectedFeedId(firstTopFeed);
+      }
+    }
+  };
+
+  const toggleTopFeed = (feedId: number) => {
+    if (tempTopFeeds.includes(feedId)) {
+      // Remove from top feeds
+      setTempTopFeeds(tempTopFeeds.filter(id => id !== feedId));
+    } else {
+      // Add to top feeds (max 6)
+      if (tempTopFeeds.length < 6) {
+        setTempTopFeeds([...tempTopFeeds, feedId]);
+      }
+    }
+  };
+
+  const moveFeedUp = (feedId: number) => {
+    const index = tempTopFeeds.indexOf(feedId);
+    if (index > 0) {
+      const newFeeds = [...tempTopFeeds];
+      [newFeeds[index - 1], newFeeds[index]] = [newFeeds[index], newFeeds[index - 1]];
+      setTempTopFeeds(newFeeds);
+    }
+  };
+
+  const moveFeedDown = (feedId: number) => {
+    const index = tempTopFeeds.indexOf(feedId);
+    if (index < tempTopFeeds.length - 1) {
+      const newFeeds = [...tempTopFeeds];
+      [newFeeds[index], newFeeds[index + 1]] = [newFeeds[index + 1], newFeeds[index]];
+      setTempTopFeeds(newFeeds);
+    }
+  };
+
   const topFeedObjs = topFeeds.map(id => allFeeds.find(f => f.id === id)).filter(Boolean) as MinifeedFeed[];
   const otherFeeds = allFeeds.filter(f => !topFeeds.includes(f.id));
   const currentFeed = allFeeds.find(f => f.id === selectedFeedId);
+  
+  const filteredFeeds = allFeeds.filter(feed => 
+    feed.title.toLowerCase().includes(settingsSearch.toLowerCase()) ||
+    feed.category.toLowerCase().includes(settingsSearch.toLowerCase())
+  );
 
   return (
     <ProtectedRoute>
@@ -131,6 +198,28 @@ export default function ReadPage() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              onClick={() => {
+                setTempTopFeeds(topFeeds);
+                setSettingsSearch("");
+                setShowSettings(true);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "var(--foreground-muted)",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "13px",
+              }}
+            >
+              <Settings style={{ width: "14px", height: "14px" }} />
+              Settings
+            </button>
             <button
               onClick={() => loadEntries(selectedFeedId)}
               disabled={loading}
@@ -353,6 +442,271 @@ export default function ReadPage() {
           </div>
         )}
       </main>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: "20px",
+          }}
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            style={{
+              background: "rgba(30, 41, 59, 0.98)",
+              borderRadius: "16px",
+              border: "1px solid rgba(148, 163, 184, 0.2)",
+              maxWidth: "800px",
+              width: "100%",
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              backdropFilter: "blur(20px)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              padding: "24px",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+              <div>
+                <h2 style={{ fontSize: "24px", fontWeight: 700, color: "white", margin: 0, marginBottom: "4px" }}>
+                  Feed Settings
+                </h2>
+                <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>
+                  Select up to 6 feeds for quick access buttons
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "none",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <div style={{ position: "relative" }}>
+                <Search size={18} style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#64748b",
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search feeds..."
+                  value={settingsSearch}
+                  onChange={(e) => setSettingsSearch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px 10px 44px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Top Feeds (Selected) */}
+            {tempTopFeeds.length > 0 && (
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                <div style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "12px" }}>
+                  QUICK ACCESS BUTTONS ({tempTopFeeds.length}/6)
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {tempTopFeeds.map((feedId, index) => {
+                    const feed = allFeeds.find(f => f.id === feedId);
+                    if (!feed) return null;
+                    return (
+                      <div
+                        key={feedId}
+                        style={{
+                          padding: "12px 16px",
+                          background: "rgba(0, 170, 255, 0.1)",
+                          border: "1px solid rgba(0, 170, 255, 0.3)",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#00aaff", minWidth: "20px" }}>
+                          #{index + 1}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: "14px", fontWeight: 600, color: "white" }}>
+                            {feed.title}
+                          </div>
+                          <div style={{ fontSize: "12px", color: "#64748b" }}>
+                            {feed.category}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <button
+                            onClick={() => moveFeedUp(feedId)}
+                            disabled={index === 0}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              background: index === 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.1)",
+                              border: "none",
+                              color: index === 0 ? "#64748b" : "white",
+                              cursor: index === 0 ? "not-allowed" : "pointer",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={() => moveFeedDown(feedId)}
+                            disabled={index === tempTopFeeds.length - 1}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              background: index === tempTopFeeds.length - 1 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.1)",
+                              border: "none",
+                              color: index === tempTopFeeds.length - 1 ? "#64748b" : "white",
+                              cursor: index === tempTopFeeds.length - 1 ? "not-allowed" : "pointer",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            ↓
+                          </button>
+                          <button
+                            onClick={() => toggleTopFeed(feedId)}
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              background: "rgba(239, 68, 68, 0.1)",
+                              border: "1px solid rgba(239, 68, 68, 0.3)",
+                              color: "#ef4444",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* All Feeds (Scrollable) */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              <div style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "12px" }}>
+                ALL FEEDS ({filteredFeeds.length})
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {filteredFeeds.map(feed => {
+                  const isSelected = tempTopFeeds.includes(feed.id);
+                  const canAdd = tempTopFeeds.length < 6;
+                  return (
+                    <button
+                      key={feed.id}
+                      onClick={() => toggleTopFeed(feed.id)}
+                      disabled={!isSelected && !canAdd}
+                      style={{
+                        padding: "12px 16px",
+                        background: isSelected ? "rgba(0, 170, 255, 0.08)" : "rgba(255, 255, 255, 0.03)",
+                        border: isSelected ? "1px solid rgba(0, 170, 255, 0.2)" : "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "8px",
+                        textAlign: "left",
+                        cursor: (!isSelected && !canAdd) ? "not-allowed" : "pointer",
+                        opacity: (!isSelected && !canAdd) ? 0.5 : 1,
+                      }}
+                    >
+                      <div style={{ fontSize: "14px", fontWeight: 600, color: isSelected ? "#00aaff" : "white", marginBottom: "2px" }}>
+                        {isSelected && "✓ "}{feed.title}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>
+                        {feed.category}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: "16px 24px",
+              borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+              display: "flex",
+              gap: "12px",
+              justifyContent: "flex-end",
+            }}>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "none",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                style={{
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  background: "linear-gradient(135deg, #00aaff, #0088cc)",
+                  border: "none",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 }
