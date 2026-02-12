@@ -1,1012 +1,402 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Search, Filter, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, AlertCircle, ExternalLink } from "lucide-react";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 
-interface ContentItem {
-  title: string;
-  url: string;
-  source_type: string;
-  source_name: string;
-  summary: string;
-  estimated_minutes: number;
-  worldview_score: number;
-  worldview_reasoning: string;
-  category: string;
-}
-
-interface HistoryItem {
-  id: string;
-  topic: string | null;
-  source: string | null;
-  mode: string;
-  triggered_by: string;
-  timestamp: string;
-  total_items: number;
-  status: 'running' | 'completed' | 'failed';
-  results?: {
-    'short-unique': ContentItem[];
-    'short-popular': ContentItem[];
-    'long-unique': ContentItem[];
-    'long-popular': ContentItem[];
-  };
-  error?: string;
-}
-
 export default function CuratePage() {
-  // Input state
   const [topic, setTopic] = useState("");
   const [sources, setSources] = useState<string[]>([]);
   const [count, setCount] = useState(12);
-  const [minScore, setMinScore] = useState(5.0);
-  const [timeRange, setTimeRange] = useState<string>("month");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [isMobile, setIsMobile] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(10);
 
-  // Detect mobile
+  const sourceOptions = [
+    { value: "x", label: "X (Twitter)" },
+    { value: "reddit", label: "Reddit" },
+    { value: "video", label: "Videos (YouTube)" },
+    { value: "article", label: "Articles" },
+  ];
+
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    loadHistory(historyLimit);
+  }, [historyLimit]);
 
-  // History state
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [fullReportItem, setFullReportItem] = useState<HistoryItem | null>(null);
-  const [latestCompletedId, setLatestCompletedId] = useState<string | null>(null);
-
-  // Load history on mount and poll every 5 seconds
-  useEffect(() => {
-    loadHistory();
-    const interval = setInterval(loadHistory, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadHistory = async () => {
+  const loadHistory = async (limitCount: number = 10) => {
     try {
-      const res = await fetch('/api/curate/history');
-      const data = await res.json();
-      const newHistory = data.history || [];
-      
-      // Check if there's a newly completed item
-      if (newHistory.length > 0 && history.length > 0) {
-        const newest = newHistory[0];
-        const wasRunning = history.find(h => h.id === newest.id && h.status === 'running');
-        
-        if (wasRunning && newest.status === 'completed' && newest.id !== latestCompletedId) {
-          // Auto-show full report for newly completed item
-          setFullReportItem(newest);
-          setLatestCompletedId(newest.id);
-        }
-      }
-      
-      setHistory(newHistory);
-      setHistoryLoading(false);
-    } catch (err) {
-      console.error('Failed to load history:', err);
-      setHistoryLoading(false);
+      const q = query(
+        collection(db, "curate_history"),
+        orderBy("timestamp", "desc"),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistory(items);
+    } catch (error) {
+      console.error("Error loading history:", error);
     }
   };
 
-  const toggleSource = (sourceId: string) => {
-    setSources(prev => 
-      prev.includes(sourceId) 
-        ? prev.filter(s => s !== sourceId)
-        : [...prev, sourceId]
-    );
-  };
+  const filteredHistory = historySearch.trim()
+    ? history.filter(item => 
+        item.topic?.toLowerCase().includes(historySearch.toLowerCase())
+      )
+    : history;
 
-  const handleCurate = async () => {
-    if (!topic.trim()) {
-      setError("Please enter a topic");
-      return;
-    }
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!topic.trim()) return;
+
     setLoading(true);
-    setError("");
-    setSuccess("");
+    setResult(null);
 
     try {
-      const res = await fetch('/api/curate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          topic: topic.trim(), 
+      const response = await fetch("/api/curate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: topic.trim(),
           sources: sources.length > 0 ? sources : null,
-          count,
-          minScore,
-          timeRange
-        }),
+          count
+        })
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        setSuccess(`Curation started! Processing: "${topic.trim()}". Check history below for results.`);
-        setTopic('');
-        
-        // Reload history immediately to show the new "running" item
-        loadHistory();
-        
-        // Clear success message after 5 seconds
-        setTimeout(() => setSuccess(""), 5000);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setResult(data);
+        loadHistory(historyLimit);
       } else {
-        setError(data.error || 'Failed to start curation');
+        alert(data.error || "Failed to curate content");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error(err);
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to curate content");
     } finally {
       setLoading(false);
     }
   };
 
-  const hasActiveFilter = searchQuery.trim() !== "" || statusFilter !== "all";
-  const historyLimit = hasActiveFilter ? 25 : 10;
-  
-  const filteredHistory = history
-    .filter(item => {
-      if (statusFilter !== "all" && item.status !== statusFilter) {
-        return false;
-      }
-      
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const topicStr = (item.topic || "").toLowerCase();
-        const resultsStr = JSON.stringify(item.results || "").toLowerCase();
-        
-        return topicStr.includes(query) || resultsStr.includes(query);
-      }
-      
-      return true;
-    })
-    .slice(0, historyLimit);
-
-  const formatTimestamp = (timestamp: string) => {
-    if (!timestamp) return "Unknown";
-    try {
-      const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return "Unknown";
-      
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).format(date);
-    } catch (error) {
-      return "Unknown";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'running':
-        return <Clock size={16} className="animate-spin" style={{ color: '#3b82f6' }} />;
-      case 'completed':
-        return <CheckCircle size={16} style={{ color: '#10b981' }} />;
-      case 'failed':
-        return <XCircle size={16} style={{ color: '#ef4444' }} />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'running': return '#3b82f6';
-      case 'completed': return '#10b981';
-      case 'failed': return '#ef4444';
-      default: return '#6b7280';
-    }
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 9) return '#10b981'; // green
-    if (score >= 7) return '#3b82f6'; // blue
-    if (score >= 5) return '#f59e0b'; // yellow
-    return '#ef4444'; // red
-  };
-
-  const getCategoryDisplay = (category: string) => {
-    const map: Record<string, string> = {
-      'short-unique': 'Short & Unique',
-      'short-popular': 'Short & Popular',
-      'long-unique': 'Long & Unique',
-      'long-popular': 'Long & Popular',
-    };
-    return map[category] || category;
-  };
-
-  const getSummary = (results: any) => {
-    if (!results) return "No results available";
-    
-    // Count total items across categories
-    let totalItems = 0;
-    const categories: Array<'short-unique' | 'short-popular' | 'long-unique' | 'long-popular'> = ['short-unique', 'short-popular', 'long-unique', 'long-popular'];
-    categories.forEach(cat => {
-      const items = results[cat];
-      if (items && Array.isArray(items)) {
-        totalItems += items.length;
-      }
-    });
-    
-    if (totalItems === 0) return "No items found";
-    
-    // Get top item by score
-    let topItem: ContentItem | null = null;
-    let topScore = 0;
-    
-    categories.forEach(cat => {
-      const items: ContentItem[] = results[cat] || [];
-      if (Array.isArray(items)) {
-        items.forEach((item: ContentItem) => {
-          if (item.worldview_score > topScore) {
-            topScore = item.worldview_score;
-            topItem = item;
-          }
-        });
-      }
-    });
-    
-    if (topItem) {
-      const item = topItem as ContentItem;
-      return `Found ${totalItems} items. Top: "${item.title}" (${topScore}/10)`;
-    }
-    
-    return `Found ${totalItems} intellectually stimulating items`;
-  };
-
-  const renderFullResults = (item: HistoryItem) => {
-    if (!item.results) return <div style={{ color: '#64748b' }}>No results available</div>;
-
-    const categories = [
-      { key: 'short-unique', emoji: '⚡', color: '#a78bfa' },
-      { key: 'short-popular', emoji: '🔥', color: '#f59e0b' },
-      { key: 'long-unique', emoji: '📚', color: '#3b82f6' },
-      { key: 'long-popular', emoji: '🌟', color: '#10b981' },
-    ];
-
-    return (
-      <div>
-        {/* Metadata */}
-        <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(0, 170, 255, 0.1)', borderRadius: '8px', border: '1px solid rgba(0, 170, 255, 0.3)' }}>
-          <div style={{ fontSize: '13px', color: '#cbd5e1' }}>
-            <div><strong>Topic:</strong> {item.topic || 'General'}</div>
-            <div><strong>Source:</strong> {item.source || 'Mixed'}</div>
-            <div><strong>Total Items:</strong> {item.total_items}</div>
-            <div><strong>Triggered By:</strong> {item.triggered_by}</div>
-          </div>
-        </div>
-
-        {/* Categories */}
-        {categories.map(({ key, emoji, color }) => {
-          const items: ContentItem[] = (item.results?.[key as keyof typeof item.results] as ContentItem[]) || [];
-          if (items.length === 0) return null;
-
-          return (
-            <div key={key} style={{ marginBottom: '32px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '20px' }}>{emoji}</span>
-                {getCategoryDisplay(key)} ({items.length})
-              </h3>
-              
-              {items.map((contentItem: ContentItem, idx: number) => (
-                <div key={idx} style={{ marginBottom: '16px', padding: '16px', background: 'rgba(0, 0, 0, 0.3)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                  {/* Title + Score */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '12px' }}>
-                    <a 
-                      href={contentItem.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={{ 
-                        color: '#60a5fa', 
-                        fontSize: '14px', 
-                        fontWeight: '600', 
-                        textDecoration: 'none',
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      {contentItem.title}
-                      <ExternalLink size={14} style={{ flexShrink: 0 }} />
-                    </a>
-                    
-                    <div style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      background: `${getScoreColor(contentItem.worldview_score)}20`,
-                      border: `1px solid ${getScoreColor(contentItem.worldview_score)}40`,
-                      color: getScoreColor(contentItem.worldview_score),
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      flexShrink: 0,
-                    }}>
-                      {contentItem.worldview_score.toFixed(1)}/10
-                    </div>
-                  </div>
-
-                  {/* Summary */}
-                  <div style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', lineHeight: '1.6' }}>
-                    {contentItem.summary}
-                  </div>
-
-                  {/* Reasoning */}
-                  <div style={{ fontSize: '12px', color: '#cbd5e1', marginBottom: '10px', padding: '10px', background: 'rgba(0, 170, 255, 0.05)', borderRadius: '6px', border: '1px solid rgba(0, 170, 255, 0.2)' }}>
-                    <strong style={{ color: '#00aaff' }}>Why it scores {contentItem.worldview_score}/10:</strong> {contentItem.worldview_reasoning}
-                  </div>
-
-                  {/* Meta */}
-                  <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', gap: '12px' }}>
-                    <span>📍 {contentItem.source_type}</span>
-                    <span>🔗 {contentItem.source_name}</span>
-                    <span>⏱️ ~{contentItem.estimated_minutes} min</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
+  const toggleSource = (source: string) => {
+    setSources(prev => 
+      prev.includes(source) 
+        ? prev.filter(s => s !== source)
+        : [...prev, source]
     );
+  };
+
+  const categoryColors: Record<string, string> = {
+    popular: "#ff6b6b",
+    technology: "#4ecdc4",
+    politics: "#00aaff",
+    culture: "#95e1d3"
+  };
+
+  const sourceTypeEmojis: Record<string, string> = {
+    x: "🐦",
+    video: "📹",
+    reddit: "👽",
+    article: "📰",
+    podcast: "🎙️",
+    pdf: "📄"
   };
 
   return (
     <>
-      <TopNav />
-      <ToolNav currentToolId="curate" />
-      <div style={{
-        minHeight: '100vh',
-        background: '#0a0e27',
-        paddingTop: '136px',
-        paddingBottom: '32px',
-        paddingLeft: '24px',
-        paddingRight: '24px',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}>
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-          <Sparkles size={48} style={{ color: '#00aaff' }} />
-          <h1 style={{ 
-            fontSize: '48px', 
-            fontWeight: 'bold', 
-            color: 'white',
-            margin: 0,
-          }}>
-            Curate
-          </h1>
-        </div>
+      <div style={{ paddingTop: "144px", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
+        <TopNav />
+        <ToolNav currentToolId="curate" />
         
-        <p style={{ fontSize: '18px', color: '#94a3b8', marginBottom: '8px' }}>
-          Find intellectually stimulating content - especially content that challenges your beliefs
-        </p>
-        <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '40px', fontStyle: 'italic' }}>
-          "Strength through competition and struggle, not atrophy by protectionism."
-        </p>
-
-        {/* Input Section */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '16px',
-          padding: '32px',
-          marginBottom: '24px',
-        }}>
-          {/* Topic Input */}
-          <input
-            type="text"
-            placeholder="Enter topic to curate (e.g., 'Austrian economics', 'Federal Reserve', 'NBA analytics')..."
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !loading && handleCurate()}
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '20px 24px',
-              fontSize: '16px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(0, 170, 255, 0.3)',
-              borderRadius: '12px',
-              color: 'white',
-              outline: 'none',
-              marginBottom: '16px',
-              opacity: loading ? 0.6 : 1,
-              cursor: loading ? 'not-allowed' : 'text',
-            }}
-          />
-
-          {/* Source Selector - Multi-select Buttons */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '12px', display: 'block' }}>
-              Source Types {sources.length > 0 && <span style={{ color: '#00aaff' }}>({sources.length} selected)</span>}
-            </label>
-            
-            {/* Broad Types */}
-            <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>BROAD TYPES</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {[
-                  { id: 'videos', label: '📹 Videos' },
-                  { id: 'articles', label: '📰 Articles' },
-                  { id: 'blogs', label: '✍️ Blogs' },
-                  { id: 'podcasts', label: '🎙️ Podcasts' },
-                  { id: 'books', label: '📚 Books' },
-                  { id: 'movies', label: '🎬 Movies' },
-                  { id: 'shows', label: '📺 Shows' },
-                  { id: 'documentaries', label: '🎥 Documentaries' },
-                ].map(({ id, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => toggleSource(id)}
-                    disabled={loading}
-                    style={{
-                      padding: '10px 18px',
-                      borderRadius: '8px',
-                      border: sources.includes(id) 
-                        ? '2px solid #00aaff' 
-                        : '1px solid rgba(255, 255, 255, 0.2)',
-                      background: sources.includes(id) 
-                        ? 'rgba(0, 170, 255, 0.15)' 
-                        : 'rgba(255, 255, 255, 0.05)',
-                      color: sources.includes(id) ? '#00aaff' : '#94a3b8',
-                      fontSize: '13px',
-                      fontWeight: sources.includes(id) ? 600 : 500,
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      opacity: loading ? 0.6 : 1,
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Specific Sources */}
-            <div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>SPECIFIC SOURCES</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {[
-                  { id: 'x', label: '𝕏 X/Twitter' },
-                  { id: 'youtube', label: '▶️ YouTube' },
-                  { id: 'rumble', label: '🎬 Rumble' },
-                  { id: 'reddit', label: '🤖 Reddit' },
-                  { id: 'substack', label: '📧 Substack' },
-                  { id: 'spotify', label: '🎧 Spotify' },
-                  { id: 'tiktok', label: '🎵 TikTok' },
-                  { id: 'apple', label: '🎧 Apple Podcasts' },
-                ].map(({ id, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => toggleSource(id)}
-                    disabled={loading}
-                    style={{
-                      padding: '10px 18px',
-                      borderRadius: '8px',
-                      border: sources.includes(id) 
-                        ? '2px solid #00aaff' 
-                        : '1px solid rgba(255, 255, 255, 0.2)',
-                      background: sources.includes(id) 
-                        ? 'rgba(0, 170, 255, 0.15)' 
-                        : 'rgba(255, 255, 255, 0.05)',
-                      color: sources.includes(id) ? '#00aaff' : '#94a3b8',
-                      fontSize: '13px',
-                      fontWeight: sources.includes(id) ? 600 : 500,
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      opacity: loading ? 0.6 : 1,
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Compact row: Time Range + Count + Min Score */}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
-            
-            {/* Time Range Dropdown */}
-            <div>
-              <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-                Time Range
-              </label>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  outline: 'none',
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                <option value="day">1 Day</option>
-                <option value="week">1 Week</option>
-                <option value="month">1 Month</option>
-                <option value="year">1 Year</option>
-                <option value="decade">10 Years</option>
-                <option value="any">Any Time</option>
-              </select>
-            </div>
-
-            {/* Count Dropdown */}
-            <div>
-              <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-                Total Items
-              </label>
-              <select
-                value={count}
-                onChange={(e) => setCount(Number(e.target.value))}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  outline: 'none',
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                <option value="4">4 items</option>
-                <option value="8">8 items</option>
-                <option value="12">12 items</option>
-                <option value="16">16 items</option>
-                <option value="20">20 items</option>
-              </select>
-            </div>
-
-            {/* Min Score Dropdown */}
-            <div>
-              <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-                Min Score
-              </label>
-              <select
-                value={minScore}
-                onChange={(e) => setMinScore(Number(e.target.value))}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  outline: 'none',
-                  opacity: loading ? 0.6 : 1,
-                }}
-              >
-                <option value="3.0">3.0+ (Low bar)</option>
-                <option value="4.0">4.0+ (Decent)</option>
-                <option value="5.0">5.0+ (Good)</option>
-                <option value="6.0">6.0+ (Strong)</option>
-                <option value="7.0">7.0+ (Excellent)</option>
-                <option value="8.0">8.0+ (Exceptional)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Curate Button */}
-          <button
-            onClick={handleCurate}
-            disabled={loading || !topic.trim()}
-            style={{
-              width: '100%',
-              padding: '16px',
-              background: loading || !topic.trim() 
-                ? 'rgba(0, 170, 255, 0.5)' 
-                : 'linear-gradient(135deg, #00aaff, #0088cc)',
-              border: 'none',
-              borderRadius: '12px',
-              color: 'white',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: loading || !topic.trim() ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-          >
-            <Sparkles size={20} />
-            {loading ? 'Curating...' : 'Curate'}
-          </button>
-        </div>
-
-        {/* Status Messages */}
-        {error && (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '12px',
-          }}>
-            <AlertCircle size={20} style={{ color: '#fca5a5', flexShrink: 0, marginTop: '2px' }} />
-            <div style={{ color: '#fca5a5', fontSize: '14px' }}>
-              {error}
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div style={{
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '24px',
-            color: '#86efac',
-            fontSize: '14px',
-          }}>
-            ✓ {success}
-          </div>
-        )}
-
-        {/* History Section */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          backdropFilter: 'blur(12px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '16px',
-          padding: '32px',
-        }}>
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: 'white',
-                margin: 0,
-              }}>
-                History
-              </h2>
-              <div style={{ fontSize: '13px', color: '#64748b' }}>
-                {hasActiveFilter 
-                  ? `Showing ${filteredHistory.length}/${history.length} (max 25 with filter)`
-                  : `Showing ${filteredHistory.length}/${history.length} (most recent)`
-                }
-              </div>
-            </div>
-            <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-              {hasActiveFilter 
-                ? 'Filtered results - up to 25 items'
-                : 'Most recent 10 curations - search or filter to expand to 25'
-              }
+        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
+          {/* Input Form */}
+          <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
+            <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
+              ✨ Curate
+            </h2>
+            <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
+              Intelligent content curation with Ron Paul lens and diversity enforcement
             </p>
-          </div>
-
-          {/* Search + Filter Row */}
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            marginBottom: '20px',
-            flexWrap: 'wrap',
-          }}>
-            <div style={{ flex: '1 1 300px', position: 'relative' }}>
-              <Search size={18} style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#64748b',
-              }} />
+            
+            <form onSubmit={handleSubmit}>
               <input
                 type="text"
-                placeholder="Search history..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Enter topic (e.g., Bitcoin, Federal Reserve, Austrian Economics)"
                 style={{
-                  width: '100%',
-                  padding: '10px 14px 10px 44px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  outline: 'none',
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--glass-border)",
+                  background: "var(--glass-bg)",
+                  color: "var(--foreground)",
+                  fontSize: "15px",
+                  marginBottom: "16px"
                 }}
+                disabled={loading}
               />
-            </div>
 
-            <div style={{ position: 'relative' }}>
-              <Filter size={18} style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#64748b',
-                pointerEvents: 'none',
-              }} />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+              {/* Source Filters */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 600 }}>
+                  Source Types (optional - leave empty for diverse mix)
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                  {sourceOptions.map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => toggleSource(option.value)}
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--glass-border)",
+                        background: sources.includes(option.value) ? "#00aaff" : "transparent",
+                        color: sources.includes(option.value) ? "#fff" : "var(--foreground)",
+                        fontSize: "14px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Count Selector */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 600 }}>
+                  Number of Items (must be multiple of 4)
+                </label>
+                <select
+                  value={count}
+                  onChange={(e) => setCount(Number(e.target.value))}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--glass-border)",
+                    background: "var(--glass-bg)",
+                    color: "var(--foreground)",
+                    fontSize: "14px"
+                  }}
+                  disabled={loading}
+                >
+                  <option value={4}>4 items</option>
+                  <option value={8}>8 items</option>
+                  <option value={12}>12 items</option>
+                  <option value={16}>16 items</option>
+                  <option value={20}>20 items</option>
+                </select>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={loading || !topic.trim()}
                 style={{
-                  padding: '10px 40px 10px 44px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  outline: 'none',
+                  padding: "12px 24px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: loading ? "var(--muted)" : "linear-gradient(135deg, #00aaff, #0088cc)",
+                  color: "#fff",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  cursor: loading ? "not-allowed" : "pointer"
                 }}
               >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="running">Running</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
+                {loading ? "Curating..." : "Curate Content"}
+              </button>
+            </form>
           </div>
 
-          {/* History Items */}
-          {historyLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-              Loading history...
-            </div>
-          ) : filteredHistory.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-              No history found
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {filteredHistory.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {/* Collapsed View */}
-                  <div
-                    style={{
-                      padding: '14px 16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                  >
-                    <div style={{ flexShrink: 0 }}>
-                      {getStatusIcon(item.status)}
-                    </div>
+          {/* Result */}
+          {result && result.items && (
+            <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
+              <h3 style={{ marginBottom: "20px", fontSize: "18px", fontWeight: 700 }}>
+                {result.topic}
+              </h3>
+              
+              {/* Diversity Stats */}
+              {result.diversity && (
+                <div style={{ 
+                  marginBottom: "24px", 
+                  padding: "12px", 
+                  background: "var(--glass-bg)", 
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  color: "var(--muted)"
+                }}>
+                  Mix: {result.diversity.x_posts || 0} X posts • {result.diversity.videos || 0} videos • {result.diversity.reddit || 0} Reddit • {result.diversity.articles || 0} articles
+                </div>
+              )}
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: 'white',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {item.topic || 'General Curation'}
+              {/* Categories */}
+              {["popular", "technology", "politics", "culture"].map(category => {
+                const categoryItems = result.items.filter((item: any) => item.category === category);
+                if (categoryItems.length === 0) return null;
+
+                return (
+                  <div key={category} style={{ marginBottom: "32px" }}>
+                    <h4 style={{ 
+                      marginBottom: "16px", 
+                      fontSize: "16px", 
+                      fontWeight: 600,
+                      color: categoryColors[category] || "#00aaff",
+                      textTransform: "capitalize"
+                    }}>
+                      {category}
+                    </h4>
+                    
+                    {categoryItems.map((item: any, i: number) => (
+                      <div 
+                        key={i}
+                        style={{
+                          marginBottom: "16px",
+                          paddingBottom: "16px",
+                          borderBottom: i < categoryItems.length - 1 ? "1px solid var(--glass-border)" : "none"
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "8px" }}>
+                          <span style={{ fontSize: "18px" }}>
+                            {sourceTypeEmojis[item.source_type] || "📄"}
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <a 
+                              href={item.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ 
+                                color: "#00aaff", 
+                                textDecoration: "none",
+                                fontWeight: 600,
+                                fontSize: "15px",
+                                display: "block",
+                                marginBottom: "6px"
+                              }}
+                            >
+                              {item.title}
+                            </a>
+                            {item.excerpt && (
+                              <p style={{ 
+                                fontSize: "13px", 
+                                color: "var(--muted)", 
+                                lineHeight: 1.5,
+                                marginBottom: "6px"
+                              }}>
+                                {item.excerpt}
+                              </p>
+                            )}
+                            {item.why && (
+                              <p style={{ 
+                                fontSize: "12px", 
+                                color: "var(--muted)", 
+                                fontStyle: "italic"
+                              }}>
+                                💡 {item.why}
+                              </p>
+                            )}
+                            {item.score && (
+                              <div style={{ 
+                                fontSize: "12px", 
+                                color: categoryColors[category] || "#00aaff",
+                                marginTop: "4px"
+                              }}>
+                                Score: {item.score}/10
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* History */}
+          {!loading && (
+            <div className="glass card" style={{ padding: "24px" }}>
+              <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>
+                History
+              </h3>
+
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Search history..."
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--glass-border)",
+                  background: "var(--glass-bg)",
+                  color: "var(--foreground)",
+                  fontSize: "14px",
+                  marginBottom: "16px"
+                }}
+              />
+
+              {filteredHistory.length === 0 ? (
+                <p style={{ color: "var(--muted)", fontSize: "14px" }}>
+                  {historySearch.trim() ? "No results found" : "No curations yet"}
+                </p>
+              ) : (
+                <>
+                  {filteredHistory.map((item) => (
+                    <div 
+                      key={item.id}
+                      onClick={() => setResult(item)}
+                      style={{
+                        padding: "12px",
+                        marginBottom: "8px",
+                        borderRadius: "6px",
+                        background: "var(--glass-bg)",
+                        cursor: "pointer",
+                        border: "1px solid transparent"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic}</div>
+                      <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
+                        {new Date(item.timestamp).toLocaleString()} • {item.total || item.items?.length || 0} items
                       </div>
                     </div>
+                  ))}
 
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#64748b',
-                      flexShrink: 0,
-                    }}>
-                      {formatTimestamp(item.timestamp)}
-                    </div>
-
-                    <div style={{
-                      padding: '4px 10px',
-                      borderRadius: '12px',
-                      background: `${getStatusColor(item.status)}20`,
-                      color: getStatusColor(item.status),
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      textTransform: 'capitalize',
-                      flexShrink: 0,
-                    }}>
-                      {item.status}
-                    </div>
-
-                    <div style={{ flexShrink: 0, color: '#64748b' }}>
-                      {expandedId === item.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </div>
-                  </div>
-
-                  {/* Expanded View */}
-                  {expandedId === item.id && (
-                    <div style={{
-                      padding: '16px',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                      background: 'rgba(0, 0, 0, 0.2)',
-                    }}>
-                      {item.status === 'failed' && item.error && (
-                        <div style={{
-                          padding: '12px',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '1px solid rgba(239, 68, 68, 0.3)',
-                          borderRadius: '6px',
-                          color: '#fca5a5',
-                          fontSize: '13px',
-                          marginBottom: '12px',
-                        }}>
-                          <strong>Error:</strong> {item.error}
-                        </div>
-                      )}
-
-                      {item.status === 'completed' && item.results && (
-                        <div>
-                          <div style={{
-                            fontSize: '13px',
-                            color: '#cbd5e1',
-                            lineHeight: '1.6',
-                            marginBottom: '12px',
-                            padding: '12px',
-                            borderRadius: '6px',
-                            background: 'rgba(0, 0, 0, 0.2)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                          }}>
-                            {getSummary(item.results)}
-                          </div>
-                          <button
-                            onClick={() => setFullReportItem(item)}
-                            style={{
-                              padding: '8px 16px',
-                              background: 'linear-gradient(135deg, #00aaff, #0088cc)',
-                              border: 'none',
-                              borderRadius: '6px',
-                              color: 'white',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            View Full Results →
-                          </button>
-                        </div>
-                      )}
-
-                      {item.status === 'running' && (
-                        <div style={{
-                          textAlign: 'center',
-                          padding: '20px',
-                          color: '#64748b',
-                        }}>
-                          Processing... check back in a moment
-                        </div>
-                      )}
-                    </div>
+                  {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
+                    <button
+                      onClick={() => setHistoryLimit(historyLimit + 25)}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        marginTop: "8px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--glass-border)",
+                        background: "transparent",
+                        color: "#00aaff",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        cursor: "pointer"
+                      }}
+                    >
+                      Show More (currently showing {historyLimit})
+                    </button>
                   )}
-                </div>
-              ))}
+                </>
+              )}
             </div>
           )}
         </div>
-
-        {/* Full Report Modal */}
-        {fullReportItem && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0, 0, 0, 0.7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 9999,
-              padding: '20px',
-            }}
-            onClick={() => setFullReportItem(null)}
-          >
-            <div
-              style={{
-                background: 'rgba(30, 41, 59, 0.95)',
-                borderRadius: '16px',
-                border: '1px solid rgba(148, 163, 184, 0.2)',
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                padding: '32px',
-                backdropFilter: 'blur(20px)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px',
-              }}>
-                <div>
-                  <h2 style={{
-                    fontSize: '24px',
-                    fontWeight: '700',
-                    color: 'white',
-                    margin: 0,
-                    marginBottom: '4px',
-                  }}>
-                    Curation Results
-                  </h2>
-                  <p style={{
-                    fontSize: '13px',
-                    color: '#94a3b8',
-                    margin: 0,
-                  }}>
-                    {fullReportItem.topic || 'General'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setFullReportItem(null)}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontSize: '20px',
-                    width: '40px',
-                    height: '40px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div style={{
-                fontSize: '14px',
-                color: '#cbd5e1',
-                lineHeight: '1.8',
-                maxHeight: '60vh',
-                overflowY: 'auto',
-              }}>
-                {renderFullResults(fullReportItem)}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
-    <BottomNav />
-  </>
+      <BottomNav />
+    </>
   );
 }

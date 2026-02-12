@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getAdminDb } from '@/lib/firebase-admin';
 
-// L3D server runs on EC2 (port 18790)
-const L3D_SERVER_URL = process.env.L3D_SERVER_URL || 'http://3.141.47.151:18790';
+const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';
+const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, mode = 'balanced', days = 30 } = body;
+    const { topic, days = 30 } = body;
 
     if (!topic || !topic.trim()) {
       return NextResponse.json(
@@ -17,49 +16,196 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a "running" record immediately in Firestore
-    const docRef = await adminDb.collection('l3d_history').add({
-      query: topic.trim(),
-      mode,
-      days,
-      status: 'running',
-      timestamp: Timestamp.now(),
-      userId: 'default',
-    });
+    // Build intelligent L3D prompt
+    const prompt = `Research the last ${days} days of developments on: "${topic}"
 
-    // Trigger L3D server on EC2 (fire and forget)
-    fetch(L3D_SERVER_URL, {
+CRITICAL CONTEXT UNDERSTANDING:
+- "Austrian Economics" = Mises/Hayek school (NOT Austria country)
+- "Iran-Contra" = Reagan scandal (NOT Iranian economics)
+- Understand topic meaning before searching
+
+WORLDVIEW (RON PAUL POLITICAL LENS):
+- Individualism > collectivism
+- Free markets, sound money, anti-Fed
+- Non-interventionism, anti-war
+- Constitutional limits on government
+- Austrian economics perspective
+- First-principles thinking
+
+RESEARCH STRATEGY:
+- Use web_search with freshness parameter
+- Focus on last ${days} days (use freshness: "p${days}d")
+- Find: news, analysis, discussions, developments
+- MAX 3-4 searches total
+- Mix of worldview-aligned + mainstream sources
+
+SEARCH QUERIES (examples):
+1. "${topic}" with freshness filter
+2. "${topic} site:mises.org OR site:cato.org OR site:reason.com" (worldview)
+3. "${topic} analysis OR commentary" (depth)
+4. "${topic} site:reddit.com OR site:x.com" (discussion)
+
+CATEGORIZATION:
+- **Major Developments**: Big news, policy changes, significant events
+- **Analysis & Commentary**: Think pieces, expert analysis
+- **Discussions**: Reddit, X, community reactions
+- **Data & Research**: Studies, reports, statistics
+
+SCORING:
+- Recency (newer = better)
+- Intellectual rigor
+- Ron Paul worldview alignment
+- Source quality
+
+OUTPUT FORMAT (JSON):
+{
+  "topic": "${topic}",
+  "days": ${days},
+  "timestamp": "ISO-8601",
+  "categories": {
+    "major_developments": [
+      {
+        "title": "...",
+        "url": "...",
+        "date": "...",
+        "source": "...",
+        "summary": "...",
+        "worldview_note": "Ron Paul lens perspective"
+      }
+    ],
+    "analysis_commentary": [...],
+    "discussions": [...],
+    "data_research": [...]
+  },
+  "key_takeaways": [
+    "3-5 key insights from last ${days} days with worldview analysis"
+  ],
+  "total_items": 12
+}
+
+CRITICAL:
+- Do NOT save to Firestore yourself (API handles it)
+- OUTPUT JSON IMMEDIATELY after research
+- Limit to 3-4 searches
+
+Think step by step:
+1. What does "${topic}" mean?
+2. What are 3-4 search queries with freshness filters?
+3. Search and collect ~15-20 recent items
+4. Categorize into 4 buckets
+5. Extract 3-5 key takeaways with Ron Paul analysis
+6. OUTPUT JSON NOW`;
+
+    // Spawn intelligent sub-agent
+    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        topic: topic.trim(),
-        mode,
-        days,
-        docId: docRef.id,
-      }),
-    }).catch(err => {
-      console.error('Failed to trigger L3D server:', err);
-      // Update Firestore with error
-      adminDb.collection('l3d_history').doc(docRef.id).update({
-        status: 'failed',
-        error: 'Failed to start research on EC2',
-        completed_at: Timestamp.now(),
-      });
+        tool: 'sessions_spawn',
+        args: {
+          task: prompt,
+          label: `l3d-${topic.slice(0, 30)}`,
+          cleanup: 'keep',
+          runTimeoutSeconds: 120  // 2 minutes for research
+        }
+      })
     });
 
-    // Return immediately with success
-    return NextResponse.json({
-      success: true,
-      message: 'Research started',
-      id: docRef.id,
-    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    }
 
-  } catch (error) {
-    console.error('Error starting L3D research:', error);
+    const data = await response.json();
+    const spawnResult = data?.result?.details || data?.result;
+    
+    if (spawnResult?.status === 'accepted') {
+      const childSessionKey = spawnResult.childSessionKey;
+      
+      // Poll for completion
+      const maxWaitTime = 120000; // 2 minutes
+      const pollInterval = 3000; // 3 seconds
+      const startTime = Date.now();
+      
+      while (Date.now() - startTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+        const historyResponse = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tool: 'sessions_history',
+            args: {
+              sessionKey: childSessionKey,
+              limit: 5,
+              includeTools: false
+            }
+          })
+        });
+        
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          const historyResult = historyData?.result?.details || historyData?.result || {};
+          const messages = historyResult?.messages || [];
+          
+          const lastAssistant = messages.reverse().find((m: any) => m.role === 'assistant');
+          
+          if (lastAssistant && lastAssistant.content) {
+            const content = Array.isArray(lastAssistant.content) 
+              ? lastAssistant.content.map((c: any) => c.text || c).join('\n')
+              : lastAssistant.content;
+            
+            const jsonMatch = content.match(/\{[\s\S]*"categories"[\s\S]*\}/);
+            
+            if (jsonMatch) {
+              try {
+                const result = JSON.parse(jsonMatch[0]);
+                
+                // Save to Firestore
+                try {
+                  const db = getAdminDb();
+                  await db.collection('l3d_history').add({
+                    query: topic.trim(),
+                    days,
+                    timestamp: new Date().toISOString(),
+                    status: 'completed',
+                    ...result
+                  });
+                } catch (saveError) {
+                  console.error('Failed to save to Firestore:', saveError);
+                }
+                
+                return NextResponse.json(result);
+              } catch (e) {
+                // Continue polling
+              }
+            }
+          }
+        }
+      }
+      
+      return NextResponse.json(
+        { error: 'Research timed out - topic may be too complex' },
+        { status: 504 }
+      );
+    }
+    
+    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Unexpected spawn response', details: data },
+      { status: 500 }
+    );
+    
+  } catch (error) {
+    console.error('L3D API error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
