@@ -42,15 +42,15 @@ ONE-PAGER STRUCTURE:
 
 🎯 **KEY POINTS** (6-8 bullets)
 - Most important insights
-- Apply Ron Paul political lens where relevant
 - First-principles thinking
-- Austrian economics perspective if applicable
+- Evidence-based analysis
+- Consider libertarian/individualist perspective where relevant
 
 🔍 **CONTEXT & IMPLICATIONS**
 - Historical background
 - Current state
 - Future implications
-- Libertarian/individualist analysis
+- Critical analysis from freedom-oriented viewpoint
 
 📚 **FURTHER READING** (3-5 links)
 - Mix of worldview-aligned and mainstream sources

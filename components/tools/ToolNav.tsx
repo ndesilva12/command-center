@@ -82,42 +82,82 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
 
         .tool-nav-button {
           padding: 10px 20px;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          background: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 15px;
+          border-radius: 10px;
+          border: 1.5px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
           white-space: nowrap;
           flex-shrink: 0;
-          text-decoration: none;
+          text-decoration: none !important;
           display: inline-block;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          box-shadow: 
+            0 4px 16px rgba(0, 0, 0, 0.2),
+            0 2px 4px rgba(0, 0, 0, 0.1),
+            inset 0 1px 1px rgba(255, 255, 255, 0.15);
+          position: relative;
+        }
+
+        .tool-nav-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: 10px;
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          pointer-events: none;
         }
 
         .tool-nav-button:hover {
-          background: rgba(255, 255, 255, 0.12);
-          border-color: rgba(255, 255, 255, 0.25);
-          color: rgba(255, 255, 255, 0.95);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+          color: #ffffff;
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 
+            0 6px 24px rgba(0, 0, 0, 0.25),
+            0 4px 8px rgba(0, 0, 0, 0.15),
+            inset 0 1px 1px rgba(255, 255, 255, 0.2);
         }
 
         .tool-nav-button.active {
           border-color: #00aaff;
-          background: linear-gradient(135deg, rgba(0, 170, 255, 0.25), rgba(0, 136, 204, 0.15));
+          background: linear-gradient(
+            135deg,
+            rgba(0, 170, 255, 0.3),
+            rgba(0, 136, 204, 0.2)
+          );
           color: #ffffff;
-          box-shadow: 0 4px 20px rgba(0, 170, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          box-shadow: 
+            0 6px 28px rgba(0, 170, 255, 0.5),
+            0 4px 12px rgba(0, 170, 255, 0.3),
+            inset 0 1px 2px rgba(255, 255, 255, 0.3),
+            inset 0 -1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .tool-nav-button.active:hover {
-          background: linear-gradient(135deg, rgba(0, 170, 255, 0.3), rgba(0, 136, 204, 0.2));
-          transform: translateY(-2px);
-          box-shadow: 0 6px 24px rgba(0, 170, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+          background: linear-gradient(
+            135deg,
+            rgba(0, 170, 255, 0.35),
+            rgba(0, 136, 204, 0.25)
+          );
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 
+            0 8px 32px rgba(0, 170, 255, 0.6),
+            0 6px 16px rgba(0, 170, 255, 0.4),
+            inset 0 1px 2px rgba(255, 255, 255, 0.35),
+            inset 0 -1px 2px rgba(0, 0, 0, 0.2);
         }
       `}</style>
     </>

@@ -26,7 +26,7 @@ CRITICAL CONTEXT:
 SPLIT (3 + 3):
 
 1. WORLDVIEW-ALIGNED (3):
-   - Ron Paul lens (libertarian, anti-war, anti-Fed)
+   - Libertarian/individualist perspective
    - Austrian economics (Mises, Hayek, Cato, Reason)
    
 2. GENERAL (3):
