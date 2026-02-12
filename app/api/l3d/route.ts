@@ -84,9 +84,13 @@ OUTPUT FORMAT (JSON):
 }
 
 CRITICAL:
-- Do NOT save to Firestore yourself (API handles it)
+- MAX 3 searches (not 3-4)
 - OUTPUT JSON IMMEDIATELY after research
-- Limit to 3-4 searches
+
+OUTPUT PRIORITY:
+1. OUTPUT COMPLETE JSON FIRST (most important)
+2. If time/tokens remain, optionally save to Firestore 'l3d_history'
+3. JSON output mandatory - saving secondary
 
 Think step by step:
 1. What does "${topic}" mean?
@@ -109,7 +113,7 @@ Think step by step:
           task: prompt,
           label: `l3d-${topic.slice(0, 30)}`,
           cleanup: 'keep',
-          runTimeoutSeconds: 120  // 2 minutes for research
+          runTimeoutSeconds: 50  // 50s for research (must finish before Vercel timeout)
         }
       })
     });
@@ -125,9 +129,9 @@ Think step by step:
     if (spawnResult?.status === 'accepted') {
       const childSessionKey = spawnResult.childSessionKey;
       
-      // Poll for completion
-      const maxWaitTime = 120000; // 2 minutes
-      const pollInterval = 3000; // 3 seconds
+      // Poll for completion (max 55s to stay under Vercel 60s limit)
+      const maxWaitTime = 55000; // 55 seconds
+      const pollInterval = 2000; // 2 seconds
       const startTime = Date.now();
       
       while (Date.now() - startTime < maxWaitTime) {

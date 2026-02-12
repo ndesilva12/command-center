@@ -57,9 +57,10 @@ ONE-PAGER STRUCTURE:
 - Academic papers, think tank analyses, primary sources
 
 RESEARCH STRATEGY:
-- Use web_search for research (MAX 3 searches)
-- Focus on: overview, key data, Ron Paul-aligned analysis
-- Output JSON immediately after collecting good information
+- Use web_search for research (STRICT MAX 2 searches)
+- Search 1: Overview + key facts
+- Search 2: Ron Paul/libertarian analysis OR mainstream academic
+- Output JSON IMMEDIATELY after 2 searches
 
 OUTPUT FORMAT (JSON):
 {
@@ -78,8 +79,10 @@ OUTPUT FORMAT (JSON):
   ]
 }
 
-IMPORTANT: Just output the JSON. Do NOT try to save to Firestore yourself.
-The API will handle saving after you return results.
+OUTPUT PRIORITY:
+1. OUTPUT THE COMPLETE JSON FIRST (most important)
+2. If time/tokens remain, optionally save to Firestore collection 'one_pagers_history'
+3. But JSON output is mandatory - saving is secondary
 
 Think step by step:
 1. What does "${topic}" actually mean?
@@ -103,7 +106,7 @@ CRITICAL: Limit to 3 searches max. Output results promptly.`;
           task: prompt,
           label: `one-pager-${topic.slice(0, 30)}`,
           cleanup: 'keep',
-          runTimeoutSeconds: 120  // 2 minutes for research + synthesis
+          runTimeoutSeconds: 60  // 60s for 2 searches + synthesis
         }
       })
     });
@@ -123,8 +126,8 @@ CRITICAL: Limit to 3 searches max. Output results promptly.`;
       const runId = spawnResult.runId;
       const childSessionKey = spawnResult.childSessionKey;
       
-      // Poll for completion (max 2 minutes)
-      const maxWaitTime = 120000; // 2 minutes
+      // Poll for completion (max 60s to stay under Vercel timeout)
+      const maxWaitTime = 55000; // 55 seconds (buffer for Vercel 60s limit)
       const pollInterval = 2000; // 2 seconds
       const startTime = Date.now();
       

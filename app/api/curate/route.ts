@@ -105,8 +105,13 @@ CRITICAL CONSTRAINTS:
 - Total items MUST be multiple of 4: ${requestedCount}
 - Categories MUST have equal distribution (${requestedCount / 4} each)
 - Apply diversity requirements strictly
-- Do NOT save to Firestore yourself (API handles it)
+- MAX 3-4 searches (not 4-5)
 - OUTPUT JSON IMMEDIATELY after curating
+
+OUTPUT PRIORITY:
+1. OUTPUT COMPLETE JSON FIRST (most important)
+2. If time/tokens remain, optionally save to Firestore 'curate_history'
+3. JSON output mandatory - saving secondary
 
 Think step by step:
 1. What does "${topic}" mean?
@@ -130,7 +135,7 @@ Think step by step:
           task: prompt,
           label: `curate-${topic.slice(0, 30)}`,
           cleanup: 'keep',
-          runTimeoutSeconds: 150  // 2.5 minutes for multi-source curation
+          runTimeoutSeconds: 90  // 90s for multi-source curation
         }
       })
     });
@@ -146,9 +151,9 @@ Think step by step:
     if (spawnResult?.status === 'accepted') {
       const childSessionKey = spawnResult.childSessionKey;
       
-      // Poll for completion
-      const maxWaitTime = 150000; // 2.5 minutes
-      const pollInterval = 3000; // 3 seconds
+      // Poll for completion (max 55s to stay under Vercel 60s limit)
+      const maxWaitTime = 55000; // 55 seconds
+      const pollInterval = 2000; // 2 seconds
       const startTime = Date.now();
       
       while (Date.now() - startTime < maxWaitTime) {
