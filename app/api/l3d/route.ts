@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+// L3D server runs on EC2 (port 18790)
+const L3D_SERVER_URL = process.env.L3D_SERVER_URL || 'http://3.141.47.151:18790';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,11 +24,30 @@ export async function POST(request: NextRequest) {
       days,
       status: 'running',
       timestamp: Timestamp.now(),
-      userId: 'default', // TODO: Add auth when multi-user
+      userId: 'default',
     });
 
-    // Start research asynchronously (fire and forget)
-    runResearchAsync(docRef.id, topic.trim(), mode, days);
+    // Trigger L3D server on EC2 (fire and forget)
+    fetch(L3D_SERVER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        topic: topic.trim(),
+        mode,
+        days,
+        docId: docRef.id,
+      }),
+    }).catch(err => {
+      console.error('Failed to trigger L3D server:', err);
+      // Update Firestore with error
+      adminDb.collection('l3d_history').doc(docRef.id).update({
+        status: 'failed',
+        error: 'Failed to start research on EC2',
+        completed_at: Timestamp.now(),
+      });
+    });
 
     // Return immediately with success
     return NextResponse.json({
@@ -44,61 +62,5 @@ export async function POST(request: NextRequest) {
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
-  }
-}
-
-async function runResearchAsync(docId: string, topic: string, mode: string, days: number) {
-  try {
-    // Build command
-    const modeFlag = mode === 'quick' ? '--quick' : mode === 'deep' ? '--deep' : '';
-    const daysFlag = `--days=${days}`;
-    const scriptPath = '/home/ubuntu/openclaw/skills/l3d/scripts/last30days.py';
-    const command = `python3 "${scriptPath}" "${topic}" --emit=json ${modeFlag} ${daysFlag}`.trim();
-
-    console.log(`[L3D] Running: ${command}`);
-
-    // Execute Python script
-    const { stdout, stderr } = await execAsync(command, {
-      timeout: 300000, // 5 minute timeout
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-      env: {
-        ...process.env,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-        XAI_API_KEY: process.env.XAI_API_KEY,
-        BRAVE_SEARCH_API_KEY: process.env.BRAVE_SEARCH_API_KEY,
-      }
-    });
-
-    if (stderr) {
-      console.error(`[L3D] stderr: ${stderr}`);
-    }
-
-    // Parse JSON output
-    let results;
-    try {
-      results = JSON.parse(stdout);
-    } catch (parseError) {
-      console.error('[L3D] Failed to parse JSON:', parseError);
-      results = { rawOutput: stdout };
-    }
-
-    // Update Firestore with completed results
-    await adminDb.collection('l3d_history').doc(docId).update({
-      status: 'completed',
-      results,
-      completed_at: Timestamp.now(),
-    });
-
-    console.log(`[L3D] Research completed: ${docId}`);
-
-  } catch (error) {
-    console.error('[L3D] Research failed:', error);
-    
-    // Update Firestore with error
-    await adminDb.collection('l3d_history').doc(docId).update({
-      status: 'failed',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      completed_at: Timestamp.now(),
-    });
   }
 }
