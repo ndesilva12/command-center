@@ -32,6 +32,8 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
 export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'curate', name: 'Curate', href: '/tools/curate', description: 'Find intellectually stimulating content - especially content that challenges your beliefs' },
   { id: 'l3d', name: 'L3D Research', href: '/tools/l3d', description: 'Research any topic from the last 30 days across Reddit, X, and web' },
+  { id: 'white-papers', name: 'White Papers', href: '/tools/white-papers', description: '10 most relevant white papers on any topic (general + worldview-aligned)' },
+  { id: 'one-pager', name: 'One-Pager', href: '/tools/one-pager', description: 'Generate comprehensive single-page summaries with data, visuals, and links' },
   { id: 'deep-search', name: 'Deep Search', href: '/tools/deep-search', description: 'Deep web search' },
   { id: 'dark-search', name: 'Dark Search', href: '/tools/dark-search', description: 'Dark web search' },
   { id: 'image-lookup', name: 'Image Lookup', href: '/tools/image-lookup', description: 'Reverse image search' },
