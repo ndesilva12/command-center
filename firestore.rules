@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function: check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function: check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Helper function: check if user has meal plan permissions
+    function hasMealPermissions() {
+      return isAuthenticated() && (
+        isAdmin() ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions.meals == true
+      );
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || request.auth.uid == userId;
+    }
+    
+    // People collection
+    match /people/{personId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Meals collections
+    match /meals/{mealId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    match /meal_drafts/{draftId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    match /weekly_plans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    match /manual_meal_selections/{selectionId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    match /processed_meal_emails/{emailId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    // Inventory collections
+    match /inventory/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    match /shopping_history/{historyId} {
+      allow read: if isAuthenticated();
+      allow write: if hasMealPermissions();
+    }
+    
+    // Intelligence tools - all authenticated users can read/write
+    match /curate_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /l3d_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /one_pagers_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /white_papers_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /deep_search_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /dark_search_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /mission_statements/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /recommendations/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /investors/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Tool customizations
+    match /tool_customizations/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Jimmy deliverables
+    match /jimmy_deliverables/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Relationships tool
+    match /relationship_projects/{projectId} {
+      allow read, write: if isAuthenticated();
+      
+      match /contacts/{contactId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    
+    // Business info
+    match /business_info_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Contact finder
+    match /contact_finder_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Image lookup
+    match /image_lookup_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
