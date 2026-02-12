@@ -12,17 +12,19 @@ export default function WhitePapersPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(10);
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    loadHistory(historyLimit);
+  }, [historyLimit]);
 
-  const loadHistory = async () => {
+  const loadHistory = async (limitCount: number = 10) => {
     try {
       const q = query(
         collection(db, "white_papers_history"),
         orderBy("timestamp", "desc"),
-        limit(10)
+        limit(limitCount)
       );
       const snapshot = await getDocs(q);
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -31,6 +33,13 @@ export default function WhitePapersPage() {
       console.error("Error loading history:", error);
     }
   };
+  
+  // Filter history based on search
+  const filteredHistory = historySearch.trim()
+    ? history.filter(item => 
+        item.topic?.toLowerCase().includes(historySearch.toLowerCase())
+      )
+    : history;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +59,7 @@ export default function WhitePapersPage() {
       
       if (response.ok) {
         setResult(data);
-        loadHistory(); // Reload history
+        loadHistory(historyLimit); // Reload history
       } else {
         alert(data.error || "Failed to generate white papers");
       }
@@ -171,29 +180,77 @@ export default function WhitePapersPage() {
           {!result && history.length > 0 && (
             <div className="glass card" style={{ padding: "24px" }}>
               <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>
-                Recent Searches
+                History
               </h3>
-              {history.map((item) => (
-                <div 
-                  key={item.id}
-                  onClick={() => setResult(item)}
-                  style={{
-                    padding: "12px",
-                    marginBottom: "8px",
-                    borderRadius: "6px",
-                    background: "var(--glass-bg)",
-                    cursor: "pointer",
-                    border: "1px solid transparent"
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
-                >
-                  <div style={{ fontWeight: 600 }}>{item.topic}</div>
-                  <div style={{ fontSize: "12px", color: "var(--muted)" }}>
-                    {new Date(item.timestamp).toLocaleString()} • {item.total} papers
-                  </div>
+              
+              {/* Search Input */}
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder="Search history..."
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  marginBottom: "16px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--glass-border)",
+                  background: "var(--glass-bg)",
+                  color: "var(--foreground)",
+                  fontSize: "14px"
+                }}
+              />
+              
+              {/* History Items */}
+              {filteredHistory.length > 0 ? (
+                <>
+                  {filteredHistory.map((item) => (
+                    <div 
+                      key={item.id}
+                      onClick={() => setResult(item)}
+                      style={{
+                        padding: "12px",
+                        marginBottom: "8px",
+                        borderRadius: "6px",
+                        background: "var(--glass-bg)",
+                        cursor: "pointer",
+                        border: "1px solid transparent"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
+                    >
+                      <div style={{ fontWeight: 600 }}>{item.topic}</div>
+                      <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+                        {new Date(item.timestamp).toLocaleString()} • {item.total} papers
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Show More Button */}
+                  {!historySearch && historyLimit < 50 && (
+                    <button
+                      onClick={() => setHistoryLimit(historyLimit + 25)}
+                      style={{
+                        width: "100%",
+                        marginTop: "12px",
+                        padding: "10px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--glass-border)",
+                        background: "transparent",
+                        color: "var(--foreground)",
+                        fontSize: "14px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      Show More
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div style={{ fontSize: "14px", color: "var(--muted)", textAlign: "center", padding: "20px" }}>
+                  No results found
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

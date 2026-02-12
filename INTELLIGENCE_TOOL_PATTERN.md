@@ -179,8 +179,11 @@ export async function POST(request: NextRequest) {
 Key patterns:
 - **Show history by default when idle**: `{!result && history.length > 0 && (...)`
 - **Single "Research" button** (no separate "Show History" button)
-- **Load history on mount**: `useEffect(() => { loadHistory(); }, []);`
-- **Auto-reload history after new request**: `loadHistory()` after successful research
+- **Load history on mount**: `useEffect(() => { loadHistory(historyLimit); }, [historyLimit]);`
+- **Auto-reload history after new request**: `loadHistory(historyLimit)` after successful research
+- **Searchable history**: Filter by topic with client-side search
+- **Pagination**: Start with 10, load +25 more with "Show More" button (up to 50)
+- **Hide "Show More" when searching**: Only show pagination controls when viewing full list
 
 ```typescript
 export default function ToolPage() {
@@ -188,21 +191,30 @@ export default function ToolPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(10);
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    loadHistory(historyLimit);
+  }, [historyLimit]);
 
-  const loadHistory = async () => {
+  const loadHistory = async (limitCount: number = 10) => {
     const q = query(
       collection(db, "[tool]_history"),
       orderBy("timestamp", "desc"),
-      limit(10)
+      limit(limitCount)
     );
     const snapshot = await getDocs(q);
     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     setHistory(items);
   };
+  
+  // Filter history based on search
+  const filteredHistory = historySearch.trim()
+    ? history.filter(item => 
+        item.topic?.toLowerCase().includes(historySearch.toLowerCase())
+      )
+    : history;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,12 +258,35 @@ export default function ToolPage() {
       {/* History - Show by default when no result */}
       {!result && history.length > 0 && (
         <div>
-          <h3>Recent Research</h3>
-          {history.map((item) => (
-            <div key={item.id} onClick={() => setResult(item)}>
-              [Display history item]
-            </div>
-          ))}
+          <h3>History</h3>
+          
+          {/* Search Input */}
+          <input
+            type="text"
+            value={historySearch}
+            onChange={(e) => setHistorySearch(e.target.value)}
+            placeholder="Search history..."
+          />
+          
+          {/* History Items */}
+          {filteredHistory.length > 0 ? (
+            <>
+              {filteredHistory.map((item) => (
+                <div key={item.id} onClick={() => setResult(item)}>
+                  [Display history item]
+                </div>
+              ))}
+              
+              {/* Show More Button (shows +25 when clicked) */}
+              {!historySearch && historyLimit < 50 && (
+                <button onClick={() => setHistoryLimit(historyLimit + 25)}>
+                  Show More
+                </button>
+              )}
+            </>
+          ) : (
+            <div>No results found</div>
+          )}
         </div>
       )}
       
