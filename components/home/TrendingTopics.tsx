@@ -115,10 +115,9 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
   return (
     <div>
       <div style={{
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        gap: isMobile ? "6px" : "8px",
+        display: "grid",
+        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(5, 1fr)",
+        gap: isMobile ? "8px" : "10px",
         maxWidth: "1200px",
         margin: "0 auto"
       }}>
@@ -127,20 +126,25 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
             key={index}
             onClick={() => onTagClick(topic.text)}
             style={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: isMobile ? "4px" : "6px",
-              padding: isMobile ? "6px 12px" : "8px 18px",
+              padding: isMobile ? "8px 10px" : "10px 12px",
               borderRadius: "24px",
               border: "1px solid rgba(255, 255, 255, 0.1)",
               background: topic.source === "x"
                 ? "rgba(0, 170, 255, 0.08)"
                 : "rgba(167, 139, 250, 0.08)",
               color: "var(--foreground)",
-              fontSize: isMobile ? "13px" : "15px",
+              fontSize: isMobile ? "12px" : "14px",
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.2s",
+              textAlign: "center",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = topic.source === "x"
@@ -157,8 +161,8 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
               e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
             }}
           >
-            <TrendingUp style={{ width: isMobile ? "12px" : "14px", height: isMobile ? "12px" : "14px" }} />
-            {topic.text}
+            <TrendingUp style={{ width: isMobile ? "12px" : "14px", height: isMobile ? "12px" : "14px", flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{topic.text}</span>
           </button>
         ))}
       </div>

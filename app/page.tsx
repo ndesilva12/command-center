@@ -223,21 +223,18 @@ export default function Home() {
             <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
           </div>
 
-          {/* Tool Categories - Desktop: Prominent top 5, compacted rest */}
+          {/* Tool Categories - Desktop: Grid layout */}
           {!isMobile && !loading && customizedCategories.map((category) => {
             if (category.tools.length === 0) return null;
 
-            const prominentTools = category.tools.slice(0, 5);
-            const remainingTools = category.tools.slice(5);
-
             return (
-              <div key={category.name} style={{ marginBottom: "48px" }}>
+              <div key={category.name} style={{ marginBottom: "40px" }}>
                 <h2
                   style={{
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: 700,
                     textTransform: "uppercase",
-                    letterSpacing: "0.1em",
+                    letterSpacing: "0.12em",
                     color: "var(--muted)",
                     marginBottom: "16px",
                   }}
@@ -245,53 +242,34 @@ export default function Home() {
                   {category.name}
                 </h2>
                 
-                {/* Prominent Tools - First 5 */}
+                {/* All Tools - Uniform Grid */}
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                    gap: "16px",
-                    marginBottom: remainingTools.length > 0 ? "20px" : "0",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                    gap: "14px",
                   }}
                 >
-                  {prominentTools.map((tool) => (
+                  {category.tools.map((tool) => (
                     <ToolCard key={tool.id} {...tool} />
                   ))}
                 </div>
-
-                {/* Remaining Tools - Compacted */}
-                {remainingTools.length > 0 && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                      gap: "12px",
-                    }}
-                  >
-                    {remainingTools.map((tool) => (
-                      <ToolCard key={tool.id} {...tool} compact />
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}
 
-          {/* Tool Categories - Mobile: Prominent top 6, less prominent rest */}
+          {/* Tool Categories - Mobile: Uniform Grid */}
           {isMobile && !loading && customizedCategories.map((category) => {
             if (category.tools.length === 0) return null;
 
-            const prominentTools = category.tools.slice(0, 6);
-            const remainingTools = category.tools.slice(6);
-
             return (
-              <div key={category.name} style={{ marginBottom: "32px" }}>
+              <div key={category.name} style={{ marginBottom: "28px" }}>
                 <h2
                   style={{
-                    fontSize: "13px",
+                    fontSize: "12px",
                     fontWeight: 700,
                     textTransform: "uppercase",
-                    letterSpacing: "0.1em",
+                    letterSpacing: "0.12em",
                     color: "var(--muted)",
                     marginBottom: "12px",
                   }}
@@ -299,34 +277,18 @@ export default function Home() {
                   {category.name}
                 </h2>
                 
-                {/* Prominent Tools - First 6 */}
+                {/* All Tools - Uniform Grid */}
                 <div
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: "12px",
-                    marginBottom: remainingTools.length > 0 ? "16px" : "0",
+                    gap: "10px",
                   }}
                 >
-                  {prominentTools.map((tool) => (
+                  {category.tools.map((tool) => (
                     <ToolCard key={tool.id} {...tool} />
                   ))}
                 </div>
-
-                {/* Remaining Tools - Less Prominent */}
-                {remainingTools.length > 0 && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: "12px",
-                    }}
-                  >
-                    {remainingTools.map((tool) => (
-                      <ToolCard key={tool.id} {...tool} lessProminent />
-                    ))}
-                  </div>
-                )}
               </div>
             );
           })}
