@@ -53,7 +53,7 @@ History shown when idle
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 
-const OPENCLAW_GATEWAY = 'http://localhost:18789';
+const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';  // Use EC2 public IP (Vercel can't access localhost)
 const OPENCLAW_TOKEN = 'your-token';
 
 export async function POST(request: NextRequest) {
