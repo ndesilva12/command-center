@@ -32,8 +32,6 @@ const US_STATES = [
 ];
 
 export default function BusinessInfoPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('business-info', 'Business Info', '#6366f1');
   return (
     <ProtectedRoute>
       <BusinessInfoContent />
@@ -42,6 +40,8 @@ export default function BusinessInfoPage() {
 }
 
 function BusinessInfoContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('business-info', 'Business Info', '#6366f1');
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
