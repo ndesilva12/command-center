@@ -39,7 +39,7 @@ interface HistoryItem {
 export default function CuratePage() {
   // Input state
   const [topic, setTopic] = useState("");
-  const [source, setSource] = useState<string>("mixed");
+  const [sources, setSources] = useState<string[]>([]);
   const [count, setCount] = useState(12);
   const [minScore, setMinScore] = useState(5.0);
   const [timeRange, setTimeRange] = useState<string>("month");
@@ -83,6 +83,14 @@ export default function CuratePage() {
     }
   };
 
+  const toggleSource = (sourceId: string) => {
+    setSources(prev => 
+      prev.includes(sourceId) 
+        ? prev.filter(s => s !== sourceId)
+        : [...prev, sourceId]
+    );
+  };
+
   const handleCurate = async () => {
     if (!topic.trim()) {
       setError("Please enter a topic");
@@ -99,7 +107,7 @@ export default function CuratePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           topic: topic.trim(), 
-          source: source === "mixed" ? null : source,
+          sources: sources.length > 0 ? sources : null,
           count,
           minScore,
           timeRange
@@ -402,35 +410,93 @@ export default function CuratePage() {
             }}
           />
 
-          {/* Source Selector */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
-              Source Type
+          {/* Source Selector - Multi-select Buttons */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '12px', display: 'block' }}>
+              Source Types {sources.length > 0 && <span style={{ color: '#00aaff' }}>({sources.length} selected)</span>}
             </label>
-            <select
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '14px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                outline: 'none',
-                opacity: loading ? 0.6 : 1,
-              }}
-            >
-              <option value="mixed">Mixed (Web + X + Reddit)</option>
-              <option value="x">X/Twitter</option>
-              <option value="reddit">Reddit</option>
-              <option value="youtube">YouTube</option>
-              <option value="rumble">Rumble</option>
-              <option value="spotify">Spotify</option>
-            </select>
+            
+            {/* Broad Types */}
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>BROAD TYPES</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {[
+                  { id: 'videos', label: '📹 Videos' },
+                  { id: 'articles', label: '📰 Articles' },
+                  { id: 'blogs', label: '✍️ Blogs' },
+                  { id: 'podcasts', label: '🎙️ Podcasts' },
+                  { id: 'books', label: '📚 Books' },
+                  { id: 'movies', label: '🎬 Movies' },
+                  { id: 'shows', label: '📺 Shows' },
+                  { id: 'documentaries', label: '🎥 Documentaries' },
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => toggleSource(id)}
+                    disabled={loading}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '8px',
+                      border: sources.includes(id) 
+                        ? '2px solid #00aaff' 
+                        : '1px solid rgba(255, 255, 255, 0.2)',
+                      background: sources.includes(id) 
+                        ? 'rgba(0, 170, 255, 0.15)' 
+                        : 'rgba(255, 255, 255, 0.05)',
+                      color: sources.includes(id) ? '#00aaff' : '#94a3b8',
+                      fontSize: '13px',
+                      fontWeight: sources.includes(id) ? 600 : 500,
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      opacity: loading ? 0.6 : 1,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Specific Sources */}
+            <div>
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '8px', fontWeight: 600 }}>SPECIFIC SOURCES</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {[
+                  { id: 'x', label: '𝕏 X/Twitter' },
+                  { id: 'youtube', label: '▶️ YouTube' },
+                  { id: 'rumble', label: '🎬 Rumble' },
+                  { id: 'reddit', label: '🤖 Reddit' },
+                  { id: 'substack', label: '📧 Substack' },
+                  { id: 'spotify', label: '🎧 Spotify' },
+                  { id: 'tiktok', label: '🎵 TikTok' },
+                  { id: 'apple', label: '🎧 Apple Podcasts' },
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => toggleSource(id)}
+                    disabled={loading}
+                    style={{
+                      padding: '10px 18px',
+                      borderRadius: '8px',
+                      border: sources.includes(id) 
+                        ? '2px solid #00aaff' 
+                        : '1px solid rgba(255, 255, 255, 0.2)',
+                      background: sources.includes(id) 
+                        ? 'rgba(0, 170, 255, 0.15)' 
+                        : 'rgba(255, 255, 255, 0.05)',
+                      color: sources.includes(id) ? '#00aaff' : '#94a3b8',
+                      fontSize: '13px',
+                      fontWeight: sources.includes(id) ? 600 : 500,
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      opacity: loading ? 0.6 : 1,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Compact row: Time Range + Count + Min Score */}

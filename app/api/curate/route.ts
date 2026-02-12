@@ -7,7 +7,7 @@ const execAsync = promisify(exec);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { topic, source, count, minScore, timeRange } = body;
+    const { topic, sources, count, minScore, timeRange } = body;
 
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
       return NextResponse.json(
@@ -28,8 +28,9 @@ export async function POST(request: NextRequest) {
       '--output', 'json',
     ];
 
-    if (source && source !== 'mixed') {
-      args.push('--source', source);
+    // Handle multiple sources
+    if (sources && Array.isArray(sources) && sources.length > 0) {
+      args.push('--sources', sources.join(','));
     }
 
     const command = `python3 ${scriptPath} ${args.join(' ')}`;
