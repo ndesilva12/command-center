@@ -27,10 +27,11 @@ CRITICAL CONTEXT UNDERSTANDING:
 SPLIT YOUR RESULTS:
 
 1. WORLDVIEW-ALIGNED (5 papers):
-   - Libertarian perspective (Cato Institute, Reason Foundation, Mises Institute)
-   - Austrian economics analysis (Mises.org, individual liberty focus)
-   - Individualism, free market, skepticism of centralized power
-   - First-principles thinking
+   - **Think like Dr. Ron Paul politically** (this is the primary worldview reference)
+   - Libertarian/anarcho-capitalist perspective (Cato Institute, Reason Foundation, Mises Institute)
+   - Austrian economics analysis (Mises, Hayek, Rothbard, Friedman)
+   - Anti-war, anti-Fed, constitutional skepticism of government power
+   - First-principles thinking, individual liberty focus
    
 2. GENERAL/POPULAR (5 papers):
    - Mainstream academic research
