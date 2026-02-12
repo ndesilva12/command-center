@@ -57,16 +57,56 @@ export default function WhitePapersPage() {
 
       const data = await response.json();
       
-      if (response.ok) {
-        setResult(data);
-        loadHistory(historyLimit); // Reload history
+      if (response.ok && data.success) {
+        // Fire-and-forget: Start polling Firestore for results
+        const startTime = Date.now();
+        const maxWaitTime = 180000; // 3 minutes
+        const pollInterval = 2500; // 2.5 seconds
+        
+        const pollForResults = async () => {
+          // Check if we've exceeded max wait time
+          if (Date.now() - startTime > maxWaitTime) {
+            setLoading(false);
+            alert("Research is taking longer than expected. Check history in a few minutes.");
+            return;
+          }
+          
+          // Query Firestore for the most recent result matching our topic
+          const q = query(
+            collection(db, "white_papers_history"),
+            orderBy("timestamp", "desc"),
+            limit(5)
+          );
+          
+          const snapshot = await getDocs(q);
+          const recentResults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          
+          // Find a result that matches our topic and was created after we started
+          const matchingResult = recentResults.find((item: any) => 
+            item.topic?.toLowerCase() === topic.trim().toLowerCase() &&
+            new Date(item.timestamp).getTime() > startTime - 5000 // 5s buffer
+          );
+          
+          if (matchingResult) {
+            // Found result!
+            setResult(matchingResult);
+            setLoading(false);
+            loadHistory(historyLimit);
+          } else {
+            // Keep polling
+            setTimeout(pollForResults, pollInterval);
+          }
+        };
+        
+        // Start polling
+        pollForResults();
       } else {
-        alert(data.error || "Failed to generate white papers");
+        alert(data.error || "Failed to start research");
+        setLoading(false);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to generate white papers");
-    } finally {
+      alert("Failed to start research");
       setLoading(false);
     }
   };
@@ -120,7 +160,7 @@ export default function WhitePapersPage() {
                   cursor: loading ? "not-allowed" : "pointer"
                 }}
               >
-                {loading ? "Researching..." : "Find Papers"}
+                {loading ? "Processing... (check history)" : "Find Papers"}
               </button>
             </form>
           </div>

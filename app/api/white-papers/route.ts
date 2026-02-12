@@ -56,18 +56,23 @@ OUTPUT FORMAT:
   "total": 6
 }
 
-DO NOT:
-- Do more than 2 searches
-- Fetch full articles
-- Over-research
-- Save to Firestore yourself
+CRITICAL - FIRESTORE SAVE:
+After outputting the JSON above, IMMEDIATELY save to Firestore using exec tool:
+
+Run this command:
+node -e "const admin = require('firebase-admin'); const serviceAccount = require('/home/ubuntu/command-center/firebase-service-account.json'); if (!admin.apps.length) { admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }); } const db = admin.firestore(); const result = <YOUR_JSON_RESULT>; db.collection('white_papers_history').add({ ...result, timestamp: new Date().toISOString(), saved_by: 'sub-agent' }).then(() => { console.log('Saved to Firestore'); process.exit(0); }).catch(err => { console.error('Save error:', err); process.exit(1); });"
+
+Replace <YOUR_JSON_RESULT> with your actual JSON result object.
+
+This ensures results persist even if the API route times out.
 
 DO:
 1. Understand what "${topic}" means
 2. Search ONCE for worldview (Mises/Cato/Reason)
 3. Search ONCE for general/academic
 4. Pick 3 from each
-5. OUTPUT JSON NOW`;
+5. OUTPUT JSON
+6. SAVE TO FIRESTORE using exec command above`;
 
     // Call OpenClaw gateway to spawn sub-agent
     const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
@@ -100,88 +105,21 @@ DO:
     
     if (spawnResult?.status === 'accepted') {
       const runId = spawnResult.runId;
-      const childSessionKey = spawnResult.childSessionKey;
       
-      // Poll for completion (max 90s)
-      const maxWaitTime = 90000; // 90 seconds
-      const pollInterval = 2000; // 2 seconds
-      const startTime = Date.now();
-      
-      while (Date.now() - startTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-        
-        // Check session history for results
-        const historyResponse = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tool: 'sessions_history',
-            args: {
-              sessionKey: childSessionKey,
-              limit: 5,
-              includeTools: false
-            }
-          })
-        });
-        
-        if (historyResponse.ok) {
-          const historyData = await historyResponse.json();
-          // Handle /tools/invoke wrapper structure
-          const historyResult = historyData?.result?.details || historyData?.result || {};
-          const messages = historyResult?.messages || [];
-          
-          // Find the last assistant message
-          const lastAssistant = messages.reverse().find((m: any) => m.role === 'assistant');
-          
-          if (lastAssistant && lastAssistant.content) {
-            // Try to extract JSON from the response
-            const content = Array.isArray(lastAssistant.content) 
-              ? lastAssistant.content.map((c: any) => c.text || c).join('\n')
-              : lastAssistant.content;
-            
-            const jsonMatch = content.match(/\{[\s\S]*"papers"[\s\S]*\}/);
-            
-            if (jsonMatch) {
-              try {
-                const result = JSON.parse(jsonMatch[0]);
-                
-                // Save to Firestore if requested
-                if (save) {
-                  try {
-                    const db = getAdminDb();
-                    await db.collection('white_papers_history').add({
-                      ...result,
-                      timestamp: new Date().toISOString()
-                    });
-                  } catch (saveError) {
-                    console.error('Failed to save to Firestore:', saveError);
-                    // Continue anyway - return results even if save fails
-                  }
-                }
-                
-                return NextResponse.json(result);
-              } catch (e) {
-                // Continue polling if JSON parse fails
-              }
-            }
-          }
-        }
-      }
-      
-      // Timeout
-      return NextResponse.json(
-        { error: 'Research timed out - topic may be too complex or spawn failed' },
-        { status: 504 }
-      );
+      // Fire-and-forget: Return immediately with runId
+      // Sub-agent will save results to Firestore when complete
+      return NextResponse.json({
+        success: true,
+        runId,
+        message: 'Research started - results will appear in history when complete',
+        topic
+      });
     }
     
     // Unexpected response - log for debugging
     console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
     return NextResponse.json(
-      { error: 'Unexpected spawn response', details: data },
+      { error: 'Failed to start research', details: data },
       { status: 500 }
     );
     

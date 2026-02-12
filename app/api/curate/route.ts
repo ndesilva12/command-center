@@ -107,10 +107,15 @@ CRITICAL CONSTRAINTS:
 - MAX 3-4 searches (not 4-5)
 - OUTPUT JSON IMMEDIATELY after curating
 
-OUTPUT PRIORITY:
-1. OUTPUT COMPLETE JSON FIRST (most important)
-2. If time/tokens remain, optionally save to Firestore 'curate_history'
-3. JSON output mandatory - saving secondary
+CRITICAL - FIRESTORE SAVE:
+After outputting the JSON above, IMMEDIATELY save to Firestore using exec tool:
+
+Run this command:
+node -e "const admin = require('firebase-admin'); const serviceAccount = require('/home/ubuntu/command-center/firebase-service-account.json'); if (!admin.apps.length) { admin.initializeApp({ credential: admin.credential.cert(serviceAccount) }); } const db = admin.firestore(); const result = <YOUR_JSON_RESULT>; db.collection('curate_history').add({ ...result, timestamp: new Date().toISOString(), saved_by: 'sub-agent' }).then(() => { console.log('Saved to Firestore'); process.exit(0); }).catch(err => { console.error('Save error:', err); process.exit(1); });"
+
+Replace <YOUR_JSON_RESULT> with your actual JSON result object.
+
+This ensures results persist even if the API route times out.
 
 Think step by step:
 1. What does "${topic}" mean?
@@ -119,7 +124,8 @@ Think step by step:
 4. Score with Ron Paul lens + intellectual rigor
 5. Filter to best ${requestedCount}
 6. Split into 4 categories (${requestedCount / 4} each)
-7. OUTPUT JSON NOW`;
+7. OUTPUT JSON
+8. SAVE TO FIRESTORE using exec command above`;
 
     // Spawn intelligent sub-agent
     const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
@@ -148,79 +154,21 @@ Think step by step:
     const spawnResult = data?.result?.details || data?.result;
     
     if (spawnResult?.status === 'accepted') {
-      const childSessionKey = spawnResult.childSessionKey;
+      const runId = spawnResult.runId;
       
-      // Poll for completion (max 55s to stay under Vercel 60s limit)
-      const maxWaitTime = 55000; // 55 seconds
-      const pollInterval = 2000; // 2 seconds
-      const startTime = Date.now();
-      
-      while (Date.now() - startTime < maxWaitTime) {
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-        
-        const historyResponse = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tool: 'sessions_history',
-            args: {
-              sessionKey: childSessionKey,
-              limit: 5,
-              includeTools: false
-            }
-          })
-        });
-        
-        if (historyResponse.ok) {
-          const historyData = await historyResponse.json();
-          const historyResult = historyData?.result?.details || historyData?.result || {};
-          const messages = historyResult?.messages || [];
-          
-          const lastAssistant = messages.reverse().find((m: any) => m.role === 'assistant');
-          
-          if (lastAssistant && lastAssistant.content) {
-            const content = Array.isArray(lastAssistant.content) 
-              ? lastAssistant.content.map((c: any) => c.text || c).join('\n')
-              : lastAssistant.content;
-            
-            const jsonMatch = content.match(/\{[\s\S]*"items"[\s\S]*\}/);
-            
-            if (jsonMatch) {
-              try {
-                const result = JSON.parse(jsonMatch[0]);
-                
-                // Save to Firestore
-                try {
-                  const db = getAdminDb();
-                  await db.collection('curate_history').add({
-                    ...result,
-                    timestamp: new Date().toISOString()
-                  });
-                } catch (saveError) {
-                  console.error('Failed to save to Firestore:', saveError);
-                }
-                
-                return NextResponse.json(result);
-              } catch (e) {
-                // Continue polling
-              }
-            }
-          }
-        }
-      }
-      
-      return NextResponse.json(
-        { error: 'Curation timed out - topic may be too complex' },
-        { status: 504 }
-      );
+      // Fire-and-forget: Return immediately with runId
+      // Sub-agent will save results to Firestore when complete
+      return NextResponse.json({
+        success: true,
+        runId,
+        message: 'Curation started - results will appear in history when complete',
+        topic: topic.trim()
+      });
     }
     
     console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
     return NextResponse.json(
-      { error: 'Unexpected spawn response', details: data },
+      { error: 'Failed to start curation', details: data },
       { status: 500 }
     );
     
