@@ -55,8 +55,17 @@ Worldview: Individual liberty, Austrian economics, first-principles thinking, ev
 
     const data = await response.json();
     
+    // Check for timeout or error status
+    if (data?.result?.status === 'timeout') {
+      throw new Error('Request timed out - try again or use a simpler topic');
+    }
+    if (data?.result?.status === 'error') {
+      throw new Error(data?.result?.error || 'OpenClaw execution error');
+    }
+    
     // Extract response from tools/invoke result structure
-    const content = data?.result?.details?.reply || data?.result?.content?.[0]?.text || 'Generated content';
+    // Structure: { ok: true, result: { runId, status: "ok", reply: "..." } }
+    const content = data?.result?.reply || 'Generated content';
     
     // Return the generated content
     return NextResponse.json({

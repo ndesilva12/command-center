@@ -73,8 +73,17 @@ Return as JSON with structure:
 
     const data = await response.json();
     
+    // Check for timeout or error status
+    if (data?.result?.status === 'timeout') {
+      throw new Error('Request timed out - try again or use a simpler topic');
+    }
+    if (data?.result?.status === 'error') {
+      throw new Error(data?.result?.error || 'OpenClaw execution error');
+    }
+    
     // Extract response from tools/invoke result structure
-    const rawResponse = data?.result?.details?.reply || data?.result?.content?.[0]?.text || '';
+    // Structure: { ok: true, result: { runId, status: "ok", reply: "..." } }
+    const rawResponse = data?.result?.reply || '';
     
     // Try to parse JSON from response
     let result;
