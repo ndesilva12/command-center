@@ -130,7 +130,9 @@ Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent 
         
         if (historyResponse.ok) {
           const historyData = await historyResponse.json();
-          const messages = historyData?.result?.messages || [];
+          // Handle /tools/invoke wrapper structure
+          const historyResult = historyData?.result?.details || historyData?.result || {};
+          const messages = historyResult?.messages || [];
           
           // Find the last assistant message
           const lastAssistant = messages.reverse().find((m: any) => m.role === 'assistant');
@@ -162,7 +164,8 @@ Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent 
       );
     }
     
-    // Unexpected response
+    // Unexpected response - log for debugging
+    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
     return NextResponse.json(
       { error: 'Unexpected spawn response', details: data },
       { status: 500 }
