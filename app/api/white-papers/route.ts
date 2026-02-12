@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';
 const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
@@ -60,7 +61,8 @@ OUTPUT FORMAT (JSON):
   "total": 10
 }
 
-${save ? 'IMPORTANT: After generating results, save to Firestore collection "white_papers_history" using your tools.' : ''}
+IMPORTANT: Just output the JSON. Do NOT try to save to Firestore yourself.
+The API will handle saving after you return results.
 
 Think step by step:
 1. What does "${topic}" actually mean?
@@ -151,6 +153,21 @@ Focus on QUALITY and RELEVANCE over quantity.`;
             if (jsonMatch) {
               try {
                 const result = JSON.parse(jsonMatch[0]);
+                
+                // Save to Firestore if requested
+                if (save) {
+                  try {
+                    const db = getAdminDb();
+                    await db.collection('white_papers_history').add({
+                      ...result,
+                      timestamp: new Date().toISOString()
+                    });
+                  } catch (saveError) {
+                    console.error('Failed to save to Firestore:', saveError);
+                    // Continue anyway - return results even if save fails
+                  }
+                }
+                
                 return NextResponse.json(result);
               } catch (e) {
                 // Continue polling if JSON parse fails
