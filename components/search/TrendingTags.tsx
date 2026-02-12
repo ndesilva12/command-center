@@ -126,9 +126,11 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
           const sourceColor = topic.source === "google" ? "#4285f4" : "#ffffff";
           
           return (
-            <button
+            <a
               key={`${topic.source}-${index}`}
-              onClick={() => onTagClick(displayText, "news")}
+              href={topic.searchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               title={topic.description || displayText}
               style={{
                 display: "inline-flex",
@@ -146,6 +148,7 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                textDecoration: "none",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
@@ -166,7 +169,7 @@ export function TrendingTags({ onTagClick }: TrendingTagsProps) {
                 }}
               />
               {displayText}
-            </button>
+            </a>
           );
         })}
       </div>
