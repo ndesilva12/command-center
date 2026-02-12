@@ -52,6 +52,7 @@ History shown when idle
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';  // Use EC2 public IP (Vercel can't access localhost)
 const OPENCLAW_TOKEN = 'your-token';
@@ -76,7 +77,8 @@ export async function POST(request: NextRequest) {
     [tool-specific fields]
   }
   
-  ${save ? 'IMPORTANT: Save to Firestore collection "[tool]_history"' : ''}
+  IMPORTANT: Just output the JSON. Do NOT try to save to Firestore yourself.
+  The API will handle saving after you return results.
   `;
 
   // Spawn sub-agent
@@ -151,6 +153,21 @@ export async function POST(request: NextRequest) {
           if (jsonMatch) {
             try {
               const result = JSON.parse(jsonMatch[0]);
+              
+              // Save to Firestore if requested (API handles this, not sub-agent)
+              if (save) {
+                try {
+                  const db = getAdminDb();
+                  await db.collection('[tool]_history').add({
+                    ...result,
+                    timestamp: new Date().toISOString()
+                  });
+                } catch (saveError) {
+                  console.error('Failed to save to Firestore:', saveError);
+                  // Continue anyway - return results even if save fails
+                }
+              }
+              
               return NextResponse.json(result);
             } catch (e) {
               // Continue polling
@@ -352,8 +369,10 @@ match /[tool]_history/{document} {
    - Include examples if needed
 
 4. **Firestore Saving**
-   - Conditional instruction: `${save ? 'IMPORTANT: Save to Firestore...' : ''}`
-   - Let sub-agent handle the saving (it has tool access)
+   - Do NOT ask sub-agent to save to Firestore
+   - Sub-agents trying to save burn tokens on Firebase setup/credentials
+   - API route handles saving after receiving JSON
+   - Keeps sub-agent focused on research only
 
 5. **Quality Focus**
    - "Better to return 8 excellent results than 10 mediocre ones"
@@ -385,10 +404,12 @@ Priority order:
 ## Common Pitfalls
 
 1. **Don't use keyword matching** - Let AI understand context
-2. **Don't timeout too quickly** - Intelligence takes time (use 120s)
+2. **Don't timeout too quickly** - Intelligence takes time (use 180s)
 3. **Don't skip worldview guidance** - Norman's perspective is critical
 4. **Don't forget history UI** - Show by default when idle
 5. **Don't use standalone scripts** - Use sub-agent spawning
+6. **Don't ask sub-agent to save to Firestore** - It will burn tokens on setup; let API route handle saving
+7. **Don't over-research** - Tell sub-agent to output after 2-4 searches, not exhaustive investigation
 
 ## Performance Notes
 
