@@ -83,10 +83,11 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
         .tool-nav-button {
           padding: 10px 20px;
           border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-          color: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          color: rgba(255, 255, 255, 0.7);
           font-size: 15px;
           font-weight: 600;
           cursor: pointer;
@@ -95,27 +96,28 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
           flex-shrink: 0;
           text-decoration: none;
           display: inline-block;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
         .tool-nav-button:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-          color: rgba(255, 255, 255, 0.9);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(255, 255, 255, 0.25);
+          color: rgba(255, 255, 255, 0.95);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         }
 
         .tool-nav-button.active {
           border-color: #00aaff;
-          background: linear-gradient(135deg, rgba(0, 170, 255, 0.2), rgba(0, 170, 255, 0.1));
+          background: linear-gradient(135deg, rgba(0, 170, 255, 0.25), rgba(0, 136, 204, 0.15));
           color: #ffffff;
-          box-shadow: 0 4px 16px rgba(0, 170, 255, 0.3);
+          box-shadow: 0 4px 20px rgba(0, 170, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .tool-nav-button.active:hover {
-          background: linear-gradient(135deg, rgba(0, 170, 255, 0.25), rgba(0, 170, 255, 0.15));
-          transform: translateY(-1px);
+          background: linear-gradient(135deg, rgba(0, 170, 255, 0.3), rgba(0, 136, 204, 0.2));
+          transform: translateY(-2px);
+          box-shadow: 0 6px 24px rgba(0, 170, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
         }
       `}</style>
     </>
