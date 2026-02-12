@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import TopNav from "@/components/navigation/TopNav";
-import BottomNav from "@/components/navigation/BottomNav";
+import { TopNav } from "@/components/navigation/TopNav";
+import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 
 export default function WhitePapersPage() {
