@@ -494,18 +494,20 @@ function MealPlanContent() {
         <div style={{
           maxWidth: "1000px",
           margin: "0 auto",
-          padding: isMobile ? "0 12px" : "0 24px"
+          padding: isMobile ? "0 8px" : "0 24px"
         }}>
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-            <div>
-              <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)", marginBottom: "4px", display: "flex", alignItems: "center", gap: "12px" }}>
-                <Calendar style={{ width: "28px", height: "28px", color: "#00aaff" }} />
-                Meal Planning
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMobile ? "16px" : "24px", gap: "8px" }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h1 style={{ fontSize: isMobile ? "20px" : "28px", fontWeight: 700, color: "var(--foreground)", marginBottom: "4px", display: "flex", alignItems: "center", gap: isMobile ? "8px" : "12px" }}>
+                <Calendar style={{ width: isMobile ? "20px" : "28px", height: isMobile ? "20px" : "28px", color: "#00aaff", flexShrink: 0 }} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Meal Planning</span>
               </h1>
-              <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
-                Weekly meal schedule and shopping list
-              </p>
+              {!isMobile && (
+                <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                  Weekly meal schedule and shopping list
+                </p>
+              )}
             </div>
 
             <a
@@ -513,16 +515,18 @@ function MealPlanContent() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                padding: "10px 16px",
+                gap: isMobile ? "4px" : "8px",
+                padding: isMobile ? "8px 12px" : "10px 16px",
                 borderRadius: "8px",
                 backgroundColor: "rgba(255, 255, 255, 0.05)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
                 color: "var(--foreground-muted)",
-                fontSize: "14px",
+                fontSize: isMobile ? "12px" : "14px",
                 fontWeight: 600,
                 textDecoration: "none",
                 transition: "all 0.2s",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
@@ -533,32 +537,34 @@ function MealPlanContent() {
                 e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
               }}
             >
-              <ArrowLeft style={{ width: "16px", height: "16px" }} />
-              All Recipes
+              <ArrowLeft style={{ width: "14px", height: "14px", flexShrink: 0 }} />
+              {isMobile ? "Recipes" : "All Recipes"}
             </a>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: "flex", gap: "8px", marginBottom: "32px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", paddingBottom: "0" }}>
+          <div style={{ display: "flex", gap: isMobile ? "4px" : "8px", marginBottom: isMobile ? "16px" : "32px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", paddingBottom: "0", overflowX: "auto" }}>
             {[
-              { id: 'this-week', label: "This Week's Meals" },
-              { id: 'next-week', label: "Next Week's Meals" },
-              { id: 'shopping', label: "Shopping List" },
+              { id: 'this-week', label: isMobile ? "This Week" : "This Week's Meals" },
+              { id: 'next-week', label: isMobile ? "Next Week" : "Next Week's Meals" },
+              { id: 'shopping', label: isMobile ? "Shopping" : "Shopping List" },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 style={{
-                  padding: "12px 20px",
+                  padding: isMobile ? "10px 12px" : "12px 20px",
                   borderRadius: "8px 8px 0 0",
                   border: "none",
                   background: activeTab === tab.id ? "rgba(0, 170, 255, 0.15)" : "transparent",
                   color: activeTab === tab.id ? "#00aaff" : "var(--foreground-muted)",
-                  fontSize: "14px",
+                  fontSize: isMobile ? "13px" : "14px",
                   fontWeight: activeTab === tab.id ? 600 : 400,
                   cursor: "pointer",
                   transition: "all 0.2s",
                   borderBottom: activeTab === tab.id ? "2px solid #00aaff" : "2px solid transparent",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
                 onMouseEnter={(e) => {
                   if (activeTab !== tab.id) {
@@ -578,14 +584,14 @@ function MealPlanContent() {
 
           {/* Tab Content */}
           {loading ? (
-            <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+            <div className="glass" style={{ textAlign: "center", padding: isMobile ? "40px 16px" : "60px 20px", borderRadius: "12px" }}>
               <p style={{ color: "var(--foreground-muted)" }}>Loading...</p>
             </div>
           ) : activeTab === 'this-week' ? (
             currentWeek ? (
               <WeekView week={currentWeek} title="This Week" canEdit={true} weekType="current" />
             ) : (
-              <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+              <div className="glass" style={{ textAlign: "center", padding: isMobile ? "40px 16px" : "60px 20px", borderRadius: "12px" }}>
                 <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
                 <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
                   No plan for this week
@@ -598,15 +604,17 @@ function MealPlanContent() {
           ) : activeTab === 'next-week' ? (
             nextWeek ? (
               <div>
-                <div style={{ marginBottom: "16px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "rgba(0, 170, 255, 0.1)", border: "1px solid rgba(0, 170, 255, 0.3)" }}>
-                  <p style={{ fontSize: "13px", color: "var(--foreground)", margin: 0 }}>
-                    💡 <strong>Tip:</strong> Add meals from the <a href="/tools/meals" style={{ color: "#00aaff", textDecoration: "underline" }}>All Recipes</a> page
-                  </p>
-                </div>
+                {!isMobile && (
+                  <div style={{ marginBottom: "16px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "rgba(0, 170, 255, 0.1)", border: "1px solid rgba(0, 170, 255, 0.3)" }}>
+                    <p style={{ fontSize: "13px", color: "var(--foreground)", margin: 0 }}>
+                      💡 <strong>Tip:</strong> Add meals from the <a href="/tools/meals" style={{ color: "#00aaff", textDecoration: "underline" }}>All Recipes</a> page
+                    </p>
+                  </div>
+                )}
                 <WeekView week={nextWeek} title="Next Week" canEdit={nextWeek.status !== 'archived'} weekType="next" />
               </div>
             ) : (
-              <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+              <div className="glass" style={{ textAlign: "center", padding: isMobile ? "40px 16px" : "60px 20px", borderRadius: "12px" }}>
                 <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
                 <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
                   Next week's plan coming soon
@@ -624,7 +632,7 @@ function MealPlanContent() {
             <div>
               {nextWeek?.shoppingList ? (
                 <>
-                  <div style={{ marginBottom: "20px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "rgba(0, 170, 255, 0.1)", border: "1px solid rgba(0, 170, 255, 0.3)" }}>
+                  <div style={{ marginBottom: isMobile ? "12px" : "20px", padding: isMobile ? "10px 12px" : "12px 16px", borderRadius: "8px", backgroundColor: "rgba(0, 170, 255, 0.1)", border: "1px solid rgba(0, 170, 255, 0.3)" }}>
                     <p style={{ fontSize: "13px", color: "var(--foreground)", margin: 0 }}>
                       🛒 Shopping list for <strong>next week</strong> ({nextWeek.weekOf})
                     </p>
@@ -649,7 +657,7 @@ function MealPlanContent() {
                   />
                 </>
               ) : (
-                <div className="glass" style={{ textAlign: "center", padding: "60px 20px", borderRadius: "12px" }}>
+                <div className="glass" style={{ textAlign: "center", padding: isMobile ? "40px 16px" : "60px 20px", borderRadius: "12px" }}>
                   <ShoppingCart style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
                   <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
                     No shopping list yet
