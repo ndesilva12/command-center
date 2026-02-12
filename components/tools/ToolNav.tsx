@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getToolsInCategory } from "@/lib/tool-categories";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { useAuth } from "@/hooks/useAuth";
-import { memo, useCallback, useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 
 interface ToolNavProps {
   currentToolId: string;
@@ -40,10 +40,6 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
     .filter((tool) => isAdmin || hasPermission(tool.id))
     .sort((a, b) => a.order - b.order);
 
-  const handleToolClick = useCallback((href: string) => {
-    router.push(href);
-  }, [router]);
-
   // Hide on mobile
   if (isMobile) return null;
   
@@ -55,13 +51,14 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
         {tools.map((tool) => {
           const isActive = tool.id === currentToolId;
           return (
-            <button
+            <Link
               key={tool.id}
-              onClick={() => handleToolClick(tool.href)}
+              href={tool.href}
+              prefetch={true}
               className={`tool-nav-button ${isActive ? 'active' : ''}`}
             >
               {tool.name}
-            </button>
+            </Link>
           );
         })}
       </div>
@@ -93,9 +90,11 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
           font-size: 15px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: none;
           white-space: nowrap;
           flex-shrink: 0;
+          text-decoration: none;
+          display: inline-block;
         }
 
         .tool-nav-button:hover {

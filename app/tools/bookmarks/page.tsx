@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bookmark, Plus, RefreshCw, ExternalLink, Search, Folder, Tag, Clock } from "lucide-react";
+import { Bookmark, Plus, RefreshCw, ExternalLink, Search, Folder, Tag, Clock, Grid3x3, List } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -36,6 +36,7 @@ export default function BookmarksPage() {
   const [selectedCollection, setSelectedCollection] = useState<string>("0");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -309,9 +310,51 @@ export default function BookmarksPage() {
               ))}
             </select>
           </div>
+
+          {/* View Toggle */}
+          <div style={{ display: "flex", gap: "4px", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "8px", padding: "2px", background: "rgba(255, 255, 255, 0.03)" }}>
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "none",
+                background: viewMode === 'grid' ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === 'grid' ? "#00aaff" : "var(--foreground-muted)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "13px",
+                fontWeight: 500,
+              }}
+            >
+              <Grid3x3 size={16} />
+              Grid
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "none",
+                background: viewMode === 'list' ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === 'list' ? "#00aaff" : "var(--foreground-muted)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "13px",
+                fontWeight: 500,
+              }}
+            >
+              <List size={16} />
+              List
+            </button>
+          </div>
         </div>
 
-        {/* Bookmarks Grid */}
+        {/* Bookmarks Display */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
             Loading bookmarks...
@@ -320,7 +363,7 @@ export default function BookmarksPage() {
           <div style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
             {searchQuery ? "No bookmarks found" : "No bookmarks yet"}
           </div>
-        ) : (
+        ) : viewMode === 'grid' ? (
           <div style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(350px, 1fr))",
@@ -420,6 +463,101 @@ export default function BookmarksPage() {
                     ))}
                   </div>
                 )}
+              </a>
+            ))}
+          </div>
+        ) : (
+          /* List View */
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {bookmarks.map(bookmark => (
+              <a
+                key={bookmark._id}
+                href={bookmark.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  padding: "16px 20px",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  textDecoration: "none",
+                  transition: "all 0.15s",
+                  alignItems: "center",
+                  gap: "16px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    color: "var(--foreground)",
+                    marginBottom: "4px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {bookmark.title}
+                  </div>
+                  
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    fontSize: "12px",
+                    color: "#64748b",
+                    flexWrap: "wrap",
+                  }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <ExternalLink size={12} />
+                      {bookmark.domain}
+                    </span>
+                    <span>•</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <Clock size={12} />
+                      {formatDate(bookmark.created)}
+                    </span>
+                    {bookmark.tags.length > 0 && (
+                      <>
+                        <span>•</span>
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                          {bookmark.tags.slice(0, 3).map((tag, idx) => (
+                            <span
+                              key={idx}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                background: "rgba(0, 170, 255, 0.1)",
+                                color: "#00aaff",
+                                fontSize: "11px",
+                                fontWeight: 500,
+                              }}
+                            >
+                              <Tag size={9} />
+                              {tag}
+                            </span>
+                          ))}
+                          {bookmark.tags.length > 3 && (
+                            <span style={{ fontSize: "11px", color: "#64748b" }}>
+                              +{bookmark.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </a>
             ))}
           </div>

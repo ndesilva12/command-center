@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { ToolNav } from "@/components/tools/ToolNav";
 import { Scale, Upload, FileText, AlertTriangle, Send } from "lucide-react";
 
 export default function LegalPage() {
@@ -34,13 +35,14 @@ export default function LegalPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--background)" }}>
       <TopNav />
+      <ToolNav currentToolId="legal" />
 
       <div
         style={{
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: isMobile ? "80px 12px 80px" : "100px 24px 32px",
-          minHeight: isMobile ? "calc(100vh - 144px)" : "calc(100vh - 132px)",
+          padding: isMobile ? "80px 12px 80px" : "136px 24px 32px",
+          minHeight: isMobile ? "calc(100vh - 144px)" : "calc(100vh - 168px)",
         }}
       >
         {/* Header */}
