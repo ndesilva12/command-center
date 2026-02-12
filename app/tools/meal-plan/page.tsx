@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { syncManualSelectionsToWeeklyPlan } from "@/lib/meal-plan-sync";
+import { moveMeal, removeMeal } from "@/lib/move-meal";
 
 interface Meal {
   id: string;
@@ -59,6 +60,7 @@ function MealPlanContent() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [movingDay, setMovingDay] = useState<string | null>(null);
   
   // Mobile detection
   useEffect(() => {
@@ -205,6 +207,28 @@ function MealPlanContent() {
     }
   };
 
+  const handleMoveMeal = async (fromDay: string, toDay: string) => {
+    if (!nextWeek) return;
+    const result = await moveMeal(nextWeek.weekOf, fromDay, toDay);
+    if (result.success) {
+      await fetchData();
+      setMovingDay(null);
+    } else {
+      alert(result.message);
+    }
+  };
+
+  const handleRemoveMeal = async (day: string) => {
+    if (!nextWeek) return;
+    if (!confirm("Remove this meal from the plan?")) return;
+    const result = await removeMeal(nextWeek.weekOf, day);
+    if (result.success) {
+      await fetchData();
+    } else {
+      alert(result.message);
+    }
+  };
+
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
   
   const getDayLabel = (day: string) => {
@@ -256,6 +280,7 @@ function MealPlanContent() {
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {days.map(day => {
           const meal = week?.meals[day];
+          const availableDays = days.filter(d => d !== day && !week?.meals[d]);
           
           return (
             <div
@@ -264,48 +289,77 @@ function MealPlanContent() {
               style={{
                 padding: "20px",
                 borderRadius: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                cursor: canEdit ? "pointer" : "default",
-              }}
-              onClick={() => canEdit && handleChangeMeal(day, weekType)}
-              onMouseEnter={(e) => {
-                if (canEdit) {
-                  e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
               }}
             >
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", color: "var(--foreground-muted)", letterSpacing: "0.5px", marginBottom: "8px" }}>
-                  {getDayLabel(day)}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: meal && weekType === 'next' ? "12px" : 0 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "12px", fontWeight: 600, textTransform: "uppercase", color: "var(--foreground-muted)", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                    {getDayLabel(day)}
+                  </div>
+                  {meal ? (
+                    <div
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: 600,
+                        color: "var(--foreground)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <ChefHat style={{ width: "20px", height: "20px" }} />
+                      {meal.mealName}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: "16px", color: "var(--foreground-muted)", fontStyle: "italic" }}>
+                      No meal planned
+                    </p>
+                  )}
                 </div>
-                {meal ? (
-                  <div
+              </div>
+              
+              {meal && weekType === 'next' && (
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  {availableDays.length > 0 && (
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          handleMoveMeal(day, e.target.value);
+                        }
+                      }}
+                      value=""
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(0, 170, 255, 0.3)",
+                        background: "rgba(0, 170, 255, 0.1)",
+                        color: "#00aaff",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="">Move to...</option>
+                      {availableDays.map(d => (
+                        <option key={d} value={d}>{getDayLabel(d)}</option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={() => handleRemoveMeal(day)}
                     style={{
-                      fontSize: "18px",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      color: "#ef4444",
+                      fontSize: "12px",
                       fontWeight: 600,
-                      color: "var(--foreground)",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
+                      cursor: "pointer",
                     }}
                   >
-                    <ChefHat style={{ width: "20px", height: "20px" }} />
-                    {meal.mealName}
-                  </div>
-                ) : (
-                  <p style={{ fontSize: "16px", color: "var(--foreground-muted)", fontStyle: "italic" }}>
-                    {canEdit ? "Click to select meal" : "No meal planned"}
-                  </p>
-                )}
-              </div>
-              {canEdit && (
-                <div style={{ fontSize: "13px", color: "#00aaff", fontWeight: 600 }}>
-                  Change →
+                    <X style={{ width: "14px", height: "14px", display: "inline" }} />
+                  </button>
                 </div>
               )}
             </div>

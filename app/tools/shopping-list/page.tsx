@@ -38,15 +38,22 @@ export default function ShoppingListPage() {
 
   const fetchShoppingList = async () => {
     try {
-      const plansSnapshot = await getDocs(
-        query(collection(db, 'weekly_plans'), orderBy('weekOf', 'desc'), limit(1))
-      );
+      // Get next Monday's date
+      const now = new Date();
+      const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + daysUntilMonday);
+      const nextWeekOf = nextMonday.toISOString().split('T')[0];
       
-      if (!plansSnapshot.empty) {
-        const doc = plansSnapshot.docs[0];
+      // Fetch all plans and find next week
+      const plansSnapshot = await getDocs(collection(db, 'weekly_plans'));
+      
+      plansSnapshot.forEach(doc => {
         const data = doc.data();
-        setPlan({ ...data, weekOf: data.weekOf } as WeeklyPlan);
-      }
+        if (data.weekOf === nextWeekOf) {
+          setPlan({ ...data, weekOf: data.weekOf } as WeeklyPlan);
+        }
+      });
     } catch (error) {
       console.error("Error fetching shopping list:", error);
     } finally {

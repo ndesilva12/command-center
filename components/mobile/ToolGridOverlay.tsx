@@ -223,7 +223,8 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "16px",
+            gap: "12px",
+            maxWidth: "100%",
           }}
         >
           {tools.map((tool) => {
@@ -245,7 +246,9 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
                   WebkitBackdropFilter: "blur(12px)",
                   cursor: "pointer",
                   transition: "all 0.15s",
-                  minHeight: "100px",
+                  minHeight: "110px",
+                  maxHeight: "110px",
+                  width: "100%",
                 }}
                 onTouchStart={(e) => {
                   e.currentTarget.style.transform = "scale(0.95)";
@@ -263,17 +266,25 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
                   <Icon style={{ width: "24px", height: "24px", color: tool.color }} />
                 </div>
                 <span
                   style={{
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: 600,
                     color: "var(--foreground)",
                     textAlign: "center",
-                    lineHeight: 1.2,
+                    lineHeight: 1.3,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    width: "100%",
+                    wordBreak: "break-word",
                   }}
                 >
                   {tool.name}
