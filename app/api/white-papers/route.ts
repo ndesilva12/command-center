@@ -50,17 +50,20 @@ Return as JSON with structure:
   "total": 10
 }`;
 
-    // Call OpenClaw sessions/send API
-    const response = await fetch(`${OPENCLAW_GATEWAY}/api/v1/sessions/send`, {
+    // Call OpenClaw tools/invoke API
+    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        sessionKey: 'main',
-        message: prompt,
-        timeoutSeconds: 90
+        tool: 'sessions_send',
+        args: {
+          sessionKey: 'main',
+          message: prompt,
+          timeoutSeconds: 90
+        }
       })
     });
 
@@ -70,11 +73,14 @@ Return as JSON with structure:
 
     const data = await response.json();
     
+    // Extract response from tools/invoke result structure
+    const rawResponse = data?.result?.details?.reply || data?.result?.content?.[0]?.text || '';
+    
     // Try to parse JSON from response
     let result;
     try {
       // Look for JSON in the response
-      const jsonMatch = (data.response || data.message || '').match(/\{[\s\S]*\}/);
+      const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         result = JSON.parse(jsonMatch[0]);
       } else {
@@ -90,7 +96,7 @@ Return as JSON with structure:
           general_popular: []
         },
         total: 0,
-        raw_response: data.response || data.message
+        raw_response: rawResponse
       };
     }
     

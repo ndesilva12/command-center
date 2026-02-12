@@ -32,17 +32,20 @@ Format as clean Markdown. Be concise, fact-dense, and actionable. Focus on what 
 
 Worldview: Individual liberty, Austrian economics, first-principles thinking, evidence-based analysis.`;
 
-    // Call OpenClaw sessions/send API
-    const response = await fetch(`${OPENCLAW_GATEWAY}/api/v1/sessions/send`, {
+    // Call OpenClaw tools/invoke API
+    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        sessionKey: 'main',
-        message: prompt,
-        timeoutSeconds: 120
+        tool: 'sessions_send',
+        args: {
+          sessionKey: 'main',
+          message: prompt,
+          timeoutSeconds: 120
+        }
       })
     });
 
@@ -52,11 +55,14 @@ Worldview: Individual liberty, Austrian economics, first-principles thinking, ev
 
     const data = await response.json();
     
+    // Extract response from tools/invoke result structure
+    const content = data?.result?.details?.reply || data?.result?.content?.[0]?.text || 'Generated content';
+    
     // Return the generated content
     return NextResponse.json({
       topic,
       timestamp: new Date().toISOString(),
-      content: data.response || data.message || 'Generated content',
+      content,
       links: []
     });
     
