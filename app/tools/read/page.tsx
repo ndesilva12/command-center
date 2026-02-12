@@ -49,6 +49,8 @@ export default function ReadPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsSearch, setSettingsSearch] = useState("");
   const [tempTopFeeds, setTempTopFeeds] = useState<number[]>(DEFAULT_TOP_FEEDS);
+  const [showMoreSources, setShowMoreSources] = useState(false);
+  const [moreSourcesSearch, setMoreSourcesSearch] = useState("");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -292,66 +294,154 @@ export default function ReadPage() {
           </div>
         )}
 
-        {/* Feed Selector */}
+        {/* Feed Selector - Different for Mobile and Desktop */}
         <div style={{ marginBottom: "24px" }}>
-          <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "12px", fontWeight: 600 }}>
-            TOP FEEDS
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
-            {topFeedObjs.map(feed => (
-              <button
-                key={feed.id}
-                onClick={() => setSelectedFeedId(feed.id)}
-                style={{
-                  padding: "10px 18px",
-                  borderRadius: "8px",
-                  border: selectedFeedId === feed.id 
-                    ? '2px solid #00aaff' 
-                    : '1px solid rgba(255, 255, 255, 0.2)',
-                  background: selectedFeedId === feed.id 
-                    ? 'rgba(0, 170, 255, 0.15)' 
-                    : 'rgba(255, 255, 255, 0.05)',
-                  color: selectedFeedId === feed.id ? '#00aaff' : '#94a3b8',
-                  fontSize: '13px',
-                  fontWeight: selectedFeedId === feed.id ? 600 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {feed.title}
-              </button>
-            ))}
-          </div>
-
-          {otherFeeds.length > 0 && (
-            <div>
-              <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "8px", fontWeight: 600 }}>
-                ALL OTHER FEEDS ({otherFeeds.length})
+          {isMobile ? (
+            // Mobile: Top 5 buttons + dropdown + "More Sources" button
+            <>
+              <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "12px", fontWeight: 600 }}>
+                TOP 5 FEEDS
               </div>
-              <select
-                value={selectedFeedId}
-                onChange={(e) => setSelectedFeedId(Number(e.target.value))}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+                {topFeedObjs.slice(0, 5).map(feed => (
+                  <button
+                    key={feed.id}
+                    onClick={() => setSelectedFeedId(feed.id)}
+                    style={{
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      border: selectedFeedId === feed.id 
+                        ? '2px solid #00aaff' 
+                        : '1px solid rgba(255, 255, 255, 0.2)',
+                      background: selectedFeedId === feed.id 
+                        ? 'rgba(0, 170, 255, 0.15)' 
+                        : 'rgba(255, 255, 255, 0.05)',
+                      color: selectedFeedId === feed.id ? '#00aaff' : '#94a3b8',
+                      fontSize: '13px',
+                      fontWeight: selectedFeedId === feed.id ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {feed.title}
+                  </button>
+                ))}
+              </div>
+
+              {/* Quick Dropdown for All Top Feeds */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "8px", fontWeight: 600 }}>
+                  QUICK SELECT
+                </div>
+                <select
+                  value={selectedFeedId}
+                  onChange={(e) => setSelectedFeedId(Number(e.target.value))}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  <option value="">Select from top feeds...</option>
+                  {topFeedObjs.map(feed => (
+                    <option key={feed.id} value={feed.id}>
+                      {feed.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* More Sources Button */}
+              <button
+                onClick={() => {
+                  setMoreSourcesSearch("");
+                  setShowMoreSources(true);
+                }}
                 style={{
                   width: "100%",
-                  maxWidth: "400px",
-                  padding: "10px 14px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  padding: "12px 16px",
                   borderRadius: "8px",
-                  color: "white",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  color: "#00aaff",
                   fontSize: "14px",
+                  fontWeight: 600,
                   cursor: "pointer",
-                  outline: "none",
+                  transition: "all 0.15s",
                 }}
               >
-                <option value="">Select a feed...</option>
-                {otherFeeds.map(feed => (
-                  <option key={feed.id} value={feed.id}>
-                    {feed.title} ({feed.category})
-                  </option>
+                More Sources... ({otherFeeds.length} available)
+              </button>
+            </>
+          ) : (
+            // Desktop: Show all top feeds + dropdown for others
+            <>
+              <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "12px", fontWeight: 600 }}>
+                TOP FEEDS
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
+                {topFeedObjs.map(feed => (
+                  <button
+                    key={feed.id}
+                    onClick={() => setSelectedFeedId(feed.id)}
+                    style={{
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      border: selectedFeedId === feed.id 
+                        ? '2px solid #00aaff' 
+                        : '1px solid rgba(255, 255, 255, 0.2)',
+                      background: selectedFeedId === feed.id 
+                        ? 'rgba(0, 170, 255, 0.15)' 
+                        : 'rgba(255, 255, 255, 0.05)',
+                      color: selectedFeedId === feed.id ? '#00aaff' : '#94a3b8',
+                      fontSize: '13px',
+                      fontWeight: selectedFeedId === feed.id ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {feed.title}
+                  </button>
                 ))}
-              </select>
-            </div>
+              </div>
+
+              {otherFeeds.length > 0 && (
+                <div>
+                  <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "8px", fontWeight: 600 }}>
+                    ALL OTHER FEEDS ({otherFeeds.length})
+                  </div>
+                  <select
+                    value={selectedFeedId}
+                    onChange={(e) => setSelectedFeedId(Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      maxWidth: "400px",
+                      padding: "10px 14px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      color: "white",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      outline: "none",
+                    }}
+                  >
+                    <option value="">Select a feed...</option>
+                    {otherFeeds.map(feed => (
+                      <option key={feed.id} value={feed.id}>
+                        {feed.title} ({feed.category})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -446,6 +536,149 @@ export default function ReadPage() {
           </div>
         )}
       </main>
+
+      {/* More Sources Modal (Mobile) */}
+      {showMoreSources && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            zIndex: 10000,
+          }}
+          onClick={() => setShowMoreSources(false)}
+        >
+          <div
+            style={{
+              background: "rgba(30, 41, 59, 0.98)",
+              borderRadius: "16px 16px 0 0",
+              border: "1px solid rgba(148, 163, 184, 0.2)",
+              width: "100%",
+              maxHeight: "80vh",
+              display: "flex",
+              flexDirection: "column",
+              backdropFilter: "blur(20px)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{
+              padding: "20px",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+              <div>
+                <h3 style={{ fontSize: "20px", fontWeight: 700, color: "white", margin: 0, marginBottom: "4px" }}>
+                  More Sources
+                </h3>
+                <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>
+                  {otherFeeds.length} feeds available
+                </p>
+              </div>
+              <button
+                onClick={() => setShowMoreSources(false)}
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "none",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <div style={{ position: "relative" }}>
+                <Search size={16} style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#64748b",
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search feeds..."
+                  value={moreSourcesSearch}
+                  onChange={(e) => setMoreSourcesSearch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 40px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Feed List */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {otherFeeds
+                  .filter(feed => 
+                    moreSourcesSearch === "" ||
+                    feed.title.toLowerCase().includes(moreSourcesSearch.toLowerCase()) ||
+                    feed.category.toLowerCase().includes(moreSourcesSearch.toLowerCase())
+                  )
+                  .map(feed => (
+                    <button
+                      key={feed.id}
+                      onClick={() => {
+                        setSelectedFeedId(feed.id);
+                        setShowMoreSources(false);
+                      }}
+                      style={{
+                        padding: "14px 16px",
+                        background: selectedFeedId === feed.id 
+                          ? "rgba(0, 170, 255, 0.1)" 
+                          : "rgba(255, 255, 255, 0.03)",
+                        border: selectedFeedId === feed.id 
+                          ? "1px solid rgba(0, 170, 255, 0.3)" 
+                          : "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "8px",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <div style={{ 
+                        fontSize: "14px", 
+                        fontWeight: 600, 
+                        color: selectedFeedId === feed.id ? "#00aaff" : "white", 
+                        marginBottom: "4px" 
+                      }}>
+                        {selectedFeedId === feed.id && "✓ "}{feed.title}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#64748b" }}>
+                        {feed.category}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
