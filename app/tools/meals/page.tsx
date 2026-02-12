@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, Plus, Search, Filter, Clock, ChefHat, Star, Flame } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { addMealToNextWeek } from "@/lib/meal-selections";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 interface Meal {
   id: string;
@@ -35,6 +36,8 @@ interface Meal {
 }
 
 export default function MealsPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('meals', 'Meal Collection', '#6366f1');
   const { user } = useAuth();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,7 +154,7 @@ export default function MealsPage() {
             <div>
               <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)", marginBottom: "4px", display: "flex", alignItems: "center", gap: "12px" }}>
                 <ChefHat style={{ width: "28px", height: "28px", color: "#00aaff" }} />
-                Meal Collection
+                {toolCustom.name}
               </h1>
               <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
                 {meals.length} recipes • Automated meal planning every week

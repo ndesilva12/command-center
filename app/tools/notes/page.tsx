@@ -5,6 +5,8 @@ import { FileText, Plus, Search, RefreshCw, ExternalLink, Calendar, Edit, Databa
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 
 interface TreeNode {
   id: string;
@@ -34,6 +36,8 @@ interface NotionBlock {
 }
 
 export default function NotesPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('notes', 'Notes', '#6366f1');
   const [rootTree, setRootTree] = useState<TreeNode | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -418,7 +422,7 @@ export default function NotesPage() {
         }}>
           <div style={{ padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>Norman C. de Silva</h2>
+              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>{toolCustom.name}</h2>
               <div style={{ display: "flex", gap: "4px" }}>
                 <button
                   onClick={fetchNotionTree}

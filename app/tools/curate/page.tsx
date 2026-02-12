@@ -6,8 +6,11 @@ import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 export default function CuratePage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('curate', 'Curate', '#6366f1');
   const [topic, setTopic] = useState("");
   const [sources, setSources] = useState<string[]>([]);
   const [count, setCount] = useState(12);
@@ -157,7 +160,7 @@ export default function CuratePage() {
           {/* Input Form */}
           <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
             <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
-              ✨ Curate
+              ✨ {toolCustom.name}
             </h2>
             <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
               Intelligent content curation with Ron Paul lens and diversity enforcement

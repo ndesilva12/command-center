@@ -5,6 +5,8 @@ import { FolderOpen, ExternalLink, RefreshCw, File, FileText, FileImage, FileVid
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 
 interface DriveFile {
   id: string;
@@ -63,6 +65,8 @@ const formatDate = (dateString: string): string => {
 };
 
 export default function FilesPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('files', 'Files', '#6366f1');
   const [files, setFiles] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +140,7 @@ export default function FilesPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <FolderOpen style={{ width: "24px", height: "24px", color: "#00aaff" }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>Files</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
             {!loading && !error && (
               <span style={{ fontSize: "14px", color: "var(--foreground-muted)", marginLeft: "4px" }}>
                 ({files.length})

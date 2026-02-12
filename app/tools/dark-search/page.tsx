@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Eye, Search, ExternalLink, ChevronDown, ChevronUp, Clock, AlertTriangle } from "lucide-react";
 
@@ -25,6 +27,8 @@ interface DarkSearchReport {
 }
 
 export default function DarkSearchPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('dark-search', 'Dark Search', '#6366f1');
   return (
     <ProtectedRoute>
       <DarkSearchContent />
@@ -127,9 +131,7 @@ function DarkSearchContent() {
               fontWeight: "bold",
               color: "white",
               margin: 0,
-            }}>
-              Dark Search
-            </h1>
+            }}>{toolCustom.name}</h1>
             <p style={{ 
               fontSize: isMobile ? "12px" : "14px", 
               color: "#94a3b8", 

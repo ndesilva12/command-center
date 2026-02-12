@@ -6,8 +6,11 @@ import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 export default function WhitePapersPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('white-papers', 'White Papers', '#6366f1');
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -121,7 +124,7 @@ export default function WhitePapersPage() {
           {/* Input Form */}
           <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
             <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
-              📄 White Papers
+              📄 {toolCustom.name}
             </h2>
             <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
               Find 6 relevant white papers on any topic (3 general + 3 worldview-aligned)

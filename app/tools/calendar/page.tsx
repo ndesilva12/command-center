@@ -5,6 +5,8 @@ import { Calendar as CalendarIcon, Plus, RefreshCw, ExternalLink, Clock, MapPin,
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 
 interface CalendarEvent {
   id: string;
@@ -18,6 +20,8 @@ interface CalendarEvent {
 }
 
 export default function CalendarPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('calendar', 'Calendar', '#6366f1');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -606,9 +610,7 @@ export default function CalendarPage() {
           ) : events.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
               <CalendarIcon style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                No events
-              </h2>
+              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
               <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
                 No events scheduled for the selected time range
               </p>

@@ -5,6 +5,8 @@ import { Users, RefreshCw, ExternalLink, Mail, Phone, AlertCircle, Grid, List, S
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 
 interface Contact {
   id: string;
@@ -19,6 +21,8 @@ interface Contact {
 }
 
 export default function ContactsPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('contacts', 'Contacts', '#6366f1');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,7 +115,7 @@ export default function ContactsPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Users style={{ width: "24px", height: "24px", color: "#00aaff" }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>Contacts</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
             {!loading && !error && (
               <span style={{ fontSize: "14px", color: "var(--foreground-muted)", marginLeft: "4px" }}>
                 ({searchQuery ? `${displayContacts.length} of ${contacts.length}` : contacts.length})

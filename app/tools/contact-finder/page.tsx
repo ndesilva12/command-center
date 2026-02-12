@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import {
   Search,
@@ -47,6 +49,8 @@ const CONFIDENCE_COLORS: Record<string, string> = {
 };
 
 export default function ContactFinderPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('contact-finder', 'Contact Finder', '#6366f1');
   return (
     <ProtectedRoute>
       <ContactFinderContent />
@@ -153,9 +157,7 @@ function ContactFinderContent() {
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
             <Search style={{ width: "32px", height: "32px", color: "#06b6d4" }} />
-            <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
-              Contact Finder
-            </h1>
+            <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{toolCustom.name}</h1>
           </div>
           <p style={{ fontSize: "15px", color: "var(--foreground-muted)" }}>
             Find contact information for individuals and organizations using public sources

@@ -5,6 +5,8 @@ import { Mail, RefreshCw, Archive, Trash2, Search, X, ExternalLink, Plus, Users,
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { formatEmailSender, getSuperhumanUrl } from "@/lib/gmail";
 
 type EmailFolder = "inbox" | "sent" | "drafts" | "archived" | "trash";
@@ -36,6 +38,8 @@ interface AccountInfo {
 }
 
 export default function EmailsPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('emails', 'Emails', '#6366f1');
   const [emails, setEmails] = useState<EmailWithAccount[]>([]);
   const [accounts, setAccounts] = useState<AccountInfo[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>("all");
@@ -805,7 +809,7 @@ export default function EmailsPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Mail style={{ width: "24px", height: "24px", color: "#00aaff" }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>Emails</h1>
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
           </div>
           
           {isConnected && (

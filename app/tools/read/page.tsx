@@ -5,6 +5,8 @@ import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search 
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 interface MinifeedEntry {
@@ -36,6 +38,8 @@ const DEFAULT_TOP_FEEDS = [
 ];
 
 export default function ReadPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('read', 'Read', '#6366f1');
   const [entries, setEntries] = useState<MinifeedEntry[]>([]);
   const [allFeeds, setAllFeeds] = useState<MinifeedFeed[]>([]);
   const [topFeeds, setTopFeeds] = useState<number[]>(DEFAULT_TOP_FEEDS);
@@ -484,9 +488,7 @@ export default function ReadPage() {
               justifyContent: "space-between",
             }}>
               <div>
-                <h2 style={{ fontSize: "24px", fontWeight: 700, color: "white", margin: 0, marginBottom: "4px" }}>
-                  Feed Settings
-                </h2>
+                <h2 style={{ fontSize: "24px", fontWeight: 700, color: "white", margin: 0, marginBottom: "4px" }}>{toolCustom.name}</h2>
                 <p style={{ fontSize: "13px", color: "#94a3b8", margin: 0 }}>
                   Select up to 6 feeds for quick access buttons
                 </p>

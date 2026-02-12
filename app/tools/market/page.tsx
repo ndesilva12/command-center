@@ -5,6 +5,8 @@ import { TrendingUp, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 
 // User's TradingView watchlist symbols with descriptions
 // Note: Removed VIX, DXY, US10Y, US30Y as they don't display properly in the widget
@@ -147,6 +149,8 @@ function TradingViewTickerTape() {
 const MemoizedTickerTape = memo(TradingViewTickerTape);
 
 export default function MarketPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('market', 'Market', '#6366f1');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -251,9 +255,7 @@ export default function MarketPage() {
 
             {/* Quick Access Cards */}
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <h2 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                Quick Access
-              </h2>
+              <h2 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
               <div
                 style={{
                   display: "grid",

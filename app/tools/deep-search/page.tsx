@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Radar, Search, ExternalLink, ChevronDown, ChevronUp, Clock } from "lucide-react";
 
@@ -26,6 +28,8 @@ interface DeepSearchReport {
 }
 
 export default function DeepSearchPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
   return (
     <ProtectedRoute>
       <DeepSearchContent />
@@ -125,9 +129,7 @@ function DeepSearchContent() {
               fontWeight: "bold",
               color: "white",
               margin: 0,
-            }}>
-              Deep Search
-            </h1>
+            }}>{toolCustom.name}</h1>
             <p style={{ 
               fontSize: isMobile ? "12px" : "14px", 
               color: "#94a3b8", 

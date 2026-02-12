@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Store, Search, Loader2, MapPin, Building2, FileText, Phone, Globe, Mail, Calendar } from "lucide-react";
 import { BusinessSearchResult, BusinessAnalysis } from "@/lib/types/business";
@@ -30,6 +32,8 @@ const US_STATES = [
 ];
 
 export default function BusinessInfoPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('business-info', 'Business Info', '#6366f1');
   return (
     <ProtectedRoute>
       <BusinessInfoContent />
@@ -146,9 +150,7 @@ function BusinessInfoContent() {
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
             <Store style={{ width: "32px", height: "32px", color: "#f59e0b" }} />
-            <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
-              Business Info
-            </h1>
+            <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{toolCustom.name}</h1>
           </div>
           <p style={{ fontSize: "15px", color: "var(--foreground-muted)" }}>
             Research local businesses with AI-powered public records search

@@ -5,6 +5,8 @@ import { Bookmark, Plus, RefreshCw, ExternalLink, Search, Folder, Tag, Clock, Gr
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 interface RaindropItem {
@@ -28,6 +30,8 @@ interface Collection {
 }
 
 export default function BookmarksPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('bookmarks', 'Bookmarks', '#6366f1');
   const [isMobile, setIsMobile] = useState(false);
   const [bookmarks, setBookmarks] = useState<RaindropItem[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -155,9 +159,7 @@ export default function BookmarksPage() {
             border: "1px solid rgba(255, 255, 255, 0.1)",
           }}>
             <Bookmark style={{ width: "64px", height: "64px", color: "#00aaff", margin: "0 auto 24px" }} />
-            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "12px" }}>
-              Connect Raindrop.io
-            </h2>
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "12px" }}>{toolCustom.name}</h2>
             <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px", maxWidth: "400px", margin: "0 auto 24px" }}>
               Link your Raindrop.io account to access your bookmarks from Command Center
             </p>

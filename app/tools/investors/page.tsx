@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { TrendingUp, Plus, Trash2, ExternalLink, Mail, Phone, Linkedin, Building2, X } from "lucide-react";
@@ -34,6 +36,8 @@ interface Investor {
 }
 
 export default function InvestorsPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('investors', 'Investors', '#6366f1');
   return (
     <ProtectedRoute>
       <InvestorsContent />
@@ -255,9 +259,7 @@ function InvestorsContent() {
                 fontWeight: "bold",
                 color: "white",
                 margin: 0,
-              }}>
-                Investors
-              </h1>
+              }}>{toolCustom.name}</h1>
               <p style={{ 
                 fontSize: isMobile ? "12px" : "14px", 
                 color: "#94a3b8", 

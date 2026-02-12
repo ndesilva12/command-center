@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ScanSearch, Upload, Link2, ExternalLink, Loader2, X, Search, Image as ImageIcon } from "lucide-react";
 
@@ -17,6 +19,8 @@ interface ImageAnalysis {
 }
 
 export default function ImageLookupPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('image-lookup', 'Image Lookup', '#6366f1');
   return (
     <ProtectedRoute>
       <ImageLookupContent />
@@ -161,9 +165,7 @@ function ImageLookupContent() {
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
             <ScanSearch style={{ width: "32px", height: "32px", color: "#a855f7" }} />
-            <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
-              Image Lookup
-            </h1>
+            <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{toolCustom.name}</h1>
           </div>
           <p style={{ fontSize: "15px", color: "var(--foreground-muted)" }}>
             Reverse image search and AI-powered image analysis

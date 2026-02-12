@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Handshake, Plus, X, ExternalLink, User, Search, Filter, CheckCircle, Clock, Play, XCircle, Trash2 } from "lucide-react";
 
@@ -21,6 +23,8 @@ interface Recommendation {
 }
 
 export default function RecommendationsPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('recommendations', 'Recommendations', '#6366f1');
   return (
     <ProtectedRoute>
       <RecommendationsContent />
@@ -203,9 +207,7 @@ function RecommendationsContent() {
                 fontWeight: "bold",
                 color: "white",
                 margin: 0,
-              }}>
-                Recommendations
-              </h1>
+              }}>{toolCustom.name}</h1>
               <p style={{ 
                 fontSize: isMobile ? "12px" : "14px", 
                 color: "#94a3b8", 

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 interface Person {
   id: string;
@@ -24,6 +25,8 @@ interface Person {
 }
 
 export default function PeoplePage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('people', 'People', '#6366f1');
   const router = useRouter();
   const [people, setPeople] = useState<Person[]>([]);
   const [filteredPeople, setFilteredPeople] = useState<Person[]>([]);
@@ -174,7 +177,7 @@ export default function PeoplePage() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <Users style={{ width: "24px", height: "24px", color: "#00aaff" }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
-              People {people.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({people.length})</span>}
+              {toolCustom.name} {people.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({people.length})</span>}
             </h1>
           </div>
           

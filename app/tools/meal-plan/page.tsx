@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Calendar, ShoppingCart, RefreshCw, Check, ChefHat, X, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -593,9 +595,7 @@ function MealPlanContent() {
             ) : (
               <div className="glass" style={{ textAlign: "center", padding: isMobile ? "40px 16px" : "60px 20px", borderRadius: "12px" }}>
                 <Calendar style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-                <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                  No plan for this week
-                </h2>
+                <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
                 <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
                   A meal plan will be generated automatically
                 </p>
@@ -774,6 +774,8 @@ function MealPlanContent() {
 }
 
 export default function MealPlanPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('meal-plan', 'Meal Plan', '#6366f1');
   return (
     <Suspense fallback={
       <>

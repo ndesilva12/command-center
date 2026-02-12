@@ -6,8 +6,11 @@ import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 export default function L3DPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('l3d', 'L3D', '#6366f1');
   const [topic, setTopic] = useState("");
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -140,7 +143,7 @@ export default function L3DPage() {
           {/* Input Form */}
           <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
             <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
-              📅 L3D (Last 30 Days)
+              📅 {toolCustom.name}
             </h2>
             <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
               Research recent developments with Ron Paul lens and intelligent analysis

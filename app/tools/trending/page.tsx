@@ -5,6 +5,8 @@ import { TrendingUp, RefreshCw, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 
 interface TrendingTopic {
   title?: string;
@@ -25,6 +27,8 @@ interface TrendsData {
 }
 
 export default function TrendingPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('trending', 'Trending', '#6366f1');
   const [googleTrends, setGoogleTrends] = useState<TrendingTopic[]>([]);
   const [xTrends, setXTrends] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,9 +189,7 @@ export default function TrendingPage() {
           <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
               <TrendingUp style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
-              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                No trending topics
-              </h2>
+              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
               <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
                 Unable to fetch trending topics at this time
               </p>

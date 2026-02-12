@@ -4,9 +4,13 @@ import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+
 import { Scale, Upload, FileText, AlertTriangle, Send } from "lucide-react";
 
 export default function LegalPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('legal', 'Legal', '#6366f1');
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<"question" | "review">("question");
   const [question, setQuestion] = useState("");
@@ -49,9 +53,7 @@ export default function LegalPage() {
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
             <Scale style={{ width: "32px", height: "32px", color: "#00aaff" }} />
-            <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)" }}>
-              Legal Assistant
-            </h1>
+            <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
           </div>
           <p style={{ color: "var(--foreground-muted)", fontSize: "15px" }}>
             Contract review, compliance guidance, and legal information
