@@ -36,8 +36,6 @@ interface Investor {
 }
 
 export default function InvestorsPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('investors', 'Investors', '#6366f1');
   return (
     <ProtectedRoute>
       <InvestorsContent />
@@ -46,6 +44,8 @@ export default function InvestorsPage() {
 }
 
 function InvestorsContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('investors', 'Investors', '#6366f1');
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);

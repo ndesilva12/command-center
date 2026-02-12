@@ -19,8 +19,6 @@ interface ImageAnalysis {
 }
 
 export default function ImageLookupPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('image-lookup', 'Image Lookup', '#6366f1');
   return (
     <ProtectedRoute>
       <ImageLookupContent />
@@ -29,6 +27,8 @@ export default function ImageLookupPage() {
 }
 
 function ImageLookupContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('image-lookup', 'Image Lookup', '#6366f1');
   const [imageUrl, setImageUrl] = useState("");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);

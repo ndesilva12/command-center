@@ -49,8 +49,6 @@ const CONFIDENCE_COLORS: Record<string, string> = {
 };
 
 export default function ContactFinderPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('contact-finder', 'Contact Finder', '#6366f1');
   return (
     <ProtectedRoute>
       <ContactFinderContent />
@@ -59,6 +57,8 @@ export default function ContactFinderPage() {
 }
 
 function ContactFinderContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('contact-finder', 'Contact Finder', '#6366f1');
   const [query, setQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("individual");
   const [isSearching, setIsSearching] = useState(false);
