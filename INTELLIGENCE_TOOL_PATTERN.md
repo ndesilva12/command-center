@@ -100,8 +100,11 @@ export async function POST(request: NextRequest) {
   const data = await response.json();
   
   // Poll for completion
-  if (data?.result?.status === 'accepted') {
-    const childSessionKey = data.result.childSessionKey;
+  // Note: /tools/invoke wraps result in data.result.details
+  const spawnResult = data?.result?.details || data?.result;
+  
+  if (spawnResult?.status === 'accepted') {
+    const childSessionKey = spawnResult.childSessionKey;
     
     // Poll session history for results (example polling logic)
     const maxWaitTime = 120000; // 2 minutes
@@ -130,7 +133,9 @@ export async function POST(request: NextRequest) {
       
       if (historyResponse.ok) {
         const historyData = await historyResponse.json();
-        const messages = historyData?.result?.messages || [];
+        // Handle /tools/invoke wrapper structure
+        const historyResult = historyData?.result?.details || historyData?.result || {};
+        const messages = historyResult?.messages || [];
         
         // Find last assistant message
         const lastAssistant = messages.reverse().find((m: any) => m.role === 'assistant');
