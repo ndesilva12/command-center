@@ -96,10 +96,12 @@ Focus on QUALITY and RELEVANCE over quantity. It's better to return 8 excellent 
     const data = await response.json();
     
     // sessions_spawn returns immediately with status: "accepted"
-    // We need to poll or wait for completion
-    if (data?.result?.status === 'accepted') {
-      const runId = data.result.runId;
-      const childSessionKey = data.result.childSessionKey;
+    // Result is in data.result.details when called via /tools/invoke
+    const spawnResult = data?.result?.details || data?.result;
+    
+    if (spawnResult?.status === 'accepted') {
+      const runId = spawnResult.runId;
+      const childSessionKey = spawnResult.childSessionKey;
       
       // Poll for completion (max 2 minutes)
       const maxWaitTime = 120000; // 2 minutes
