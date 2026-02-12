@@ -33,9 +33,9 @@ export async function syncManualSelectionsToWeeklyPlan(
       return { success: true, message: "No meals selected" };
     }
     
-    // 2. Fetch meal details
+    // 2. Fetch meal details with ingredients
     const mealsRef = collection(db, 'meals');
-    const mealDetails: Array<{ id: string; name: string }> = [];
+    const mealDetails: Array<{ id: string; name: string; ingredients: any[] }> = [];
     
     for (const mealId of mealIds) {
       const mealSnap = await getDoc(doc(mealsRef, mealId));
@@ -43,7 +43,8 @@ export async function syncManualSelectionsToWeeklyPlan(
         const data = mealSnap.data();
         mealDetails.push({
           id: mealId,
-          name: data.name || data.title
+          name: data.name || data.title,
+          ingredients: data.ingredients || []
         });
       }
     }
@@ -68,15 +69,39 @@ export async function syncManualSelectionsToWeeklyPlan(
       }
     });
     
-    // 5. Create or update weekly plan
+    // 5. Generate shopping list from ingredients
+    const wholeFoodsItems: string[] = [];
+    const traderJoesItems: string[] = [];
+    const eitherItems: string[] = [];
+    
+    mealDetails.forEach(meal => {
+      meal.ingredients.forEach((ing: any) => {
+        if (typeof ing === 'string') {
+          eitherItems.push(ing);
+        } else if (typeof ing === 'object') {
+          const store = (ing.store || 'either').toLowerCase();
+          const itemText = `${ing.quantity || ''} ${ing.unit || ''} ${ing.item || ''}`.trim();
+          
+          if (store === 'wholefoods') {
+            wholeFoodsItems.push(itemText);
+          } else if (store === 'traderjoes') {
+            traderJoesItems.push(itemText);
+          } else {
+            eitherItems.push(itemText);
+          }
+        }
+      });
+    });
+    
+    // 6. Create or update weekly plan
     const planData = {
       weekOf,
       status: 'draft',
       meals: mealsObj,
       shoppingList: {
-        wholefoods: [],
-        traderjoes: [],
-        either: []
+        wholefoods: wholeFoodsItems,
+        traderjoes: traderJoesItems,
+        either: eitherItems
       },
       updatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString()
@@ -87,12 +112,13 @@ export async function syncManualSelectionsToWeeklyPlan(
       const newDocRef = doc(collection(db, 'weekly_plans'));
       await setDoc(newDocRef, planData);
     } else {
-      // Update existing plan's meals
+      // Update existing plan's meals and shopping list
       const existingDoc = plansSnap.docs[0];
       const existingData = existingDoc.data();
       await setDoc(doc(db, 'weekly_plans', existingDoc.id), {
         ...existingData,
         meals: mealsObj,
+        shoppingList: planData.shoppingList,
         updatedAt: new Date().toISOString()
       });
     }
