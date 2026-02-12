@@ -19,13 +19,14 @@ export async function POST(request: NextRequest) {
     // Build curate.py command
     const scriptPath = '/home/ubuntu/openclaw/skills/curate/curate.py';
     const args: string[] = [
-      '--topic', `"${topic.trim()}"`,
+      `"${topic.trim()}"`,  // Positional topic argument
       '--count', String(count || 12),
       '--min-score', String(minScore || 5.0),
       '--time-range', timeRange || 'month',
       '--mode', 'manual',
       '--triggered-by', 'cc_tool',
       '--output', 'json',
+      '--save',  // CRITICAL: Save to Firestore
     ];
 
     // Handle multiple sources
