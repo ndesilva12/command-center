@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const OPENCLAW_GATEWAY = 'http://localhost:18789';
+const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,19 +14,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call Python script on EC2
-    const saveFlag = save ? '--save' : '';
-    const command = `python3 /home/ubuntu/openclaw/skills/one-pager/one_pager.py ${saveFlag} --json "${topic.replace(/"/g, '\\"')}"`;
+    // Ask Jimmy (OpenClaw main session) to generate the one-pager
+    const prompt = `Generate a comprehensive ONE-PAGER on: "${topic}"
 
-    const { stdout, stderr } = await execAsync(command, {
-      timeout: 180000, // 3 minutes (AI generation takes longer)
-      maxBuffer: 10 * 1024 * 1024 // 10MB
+The one-pager MUST include these exact sections in Markdown:
+
+1. **EXECUTIVE SUMMARY** (2-3 sentences)
+2. **KEY DATA TABLE** (one table with the most important metrics/data)
+3. **VISUAL DESCRIPTION** (describe an ideal chart/graph for this topic)
+4. **KEY POINTS** (8-12 bullet points)
+5. **CONTEXT & IMPLICATIONS** (2-3 sentences on why this matters)
+6. **FURTHER READING** (search Brave for 3-5 best links with descriptions)
+
+${save ? 'IMPORTANT: Save the result to Firestore collection "one_pagers_history" with fields: topic, timestamp, content, links.' : ''}
+
+Format as clean Markdown. Be concise, fact-dense, and actionable. Focus on what someone needs to know to understand this topic.
+
+Worldview: Individual liberty, Austrian economics, first-principles thinking, evidence-based analysis.`;
+
+    // Call OpenClaw sessions/send API
+    const response = await fetch(`${OPENCLAW_GATEWAY}/api/v1/sessions/send`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionKey: 'main',
+        message: prompt,
+        timeoutSeconds: 120
+      })
     });
 
-    // Parse JSON output
-    const result = JSON.parse(stdout);
+    if (!response.ok) {
+      throw new Error(`OpenClaw API error: ${response.status}`);
+    }
 
-    return NextResponse.json(result);
+    const data = await response.json();
+    
+    // Return the generated content
+    return NextResponse.json({
+      topic,
+      timestamp: new Date().toISOString(),
+      content: data.response || data.message || 'Generated content',
+      links: []
+    });
+    
   } catch (error: any) {
     console.error('One-pager error:', error);
     return NextResponse.json(
