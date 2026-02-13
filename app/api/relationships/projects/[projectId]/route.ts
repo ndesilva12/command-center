@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const COLLECTION_ROOT = 'relationship_intel_projects';
+const WORKSPACE_PATH = '/home/ubuntu/.openclaw/workspace/relationships';
 
 // Helper to convert Firestore Timestamp to Date
 function toDate(value: any): Date {
@@ -33,31 +37,81 @@ export async function GET(
 
     const projectData = projectDoc.data();
     
-    // Get all contacts
+    // Check for discovered data in workspace JSON file
+    const jsonPath = path.join(WORKSPACE_PATH, `${projectId}.json`);
+    if (fs.existsSync(jsonPath)) {
+      // Import discovered contacts into Firestore
+      const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+      
+      if (jsonData.contacts && Array.isArray(jsonData.contacts)) {
+        const batch = adminDb.batch();
+        
+        for (const contact of jsonData.contacts) {
+          const contactRef = projectRef.collection('contacts').doc(contact.email);
+          batch.set(contactRef, {
+            ...contact,
+            lastContact: Timestamp.fromDate(new Date(contact.lastContact)),
+            firstContact: Timestamp.fromDate(new Date(contact.firstContact)),
+          });
+        }
+        
+        // Update project's lastDiscovery timestamp
+        batch.update(projectRef, { 
+          lastDiscovery: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+        
+        await batch.commit();
+        
+        // Delete the JSON file after importing
+        fs.unlinkSync(jsonPath);
+      }
+    }
+    
+    // Get all contacts from Firestore
     const contactsSnapshot = await projectRef.collection('contacts').get();
-    const contacts = contactsSnapshot.docs.map(doc => ({
-      email: doc.id,
-      ...doc.data(),
-      lastContact: toDate(doc.data().lastContact).toISOString(),
-      firstContact: toDate(doc.data().firstContact).toISOString(),
-    }));
+    const contacts = contactsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        email: doc.id,
+        name: data.name,
+        company: data.company,
+        title: data.title,
+        emailThreads: data.emailThreads || [],
+        calendarEvents: data.calendarEvents || [],
+        lastContact: toDate(data.lastContact).toISOString(),
+        firstContact: toDate(data.firstContact).toISOString(),
+        interactionCount: data.interactionCount || 0,
+        needsFollowUp: data.needsFollowUp || false,
+        urgencyScore: data.urgencyScore || 0,
+        notes: data.notes || '',
+      };
+    });
 
-    // Sort by most recent contact
-    contacts.sort((a, b) => 
-      new Date(b.lastContact).getTime() - new Date(a.lastContact).getTime()
-    );
+    // Calculate summary stats
+    const summary = {
+      totalContacts: contacts.length,
+      needsFollowUp: contacts.filter(c => c.needsFollowUp).length,
+      avgUrgency: contacts.length > 0 
+        ? contacts.reduce((sum, c) => sum + c.urgencyScore, 0) / contacts.length 
+        : 0,
+    };
 
     return NextResponse.json({
       project: {
         id: projectId,
         name: projectData?.name,
+        description: projectData?.description,
         createdAt: toDate(projectData?.createdAt).toISOString(),
         updatedAt: toDate(projectData?.updatedAt).toISOString(),
         keywords: projectData?.keywords || [],
-        tags: projectData?.tags || [],
+        dateFrom: projectData?.dateFrom,
         contactCount: contacts.length,
+        needsFollowUp: summary.needsFollowUp,
+        lastDiscovery: projectData?.lastDiscovery ? toDate(projectData.lastDiscovery).toISOString() : null,
       },
       contacts,
+      summary,
     });
   } catch (error) {
     console.error('Error getting project:', error);

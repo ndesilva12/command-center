@@ -5,17 +5,20 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { Network, Plus, Loader2, Users, ArrowRight } from "lucide-react";
+import { Network, Plus, Loader2, Users, ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 interface Project {
   id: string;
   name: string;
+  description?: string;
   createdAt: string;
   updatedAt: string;
   keywords: string[];
-  tags: string[];
+  dateFrom?: string;
   contactCount: number;
+  needsFollowUp?: number;
+  lastDiscovery?: string;
 }
 
 export default function RelationshipsPage() {
@@ -32,7 +35,9 @@ function RelationshipsContent() {
   const [isMobile, setIsMobile] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectDescription, setNewProjectDescription] = useState("");
   const [newProjectKeywords, setNewProjectKeywords] = useState("");
+  const [newProjectDateFrom, setNewProjectDateFrom] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -70,15 +75,18 @@ function RelationshipsContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newProjectName,
+          description: newProjectDescription,
           keywords,
-          tags: [],
+          dateFrom: newProjectDateFrom || undefined,
         }),
       });
 
       if (response.ok) {
         setShowCreateModal(false);
         setNewProjectName("");
+        setNewProjectDescription("");
         setNewProjectKeywords("");
+        setNewProjectDateFrom("");
         loadProjects();
       }
     } catch (error) {
@@ -119,11 +127,11 @@ function RelationshipsContent() {
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
               <Network style={{ width: "32px", height: "32px", color: "#14b8a6" }} />
               <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
-                Relationships
+                Relationship Intelligence
               </h1>
             </div>
             <p style={{ fontSize: "15px", color: "var(--foreground-muted)" }}>
-              Track and analyze your professional relationships across projects
+              AI-powered relationship tracking • Auto-discover contacts from your emails & calendar
             </p>
           </div>
           <button
@@ -167,7 +175,7 @@ function RelationshipsContent() {
               No projects yet
             </h3>
             <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px" }}>
-              Create your first project to start tracking relationships
+              Create your first project and let AI discover your relationships
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -193,7 +201,7 @@ function RelationshipsContent() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))",
               gap: "24px",
             }}
           >
@@ -228,11 +236,27 @@ function RelationshipsContent() {
                     <ArrowRight style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-                    <Users style={{ width: "16px", height: "16px", color: "#14b8a6" }} />
-                    <span style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
-                      {project.contactCount} contacts
-                    </span>
+                  {project.description && (
+                    <p style={{ fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "16px", lineHeight: 1.5 }}>
+                      {project.description}
+                    </p>
+                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Users style={{ width: "16px", height: "16px", color: "#14b8a6" }} />
+                      <span style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                        {project.contactCount} contacts
+                      </span>
+                    </div>
+                    {project.needsFollowUp && project.needsFollowUp > 0 && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Sparkles style={{ width: "16px", height: "16px", color: "#f59e0b" }} />
+                        <span style={{ fontSize: "14px", color: "#f59e0b", fontWeight: 600 }}>
+                          {project.needsFollowUp} need follow-up
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {project.keywords.length > 0 && (
@@ -270,7 +294,9 @@ function RelationshipsContent() {
                   )}
 
                   <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
-                    Updated: {new Date(project.updatedAt).toLocaleDateString()}
+                    {project.lastDiscovery 
+                      ? `Last analyzed: ${new Date(project.lastDiscovery).toLocaleDateString()}`
+                      : "Not yet analyzed"}
                   </div>
                 </div>
               </Link>
@@ -290,6 +316,7 @@ function RelationshipsContent() {
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1000,
+            padding: "20px",
           }}
           onClick={() => setShowCreateModal(false)}
         >
@@ -299,24 +326,29 @@ function RelationshipsContent() {
               border: "1px solid rgba(255, 255, 255, 0.1)",
               borderRadius: "12px",
               padding: "32px",
-              maxWidth: "500px",
-              width: "90%",
+              maxWidth: "600px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "24px" }}>
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "8px" }}>
               Create New Project
             </h2>
+            <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px" }}>
+              AI will analyze your emails and calendar to discover all relationships for this project
+            </p>
 
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                Project Name
+                Project Name *
               </label>
               <input
                 type="text"
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="e.g., Fundraising Campaign"
+                placeholder="e.g., Cinderella Fundraising"
                 style={{
                   width: "100%",
                   padding: "12px",
@@ -329,7 +361,29 @@ function RelationshipsContent() {
               />
             </div>
 
-            <div style={{ marginBottom: "24px" }}>
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                Description
+              </label>
+              <textarea
+                value={newProjectDescription}
+                onChange={(e) => setNewProjectDescription(e.target.value)}
+                placeholder="Brief description to help AI understand what this project is about"
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  color: "var(--foreground)",
+                  fontSize: "14px",
+                  resize: "vertical",
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
                 Keywords (comma-separated)
               </label>
@@ -337,7 +391,7 @@ function RelationshipsContent() {
                 type="text"
                 value={newProjectKeywords}
                 onChange={(e) => setNewProjectKeywords(e.target.value)}
-                placeholder="e.g., fundraising, investors, seed round"
+                placeholder="e.g., cinderella, fundraising, PE, investors"
                 style={{
                   width: "100%",
                   padding: "12px",
@@ -348,6 +402,32 @@ function RelationshipsContent() {
                   fontSize: "14px",
                 }}
               />
+              <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "6px" }}>
+                AI will search for these keywords in email subjects, bodies, and calendar events
+              </p>
+            </div>
+
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                Start Date (optional)
+              </label>
+              <input
+                type="date"
+                value={newProjectDateFrom}
+                onChange={(e) => setNewProjectDateFrom(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  color: "var(--foreground)",
+                  fontSize: "14px",
+                }}
+              />
+              <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "6px" }}>
+                Only analyze emails/events from this date forward (leave empty for all time)
+              </p>
             </div>
 
             <div style={{ display: "flex", gap: "12px" }}>

@@ -27,15 +27,23 @@ export async function GET(request: NextRequest) {
         
         // Count contacts in this project
         const contactsSnapshot = await doc.ref.collection('contacts').get();
+        
+        // Count contacts needing follow-up
+        const needsFollowUpCount = contactsSnapshot.docs.filter(
+          contact => contact.data().needsFollowUp === true
+        ).length;
 
         return {
           id: doc.id,
           name: data.name,
+          description: data.description,
           createdAt: toDate(data.createdAt).toISOString(),
           updatedAt: toDate(data.updatedAt).toISOString(),
           keywords: data.keywords || [],
-          tags: data.tags || [],
+          dateFrom: data.dateFrom,
           contactCount: contactsSnapshot.size,
+          needsFollowUp: needsFollowUpCount,
+          lastDiscovery: data.lastDiscovery ? toDate(data.lastDiscovery).toISOString() : null,
         };
       })
     );
@@ -58,7 +66,7 @@ export async function GET(request: NextRequest) {
 // POST - Create new project
 export async function POST(request: NextRequest) {
   try {
-    const { name, keywords, tags } = await request.json();
+    const { name, description, keywords, dateFrom } = await request.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -67,15 +75,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create project ID from name
-    const projectId = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    // Create project ID from name (add timestamp to ensure uniqueness)
+    const timestamp = Date.now();
+    const projectId = `${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${timestamp}`;
 
     const projectData = {
       name: name.trim(),
+      description: description?.trim() || null,
       keywords: keywords || [],
-      tags: tags || [],
+      dateFrom: dateFrom || null,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
+      lastDiscovery: null,
     };
 
     await adminDb
