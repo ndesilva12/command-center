@@ -123,14 +123,13 @@ export default function MealsPage() {
     setAddingMealId(mealId);
     const result = await addMealToNextWeek(user.uid, mealId);
     
-    // Show feedback (you can replace with toast notification)
     if (result.success) {
-      alert(result.message);
+      // Redirect to meal plan next week tab to see the selection
+      window.location.href = "/tools/meal-plan?tab=next-week";
     } else {
       alert(result.message);
+      setAddingMealId(null);
     }
-    
-    setAddingMealId(null);
   };
 
   return (
@@ -161,86 +160,35 @@ export default function MealsPage() {
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "8px" }}>
-              <a
-                href="/tools/meal-plan?tab=this-week"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  backgroundColor: "rgba(0, 170, 255, 0.15)",
-                  border: "1px solid rgba(0, 170, 255, 0.3)",
-                  color: "#00aaff",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0, 170, 255, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(0, 170, 255, 0.15)";
-                }}
-              >
-                <Calendar style={{ width: "14px", height: "14px" }} />
-                This Week
-              </a>
-              <a
-                href="/tools/meal-plan?tab=next-week"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  backgroundColor: "rgba(16, 185, 129, 0.15)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                  color: "#10b981",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
-                }}
-              >
-                <Calendar style={{ width: "14px", height: "14px" }} />
-                Next Week
-              </a>
-              <a
-                href="/tools/shopping-list"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  backgroundColor: "rgba(139, 92, 246, 0.15)",
-                  border: "1px solid rgba(139, 92, 246, 0.3)",
-                  color: "#8b5cf6",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "rgba(139, 92, 246, 0.15)";
-                }}
-              >
-                <Calendar style={{ width: "14px", height: "14px" }} />
-                Shopping List
-              </a>
-            </div>
+            <a
+              href="/tools/meal-plan"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 18px",
+                borderRadius: "8px",
+                background: "linear-gradient(135deg, #00aaff 0%, #0088cc 100%)",
+                border: "none",
+                color: "white",
+                fontSize: "14px",
+                fontWeight: 600,
+                textDecoration: "none",
+                transition: "all 0.2s",
+                boxShadow: "0 2px 8px rgba(0, 170, 255, 0.25)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 170, 255, 0.35)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 170, 255, 0.25)";
+              }}
+            >
+              <Calendar style={{ width: "16px", height: "16px" }} />
+              View Meal Plan
+            </a>
           </div>
 
           {/* Search & Filter */}
