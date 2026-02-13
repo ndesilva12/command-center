@@ -44,9 +44,19 @@ export async function GET(
       const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
       
       if (jsonData.contacts && Array.isArray(jsonData.contacts)) {
+        // Get blacklist
+        const blacklistSnapshot = await projectRef.collection('blacklist').get();
+        const blacklistedEmails = new Set(blacklistSnapshot.docs.map(doc => doc.id));
+        
         const batch = adminDb.batch();
         
         for (const contact of jsonData.contacts) {
+          // Skip blacklisted contacts
+          if (blacklistedEmails.has(contact.email)) {
+            console.log(`Skipping blacklisted contact: ${contact.email}`);
+            continue;
+          }
+          
           const contactRef = projectRef.collection('contacts').doc(contact.email);
           batch.set(contactRef, {
             ...contact,

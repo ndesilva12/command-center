@@ -215,6 +215,35 @@ function ProjectDetailContent() {
     return '#10b981'; // green
   };
 
+  const handleRemoveContact = async (email: string, name: string) => {
+    if (!confirm(`Remove ${name} from this project?\n\nThey will be blacklisted and won't be re-added on future syncs.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/relationships/projects/${projectId}/contacts/${encodeURIComponent(email)}`,
+        { method: 'DELETE' }
+      );
+
+      if (response.ok) {
+        // Remove from local state
+        setContacts(contacts.filter(c => c.email !== email));
+        if (summary) {
+          setSummary({
+            ...summary,
+            totalContacts: summary.totalContacts - 1,
+          });
+        }
+      } else {
+        throw new Error('Failed to remove contact');
+      }
+    } catch (error) {
+      console.error('Remove contact error:', error);
+      alert('Failed to remove contact');
+    }
+  };
+
   return (
     <>
       <TopNav />
@@ -566,7 +595,29 @@ function ProjectDetailContent() {
                             </div>
                           </div>
 
-                          <div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveContact(contact.email, contact.name);
+                              }}
+                              style={{
+                                padding: "6px 12px",
+                                background: "rgba(239, 68, 68, 0.1)",
+                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                borderRadius: "6px",
+                                color: "#ef4444",
+                                fontSize: "12px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <Trash2 style={{ width: "14px", height: "14px" }} />
+                              Remove
+                            </button>
                             {isExpanded ? (
                               <ChevronUp style={{ width: "20px", height: "20px", color: "var(--foreground-muted)" }} />
                             ) : (
