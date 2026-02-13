@@ -139,7 +139,11 @@ export default function Home() {
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
   const trendingTopicsRef = useRef<TrendingTopicsRef>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  // Default all categories to expanded
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    "Productivity": true,
+    "Intelligence": true,
+  });
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -228,20 +232,22 @@ export default function Home() {
           </div>
 
           {/* Tool Categories - Desktop: Toggle all on/off */}
-          {!isMobile && !loading && customizedCategories.map((category) => {
+          {!isMobile && !loading && customizedCategories.map((category, index) => {
             if (category.tools.length === 0) return null;
 
-            const expanded = expandedCategories[category.name] || false;
+            const expanded = expandedCategories[category.name] !== undefined 
+              ? expandedCategories[category.name] 
+              : true;
 
             return (
-              <div key={category.name} style={{ marginBottom: "32px" }}>
+              <div key={category.name} style={{ marginBottom: "32px", marginTop: index === 0 ? "32px" : "0" }}>
                 {/* Clickable Header with underline */}
                 <div
                   onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
                   style={{
                     textAlign: "center",
-                    paddingBottom: "8px",
-                    marginBottom: "16px",
+                    paddingBottom: "10px",
+                    marginBottom: "20px",
                     borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -255,7 +261,7 @@ export default function Home() {
                 >
                   <h2
                     style={{
-                      fontSize: "11px",
+                      fontSize: "13px",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.15em",
@@ -293,20 +299,22 @@ export default function Home() {
           })}
 
           {/* Tool Categories - Mobile: Toggle all on/off */}
-          {isMobile && !loading && customizedCategories.map((category) => {
+          {isMobile && !loading && customizedCategories.map((category, index) => {
             if (category.tools.length === 0) return null;
 
-            const expanded = expandedCategories[category.name] || false;
+            const expanded = expandedCategories[category.name] !== undefined 
+              ? expandedCategories[category.name] 
+              : true;
 
             return (
-              <div key={category.name} style={{ marginBottom: "24px" }}>
+              <div key={category.name} style={{ marginBottom: "24px", marginTop: index === 0 ? "24px" : "0" }}>
                 {/* Clickable Header with underline */}
                 <div
                   onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
                   style={{
                     textAlign: "center",
                     paddingBottom: "8px",
-                    marginBottom: "12px",
+                    marginBottom: "16px",
                     borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -314,7 +322,7 @@ export default function Home() {
                 >
                   <h2
                     style={{
-                      fontSize: "11px",
+                      fontSize: "12px",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.15em",
