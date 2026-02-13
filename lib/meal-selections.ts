@@ -29,12 +29,15 @@ export async function addMealToNextWeek(
     
     // Check if already selected
     if (currentSelections.includes(mealId)) {
-      return { success: false, message: "Already added to next week" };
+      return { success: false, message: "This recipe is already in next week's plan" };
     }
     
     // Check limit
     if (currentSelections.length >= 5) {
-      return { success: false, message: "Maximum 5 recipes allowed" };
+      return { 
+        success: false, 
+        message: `All 5 days (Mon-Fri) are filled! Go to Meal Plan → Next Week to remove a recipe first.` 
+      };
     }
     
     // Add meal

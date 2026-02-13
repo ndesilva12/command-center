@@ -106,85 +106,114 @@ export function ManualMealSelector({ userId, weekOf, onSelectionsChange }: Manua
 
   return (
     <div className="glass" style={{ padding: "24px", borderRadius: "12px", marginBottom: "24px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-        <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ flex: 1, minWidth: "200px" }}>
           <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
-            Manual Recipe Selection
+            Your Recipe Selections
           </h3>
           <p style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
-            Select up to 5 recipes for this week. Jimmy will fill remaining slots automatically.
+            Pick recipes for Monday-Friday. Each selection fills one day.
           </p>
         </div>
-        <span
-          style={{
-            padding: "6px 12px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 600,
-            color: selectedMealIds.length >= 5 ? "#6366f1" : "#10b981",
-            backgroundColor: selectedMealIds.length >= 5 ? "rgba(245, 158, 11, 0.15)" : "rgba(16, 185, 129, 0.15)",
-            border: selectedMealIds.length >= 5 ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
-          }}
-        >
-          {selectedMealIds.length} / 5 selected
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+          <span
+            style={{
+              padding: "6px 12px",
+              borderRadius: "6px",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: selectedMealIds.length >= 5 ? "#6366f1" : "#10b981",
+              backgroundColor: selectedMealIds.length >= 5 ? "rgba(99, 102, 241, 0.15)" : "rgba(16, 185, 129, 0.15)",
+              border: selectedMealIds.length >= 5 ? "1px solid rgba(99, 102, 241, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
+            }}
+          >
+            {selectedMealIds.length} / 5 days filled
+          </span>
+          {selectedMealIds.length >= 5 && (
+            <span style={{ fontSize: "11px", color: "var(--foreground-muted)", textAlign: "right" }}>
+              All days filled! Remove one to change.
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Selected Meals */}
       {selectedMeals.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
-          {selectedMeals.map((meal) => (
-            <div
-              key={meal.id}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "12px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(0, 170, 255, 0.1)",
-                border: "1px solid rgba(0, 170, 255, 0.3)",
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
-                  {meal.name}
-                </p>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                  {meal.tags.slice(0, 3).map((tag) => (
-                    <span
-                      key={tag}
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--foreground-muted)",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        backgroundColor: "rgba(255, 255, 255, 0.05)",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={() => removeMeal(meal.id)}
+          {selectedMeals.map((meal, index) => {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const dayLabel = days[index];
+            
+            return (
+              <div
+                key={meal.id}
                 style={{
-                  padding: "6px",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  backgroundColor: "rgba(239, 68, 68, 0.1)",
-                  color: "#ef4444",
-                  cursor: "pointer",
                   display: "flex",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  justifyContent: "center",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(0, 170, 255, 0.1)",
+                  border: "1px solid rgba(0, 170, 255, 0.3)",
                 }}
               >
-                <X style={{ width: "16px", height: "16px" }} />
-              </button>
-            </div>
-          ))}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                    <span style={{ 
+                      fontSize: "11px", 
+                      fontWeight: 700, 
+                      textTransform: "uppercase", 
+                      color: "#00aaff",
+                      letterSpacing: "0.5px" 
+                    }}>
+                      {dayLabel}
+                    </span>
+                    <span style={{ 
+                      fontSize: "14px", 
+                      fontWeight: 600, 
+                      color: "var(--foreground)" 
+                    }}>
+                      {meal.name}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {meal.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          fontSize: "11px",
+                          color: "var(--foreground-muted)",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeMeal(meal.id)}
+                  style={{
+                    padding: "6px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    color: "#ef4444",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    marginLeft: "12px",
+                  }}
+                >
+                  <X style={{ width: "16px", height: "16px" }} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 

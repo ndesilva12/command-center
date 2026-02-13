@@ -615,12 +615,12 @@ function MealPlanContent() {
                 />
               )}
               
-              {/* Auto-Generated Plan */}
+              {/* Full Week View - Shows Manual + AI Selections */}
               {nextWeek ? (
                 <div>
                   <div style={{ marginBottom: "16px", padding: "12px 16px", borderRadius: "8px", backgroundColor: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.3)" }}>
                     <p style={{ fontSize: "13px", color: "var(--foreground)", margin: 0 }}>
-                      📋 <strong>AI-Generated Plan</strong> — Jimmy auto-filled remaining days based on your preferences
+                      📋 <strong>Complete Week</strong> — Your selections + AI auto-fill for empty days
                     </p>
                   </div>
                   <WeekView week={nextWeek} title="Next Week" canEdit={nextWeek.status !== 'archived'} weekType="next" />
