@@ -211,11 +211,9 @@ function CommunicationsTab({ isMobile }: { isMobile: boolean }) {
 
   const filtered = communications.filter(c => {
     if (categoryFilter !== 'all') {
-      const catMatch = categoryFilter === 'vc' ? c.category === 'VC' : 
-                       categoryFilter === 'pe' ? c.category === 'PE' :
-                       categoryFilter === 'production' ? c.category === 'Production' :
-                       c.category === 'Other';
-      if (!catMatch) return false;
+      if (categoryFilter === 'vc' && c.category !== 'VC') return false;
+      if (categoryFilter === 'pe' && c.category !== 'PE') return false;
+      if (categoryFilter === 'production' || categoryFilter === 'other') return false; // No production/other comms yet
     }
     
     if (statusFilter !== 'all') {
