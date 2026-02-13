@@ -772,10 +772,10 @@ export default function ReadPage() {
               </div>
             </div>
 
-            {/* Top Feeds (Selected) */}
+            {/* Top Feeds (Selected) - Scrollable */}
             {tempTopFeeds.length > 0 && (
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "12px" }}>
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", maxHeight: "300px", overflowY: "auto" }}>
+                <div style={{ fontSize: "12px", fontWeight: 600, color: "#64748b", marginBottom: "12px", position: "sticky", top: 0, background: "rgba(30, 41, 59, 0.98)", paddingBottom: "8px", zIndex: 1 }}>
                   QUICK ACCESS BUTTONS ({tempTopFeeds.length})
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
