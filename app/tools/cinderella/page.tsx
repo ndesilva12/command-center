@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink } from "lucide-react";
+import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -19,7 +19,7 @@ export default function CinderellaPage() {
 function CinderellaContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('cinderella', 'Cinderella Project', '#f59e0b');
-  const [activeTab, setActiveTab] = useState<'overview' | 'targets' | 'contacts' | 'tasks' | 'financials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'targets' | 'legal' | 'tasks' | 'financials'>('overview');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -68,8 +68,9 @@ function CinderellaContent() {
         }}>
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
+            { id: 'communications', label: 'Communications', icon: Mail },
             { id: 'targets', label: 'Targets', icon: Target },
-            { id: 'contacts', label: 'Contacts', icon: Users },
+            { id: 'legal', label: 'Legal', icon: Scale },
             { id: 'tasks', label: 'Tasks', icon: FileText },
             { id: 'financials', label: 'Financials', icon: Building2 },
           ].map(({ id, label, icon: Icon }) => (
@@ -100,14 +101,478 @@ function CinderellaContent() {
 
         {/* Content */}
         {activeTab === 'overview' && <OverviewTab isMobile={isMobile} />}
+        {activeTab === 'communications' && <CommunicationsTab isMobile={isMobile} />}
         {activeTab === 'targets' && <TargetsTab isMobile={isMobile} />}
-        {activeTab === 'contacts' && <ContactsTab isMobile={isMobile} />}
+        {activeTab === 'legal' && <LegalTab isMobile={isMobile} />}
         {activeTab === 'tasks' && <TasksTab isMobile={isMobile} />}
         {activeTab === 'financials' && <FinancialsTab isMobile={isMobile} />}
       </main>
     </>
   );
 }
+
+function CommunicationsTab({ isMobile }: { isMobile: boolean }) {
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'vc' | 'pe' | 'production' | 'other'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'waiting' | 'scheduled' | 'cold'>('all');
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
+
+  const communications = [
+    {
+      contact: "Adrian Williams",
+      company: "SC Holdings",
+      category: "PE" as const,
+      status: "Scheduled" as const,
+      priority: "High" as const,
+      threadId: "19c2049e6c14d96c",
+      lastEmail: "2026-02-12",
+      subject: "Cinderella - Next meeting scheduled",
+      snippet: "Perfect – just sent an invite for next Weds. Looking forward to speaking then!",
+      nextStep: "Meeting Feb 19 @ 12:30pm ET",
+      notes: "Had initial call Feb 4. Lots to update on. SC interested in lead vs follow positioning.",
+    },
+    {
+      contact: "Deepen Parikh",
+      company: "Courtside VC",
+      category: "VC" as const,
+      status: "Active" as const,
+      priority: "High" as const,
+      threadId: "19c04fa08ff819ad",
+      lastEmail: "2026-02-11",
+      subject: "Follow Up - Good momentum",
+      snippet: "Quite a bit of momentum. I think your point proved spot on - smaller check sizes opens door to far more groups.",
+      nextStep: "Share UIC update + celebrity progress",
+      notes: "Positive feedback. Interested in workshopping name/school combos with Avenue, SC, TCG.",
+    },
+    {
+      contact: "Todd Marcy",
+      company: "Avenue Capital",
+      category: "PE" as const,
+      status: "Waiting" as const,
+      priority: "Medium" as const,
+      threadId: "19bd56ec09715f00",
+      lastEmail: "2026-02-04",
+      subject: "NCAA Investment - Deck shared",
+      snippet: "Pleasure to meet you. Sent decks. We're on similar pages - low-end Power 4 or low-end D1, not blue bloods.",
+      nextStep: "Wait for feedback, follow up in 1 week if no response",
+      notes: "Had call Feb 4. Aligned on thesis (arbitrage vs. blue bloods).",
+    },
+    {
+      contact: "Andy Howard",
+      company: "Shamrock Capital",
+      category: "PE" as const,
+      status: "Waiting" as const,
+      priority: "Medium" as const,
+      threadId: "19c20315cbfde5d5",
+      lastEmail: "2026-02-04",
+      subject: "NCAA - Intro from Steve Royer",
+      snippet: "Look forward to talking. Let me know how best to get on your calendar.",
+      nextStep: "Schedule call",
+      notes: "Intro from Steve Royer. Need to find time to connect.",
+    },
+    {
+      contact: "Donella Madrid",
+      company: "Shamrock Capital",
+      category: "PE" as const,
+      status: "Scheduled" as const,
+      priority: "Medium" as const,
+      threadId: "19c20315cbfde5d5",
+      lastEmail: "2026-02-04",
+      subject: "NCAA - Call scheduled",
+      snippet: "Let's do Friday 2/6 @ 130p PT. Invite sent.",
+      nextStep: "Call Feb 6 @ 1:30pm PT (past - need status update)",
+      notes: "Scheduled via Andy Howard intro.",
+    },
+    {
+      contact: "Jesse Jacobs",
+      company: "TCG",
+      category: "VC" as const,
+      status: "Waiting" as const,
+      priority: "Medium" as const,
+      threadId: "19bd57878e137203",
+      lastEmail: "2026-01-23",
+      subject: "NCAA Investment - Deck shared",
+      snippet: "Thanks for the call. Sent video deck and PDF deck with specific examples.",
+      nextStep: "Follow up - it's been 3 weeks",
+      notes: "Had call in late Jan. Radio silence since deck send.",
+    },
+  ];
+
+  const toggleThread = (threadId: string) => {
+    const newExpanded = new Set(expandedThreads);
+    if (newExpanded.has(threadId)) {
+      newExpanded.delete(threadId);
+    } else {
+      newExpanded.add(threadId);
+    }
+    setExpandedThreads(newExpanded);
+  };
+
+  const filtered = communications.filter(c => {
+    if (categoryFilter !== 'all') {
+      const catMatch = categoryFilter === 'vc' ? c.category === 'VC' : 
+                       categoryFilter === 'pe' ? c.category === 'PE' :
+                       categoryFilter === 'production' ? c.category === 'Production' :
+                       c.category === 'Other';
+      if (!catMatch) return false;
+    }
+    
+    if (statusFilter !== 'all') {
+      const statusMatch = statusFilter === 'active' ? c.status === 'Active' :
+                         statusFilter === 'waiting' ? c.status === 'Waiting' :
+                         statusFilter === 'scheduled' ? c.status === 'Scheduled' :
+                         c.status === 'Cold';
+      if (!statusMatch) return false;
+    }
+    
+    return true;
+  });
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High': return '#ef4444';
+      case 'Medium': return '#f59e0b';
+      case 'Low': return '#10b981';
+      default: return '#6b7280';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active': return '#10b981';
+      case 'Scheduled': return '#3b82f6';
+      case 'Waiting': return '#f59e0b';
+      case 'Cold': return '#6b7280';
+      default: return '#6b7280';
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Filters */}
+      <div style={{
+        display: "flex",
+        gap: "12px",
+        flexWrap: isMobile ? "wrap" : "nowrap",
+        padding: isMobile ? "12px" : "16px",
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+      }}>
+        <div style={{ flex: 1, minWidth: isMobile ? "100%" : "auto" }}>
+          <label style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "6px", display: "block" }}>
+            Category
+          </label>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value as any)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              background: "rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              color: "white",
+              fontSize: "14px",
+            }}
+          >
+            <option value="all">All Categories</option>
+            <option value="vc">VC</option>
+            <option value="pe">PE</option>
+            <option value="production">Production</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div style={{ flex: 1, minWidth: isMobile ? "100%" : "auto" }}>
+          <label style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "6px", display: "block" }}>
+            Status
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: "6px",
+              background: "rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              color: "white",
+              fontSize: "14px",
+            }}
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="waiting">Waiting</option>
+            <option value="cold">Cold</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Communications List */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {filtered.map((comm) => {
+          const isExpanded = expandedThreads.has(comm.threadId);
+          const gmailLink = `https://mail.google.com/mail/u/0/#all/${comm.threadId}`;
+          
+          return (
+            <div
+              key={comm.threadId}
+              style={{
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                overflow: "hidden",
+              }}
+            >
+              {/* Header - Always visible */}
+              <div
+                onClick={() => toggleThread(comm.threadId)}
+                style={{
+                  padding: isMobile ? "12px" : "16px",
+                  cursor: "pointer",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                      <span style={{ fontSize: isMobile ? "15px" : "16px", fontWeight: 600, color: "var(--foreground)" }}>
+                        {comm.contact}
+                      </span>
+                      <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
+                        @ {comm.company}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                      {comm.subject}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {isExpanded ? <ChevronUp size={16} color="#6b7280" /> : <ChevronDown size={16} color="#6b7280" />}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+                  <span style={{
+                    padding: "3px 8px",
+                    borderRadius: "12px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    background: `${getPriorityColor(comm.priority)}20`,
+                    color: getPriorityColor(comm.priority),
+                  }}>
+                    {comm.priority} Priority
+                  </span>
+                  <span style={{
+                    padding: "3px 8px",
+                    borderRadius: "12px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    background: `${getStatusColor(comm.status)}20`,
+                    color: getStatusColor(comm.status),
+                  }}>
+                    {comm.status}
+                  </span>
+                  <span style={{
+                    padding: "3px 8px",
+                    borderRadius: "12px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    background: "rgba(139, 92, 246, 0.2)",
+                    color: "#8b5cf6",
+                  }}>
+                    {comm.category}
+                  </span>
+                </div>
+              </div>
+
+              {/* Expanded Details */}
+              {isExpanded && (
+                <div style={{
+                  padding: isMobile ? "12px" : "16px",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "rgba(0, 0, 0, 0.2)",
+                }}>
+                  {/* Latest Snippet */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                      Latest Email ({comm.lastEmail})
+                    </div>
+                    <div style={{
+                      padding: "10px 12px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.03)",
+                      fontSize: "13px",
+                      color: "var(--foreground)",
+                      fontStyle: "italic",
+                    }}>
+                      "{comm.snippet}"
+                    </div>
+                  </div>
+
+                  {/* Next Step */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                      Next Step
+                    </div>
+                    <div style={{ fontSize: "14px", color: "#10b981", fontWeight: 500 }}>
+                      → {comm.nextStep}
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                      Notes
+                    </div>
+                    <div style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: 1.5 }}>
+                      {comm.notes}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <a
+                      href={gmailLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: "6px",
+                        background: "linear-gradient(135deg, #00aaff, #0088cc)",
+                        color: "white",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <ExternalLink size={14} />
+                      View in Gmail
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LegalTab({ isMobile }: { isMobile: boolean }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Legal Documents */}
+      <div style={{
+        padding: isMobile ? "16px" : "24px",
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+      }}>
+        <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          <Scale size={20} />
+          Legal Documents
+        </h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {/* Legal Structure Memo */}
+          <a
+            href="https://docs.google.com/document/d/1DXSwlvDqoGkgp9T09-T9UY60_iH3Vqbvx7smgALaBXk/edit"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "16px",
+              borderRadius: "8px",
+              background: "rgba(59, 130, 246, 0.05)",
+              border: "1px solid rgba(59, 130, 246, 0.2)",
+              textDecoration: "none",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(59, 130, 246, 0.1)";
+              e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(59, 130, 246, 0.05)";
+              e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.2)";
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "16px", fontWeight: 600, color: "#3b82f6" }}>
+                Legal Structure Memo
+              </span>
+              <ExternalLink size={16} color="#3b82f6" />
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--foreground-muted)", margin: 0 }}>
+              2-page memo: LLC structure, production rights, Title IX compliance
+            </p>
+          </a>
+
+          {/* UIC MOU Draft */}
+          <a
+            href="https://docs.google.com/document/d/1rVoJOmspnhjri6w1rrITb95k4BF1s643IQtyHC9udN8/edit"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: "16px",
+              borderRadius: "8px",
+              background: "rgba(16, 185, 129, 0.05)",
+              border: "1px solid rgba(16, 185, 129, 0.2)",
+              textDecoration: "none",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(16, 185, 129, 0.1)";
+              e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(16, 185, 129, 0.05)";
+              e.currentTarget.style.borderColor = "rgba(16, 185, 129, 0.2)";
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <span style={{ fontSize: "16px", fontWeight: 600, color: "#10b981" }}>
+                UIC MOU Draft
+              </span>
+              <ExternalLink size={16} color="#10b981" />
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--foreground-muted)", margin: 0 }}>
+              Non-binding MOU framework (Title IX compliant, Utah/Otro model)
+            </p>
+          </a>
+        </div>
+      </div>
+
+      {/* Legal Considerations */}
+      <div style={{
+        padding: isMobile ? "16px" : "24px",
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+      }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px" }}>
+          Key Legal Considerations
+        </h3>
+        <ul style={{ fontSize: "14px", color: "var(--foreground)", lineHeight: 1.8, paddingLeft: "20px" }}>
+          <li>LLC owns team revenue rights (49% PE, 51% University)</li>
+          <li>1-year renewable contracts, 10-year expiration</li>
+          <li>PE funds entire program ($13M Year 1)</li>
+          <li>University retains operational control (NCAA requirement)</li>
+          <li>Title IX compliance: savings redistributed to other sports</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// (Rest of the component functions remain the same: OverviewTab, TargetsTab, TasksTab, FinancialsTab)
 
 function OverviewTab({ isMobile }: { isMobile: boolean }) {
   return (
@@ -279,69 +744,6 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function ContactsTab({ isMobile }: { isMobile: boolean }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <div style={{
-        padding: isMobile ? "16px" : "24px",
-        borderRadius: "12px",
-        background: "rgba(255, 255, 255, 0.03)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-      }}>
-        <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px" }}>
-          🏢 Contact Database
-        </h2>
-        <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "16px" }}>
-          View full contact database in CONTACTS.md
-        </p>
-
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "12px" }}>
-          <StatCard label="PE Groups" value="86" color="#3b82f6" />
-          <StatCard label="Production Cos" value="12" color="#8b5cf6" />
-          <StatCard label="People" value="115+" color="#10b981" />
-        </div>
-      </div>
-
-      {/* Key PE Groups */}
-      <div style={{
-        padding: isMobile ? "16px" : "24px",
-        borderRadius: "12px",
-        background: "rgba(255, 255, 255, 0.03)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-      }}>
-        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px" }}>
-          Top PE Groups
-        </h3>
-        <ul style={{ fontSize: "14px", color: "var(--foreground)", lineHeight: 1.8, paddingLeft: "20px" }}>
-          <li>Sixth Street</li>
-          <li>Arctos Partners</li>
-          <li>RedBird Capital</li>
-          <li>Courtside VC (following up)</li>
-          <li>SC Holdings (following up)</li>
-        </ul>
-      </div>
-
-      {/* Key Production Companies */}
-      <div style={{
-        padding: isMobile ? "16px" : "24px",
-        borderRadius: "12px",
-        background: "rgba(255, 255, 255, 0.03)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-      }}>
-        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px" }}>
-          Top Production Companies
-        </h3>
-        <ul style={{ fontSize: "14px", color: "var(--foreground)", lineHeight: 1.8, paddingLeft: "20px" }}>
-          <li>Box to Box Films (Drive to Survive)</li>
-          <li>Omaha Productions (Quarterback)</li>
-          <li>Netflix Sports Division</li>
-          <li>FX/Hulu</li>
-        </ul>
       </div>
     </div>
   );
