@@ -5,7 +5,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { Network, Plus, Loader2, Users, ArrowRight, Sparkles } from "lucide-react";
+import { Network, Plus, Loader2, Users, ArrowRight, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 interface Project {
@@ -39,6 +39,7 @@ function RelationshipsContent() {
   const [newProjectKeywords, setNewProjectKeywords] = useState("");
   const [newProjectDateFrom, setNewProjectDateFrom] = useState("");
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -93,6 +94,33 @@ function RelationshipsContent() {
       console.error("Failed to create project:", error);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string, projectName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm(`Are you sure you want to delete "${projectName}"? This will also delete all contacts and analysis for this project.`)) {
+      return;
+    }
+
+    setDeleting(projectId);
+    try {
+      const response = await fetch(`/api/relationships/projects/${projectId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        loadProjects();
+      } else {
+        alert("Failed to delete project");
+      }
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      alert("Failed to delete project");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -233,7 +261,43 @@ function RelationshipsContent() {
                     <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", margin: 0 }}>
                       {project.name}
                     </h3>
-                    <ArrowRight style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <button
+                        onClick={(e) => handleDeleteProject(project.id, project.name, e)}
+                        disabled={deleting === project.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "32px",
+                          height: "32px",
+                          padding: 0,
+                          background: "rgba(239, 68, 68, 0.1)",
+                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                          borderRadius: "6px",
+                          cursor: deleting === project.id ? "not-allowed" : "pointer",
+                          transition: "all 0.2s",
+                          opacity: deleting === project.id ? 0.5 : 1,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (deleting !== project.id) {
+                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                            e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.4)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
+                        }}
+                      >
+                        {deleting === project.id ? (
+                          <Loader2 style={{ width: "16px", height: "16px", color: "#ef4444", animation: "spin 1s linear infinite" }} />
+                        ) : (
+                          <Trash2 style={{ width: "16px", height: "16px", color: "#ef4444" }} />
+                        )}
+                      </button>
+                      <ArrowRight style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
+                    </div>
                   </div>
 
                   {project.description && (
