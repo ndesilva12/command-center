@@ -18,7 +18,7 @@ export default function CinderellaPage() {
 
 function CinderellaContent() {
   const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('cinderella', 'Cinderella Project', '#f59e0b');
+  const toolCustom = getCustomization('cinderella', 'Cinderella Project', '#3b82f6');
   const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'tasks' | 'financials'>('overview');
   const [isMobile, setIsMobile] = useState(false);
 
@@ -48,7 +48,7 @@ function CinderellaContent() {
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <Trophy style={{ width: "32px", height: "32px", color: "#f59e0b" }} />
+            <Trophy style={{ width: "32px", height: "32px", color: "#3b82f6" }} />
             <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
               {toolCustom.name}
             </h1>
@@ -83,7 +83,7 @@ function CinderellaContent() {
                 borderRadius: "8px",
                 border: activeTab === id ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
                 background: activeTab === id ? "rgba(245, 158, 11, 0.1)" : "rgba(255, 255, 255, 0.03)",
-                color: activeTab === id ? "#f59e0b" : "rgba(255, 255, 255, 0.7)",
+                color: activeTab === id ? "#3b82f6" : "rgba(255, 255, 255, 0.7)",
                 fontSize: isMobile ? "13px" : "14px",
                 fontWeight: activeTab === id ? 600 : 500,
                 cursor: "pointer",
@@ -997,59 +997,335 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
 }
 
 function TargetsTab({ isMobile }: { isMobile: boolean }) {
-  return (
-    <div style={{
-      padding: isMobile ? "16px" : "24px",
-      borderRadius: "12px",
-      background: "rgba(255, 255, 255, 0.03)",
-      border: "1px solid rgba(255, 255, 255, 0.1)",
-    }}>
-      <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "16px" }}>
-        🎯 Celebrity Targets (99 Total)
-      </h2>
-      <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "20px" }}>
-        View full targets database in TARGETS.md
-      </p>
+  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set(['elite']));
 
-      {/* Priority Targets */}
-      <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px" }}>
-        Top 10 Priority Targets
-      </h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-        {[
-          { name: "Tim Grover", school: "UIC", status: "🟡 In Talks", note: "MOU in progress" },
-          { name: "Bill Simmons", school: "Holy Cross", status: "⚪ Not Contacted", note: "" },
-          { name: "Denzel Washington", school: "Fordham", status: "⚪ Not Contacted", note: "" },
-          { name: "Steph Curry", school: "Davidson", status: "⚪ Not Contacted", note: "" },
-          { name: "Jon Stewart", school: "William & Mary", status: "⚪ Not Contacted", note: "" },
-          { name: "Ben Affleck", school: "Vermont", status: "⚪ Not Contacted", note: "" },
-          { name: "CJ McCollum", school: "Lehigh", status: "⚪ Not Contacted", note: "" },
-          { name: "Liev Schreiber", school: "UMass", status: "⚪ Not Contacted", note: "" },
-          { name: "Matt Damon", school: "Boston ties", status: "⚪ Not Contacted", note: "" },
-          { name: "Dierks Bentley", school: "Vermont", status: "⚪ Not Contacted", note: "" },
-        ].map((target, i) => (
-          <div
-            key={i}
-            style={{
-              padding: "12px 16px",
-              background: "rgba(255, 255, 255, 0.03)",
-              borderRadius: "8px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-              <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>
-                {target.name}
-              </span>
-              <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
-                {target.status}
+  const toggleTier = (tier: string) => {
+    const newExpanded = new Set(expandedTiers);
+    if (newExpanded.has(tier)) {
+      newExpanded.delete(tier);
+    } else {
+      newExpanded.add(tier);
+    }
+    setExpandedTiers(newExpanded);
+  };
+
+  const eliteTier = [
+    { rank: 1, name: "Steph Curry", school: "Davidson", reasoning: "Basketball royalty returns to alma mater. Perfect narrative, massive global appeal, Davidson already has infrastructure." },
+    { rank: 2, name: "Kevin Hart", school: "Temple", reasoning: "Hart is HUGE (250M+ social), basketball fanatic, Philly market, fiercely loyal to Temple. This would break the internet." },
+    { rank: 3, name: "Denzel Washington", school: "Fordham", reasoning: "A-list legend, NYC market, 'prestige meets grit' story. Denzel brings gravitas + investment capacity." },
+    { rank: 4, name: "Bill Murray", school: "Charleston", reasoning: "Murray is universally beloved, Charleston has recent momentum (2022 tournament), perfect personality fit. Wrexham vibes." },
+    { rank: 5, name: "Adam Sandler", school: "New Hampshire", reasoning: "Sandler LOVES basketball (Hustle, constant pickup games), massive fanbase, loyal alum. Would go all-in." },
+    { rank: 6, name: "Jon Stewart", school: "William & Mary", reasoning: "Stewart has influence + platform (Apple show), W&M is historic/respected, great David vs Goliath story." },
+    { rank: 7, name: "Dana White", school: "UMass", reasoning: "White built UFC brand from scratch, understands promotion, Boston market, UMass needs this energy." },
+    { rank: 8, name: "Ben Affleck", school: "Vermont", reasoning: "A-list, Boston connection, Vermont is scrappy underdog. Affleck loves sports + New England." },
+    { rank: 9, name: "Jason Sudeikis", school: "Loyola Chicago", reasoning: "Post-Ted Lasso, basketball is his brand now, Loyola had 2018 Final Four run, Chicago market." },
+    { rank: 10, name: "Ludacris", school: "Georgia St", reasoning: "Atlanta market, hip-hop appeal, ATL basketball culture is deep. Ludacris is culturally relevant + loyal." },
+  ];
+
+  const strongContenders = [
+    { rank: 11, name: "Luke Bryan", school: "Georgia Southern", reasoning: "Country megastar, Georgia market, fiercely loyal to school, huge fanbase in Southeast." },
+    { rank: 12, name: "Bruno Mars", school: "Hawaii", reasoning: "Global superstar, unique market/story, Hawaii basketball has potential, Mars is beloved everywhere." },
+    { rank: 13, name: "Tom Hanks", school: "Sacramento St", reasoning: "American treasure, Sacramento market, Hanks brings instant credibility. Everyone trusts Hanks." },
+    { rank: 14, name: "CJ McCollum", school: "Lehigh", reasoning: "ACTIVE NBA player, went to Lehigh (#15 seed upset Duke), basketball credibility is unmatched." },
+    { rank: 15, name: "Taylor Sheridan", school: "Texas St", reasoning: "Hottest creator in TV (Yellowstone), Texas market is massive, Sheridan understands storytelling." },
+    { rank: 16, name: "Michael Strahan", school: "Texas Southern", reasoning: "Sports credibility (NFL HOF + media), HBCU angle, Houston market, Strahan is beloved." },
+    { rank: 17, name: "Seth MacFarlane", school: "URI", reasoning: "Creative genius (Family Guy/Ted), loyal to URI, New England market, has resources + quirky appeal." },
+    { rank: 18, name: "Darius Rucker", school: "Charleston", reasoning: "Country star + Hootie nostalgia, basketball fan, Charleston has momentum, great cultural fit." },
+    { rank: 19, name: "Dr. Phil", school: "North Texas", reasoning: "Name recognition, Dallas market, media empire, knows how to build brands. Polarizing but powerful." },
+    { rank: 20, name: "George Clooney", school: "Northern Kentucky", reasoning: "A-list legend, Cincinnati market, NKU is young/hungry program, Clooney brings prestige." },
+  ];
+
+  const tier2 = [
+    { name: "Vince Vaughn", school: "Miami Ohio" },
+    { name: "Sandra Bullock", school: "Eastern Carolina" },
+    { name: "Andy Garcia", school: "FIU" },
+    { name: "Tim McGraw", school: "Louisiana Monroe" },
+    { name: "Adam McKay", school: "Temple" },
+    { name: "Charlie Day", school: "URI" },
+    { name: "Conan O'Brien", school: "URI" },
+    { name: "Paul Giamatti", school: "New Haven" },
+    { name: "Ken Jeong", school: "UNC Greensboro" },
+    { name: "Walton Goggins", school: "Georgia Southern" },
+    { name: "Brad Pitt", school: "Missouri St" },
+    { name: "Rick Ross", school: "Bethune-Cookman" },
+    { name: "Danny McBride", school: "Charleston" },
+    { name: "Jim Nantz", school: "Ball St" },
+    { name: "Steve Nash", school: "Santa Clara" },
+    { name: "Kevin Costner", school: "Cal St Fullerton" },
+    { name: "Liev Schreiber", school: "UMass" },
+    { name: "Ray Romano", school: "Hofstra" },
+    { name: "Shane Gillis", school: "Elon" },
+    { name: "Bill Simmons", school: "Holy Cross" },
+  ];
+
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case 'elite': return '#3b82f6'; // Light blue
+      case 'strong': return '#10b981'; // Green
+      case 'tier2': return '#8b5cf6'; // Purple
+      default: return '#6b7280';
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Header */}
+      <div style={{
+        padding: isMobile ? "16px" : "24px",
+        borderRadius: "12px",
+        background: "rgba(59, 130, 246, 0.05)",
+        border: "1px solid rgba(59, 130, 246, 0.2)",
+      }}>
+        <h2 style={{ fontSize: "20px", fontWeight: 600, color: "#3b82f6", marginBottom: "8px" }}>
+          🎯 Celebrity + School Rankings
+        </h2>
+        <p style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+          Weighing: celebrity appeal × basketball fit × school market × storytelling
+        </p>
+      </div>
+
+      {/* Elite Tier (1-10) */}
+      <div style={{
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+      }}>
+        <div
+          onClick={() => toggleTier('elite')}
+          style={{
+            padding: isMobile ? "14px 16px" : "16px 20px",
+            cursor: "pointer",
+            background: expandedTiers.has('elite') ? "rgba(59, 130, 246, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            borderBottom: expandedTiers.has('elite') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#3b82f6",
+              }} />
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#3b82f6", margin: 0 }}>
+                THE ELITE TIER
+              </h3>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                (1-10)
               </span>
             </div>
-            <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
-              {target.school} {target.note && `• ${target.note}`}
+            {expandedTiers.has('elite') ? <ChevronUp size={18} color="#3b82f6" /> : <ChevronDown size={18} color="#6b7280" />}
+          </div>
+        </div>
+
+        {expandedTiers.has('elite') && (
+          <div style={{ padding: isMobile ? "12px" : "16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {eliteTier.map((target) => (
+                <div
+                  key={target.rank}
+                  style={{
+                    padding: isMobile ? "12px" : "14px 16px",
+                    borderRadius: "8px",
+                    background: "rgba(59, 130, 246, 0.05)",
+                    border: "1px solid rgba(59, 130, 246, 0.15)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "8px" }}>
+                    <span style={{
+                      minWidth: "28px",
+                      height: "28px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                      color: "white",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      {target.rank}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                        <span style={{ fontSize: isMobile ? "15px" : "16px", fontWeight: 600, color: "var(--foreground)" }}>
+                          {target.name}
+                        </span>
+                        <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
+                          ⚪ Not Contacted
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "13px", color: "#3b82f6", marginBottom: "6px" }}>
+                        📍 {target.school}
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: 1.5, opacity: 0.9 }}>
+                        {target.reasoning}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        )}
+      </div>
+
+      {/* Strong Contenders (11-20) */}
+      <div style={{
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+      }}>
+        <div
+          onClick={() => toggleTier('strong')}
+          style={{
+            padding: isMobile ? "14px 16px" : "16px 20px",
+            cursor: "pointer",
+            background: expandedTiers.has('strong') ? "rgba(16, 185, 129, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            borderBottom: expandedTiers.has('strong') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#10b981",
+              }} />
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#10b981", margin: 0 }}>
+                STRONG CONTENDERS
+              </h3>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                (11-20)
+              </span>
+            </div>
+            {expandedTiers.has('strong') ? <ChevronUp size={18} color="#10b981" /> : <ChevronDown size={18} color="#6b7280" />}
+          </div>
+        </div>
+
+        {expandedTiers.has('strong') && (
+          <div style={{ padding: isMobile ? "12px" : "16px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {strongContenders.map((target) => (
+                <div
+                  key={target.rank}
+                  style={{
+                    padding: isMobile ? "12px" : "14px 16px",
+                    borderRadius: "8px",
+                    background: "rgba(16, 185, 129, 0.05)",
+                    border: "1px solid rgba(16, 185, 129, 0.15)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "8px" }}>
+                    <span style={{
+                      minWidth: "28px",
+                      height: "28px",
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      color: "white",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      {target.rank}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "4px" }}>
+                        <span style={{ fontSize: isMobile ? "15px" : "16px", fontWeight: 600, color: "var(--foreground)" }}>
+                          {target.name}
+                        </span>
+                        <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
+                          ⚪ Not Contacted
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "13px", color: "#10b981", marginBottom: "6px" }}>
+                        📍 {target.school}
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: 1.5, opacity: 0.9 }}>
+                        {target.reasoning}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Tier 2 (21-40) */}
+      <div style={{
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+      }}>
+        <div
+          onClick={() => toggleTier('tier2')}
+          style={{
+            padding: isMobile ? "14px 16px" : "16px 20px",
+            cursor: "pointer",
+            background: expandedTiers.has('tier2') ? "rgba(139, 92, 246, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            borderBottom: expandedTiers.has('tier2') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#8b5cf6",
+              }} />
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#8b5cf6", margin: 0 }}>
+                TIER 2: SOLID OPTIONS
+              </h3>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                (21-40)
+              </span>
+            </div>
+            {expandedTiers.has('tier2') ? <ChevronUp size={18} color="#8b5cf6" /> : <ChevronDown size={18} color="#6b7280" />}
+          </div>
+        </div>
+
+        {expandedTiers.has('tier2') && (
+          <div style={{ padding: isMobile ? "12px" : "16px" }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+              gap: "8px",
+            }}>
+              {tier2.map((target, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    background: "rgba(139, 92, 246, 0.05)",
+                    border: "1px solid rgba(139, 92, 246, 0.15)",
+                  }}
+                >
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
+                    {target.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#8b5cf6" }}>
+                    📍 {target.school}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
