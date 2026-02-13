@@ -217,11 +217,10 @@ function CommunicationsTab({ isMobile }: { isMobile: boolean }) {
     }
     
     if (statusFilter !== 'all') {
-      const statusMatch = statusFilter === 'active' ? c.status === 'Active' :
-                         statusFilter === 'waiting' ? c.status === 'Waiting' :
-                         statusFilter === 'scheduled' ? c.status === 'Scheduled' :
-                         c.status === 'Cold';
-      if (!statusMatch) return false;
+      if (statusFilter === 'active' && c.status !== 'Active') return false;
+      if (statusFilter === 'waiting' && c.status !== 'Waiting') return false;
+      if (statusFilter === 'scheduled' && c.status !== 'Scheduled') return false;
+      if (statusFilter === 'cold') return false; // No cold comms yet
     }
     
     return true;
