@@ -1058,11 +1058,91 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
     { name: "Bill Simmons", school: "Holy Cross" },
   ];
 
+  const tier3 = [
+    { name: "David Letterman", school: "Ball St" },
+    { name: "Jay Leno", school: "URI" },
+    { name: "Dennis Leary", school: "Holy Cross" },
+    { name: "Ryen Russillo", school: "Vermont" },
+    { name: "Brad Paisley", school: "Belmont" },
+    { name: "Luke Combs", school: "Appalachian St" },
+    { name: "Eric Church", school: "Appalachian St" },
+    { name: "Steve Martin", school: "Long Beach State" },
+    { name: "Forest Whitaker", school: "Cal Poly" },
+    { name: "Seth Meyers", school: "New Hampshire" },
+    { name: "Adrien Brody", school: "Stony Brook" },
+    { name: "Gucci Mane", school: "Georgia St" },
+    { name: "Tim Allen", school: "Western Michigan" },
+    { name: "John Goodman", school: "Missouri St" },
+    { name: "Christopher Walken", school: "Hofstra" },
+    { name: "Patton Oswalt", school: "William & Mary" },
+    { name: "Jay Bilas", school: "Davidson" },
+    { name: "Dan Patrick", school: "Dayton" },
+    { name: "Jason Mraz", school: "VCU" },
+    { name: "Billy Crystal", school: "Marshall" },
+  ];
+
+  const tier4 = [
+    { name: "Cole Swindell", school: "Georgia Southern" },
+    { name: "Dierks Bentley", school: "Vermont" },
+    { name: "Druski", school: "Georgia Southern" },
+    { name: "Paul Reiser", school: "Binghamton" },
+    { name: "Tony Kornheiser", school: "Binghamton" },
+    { name: "Casey Affleck", school: "GW" },
+    { name: "Alec Baldwin", school: "GW" },
+    { name: "Shawn Michaels", school: "Texas St" },
+    { name: "George Strait", school: "Texas St" },
+    { name: "Lori Greiner", school: "Loyola Chicago" },
+    { name: "Bridget Moynahan", school: "UMass" },
+    { name: "Brandy Clark", school: "Belmont" },
+    { name: "Will Cain", school: "Pepperdine" },
+    { name: "Michael Bolton", school: "New Haven" },
+    { name: "Sage Steele", school: "Loyola Maryland" },
+    { name: "Tom Selleck", school: "Loyola Marymount" },
+    { name: "Paul Wight (Big Show)", school: "Wichita St" },
+    { name: "Billy Beane", school: "UC San Diego" },
+    { name: "Chris Matthews", school: "Holy Cross" },
+    { name: "Jason Alexander", school: "Boston University" },
+  ];
+
+  const tier5 = [
+    { name: "Chuck Norris", school: "Liberty" },
+    { name: "Wally Szczerbiak", school: "Miami Ohio" },
+    { name: "Bill O'Reilly", school: "Marist" },
+    { name: "Eric Adams", school: "Marist" },
+    { name: "Matt Bonner", school: "New Hampshire" },
+    { name: "Triple H", school: "New Hampshire" },
+    { name: "James Woods", school: "URI" },
+    { name: "Olivia Culpo", school: "URI" },
+    { name: "Pauly D", school: "URI" },
+    { name: "Jeremy Piven", school: "Drake" },
+    { name: "Rami Malek", school: "Evansville" },
+    { name: "Scottie Pippen", school: "Central Arkansas" },
+    { name: "Fred VanVleet", school: "Wichita St" },
+    { name: "Montell Jordan", school: "Pepperdine" },
+    { name: "Steve Wynn", school: "New Haven" },
+    { name: "Julia Roberts", school: "Georgia St" },
+    { name: "Julie Ertz", school: "Santa Clara" },
+    { name: "Michael Smerconish", school: "Lehigh" },
+    { name: "Steve Forbes", school: "Lehigh" },
+    { name: "Leslie Baker", school: "Loyola Chicago" },
+    { name: "Mike Breen", school: "Fordham" },
+    { name: "John Grisham", school: "Arkansas St" },
+    { name: "Tim Conway", school: "Bowling Green" },
+    { name: "Wolf Blitzer", school: "Buffalo" },
+    { name: "Michael Kelly", school: "Coastal Carolina" },
+    { name: "Ken Ball", school: "George Mason" },
+    { name: "Bob Saget", school: "Temple" },
+    { name: "Hall & Oates", school: "Temple" },
+  ];
+
   const getTierColor = (tier: string) => {
     switch (tier) {
       case 'elite': return '#3b82f6'; // Light blue
       case 'strong': return '#10b981'; // Green
       case 'tier2': return '#8b5cf6'; // Purple
+      case 'tier3': return '#f59e0b'; // Orange
+      case 'tier4': return '#ec4899'; // Pink
+      case 'tier5': return '#6b7280'; // Gray
       default: return '#6b7280';
     }
   };
@@ -1326,6 +1406,236 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Tier 3 (41-60) */}
+      <div style={{
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+      }}>
+        <div
+          onClick={() => toggleTier('tier3')}
+          style={{
+            padding: isMobile ? "14px 16px" : "16px 20px",
+            cursor: "pointer",
+            background: expandedTiers.has('tier3') ? "rgba(245, 158, 11, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            borderBottom: expandedTiers.has('tier3') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#f59e0b",
+              }} />
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#f59e0b", margin: 0 }}>
+                TIER 3: NOTABLE OPTIONS
+              </h3>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                (41-60)
+              </span>
+            </div>
+            {expandedTiers.has('tier3') ? <ChevronUp size={18} color="#f59e0b" /> : <ChevronDown size={18} color="#6b7280" />}
+          </div>
+        </div>
+
+        {expandedTiers.has('tier3') && (
+          <div style={{ padding: isMobile ? "12px" : "16px" }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+              gap: "8px",
+            }}>
+              {tier3.map((target, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    background: "rgba(245, 158, 11, 0.05)",
+                    border: "1px solid rgba(245, 158, 11, 0.15)",
+                  }}
+                >
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
+                    {target.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#f59e0b" }}>
+                    📍 {target.school}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Tier 4 (61-80) */}
+      <div style={{
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+      }}>
+        <div
+          onClick={() => toggleTier('tier4')}
+          style={{
+            padding: isMobile ? "14px 16px" : "16px 20px",
+            cursor: "pointer",
+            background: expandedTiers.has('tier4') ? "rgba(236, 72, 153, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            borderBottom: expandedTiers.has('tier4') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#ec4899",
+              }} />
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#ec4899", margin: 0 }}>
+                TIER 4: DEEPER CUTS
+              </h3>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                (61-80)
+              </span>
+            </div>
+            {expandedTiers.has('tier4') ? <ChevronUp size={18} color="#ec4899" /> : <ChevronDown size={18} color="#6b7280" />}
+          </div>
+        </div>
+
+        {expandedTiers.has('tier4') && (
+          <div style={{ padding: isMobile ? "12px" : "16px" }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+              gap: "8px",
+            }}>
+              {tier4.map((target, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    background: "rgba(236, 72, 153, 0.05)",
+                    border: "1px solid rgba(236, 72, 153, 0.15)",
+                  }}
+                >
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
+                    {target.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#ec4899" }}>
+                    📍 {target.school}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Tier 5 (81-100+) */}
+      <div style={{
+        borderRadius: "12px",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        overflow: "hidden",
+      }}>
+        <div
+          onClick={() => toggleTier('tier5')}
+          style={{
+            padding: isMobile ? "14px 16px" : "16px 20px",
+            cursor: "pointer",
+            background: expandedTiers.has('tier5') ? "rgba(107, 114, 128, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            borderBottom: expandedTiers.has('tier5') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#6b7280",
+              }} />
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#6b7280", margin: 0 }}>
+                TIER 5: LONG SHOTS
+              </h3>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                (81-100+)
+              </span>
+            </div>
+            {expandedTiers.has('tier5') ? <ChevronUp size={18} color="#6b7280" /> : <ChevronDown size={18} color="#6b7280" />}
+          </div>
+        </div>
+
+        {expandedTiers.has('tier5') && (
+          <div style={{ padding: isMobile ? "12px" : "16px" }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+              gap: "8px",
+            }}>
+              {tier5.map((target, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "6px",
+                    background: "rgba(107, 114, 128, 0.05)",
+                    border: "1px solid rgba(107, 114, 128, 0.15)",
+                  }}
+                >
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
+                    {target.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                    📍 {target.school}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Key Insights */}
+      <div style={{
+        padding: isMobile ? "16px" : "24px",
+        borderRadius: "12px",
+        background: "rgba(59, 130, 246, 0.05)",
+        border: "1px solid rgba(59, 130, 246, 0.2)",
+      }}>
+        <h2 style={{ fontSize: "20px", fontWeight: 600, color: "#3b82f6", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+          💡 Key Insights
+        </h2>
+        <ul style={{ fontSize: "14px", color: "var(--foreground)", lineHeight: 1.8, paddingLeft: "20px", margin: 0 }}>
+          <li><strong>Top targets combine:</strong> A-list appeal + basketball connection + strong school market + compelling story</li>
+          <li><strong>Surprise high rankings:</strong> Dana White, Jason Sudeikis, CJ McCollum (underrated basketball credibility)</li>
+          <li><strong>HBCU angle:</strong> Michael Strahan + Texas Southern could be powerful</li>
+          <li><strong>Multiple options at one school:</strong> URI has 6 options (Seth MacFarlane strongest), Charleston has 3 (Murray #1)</li>
+        </ul>
+        <div style={{
+          marginTop: "16px",
+          padding: "12px 16px",
+          borderRadius: "8px",
+          background: "rgba(16, 185, 129, 0.1)",
+          border: "1px solid rgba(16, 185, 129, 0.2)",
+        }}>
+          <p style={{ fontSize: "14px", color: "#10b981", margin: 0, fontWeight: 600 }}>
+            ✅ Recommendation: Start outreach on the top 10 first
+          </p>
+          <p style={{ fontSize: "13px", color: "var(--foreground)", margin: "6px 0 0 0" }}>
+            Focus on Elite Tier for maximum impact. Once we secure 1-2 commitments from this group, we can expand to Strong Contenders.
+          </p>
+        </div>
       </div>
     </div>
   );
