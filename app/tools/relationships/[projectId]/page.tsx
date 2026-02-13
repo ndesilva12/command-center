@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { 
   Network, Loader2, Mail, Calendar, Building, ArrowLeft, 
   Sparkles, ExternalLink, AlertCircle, TrendingUp, ChevronDown, 
-  ChevronUp, RefreshCw 
+  ChevronUp, RefreshCw, Trash2 
 } from "lucide-react";
 import Link from "next/link";
 
@@ -81,6 +81,8 @@ function ProjectDetailContent() {
   const [isMobile, setIsMobile] = useState(false);
   const [expandedContacts, setExpandedContacts] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'urgency' | 'recent' | 'name'>('urgency');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -158,6 +160,28 @@ function ProjectDetailContent() {
       console.error("Discovery error:", error);
       alert("Failed to start discovery");
       setDiscovering(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!project) return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/relationships/projects/${projectId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/tools/relationships");
+      } else {
+        throw new Error("Failed to delete project");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Failed to delete project");
+      setDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -273,37 +297,58 @@ function ProjectDetailContent() {
                     ))}
                   </div>
                 </div>
-                <button
-                  onClick={handleDiscover}
-                  disabled={discovering}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "12px 24px",
-                    background: discovering
-                      ? "rgba(20, 184, 166, 0.3)"
-                      : "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "#ffffff",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: discovering ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {discovering ? (
-                    <>
-                      <Loader2 style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} />
-                      Discovering...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles style={{ width: "16px", height: "16px" }} />
-                      {contacts.length > 0 ? "Re-discover" : "Discover Contacts"}
-                    </>
-                  )}
-                </button>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button
+                    onClick={handleDiscover}
+                    disabled={discovering}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "12px 24px",
+                      background: discovering
+                        ? "rgba(20, 184, 166, 0.3)"
+                        : "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "#ffffff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: discovering ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {discovering ? (
+                      <>
+                        <Loader2 style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} />
+                        Discovering...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles style={{ width: "16px", height: "16px" }} />
+                        {contacts.length > 0 ? "Re-discover" : "Discover Contacts"}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteModal(true)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "12px 24px",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      borderRadius: "8px",
+                      color: "#ef4444",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 style={{ width: "16px", height: "16px" }} />
+                    Delete Project
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -676,6 +721,109 @@ function ProjectDetailContent() {
           </>
         )}
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !deleting && setShowDeleteModal(false)}
+        >
+          <div
+            style={{
+              background: "#0f0f0f",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "12px",
+              padding: "32px",
+              maxWidth: "500px",
+              width: "90%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
+              <Trash2 style={{ width: "24px", height: "24px", color: "#ef4444" }} />
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#ef4444", margin: 0 }}>
+                Delete Project?
+              </h2>
+            </div>
+
+            <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px" }}>
+              Are you sure you want to delete <strong>{project?.name}</strong>? This will permanently delete:
+            </p>
+
+            <ul style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px", paddingLeft: "20px" }}>
+              <li>All {contacts.length} contacts</li>
+              <li>All email thread history</li>
+              <li>All calendar event data</li>
+              <li>Project settings and configuration</li>
+            </ul>
+
+            <p style={{ fontSize: "14px", color: "#ef4444", fontWeight: 600, marginBottom: "24px" }}>
+              This action cannot be undone.
+            </p>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  color: "var(--foreground-muted)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: deleting ? "not-allowed" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteProject}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  background: deleting
+                    ? "rgba(239, 68, 68, 0.3)"
+                    : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: deleting ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                }}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 style={{ width: "16px", height: "16px" }} />
+                    Delete Project
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes spin {
