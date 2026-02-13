@@ -41,6 +41,8 @@ import {
   ChefHat,
   Settings,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -234,21 +236,68 @@ export default function Home() {
             const topTools = category.tools.slice(0, 5);
             const remainingTools = category.tools.slice(5);
             const expanded = expandedCategories[category.name] || false;
+            const hasMore = remainingTools.length > 0;
 
             return (
               <div key={category.name} style={{ marginBottom: "32px" }}>
-                <h2
+                {/* Header with category name and expand/collapse chevron */}
+                <div
                   style={{
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.15em",
-                    color: "rgba(255, 255, 255, 0.4)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     marginBottom: "12px",
                   }}
                 >
-                  {category.name}
-                </h2>
+                  <h2
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.15em",
+                      color: "rgba(255, 255, 255, 0.4)",
+                      margin: 0,
+                    }}
+                  >
+                    {category.name}
+                  </h2>
+                  
+                  {/* Chevron expand/collapse button */}
+                  {hasMore && (
+                    <button
+                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        color: "rgba(255, 255, 255, 0.5)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                      }}
+                    >
+                      {expanded ? (
+                        <ChevronUp style={{ width: "16px", height: "16px" }} />
+                      ) : (
+                        <ChevronDown style={{ width: "16px", height: "16px" }} />
+                      )}
+                    </button>
+                  )}
+                </div>
                 
                 {/* Top Tools */}
                 <div
@@ -261,40 +310,6 @@ export default function Home() {
                   {topTools.map((tool) => (
                     <ToolCard key={tool.id} {...tool} compact />
                   ))}
-                  
-                  {/* Show More Button as a card */}
-                  {remainingTools.length > 0 && !expanded && (
-                    <button
-                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: true})}
-                      style={{
-                        padding: "16px",
-                        borderRadius: "12px",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        background: "rgba(255, 255, 255, 0.03)",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        minHeight: "80px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                      }}
-                    >
-                      <span style={{ fontSize: "24px", color: "rgba(255, 255, 255, 0.5)" }}>+</span>
-                      <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.7)" }}>
-                        {remainingTools.length} more
-                      </span>
-                    </button>
-                  )}
                 </div>
 
                 {/* Remaining Tools - Expanded */}
@@ -310,36 +325,6 @@ export default function Home() {
                     {remainingTools.map((tool) => (
                       <ToolCard key={tool.id} {...tool} compact />
                     ))}
-                    <button
-                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: false})}
-                      style={{
-                        padding: "16px",
-                        borderRadius: "12px",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        background: "rgba(255, 255, 255, 0.03)",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        minHeight: "80px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                      }}
-                    >
-                      <span style={{ fontSize: "24px", color: "rgba(255, 255, 255, 0.5)" }}>−</span>
-                      <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.7)" }}>
-                        Show less
-                      </span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -353,21 +338,68 @@ export default function Home() {
             const topTools = category.tools.slice(0, 4);
             const remainingTools = category.tools.slice(4);
             const expanded = expandedCategories[category.name] || false;
+            const hasMore = remainingTools.length > 0;
 
             return (
               <div key={category.name} style={{ marginBottom: "24px" }}>
-                <h2
+                {/* Header with category name and expand/collapse chevron */}
+                <div
                   style={{
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.15em",
-                    color: "rgba(255, 255, 255, 0.4)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     marginBottom: "10px",
                   }}
                 >
-                  {category.name}
-                </h2>
+                  <h2
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.15em",
+                      color: "rgba(255, 255, 255, 0.4)",
+                      margin: 0,
+                    }}
+                  >
+                    {category.name}
+                  </h2>
+                  
+                  {/* Chevron expand/collapse button */}
+                  {hasMore && (
+                    <button
+                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "22px",
+                        height: "22px",
+                        borderRadius: "5px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        color: "rgba(255, 255, 255, 0.5)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                      }}
+                    >
+                      {expanded ? (
+                        <ChevronUp style={{ width: "14px", height: "14px" }} />
+                      ) : (
+                        <ChevronDown style={{ width: "14px", height: "14px" }} />
+                      )}
+                    </button>
+                  )}
+                </div>
                 
                 {/* Top Tools */}
                 <div
@@ -380,32 +412,6 @@ export default function Home() {
                   {topTools.map((tool) => (
                     <ToolCard key={tool.id} {...tool} compact />
                   ))}
-                  
-                  {/* Show More Button */}
-                  {remainingTools.length > 0 && !expanded && (
-                    <button
-                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: true})}
-                      style={{
-                        padding: "12px",
-                        borderRadius: "10px",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        background: "rgba(255, 255, 255, 0.03)",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "4px",
-                        minHeight: "70px",
-                      }}
-                    >
-                      <span style={{ fontSize: "20px", color: "rgba(255, 255, 255, 0.5)" }}>+</span>
-                      <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255, 255, 255, 0.6)" }}>
-                        {remainingTools.length} more
-                      </span>
-                    </button>
-                  )}
                 </div>
 
                 {/* Remaining Tools - Expanded */}
@@ -421,28 +427,6 @@ export default function Home() {
                     {remainingTools.map((tool) => (
                       <ToolCard key={tool.id} {...tool} compact />
                     ))}
-                    <button
-                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: false})}
-                      style={{
-                        padding: "12px",
-                        borderRadius: "10px",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        background: "rgba(255, 255, 255, 0.03)",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "4px",
-                        minHeight: "70px",
-                      }}
-                    >
-                      <span style={{ fontSize: "20px", color: "rgba(255, 255, 255, 0.5)" }}>−</span>
-                      <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255, 255, 255, 0.6)" }}>
-                        Show less
-                      </span>
-                    </button>
                   </div>
                 )}
               </div>
