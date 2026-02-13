@@ -41,8 +41,6 @@ import {
   ChefHat,
   Settings,
   RefreshCw,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -229,24 +227,30 @@ export default function Home() {
             <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
           </div>
 
-          {/* Tool Categories - Desktop: Compact with expandable */}
+          {/* Tool Categories - Desktop: Toggle all on/off */}
           {!isMobile && !loading && customizedCategories.map((category) => {
             if (category.tools.length === 0) return null;
 
-            const topTools = category.tools.slice(0, 5);
-            const remainingTools = category.tools.slice(5);
             const expanded = expandedCategories[category.name] || false;
-            const hasMore = remainingTools.length > 0;
 
             return (
               <div key={category.name} style={{ marginBottom: "32px" }}>
-                {/* Header with category name and expand/collapse chevron */}
+                {/* Clickable Header with underline */}
                 <div
+                  onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "12px",
+                    textAlign: "center",
+                    paddingBottom: "8px",
+                    marginBottom: "16px",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderBottomColor = "rgba(255, 255, 255, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderBottomColor = "rgba(255, 255, 255, 0.1)";
                   }}
                 >
                   <h2
@@ -257,72 +261,29 @@ export default function Home() {
                       letterSpacing: "0.15em",
                       color: "rgba(255, 255, 255, 0.4)",
                       margin: 0,
+                      transition: "color 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "rgba(255, 255, 255, 0.4)";
                     }}
                   >
                     {category.name}
                   </h2>
-                  
-                  {/* Chevron expand/collapse button */}
-                  {hasMore && (
-                    <button
-                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "24px",
-                        height: "24px",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        background: "rgba(255, 255, 255, 0.03)",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        color: "rgba(255, 255, 255, 0.5)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
-                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                      }}
-                    >
-                      {expanded ? (
-                        <ChevronUp style={{ width: "16px", height: "16px" }} />
-                      ) : (
-                        <ChevronDown style={{ width: "16px", height: "16px" }} />
-                      )}
-                    </button>
-                  )}
                 </div>
                 
-                {/* Top Tools */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                    gap: "10px",
-                  }}
-                >
-                  {topTools.map((tool) => (
-                    <ToolCard key={tool.id} {...tool} compact />
-                  ))}
-                </div>
-
-                {/* Remaining Tools - Expanded */}
-                {expanded && remainingTools.length > 0 && (
+                {/* All Tools - Show when expanded */}
+                {expanded && (
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
                       gap: "10px",
-                      marginTop: "10px",
                     }}
                   >
-                    {remainingTools.map((tool) => (
+                    {category.tools.map((tool) => (
                       <ToolCard key={tool.id} {...tool} compact />
                     ))}
                   </div>
@@ -331,24 +292,24 @@ export default function Home() {
             );
           })}
 
-          {/* Tool Categories - Mobile: Compact with expandable */}
+          {/* Tool Categories - Mobile: Toggle all on/off */}
           {isMobile && !loading && customizedCategories.map((category) => {
             if (category.tools.length === 0) return null;
 
-            const topTools = category.tools.slice(0, 4);
-            const remainingTools = category.tools.slice(4);
             const expanded = expandedCategories[category.name] || false;
-            const hasMore = remainingTools.length > 0;
 
             return (
               <div key={category.name} style={{ marginBottom: "24px" }}>
-                {/* Header with category name and expand/collapse chevron */}
+                {/* Clickable Header with underline */}
                 <div
+                  onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "10px",
+                    textAlign: "center",
+                    paddingBottom: "8px",
+                    marginBottom: "12px",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
                   }}
                 >
                   <h2
@@ -363,68 +324,18 @@ export default function Home() {
                   >
                     {category.name}
                   </h2>
-                  
-                  {/* Chevron expand/collapse button */}
-                  {hasMore && (
-                    <button
-                      onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "22px",
-                        height: "22px",
-                        borderRadius: "5px",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        background: "rgba(255, 255, 255, 0.03)",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        color: "rgba(255, 255, 255, 0.5)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
-                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-                        e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                      }}
-                    >
-                      {expanded ? (
-                        <ChevronUp style={{ width: "14px", height: "14px" }} />
-                      ) : (
-                        <ChevronDown style={{ width: "14px", height: "14px" }} />
-                      )}
-                    </button>
-                  )}
                 </div>
                 
-                {/* Top Tools */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, 1fr)",
-                    gap: "8px",
-                  }}
-                >
-                  {topTools.map((tool) => (
-                    <ToolCard key={tool.id} {...tool} compact />
-                  ))}
-                </div>
-
-                {/* Remaining Tools - Expanded */}
-                {expanded && remainingTools.length > 0 && (
+                {/* All Tools - Show when expanded */}
+                {expanded && (
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(2, 1fr)",
                       gap: "8px",
-                      marginTop: "8px",
                     }}
                   >
-                    {remainingTools.map((tool) => (
+                    {category.tools.map((tool) => (
                       <ToolCard key={tool.id} {...tool} compact />
                     ))}
                   </div>
