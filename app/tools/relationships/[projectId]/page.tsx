@@ -186,9 +186,9 @@ function ProjectDetailContent() {
   };
 
   const getUrgencyColor = (score: number) => {
-    if (score >= 8) return '#ef4444';
-    if (score >= 5) return '#f59e0b';
-    return '#10b981';
+    if (score >= 8) return '#ef4444'; // red
+    if (score >= 5) return '#eab308'; // yellow
+    return '#10b981'; // green
   };
 
   return (
@@ -331,13 +331,13 @@ function ProjectDetailContent() {
                 <div
                   style={{
                     padding: "20px",
-                    background: "rgba(245, 158, 11, 0.1)",
-                    border: "1px solid rgba(245, 158, 11, 0.2)",
+                    background: "rgba(239, 68, 68, 0.1)",
+                    border: "1px solid rgba(239, 68, 68, 0.2)",
                     borderRadius: "12px",
                   }}
                 >
-                  <div style={{ fontSize: "14px", color: "#f59e0b", marginBottom: "8px" }}>Need Follow-up</div>
-                  <div style={{ fontSize: "32px", fontWeight: 700, color: "#f59e0b" }}>{summary.needsFollowUp}</div>
+                  <div style={{ fontSize: "14px", color: "#ef4444", marginBottom: "8px" }}>Need Follow-up</div>
+                  <div style={{ fontSize: "32px", fontWeight: 700, color: "#ef4444" }}>{summary.needsFollowUp}</div>
                 </div>
                 <div
                   style={{
@@ -439,7 +439,7 @@ function ProjectDetailContent() {
                       key={contact.email}
                       style={{
                         background: "rgba(255, 255, 255, 0.02)",
-                        border: `1px solid ${contact.needsFollowUp ? 'rgba(245, 158, 11, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        border: `1px solid ${contact.needsFollowUp ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
                         borderRadius: "12px",
                         overflow: "hidden",
                       }}
@@ -459,7 +459,7 @@ function ProjectDetailContent() {
                                 {contact.name}
                               </h3>
                               {contact.needsFollowUp && (
-                                <AlertCircle style={{ width: "18px", height: "18px", color: "#f59e0b" }} />
+                                <AlertCircle style={{ width: "18px", height: "18px", color: "#ef4444" }} />
                               )}
                             </div>
 
@@ -511,8 +511,8 @@ function ProjectDetailContent() {
                                     borderRadius: "12px",
                                     fontSize: "12px",
                                     fontWeight: 600,
-                                    background: "rgba(245, 158, 11, 0.2)",
-                                    color: "#f59e0b",
+                                    background: "rgba(239, 68, 68, 0.2)",
+                                    color: "#ef4444",
                                   }}
                                 >
                                   Needs follow-up

@@ -251,8 +251,8 @@ function RelationshipsContent() {
                     </div>
                     {project.needsFollowUp && project.needsFollowUp > 0 && (
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Sparkles style={{ width: "16px", height: "16px", color: "#f59e0b" }} />
-                        <span style={{ fontSize: "14px", color: "#f59e0b", fontWeight: 600 }}>
+                        <Sparkles style={{ width: "16px", height: "16px", color: "#ef4444" }} />
+                        <span style={{ fontSize: "14px", color: "#ef4444", fontWeight: 600 }}>
                           {project.needsFollowUp} need follow-up
                         </span>
                       </div>
