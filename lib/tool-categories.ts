@@ -43,6 +43,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'mission', name: 'Mission', href: '/tools/mission', description: 'Task management' },
   { id: 'business-info', name: 'Business Info', href: '/tools/business-info', description: 'Company research' },
   { id: 'corporate', name: 'Corporate', href: '/tools/corporate', description: 'Corporate insights' },
+  { id: 'cinderella', name: 'Cinderella Project', href: '/tools/cinderella', description: 'PE-backed NCAA basketball acquisition tracker' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];

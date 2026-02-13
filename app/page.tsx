@@ -72,6 +72,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   corporate: Briefcase,
   analyze: BarChart3,
   insights: Sparkles,
+  cinderella: TrendingUp,
 };
 
 // Color mapping for tools
@@ -101,6 +102,7 @@ const TOOL_COLORS: Record<string, string> = {
   investors: "#3b82f6",
   'business-info': "#8b5cf6",
   corporate: "#10b981",
+  cinderella: "#f59e0b",
   analyze: "#6366f1",
   insights: "#a78bfa",
 };
