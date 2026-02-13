@@ -16,7 +16,7 @@ const TOOL_INFO: Record<string, { name: string; description: string; color: stri
   "image-lookup": { name: "Image Lookup", description: "Reverse image search and analysis", color: "#a78bfa" },
   "contact-finder": { name: "Contact Finder", description: "Find contact information", color: "#6366f1" },
   relationships: { name: "Relationships", description: "Contact insights and relationships", color: "#14b8a6" },
-  mission: { name: "Mission", description: "Task and mission management", color: "#f59e0b" },
+  mission: { name: "Mission", description: "Task and mission management", color: "#6366f1" },
   investors: { name: "Investors", description: "Fundraising pipeline management", color: "#3b82f6" },
   "business-info": { name: "Business Info", description: "Company research and insights", color: "#8b5cf6" },
   corporate: { name: "Corporate", description: "Corporate intelligence", color: "#10b981" },

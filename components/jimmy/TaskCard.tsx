@@ -15,7 +15,7 @@ interface TaskCardProps {
 export function TaskCard({ id, title, date, status, preview, createdBy }: TaskCardProps) {
   const statusColors = {
     completed: "#10b981",
-    "in-progress": "#f59e0b",
+    "in-progress": "#6366f1",
   };
 
   const statusIcons = {

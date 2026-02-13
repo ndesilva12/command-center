@@ -121,7 +121,7 @@ export function ManualMealSelector({ userId, weekOf, onSelectionsChange }: Manua
             borderRadius: "6px",
             fontSize: "13px",
             fontWeight: 600,
-            color: selectedMealIds.length >= 5 ? "#f59e0b" : "#10b981",
+            color: selectedMealIds.length >= 5 ? "#6366f1" : "#10b981",
             backgroundColor: selectedMealIds.length >= 5 ? "rgba(245, 158, 11, 0.15)" : "rgba(16, 185, 129, 0.15)",
             border: selectedMealIds.length >= 5 ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)",
           }}

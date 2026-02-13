@@ -145,7 +145,7 @@ function RecommendationsContent() {
   const getStatusIcon = (status: Recommendation['status']) => {
     switch (status) {
       case 'new': return <Clock size={14} style={{ color: '#3b82f6' }} />;
-      case 'in_progress': return <Play size={14} style={{ color: '#f59e0b' }} />;
+      case 'in_progress': return <Play size={14} style={{ color: '#6366f1' }} />;
       case 'completed': return <CheckCircle size={14} style={{ color: '#10b981' }} />;
       case 'not_interested': return <XCircle size={14} style={{ color: '#64748b' }} />;
     }
@@ -154,7 +154,7 @@ function RecommendationsContent() {
   const getStatusColor = (status: Recommendation['status']) => {
     switch (status) {
       case 'new': return '#3b82f6';
-      case 'in_progress': return '#f59e0b';
+      case 'in_progress': return '#6366f1';
       case 'completed': return '#10b981';
       case 'not_interested': return '#64748b';
     }
@@ -167,7 +167,7 @@ function RecommendationsContent() {
       article: '#3b82f6',
       product: '#10b981',
       service: '#14b8a6',
-      person: '#f59e0b',
+      person: '#a78bfa',
       podcast: '#ef4444',
       tool: '#6366f1',
       other: '#64748b',

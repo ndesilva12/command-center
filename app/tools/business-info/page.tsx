@@ -149,7 +149,7 @@ function BusinessInfoContent() {
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <Store style={{ width: "32px", height: "32px", color: "#f59e0b" }} />
+            <Store style={{ width: "32px", height: "32px", color: "#8b5cf6" }} />
             <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{toolCustom.name}</h1>
           </div>
           <p style={{ fontSize: "15px", color: "var(--foreground-muted)" }}>
@@ -248,8 +248,8 @@ function BusinessInfoContent() {
                 gap: "8px",
                 padding: "12px 24px",
                 background: isSearching || !query.trim() || !city.trim() || !state
-                  ? "rgba(245, 158, 11, 0.3)"
-                  : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  ? "rgba(139, 92, 246, 0.3)"
+                  : "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
                 border: "none",
                 borderRadius: "8px",
                 color: "#ffffff",
@@ -348,8 +348,8 @@ function BusinessInfoContent() {
                           style={{
                             fontSize: "12px",
                             padding: "4px 8px",
-                            background: "rgba(245, 158, 11, 0.1)",
-                            color: "#f59e0b",
+                            background: "rgba(139, 92, 246, 0.1)",
+                            color: "#8b5cf6",
                             borderRadius: "4px",
                           }}
                         >
@@ -375,7 +375,7 @@ function BusinessInfoContent() {
         {/* Business Details */}
         {isLoadingDetails && (
           <div style={{ display: "flex", justifyContent: "center", padding: "64px" }}>
-            <Loader2 style={{ width: "32px", height: "32px", color: "#f59e0b", animation: "spin 1s linear infinite" }} />
+            <Loader2 style={{ width: "32px", height: "32px", color: "#8b5cf6", animation: "spin 1s linear infinite" }} />
           </div>
         )}
 
@@ -435,7 +435,7 @@ function BusinessInfoContent() {
                 {businessDetails.website && (
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px" }}>
                     <Globe style={{ width: "16px", height: "16px", color: "var(--foreground-muted)" }} />
-                    <a href={businessDetails.website} target="_blank" rel="noopener noreferrer" style={{ color: "#f59e0b" }}>
+                    <a href={businessDetails.website} target="_blank" rel="noopener noreferrer" style={{ color: "#8b5cf6" }}>
                       {businessDetails.website}
                     </a>
                   </div>
@@ -453,8 +453,8 @@ function BusinessInfoContent() {
                   style={{
                     fontSize: "12px",
                     padding: "6px 12px",
-                    background: "rgba(245, 158, 11, 0.1)",
-                    color: "#f59e0b",
+                    background: "rgba(139, 92, 246, 0.1)",
+                    color: "#8b5cf6",
                     borderRadius: "6px",
                   }}
                 >

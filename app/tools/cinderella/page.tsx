@@ -229,7 +229,7 @@ function CommunicationsTab({ isMobile }: { isMobile: boolean }) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High': return '#ef4444';
-      case 'Medium': return '#f59e0b';
+      case 'Medium': return '#6366f1';
       case 'Low': return '#10b981';
       default: return '#6b7280';
     }
@@ -239,7 +239,7 @@ function CommunicationsTab({ isMobile }: { isMobile: boolean }) {
     switch (status) {
       case 'Active': return '#10b981';
       case 'Scheduled': return '#3b82f6';
-      case 'Waiting': return '#f59e0b';
+      case 'Waiting': return '#8b5cf6';
       case 'Cold': return '#6b7280';
       default: return '#6b7280';
     }
@@ -491,7 +491,7 @@ function CalendarTab({ isMobile }: { isMobile: boolean }) {
   ];
 
   const milestones = [
-    { title: "Lock UIC + Grover", target: "This Week (Feb 17)", status: "In Progress", color: "#f59e0b" },
+    { title: "Lock UIC + Grover", target: "This Week (Feb 17)", status: "In Progress", color: "#6366f1" },
     { title: "Pre-Term Sheet Package Complete", target: "Next 2 Weeks (Feb 22)", status: "In Progress", color: "#3b82f6" },
     { title: "Celebrity Outreach Launch", target: "Feb 20", status: "Pending", color: "#6b7280" },
     { title: "Secure Lead Investor ($750K-$1M)", target: "March 2026", status: "Pending", color: "#6b7280" },
@@ -508,7 +508,7 @@ function CalendarTab({ isMobile }: { isMobile: boolean }) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High': return '#ef4444';
-      case 'Medium': return '#f59e0b';
+      case 'Medium': return '#6366f1';
       case 'Low': return '#10b981';
       default: return '#6b7280';
     }
@@ -695,7 +695,7 @@ function CalendarTab({ isMobile }: { isMobile: boolean }) {
                 <div style={{
                   fontSize: "12px",
                   fontWeight: 600,
-                  color: isOverdue ? "#ef4444" : isUrgent ? "#f59e0b" : "var(--foreground-muted)",
+                  color: isOverdue ? "#ef4444" : isUrgent ? "#6366f1" : "var(--foreground-muted)",
                   whiteSpace: "nowrap",
                 }}>
                   {isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? "Due today" : `${daysUntil}d left`}
@@ -890,7 +890,7 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
         background: "rgba(245, 158, 11, 0.05)",
         border: "1px solid rgba(245, 158, 11, 0.2)",
       }}>
-        <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#f59e0b", marginBottom: "12px" }}>
+        <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#6366f1", marginBottom: "12px" }}>
           🎯 Current Status
         </h2>
         <div style={{ fontSize: "14px", color: "var(--foreground)", lineHeight: 1.6 }}>
@@ -919,7 +919,7 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
         <StatCard
           label="Year 1 Investor Return"
           value="$4.3M (33% ROI)"
-          color="#f59e0b"
+          color="#6366f1"
         />
       </div>
 
@@ -940,7 +940,7 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
           </div>
           <div>
             <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>Year 3 Exit</div>
-            <div style={{ fontSize: "24px", fontWeight: 700, color: "#f59e0b" }}>91%</div>
+            <div style={{ fontSize: "24px", fontWeight: 700, color: "#6366f1" }}>91%</div>
           </div>
           <div>
             <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>Year 5 Exit</div>
@@ -1140,7 +1140,7 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
       case 'elite': return '#3b82f6'; // Light blue
       case 'strong': return '#10b981'; // Green
       case 'tier2': return '#8b5cf6'; // Purple
-      case 'tier3': return '#f59e0b'; // Orange
+      case 'tier3': return '#6366f1'; // Orange
       case 'tier4': return '#ec4899'; // Pink
       case 'tier5': return '#6b7280'; // Gray
       default: return '#6b7280';
@@ -1431,16 +1431,16 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
                 width: "6px",
                 height: "6px",
                 borderRadius: "50%",
-                background: "#f59e0b",
+                background: "#6366f1",
               }} />
-              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#f59e0b", margin: 0 }}>
+              <h3 style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: 600, color: "#6366f1", margin: 0 }}>
                 TIER 3: NOTABLE OPTIONS
               </h3>
               <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
                 (41-60)
               </span>
             </div>
-            {expandedTiers.has('tier3') ? <ChevronUp size={18} color="#f59e0b" /> : <ChevronDown size={18} color="#6b7280" />}
+            {expandedTiers.has('tier3') ? <ChevronUp size={18} color="#6366f1" /> : <ChevronDown size={18} color="#6b7280" />}
           </div>
         </div>
 
@@ -1464,7 +1464,7 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
                     {target.name}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#f59e0b" }}>
+                  <div style={{ fontSize: "12px", color: "#6366f1" }}>
                     📍 {target.school}
                   </div>
                 </div>
@@ -1657,7 +1657,7 @@ function TasksTab({ isMobile }: { isMobile: boolean }) {
       </p>
 
       {/* Priority 1 */}
-      <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#f59e0b", marginBottom: "12px" }}>
+      <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#6366f1", marginBottom: "12px" }}>
         Priority 1: Lock UIC + Grover (THIS WEEK)
       </h3>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "24px" }}>

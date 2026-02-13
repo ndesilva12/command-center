@@ -326,8 +326,8 @@ export default function MealsPage() {
                       </h3>
                       {meal.rating && (
                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <Star style={{ width: "14px", height: "14px", fill: "#f59e0b", color: "#f59e0b" }} />
-                          <span style={{ fontSize: "13px", color: "#f59e0b", fontWeight: 600 }}>{meal.rating}</span>
+                          <Star style={{ width: "14px", height: "14px", fill: "#10b981", color: "#10b981" }} />
+                          <span style={{ fontSize: "13px", color: "#10b981", fontWeight: 600 }}>{meal.rating}</span>
                         </div>
                       )}
                     </div>

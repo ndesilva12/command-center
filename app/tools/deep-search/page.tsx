@@ -95,7 +95,7 @@ function DeepSearchContent() {
     "#8b5cf6", // purple
     "#10b981", // green
     "#06b6d4", // cyan
-    "#f59e0b", // orange
+    "#ef4444", // red
     "#ec4899", // pink
     "#6366f1", // indigo
   ];
@@ -374,7 +374,7 @@ function DeepSearchContent() {
                 <h3 style={{
                   fontSize: isMobile ? "14px" : "16px",
                   fontWeight: "700",
-                  color: "#f59e0b",
+                  color: "#ef4444",
                   marginBottom: "12px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",

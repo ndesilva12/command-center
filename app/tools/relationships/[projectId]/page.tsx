@@ -187,7 +187,7 @@ function ProjectDetailContent() {
 
   const getUrgencyColor = (score: number) => {
     if (score >= 8) return '#ef4444'; // red
-    if (score >= 5) return '#eab308'; // yellow
+    if (score >= 5) return '#06b6d4'; // cyan
     return '#10b981'; // green
   };
 

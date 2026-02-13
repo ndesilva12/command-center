@@ -75,7 +75,7 @@ export default function TaskDetailPage() {
 
   const statusColors = {
     completed: "#10b981",
-    "in-progress": "#f59e0b",
+    "in-progress": "#6366f1",
   };
 
   const StatusIcon = task.status === "completed" ? CheckCircle : Clock;

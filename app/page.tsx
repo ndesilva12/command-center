@@ -98,7 +98,7 @@ const TOOL_COLORS: Record<string, string> = {
   'image-lookup': "#a78bfa",
   'contact-finder': "#6366f1",
   relationships: "#14b8a6",
-  mission: "#f59e0b",
+  mission: "#6366f1",
   investors: "#3b82f6",
   'business-info': "#8b5cf6",
   corporate: "#10b981",

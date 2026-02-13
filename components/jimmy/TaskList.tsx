@@ -17,7 +17,7 @@ interface TaskListProps {
 export function TaskList({ tasks }: TaskListProps) {
   const statusColors = {
     completed: "#10b981",
-    "in-progress": "#f59e0b",
+    "in-progress": "#6366f1",
   };
 
   const statusIcons = {

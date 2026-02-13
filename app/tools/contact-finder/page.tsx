@@ -43,8 +43,8 @@ const CONTACT_ICONS: Record<string, React.ElementType> = {
 // Confidence color mapping
 const CONFIDENCE_COLORS: Record<string, string> = {
   high: "#22c55e",
-  medium: "#eab308",
-  low: "#f97316",
+  medium: "#06b6d4",
+  low: "#6366f1",
   speculative: "#ef4444",
 };
 
@@ -175,7 +175,7 @@ function ContactFinderContent() {
           }}
         >
           <div style={{ display: "flex", gap: "12px" }}>
-            <AlertCircle style={{ width: "20px", height: "20px", color: "#eab308", flexShrink: 0, marginTop: "2px" }} />
+            <AlertCircle style={{ width: "20px", height: "20px", color: "#06b6d4", flexShrink: 0, marginTop: "2px" }} />
             <div style={{ fontSize: "13px", color: "var(--foreground-muted)", whiteSpace: "pre-line" }}>
               {DISCLAIMER}
             </div>

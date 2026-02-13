@@ -222,7 +222,7 @@ function InvestorsContent() {
     { id: 'research', title: 'Research', color: '#6366f1' },
     { id: 'outreach', title: 'Outreach', color: '#8b5cf6' },
     { id: 'meeting', title: 'Meeting', color: '#3b82f6' },
-    { id: 'follow_up', title: 'Follow-up', color: '#f59e0b' },
+    { id: 'follow_up', title: 'Follow-up', color: '#14b8a6' },
     { id: 'committed', title: 'Committed', color: '#10b981' },
     { id: 'passed', title: 'Passed', color: '#ef4444' },
   ];

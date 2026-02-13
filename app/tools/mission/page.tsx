@@ -202,7 +202,7 @@ function MissionContent() {
 
   const columns: { id: Mission['status']; title: string; color: string }[] = [
     { id: 'created', title: 'Created', color: '#3b82f6' },
-    { id: 'in_progress', title: 'In Progress', color: '#f59e0b' },
+    { id: 'in_progress', title: 'In Progress', color: '#6366f1' },
     { id: 'completed', title: 'Completed', color: '#10b981' },
   ];
 
@@ -231,7 +231,7 @@ function MissionContent() {
           gap: "12px",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Target size={isMobile ? 32 : 40} style={{ color: "#f59e0b" }} />
+            <Target size={isMobile ? 32 : 40} style={{ color: "#6366f1" }} />
             <div>
               <h1 style={{
                 fontSize: isMobile ? "24px" : "32px",
@@ -258,7 +258,7 @@ function MissionContent() {
               alignItems: "center",
               gap: "8px",
               padding: isMobile ? "8px 16px" : "10px 20px",
-              background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+              background: "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)",
               color: "white",
               border: "none",
               borderRadius: "8px",
@@ -470,7 +470,7 @@ function MissionContent() {
                   style={{
                     padding: "10px 20px",
                     background: newMission.title.trim() 
-                      ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                      ? "linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)"
                       : "rgba(148, 163, 184, 0.1)",
                     border: "none",
                     borderRadius: "8px",
@@ -499,7 +499,7 @@ function MissionContent() {
               width: "40px", 
               height: "40px", 
               border: "3px solid rgba(148, 163, 184, 0.2)",
-              borderTop: "3px solid #f59e0b",
+              borderTop: "3px solid #6366f1",
               borderRadius: "50%",
               margin: "0 auto 16px",
               animation: "spin 1s linear infinite",

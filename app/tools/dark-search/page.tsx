@@ -95,10 +95,10 @@ function DarkSearchContent() {
 
   const sectionColors = [
     "#ef4444", // red
-    "#f59e0b", // amber
+    "#6366f1", // indigo
     "#8b5cf6", // purple
     "#ec4899", // pink
-    "#f97316", // orange
+    "#14b8a6", // teal
     "#dc2626", // dark red
   ];
 
@@ -406,7 +406,7 @@ function DarkSearchContent() {
                 <h3 style={{
                   fontSize: isMobile ? "14px" : "16px",
                   fontWeight: "700",
-                  color: "#f59e0b",
+                  color: "#6366f1",
                   marginBottom: "12px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
