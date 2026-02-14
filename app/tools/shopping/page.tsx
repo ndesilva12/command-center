@@ -54,7 +54,10 @@ export default function ShoppingPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showCreateListModal, setShowCreateListModal] = useState(false);
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
   const [expandedList, setExpandedList] = useState<string | null>(null);
+  const [extracting, setExtracting] = useState(false);
+  const [quickAddUrl, setQuickAddUrl] = useState('');
   
   const [newItem, setNewItem] = useState({
     url: '',
@@ -104,6 +107,53 @@ export default function ShoppingPage() {
       setLists(listsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     } catch (error) {
       console.error("Error fetching data:", error);
+    }
+  };
+
+  const handleQuickAdd = async () => {
+    if (!quickAddUrl.trim()) {
+      alert("Please enter a URL");
+      return;
+    }
+
+    setExtracting(true);
+    try {
+      const response = await fetch("/api/shopping/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: quickAddUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to extract product info");
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.product) {
+        // Pre-fill the add item form with extracted data
+        setNewItem({
+          url: data.product.url,
+          title: data.product.title || '',
+          description: data.product.description || '',
+          imageUrl: data.product.imageUrl || '',
+          price: data.product.price || '',
+          priority: 'medium',
+          category: data.product.category || '',
+          tags: '',
+        });
+        
+        setShowQuickAddModal(false);
+        setQuickAddUrl('');
+        setShowAddItemModal(true);
+      } else {
+        alert("Could not extract product information. Please add manually.");
+      }
+    } catch (error) {
+      console.error("Error extracting product:", error);
+      alert("Failed to extract product info. Please add manually.");
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -296,6 +346,35 @@ export default function ShoppingPage() {
             </div>
 
             <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+              {activeTab === 'items' && (
+                <button
+                  onClick={() => setShowQuickAddModal(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 18px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    backgroundColor: "rgba(16, 185, 129, 0.1)",
+                    color: "#10b981",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
+                  }}
+                >
+                  <LinkIcon style={{ width: "16px", height: "16px" }} />
+                  Quick Add
+                </button>
+              )}
               <button
                 onClick={() => activeTab === 'items' ? setShowAddItemModal(true) : setShowCreateListModal(true)}
                 style={{
@@ -1053,6 +1132,134 @@ export default function ShoppingPage() {
         </div>
       )}
 
+      {/* Quick Add Modal */}
+      {showQuickAddModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setShowQuickAddModal(false)}
+        >
+          <div
+            className="glass"
+            style={{
+              maxWidth: "500px",
+              width: "100%",
+              padding: "32px",
+              borderRadius: "16px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "8px" }}>
+              Quick Add from Link
+            </h2>
+            <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px" }}>
+              Paste a product URL to automatically extract details
+            </p>
+
+            <div style={{ marginBottom: "24px" }}>
+              <label style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
+                Product URL *
+              </label>
+              <input
+                type="url"
+                value={quickAddUrl}
+                onChange={(e) => setQuickAddUrl(e.target.value)}
+                placeholder="https://amazon.com/product..."
+                disabled={extracting}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  color: "var(--foreground)",
+                  fontSize: "14px",
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && quickAddUrl.trim()) {
+                    handleQuickAdd();
+                  }
+                }}
+              />
+              <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "6px" }}>
+                Supports Amazon, eBay, Etsy, and most e-commerce sites
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={() => {
+                  setShowQuickAddModal(false);
+                  setQuickAddUrl('');
+                }}
+                disabled={extracting}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  color: "var(--foreground-muted)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: extracting ? "not-allowed" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleQuickAdd}
+                disabled={!quickAddUrl.trim() || extracting}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: quickAddUrl.trim() && !extracting
+                    ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                    : "rgba(255, 255, 255, 0.1)",
+                  color: quickAddUrl.trim() && !extracting ? "white" : "var(--foreground-muted)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: quickAddUrl.trim() && !extracting ? "pointer" : "not-allowed",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                }}
+              >
+                {extracting ? (
+                  <>
+                    <div style={{ 
+                      width: "14px", 
+                      height: "14px", 
+                      border: "2px solid rgba(255,255,255,0.3)",
+                      borderTopColor: "white",
+                      borderRadius: "50%",
+                      animation: "spin 0.8s linear infinite"
+                    }} />
+                    Extracting...
+                  </>
+                ) : (
+                  <>
+                    <LinkIcon style={{ width: "16px", height: "16px" }} />
+                    Extract Info
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Create List Modal */}
       {showCreateListModal && (
         <div
@@ -1170,6 +1377,12 @@ export default function ShoppingPage() {
           </div>
         </div>
       )}
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </ProtectedRoute>
   );
 }
