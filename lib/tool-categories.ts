@@ -28,6 +28,7 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
   { id: 'meals', name: 'Meals', href: '/tools/meals', description: 'Weekly meal planning' },
   { id: 'image-lookup', name: 'Image Lookup', href: '/tools/image-lookup', description: 'Reverse image search' },
   { id: 'investors', name: 'Investors', href: '/tools/investors', description: 'Fundraising pipeline' },
+  { id: 'shopping', name: 'Shopping', href: '/tools/shopping', description: 'Shopping wishlist and lists' },
 ];
 
 export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
@@ -44,6 +45,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'business-info', name: 'Business Info', href: '/tools/business-info', description: 'Company research' },
   { id: 'corporate', name: 'Corporate', href: '/tools/corporate', description: 'Corporate insights' },
   { id: 'cinderella', name: 'Cinderella Project', href: '/tools/cinderella', description: 'PE-backed NCAA basketball acquisition tracker' },
+  { id: 'summarizer', name: 'Summarizer', href: '/tools/summarizer', description: 'Condense any content into custom-length summaries' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];

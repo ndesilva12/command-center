@@ -41,6 +41,8 @@ import {
   ChefHat,
   Settings,
   RefreshCw,
+  ShoppingBag,
+  FileText,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -73,6 +75,8 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   analyze: BarChart3,
   insights: Sparkles,
   cinderella: TrendingUp,
+  shopping: ShoppingBag,
+  summarizer: FileText,
 };
 
 // Color mapping for tools
@@ -105,6 +109,8 @@ const TOOL_COLORS: Record<string, string> = {
   cinderella: "#3b82f6",
   analyze: "#6366f1",
   insights: "#a78bfa",
+  shopping: "#10b981",
+  summarizer: "#8b5cf6",
 };
 
 const TOOL_CATEGORIES = [
