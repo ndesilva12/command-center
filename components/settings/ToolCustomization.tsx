@@ -34,6 +34,8 @@ import {
   Rss,
   Smartphone,
   Check,
+  FileText,
+  ShoppingBag,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -64,6 +66,11 @@ const ICON_MAP: Record<string, any> = {
   "trending": TrendingUp,
   "rosters": BarChart3,
   "meals": ChefHat,
+  "summarizer": FileText,
+  "shopping": ShoppingBag,
+  "white-papers": FileText,
+  "one-pager": FileText,
+  "cinderella": BarChart3,
 };
 
 interface ToolCustomization {
@@ -109,6 +116,11 @@ const DEFAULT_COLORS: Record<string, string> = {
   "trending": "#14b8a6",
   "rosters": "#3b82f6",
   "meals": "#10b981",
+  "summarizer": "#8b5cf6",
+  "shopping": "#10b981",
+  "white-papers": "#6366f1",
+  "one-pager": "#7c3aed",
+  "cinderella": "#ef4444",
 };
 
 // Build DEFAULT_TOOLS from tool-categories.ts

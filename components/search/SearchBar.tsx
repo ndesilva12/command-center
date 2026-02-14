@@ -146,7 +146,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
               type="submit"
               disabled={!query.trim()}
               style={{
-                padding: isMobile ? "6px" : "6px",
+                padding: isMobile ? "7px" : "7px",
                 borderRadius: "50%",
                 border: "none",
                 background: query.trim() ? "rgba(0, 170, 255, 0.2)" : "transparent",
@@ -157,10 +157,12 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: isMobile ? "32px" : "32px",
-                height: isMobile ? "32px" : "32px",
-                minWidth: isMobile ? "32px" : "32px",
-                minHeight: isMobile ? "32px" : "32px",
+                width: "32px",
+                height: "32px",
+                minWidth: "32px",
+                minHeight: "32px",
+                maxWidth: "32px",
+                maxHeight: "32px",
               }}
               onMouseEnter={(e) => {
                 if (query.trim()) {
@@ -173,7 +175,7 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
                 }
               }}
             >
-              <Search style={{ width: "18px", height: "18px", flexShrink: 0 }} />
+              <Search style={{ width: "18px", height: "18px", minWidth: "18px", minHeight: "18px", flexShrink: 0 }} />
             </button>
           </div>
 
