@@ -46,7 +46,8 @@ try {
     ...data,
     timestamp: new Date().toISOString(),
     saved_by: 'sub-agent',
-    saved_at: admin.firestore.FieldValue.serverTimestamp()
+    saved_at: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: data.createdAt || admin.firestore.FieldValue.serverTimestamp()
   };
   
   // Save to Firestore

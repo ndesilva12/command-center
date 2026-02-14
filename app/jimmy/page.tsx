@@ -34,7 +34,6 @@ export default function JimmyPage() {
         const deliveriesRef = collection(db, "jimmy_deliverables");
         const q = query(
           deliveriesRef,
-          where("createdBy", "==", "cc_jimmy_command"),
           orderBy("createdAt", "desc")
         );
 

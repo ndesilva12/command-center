@@ -1,0 +1,12 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "jimmy_deliverables",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ]
+}
