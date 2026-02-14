@@ -59,6 +59,87 @@ export default function TaskDetailPage() {
     }
   };
 
+  const handleExportPDF = () => {
+    if (!task) return;
+    // Render markdown content into a print-friendly window and trigger PDF save
+    const contentEl = document.querySelector('[data-pdf-content]');
+    const htmlContent = contentEl?.innerHTML || task.content || task.preview || '';
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${task.title}</title>
+        <style>
+          @page { margin: 1in; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.7;
+            color: #1a1a1a;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 14px;
+          }
+          .pdf-header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+          }
+          .pdf-header h1 {
+            font-size: 24px;
+            margin: 0 0 8px 0;
+            color: #111;
+          }
+          .pdf-header .meta {
+            font-size: 12px;
+            color: #666;
+          }
+          h1 { font-size: 22px; margin-top: 32px; }
+          h2 { font-size: 18px; margin-top: 28px; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+          h3 { font-size: 16px; margin-top: 24px; }
+          h4 { font-size: 14px; margin-top: 20px; }
+          p { margin: 10px 0; }
+          ul, ol { padding-left: 24px; }
+          li { margin: 6px 0; }
+          blockquote {
+            border-left: 3px solid #999;
+            padding-left: 16px;
+            margin: 16px 0;
+            color: #444;
+            font-style: italic;
+          }
+          table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+          th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
+          th { background: #f5f5f5; font-weight: 600; }
+          code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+          pre { background: #f5f5f5; padding: 16px; border-radius: 6px; overflow-x: auto; }
+          pre code { background: none; padding: 0; }
+          a { color: #0066cc; }
+          hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+          strong { font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <div class="pdf-header">
+          <h1>${task.title}</h1>
+          <div class="meta">${new Date(task.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} · Command Center Intelligence Brief</div>
+        </div>
+        ${htmlContent}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    
+    // Give it a moment to render, then trigger print (Save as PDF)
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  };
+
   if (!task) {
     return (
       <>
@@ -183,6 +264,7 @@ export default function TaskDetailPage() {
                 {copied ? "Copied!" : "Copy"}
               </button>
               <button
+                onClick={handleExportPDF}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -204,7 +286,7 @@ export default function TaskDetailPage() {
           </div>
 
           {/* Content */}
-          <div className="glass" style={{ padding: "32px", borderRadius: "12px" }}>
+          <div className="glass" style={{ padding: "32px", borderRadius: "12px" }} data-pdf-content>
             <MarkdownContent content={task.content || task.preview} />
           </div>
         </div>
