@@ -154,7 +154,7 @@ export default function SummarizerPage() {
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com/document.pdf"
+                  placeholder="https://youtube.com/... or https://example.com/article.pdf"
                   disabled={processing}
                   style={{
                     width: "100%",
@@ -167,7 +167,7 @@ export default function SummarizerPage() {
                   }}
                 />
                 <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "6px" }}>
-                  Enter a URL to a PDF, article, book, or any written content
+                  PDFs, articles, books, YouTube videos (with captions), or podcasts (with transcripts)
                 </p>
               </div>
 

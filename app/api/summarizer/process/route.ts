@@ -13,10 +13,199 @@ interface SummaryRequest {
 }
 
 /**
- * Extract content from various sources (PDFs, web pages, etc.)
+ * Extract YouTube video ID from URL
+ */
+function extractYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  
+  return null;
+}
+
+/**
+ * Extract transcript from YouTube video
+ */
+async function extractYouTubeTranscript(url: string): Promise<{ content: string; title: string; sourceType: string }> {
+  const videoId = extractYouTubeId(url);
+  
+  if (!videoId) {
+    throw new Error('Invalid YouTube URL');
+  }
+
+  console.log(`[Summarizer] Extracting YouTube transcript for video: ${videoId}`);
+
+  try {
+    // Try to get transcript using youtube-transcript
+    const { YoutubeTranscript } = await import('youtube-transcript');
+    
+    const transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
+    
+    if (!transcriptData || transcriptData.length === 0) {
+      throw new Error('No transcript available');
+    }
+
+    // Combine all transcript segments
+    const content = transcriptData.map((segment: any) => segment.text).join(' ');
+    
+    // Get video title from ytdl-core
+    let title = `YouTube Video ${videoId}`;
+    try {
+      const ytdl = await import('@distube/ytdl-core');
+      const info = await ytdl.default.getBasicInfo(`https://www.youtube.com/watch?v=${videoId}`);
+      title = info.videoDetails.title;
+    } catch (e) {
+      console.log('[Summarizer] Could not fetch video title, using fallback');
+    }
+
+    console.log(`[Summarizer] Extracted ${content.length} chars from YouTube transcript`);
+
+    return {
+      content,
+      title,
+      sourceType: 'youtube',
+    };
+  } catch (error: any) {
+    console.error('[Summarizer] YouTube transcript extraction failed:', error.message);
+    throw new Error(`YouTube transcript not available. Consider adding audio transcription fallback.`);
+  }
+}
+
+/**
+ * Extract podcast transcript or show notes
+ */
+async function extractPodcastContent(url: string): Promise<{ content: string; title: string; sourceType: string }> {
+  console.log(`[Summarizer] Extracting podcast content from: ${url}`);
+
+  try {
+    // Check if it's an RSS feed URL
+    if (url.includes('.rss') || url.includes('feed') || url.includes('podcast')) {
+      const Parser = (await import('rss-parser')).default;
+      const parser = new Parser();
+      
+      try {
+        const feed = await parser.parseURL(url);
+        
+        // Get the most recent episode or all episodes
+        if (feed.items && feed.items.length > 0) {
+          const latestEpisode = feed.items[0];
+          
+          // Try to get transcript from content, description, or content:encoded
+          let content = latestEpisode.content || latestEpisode.contentSnippet || latestEpisode.description || '';
+          
+          // Clean HTML tags if present
+          const $ = cheerio.load(content);
+          content = $.text();
+          
+          return {
+            content,
+            title: latestEpisode.title || feed.title || 'Podcast Episode',
+            sourceType: 'podcast-rss',
+          };
+        }
+      } catch (e) {
+        console.log('[Summarizer] Not an RSS feed, trying web scraping');
+      }
+    }
+
+    // Fallback: Try to scrape podcast page for transcript
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      timeout: 15000,
+    });
+
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    // Remove scripts, styles, nav, etc.
+    $('script, style, nav, header, footer, iframe, noscript').remove();
+
+    // Look for transcript sections
+    let content = '';
+    const transcriptSelectors = [
+      '.transcript',
+      '#transcript', 
+      '[class*="transcript"]',
+      '[id*="transcript"]',
+      '.show-notes',
+      '#show-notes',
+      '[class*="show-notes"]',
+      '.episode-description',
+      '.description',
+    ];
+
+    for (const selector of transcriptSelectors) {
+      const element = $(selector);
+      if (element.length) {
+        content = element.text();
+        if (content.length > 500) break; // Found substantial content
+      }
+    }
+
+    // If no transcript section found, get main content
+    if (!content || content.length < 500) {
+      const article = $('article, main, .content, [role="main"]').first();
+      content = article.length ? article.text() : $('body').text();
+    }
+
+    // Clean up whitespace
+    content = content.replace(/\s+/g, ' ').trim();
+
+    const title = $('title').text() || 
+                 $('h1').first().text() || 
+                 $('meta[property="og:title"]').attr('content') || 
+                 'Podcast Episode';
+
+    if (!content || content.length < 200) {
+      throw new Error('No transcript or show notes found. Consider adding audio transcription fallback.');
+    }
+
+    console.log(`[Summarizer] Extracted ${content.length} chars from podcast page`);
+
+    return {
+      content,
+      title: title.trim(),
+      sourceType: 'podcast-web',
+    };
+  } catch (error: any) {
+    console.error('[Summarizer] Podcast extraction failed:', error.message);
+    throw new Error(`Could not extract podcast content: ${error.message}`);
+  }
+}
+
+/**
+ * Extract content from various sources (PDFs, web pages, YouTube, podcasts, etc.)
  */
 async function extractContent(url: string): Promise<{ content: string; title: string; sourceType: string }> {
   try {
+    const urlLower = url.toLowerCase();
+
+    // Handle YouTube videos
+    if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
+      return await extractYouTubeTranscript(url);
+    }
+
+    // Handle podcasts (common podcast platforms)
+    if (urlLower.includes('podcast') || 
+        urlLower.includes('spotify.com/episode') ||
+        urlLower.includes('apple.com/podcast') ||
+        urlLower.includes('soundcloud.com') ||
+        urlLower.includes('.rss') ||
+        urlLower.includes('libsyn.com') ||
+        urlLower.includes('podbean.com') ||
+        urlLower.includes('buzzsprout.com') ||
+        urlLower.includes('transistor.fm')) {
+      return await extractPodcastContent(url);
+    }
+
     const response = await axios.get(url, {
       responseType: 'arraybuffer',
       headers: {
@@ -41,8 +230,12 @@ async function extractContent(url: string): Promise<{ content: string; title: st
       let title = new URL(url).hostname;
       try {
         const infoResult = await parser.getInfo();
-        if (infoResult.metadata?.title) {
-          title = infoResult.metadata.title;
+        // pdf-parse metadata structure: { Title, Author, Subject, etc. }
+        if (infoResult.metadata && 'Title' in infoResult.metadata) {
+          const metaTitle = (infoResult.metadata as any).Title;
+          if (metaTitle) {
+            title = metaTitle;
+          }
         }
       } catch (e) {
         // Ignore metadata errors
