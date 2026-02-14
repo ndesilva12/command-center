@@ -28,12 +28,28 @@ export default function LegalPage() {
     if (!question.trim()) return;
     
     setLoading(true);
-    // TODO: Integrate with backend/OpenClaw for actual legal skill processing
-    // For now, show placeholder response
-    setTimeout(() => {
-      setResponse(`Legal analysis for: "${question}"\n\n[This will integrate with the legal skill via OpenClaw]`);
+    setResponse("");
+    
+    try {
+      const res = await fetch("/api/legal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.response) {
+        setResponse(data.response);
+      } else {
+        setResponse(`Error: ${data.error || "Failed to get legal analysis"}`);
+      }
+    } catch (error) {
+      console.error("Legal API error:", error);
+      setResponse("Error: Failed to connect to legal analysis service");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
