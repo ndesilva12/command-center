@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 export default function OnePagerPage() {
   const [topic, setTopic] = useState("");
@@ -116,6 +117,7 @@ export default function OnePagerPage() {
       <div style={{ paddingTop: "144px", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
         <TopNav />
         <ToolNav currentToolId="one-pager" />
+      <ToolBackground color="#7c3aed" />
         
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
           {/* Input Form */}

@@ -7,6 +7,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 export default function L3DPage() {
   const { getCustomization } = useToolCustomizations();
@@ -138,6 +139,7 @@ export default function L3DPage() {
       <div style={{ paddingTop: "144px", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
         <TopNav />
         <ToolNav currentToolId="l3d" />
+      <ToolBackground color={toolCustom.color} />
         
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
           {/* Input Form */}

@@ -6,6 +6,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 
 interface CalendarEvent {
@@ -440,6 +441,7 @@ export default function CalendarPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="calendar" />
+      <ToolBackground color={toolCustom.color} />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

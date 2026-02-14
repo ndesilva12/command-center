@@ -8,6 +8,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Eye, Search, ExternalLink, ChevronDown, ChevronUp, Clock, AlertTriangle } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface DarkSearchReport {
   topic: string;
@@ -107,6 +108,7 @@ function DarkSearchContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="dark-search" />
+      <ToolBackground color={toolCustom.color} />
       
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

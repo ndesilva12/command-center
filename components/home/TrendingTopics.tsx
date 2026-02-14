@@ -129,14 +129,11 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: isMobile ? "4px" : "6px",
-              padding: isMobile ? "8px 10px" : "10px 12px",
+              padding: isMobile ? "8px 14px" : "10px 16px",
               borderRadius: "24px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              background: topic.source === "x"
-                ? "rgba(0, 170, 255, 0.08)"
-                : "rgba(167, 139, 250, 0.08)",
-              color: "var(--foreground)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "rgba(255, 255, 255, 0.05)",
+              color: "rgba(255, 255, 255, 0.7)",
               fontSize: isMobile ? "12px" : "14px",
               fontWeight: 500,
               cursor: "pointer",
@@ -147,21 +144,16 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
               textOverflow: "ellipsis",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = topic.source === "x"
-                ? "rgba(0, 170, 255, 0.15)"
-                : "rgba(167, 139, 250, 0.15)";
-              e.currentTarget.style.borderColor = topic.source === "x"
-                ? "rgba(0, 170, 255, 0.3)"
-                : "rgba(167, 139, 250, 0.3)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = topic.source === "x"
-                ? "rgba(0, 170, 255, 0.08)"
-                : "rgba(167, 139, 250, 0.08)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
             }}
           >
-            <TrendingUp style={{ width: isMobile ? "12px" : "14px", height: isMobile ? "12px" : "14px", flexShrink: 0 }} />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{topic.text}</span>
           </button>
         ))}

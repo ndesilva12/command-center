@@ -8,6 +8,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Radar, Search, ExternalLink, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface DeepSearchReport {
   topic: string;
@@ -105,6 +106,7 @@ function DeepSearchContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="deep-search" />
+      <ToolBackground color={toolCustom.color} />
       
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

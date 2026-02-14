@@ -6,6 +6,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 
 interface TreeNode {
@@ -400,6 +401,7 @@ export default function NotesPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="notes" />
+      <ToolBackground color={toolCustom.color} />
 
       <main style={{
         paddingTop: isMobile ? "80px" : "88px",

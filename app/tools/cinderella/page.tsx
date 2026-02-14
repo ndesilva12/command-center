@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 export default function CinderellaPage() {
   return (
@@ -34,6 +35,7 @@ function CinderellaContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="cinderella" />
+      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "64px" : "136px",

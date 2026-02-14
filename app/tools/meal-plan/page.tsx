@@ -15,6 +15,7 @@ import { db } from "@/lib/firebase";
 import { 
   collection, getDocs, doc, getDoc, setDoc, deleteDoc, addDoc 
 } from "firebase/firestore";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Meal {
   id: string;
@@ -442,6 +443,7 @@ function MealPlanContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="meals" />
+      <ToolBackground color="#10b981" />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

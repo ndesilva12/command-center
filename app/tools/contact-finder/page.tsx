@@ -26,6 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { SearchType, ContactResult, ContactMethod, DISCLAIMER } from "@/lib/types/contact-finder";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 // Icon mapping for contact types
 const CONTACT_ICONS: Record<string, React.ElementType> = {
@@ -142,6 +143,7 @@ function ContactFinderContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="contact-finder" />
+      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "64px" : "136px",

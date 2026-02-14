@@ -8,6 +8,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Handshake, Plus, X, ExternalLink, User, Search, Filter, CheckCircle, Clock, Play, XCircle, Trash2 } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Recommendation {
   id: string;
@@ -180,6 +181,7 @@ function RecommendationsContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="recommendations" />
+      <ToolBackground color={toolCustom.color} />
       
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

@@ -8,6 +8,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ScanSearch, Upload, Link2, ExternalLink, Loader2, X, Search, Image as ImageIcon } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface ImageAnalysis {
   description: string;
@@ -150,6 +151,7 @@ function ImageLookupContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="image-lookup" />
+      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "64px" : "136px",

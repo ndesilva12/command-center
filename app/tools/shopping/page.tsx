@@ -17,6 +17,7 @@ import {
   updateDoc, serverTimestamp 
 } from "firebase/firestore";
 import { useAuth } from "@/hooks/useAuth";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface ShoppingItem {
   id: string;
@@ -320,6 +321,7 @@ export default function ShoppingPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="shopping" />
+      <ToolBackground color={toolCustom.color} />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

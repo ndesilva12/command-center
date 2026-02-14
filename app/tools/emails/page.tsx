@@ -8,6 +8,7 @@ import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { formatEmailSender, getSuperhumanUrl } from "@/lib/gmail";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 type EmailFolder = "inbox" | "sent" | "drafts" | "archived" | "trash";
 
@@ -375,6 +376,7 @@ export default function EmailsPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="emails" />
+      <ToolBackground color={toolCustom.color} />
 
       {/* View Email Modal */}
       {selectedEmail && (

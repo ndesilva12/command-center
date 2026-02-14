@@ -9,6 +9,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { TrendingUp, Plus, Trash2, ExternalLink, Mail, Phone, Linkedin, Building2, X } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Investor {
   id: string;
@@ -232,6 +233,7 @@ function InvestorsContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="investors" />
+      <ToolBackground color={toolCustom.color} />
       
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

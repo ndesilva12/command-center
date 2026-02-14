@@ -7,6 +7,7 @@ import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Network, Plus, Loader2, Users, ArrowRight, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Project {
   id: string;
@@ -129,6 +130,7 @@ function RelationshipsContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="relationships" />
+      <ToolBackground color="#14b8a6" />
       <main
         style={{
           paddingTop: isMobile ? "64px" : "136px",

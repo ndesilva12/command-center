@@ -7,6 +7,7 @@ import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { Scale, Upload, FileText, AlertTriangle, Send } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 export default function LegalPage() {
   const { getCustomization } = useToolCustomizations();
@@ -56,6 +57,7 @@ export default function LegalPage() {
     <div style={{ minHeight: "100vh", background: "var(--background)" }}>
       <TopNav />
       <ToolNav currentToolId="legal" />
+      <ToolBackground color={toolCustom.color} />
 
       <div
         style={{

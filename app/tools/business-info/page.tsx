@@ -9,6 +9,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Store, Search, Loader2, MapPin, Building2, FileText, Phone, Globe, Mail, Calendar } from "lucide-react";
 import { BusinessSearchResult, BusinessAnalysis } from "@/lib/types/business";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 // US States for dropdown
 const US_STATES = [
@@ -135,6 +136,7 @@ function BusinessInfoContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="business-info" />
+      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "64px" : "136px",

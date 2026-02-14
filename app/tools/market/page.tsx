@@ -6,6 +6,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 
 // User's TradingView watchlist symbols with descriptions
@@ -166,6 +167,7 @@ export default function MarketPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="market" />
+      <ToolBackground color={toolCustom.color} />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

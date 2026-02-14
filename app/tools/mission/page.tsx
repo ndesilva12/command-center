@@ -7,6 +7,7 @@ import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Target, Plus, Trash2, ExternalLink, Edit2, X } from "lucide-react";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Mission {
   id: string;
@@ -211,6 +212,7 @@ function MissionContent() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="mission" />
+      <ToolBackground color="#6366f1" />
       
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

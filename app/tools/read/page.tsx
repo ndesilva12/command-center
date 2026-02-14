@@ -8,6 +8,7 @@ import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface MinifeedEntry {
   id: number;
@@ -182,6 +183,7 @@ export default function ReadPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="read" />
+      <ToolBackground color={toolCustom.color} />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

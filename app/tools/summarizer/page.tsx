@@ -7,6 +7,7 @@ import { ToolNav } from "@/components/tools/ToolNav";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { FileText, Download, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Summary {
   id: string;
@@ -115,6 +116,7 @@ export default function SummarizerPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="summarizer" />
+      <ToolBackground color={toolCustom.color} />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",

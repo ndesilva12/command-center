@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ShoppingCart, Package } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface WeeklyPlan {
   shoppingList?: {
@@ -291,6 +292,7 @@ export default function ShoppingListPage() {
       <TopNav />
       <BottomNav />
       <ToolNav currentToolId="meals" />
+      <ToolBackground color="#10b981" />
 
       <main style={{
         paddingTop: isMobile ? "64px" : "136px",
