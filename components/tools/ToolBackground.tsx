@@ -20,7 +20,7 @@ export function ToolBackground({ color }: { color: string }) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: -1,
+        zIndex: 0,
         pointerEvents: "none",
         background: `linear-gradient(135deg, rgba(${rgb}, 0.12) 0%, rgba(${rgb}, 0.03) 30%, #0a0a0e 70%)`,
       }}

@@ -24,31 +24,12 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Check if buttons exceed 80% of window width
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (!containerRef.current) return;
-      const threshold = window.innerWidth * 0.8;
-      const buttons = containerRef.current.querySelectorAll('.tool-nav-button');
-      let totalWidth = 0;
-      buttons.forEach((btn, i) => {
-        totalWidth += (btn as HTMLElement).offsetWidth + (i > 0 ? 8 : 0); // 8px gap
-      });
-      setNeedsWrap(totalWidth > threshold);
-    };
-    // Delay to let DOM render
-    const timer = setTimeout(checkOverflow, 100);
-    window.addEventListener("resize", checkOverflow);
-    return () => { clearTimeout(timer); window.removeEventListener("resize", checkOverflow); };
-  }, [currentToolId]);
-  
   const allTools = getToolsInCategory(currentToolId);
   const currentCategory = getToolCategory(currentToolId);
   
-  // Determine cross-category link
-  const otherCategory = currentCategory === 'productivity' ? 'intelligence' : 'productivity';
-  const otherLabel = otherCategory === 'productivity' ? 'Productivity' : 'Intelligence';
-  const otherTools = otherCategory === 'productivity' ? PRODUCTIVITY_TOOLS : INTELLIGENCE_TOOLS;
+  // Category switch button: shows OWN category name, links to OTHER category's first tool
+  const ownLabel = currentCategory === 'productivity' ? 'Productivity' : 'Intelligence';
+  const otherTools = currentCategory === 'productivity' ? INTELLIGENCE_TOOLS : PRODUCTIVITY_TOOLS;
   const otherFirstHref = otherTools[0]?.href || '/';
 
   // Filter by visibility and permissions
@@ -61,36 +42,80 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
     .filter((tool) => isAdmin || hasPermission(tool.id))
     .sort((a, b) => a.order - b.order);
 
+  // All buttons: category switch + tools
+  const allButtons = [
+    { id: '__category_switch__', name: ownLabel, href: otherFirstHref, isCategorySwitch: true },
+    ...tools.map(t => ({ id: t.id, name: t.name, href: t.href, isCategorySwitch: false })),
+  ];
+
+  // Check if buttons exceed 80% of window width
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (!containerRef.current) return;
+      const threshold = window.innerWidth * 0.8;
+      const buttons = containerRef.current.querySelectorAll('.tool-nav-button');
+      let totalWidth = 0;
+      buttons.forEach((btn, i) => {
+        totalWidth += (btn as HTMLElement).offsetWidth + (i > 0 ? 8 : 0);
+      });
+      setNeedsWrap(totalWidth > threshold);
+    };
+    const timer = setTimeout(checkOverflow, 100);
+    window.addEventListener("resize", checkOverflow);
+    return () => { clearTimeout(timer); window.removeEventListener("resize", checkOverflow); };
+  }, [currentToolId, tools.length]);
+
   if (isMobile) return null;
   if (tools.length === 0) return null;
 
-  return (
-    <div
-      ref={containerRef}
-      className={`tool-nav-container ${needsWrap ? 'tool-nav-wrap' : ''}`}
-    >
-      {/* Cross-category link button */}
-      <Link
-        href={otherFirstHref}
-        prefetch={true}
-        className="tool-nav-button tool-nav-category-switch"
-      >
-        {otherLabel} →
-      </Link>
+  // Split into two equal rows if wrapping needed
+  if (needsWrap) {
+    const half = Math.ceil(allButtons.length / 2);
+    const row1 = allButtons.slice(0, half);
+    const row2 = allButtons.slice(half);
 
-      {tools.map((tool) => {
-        const isActive = tool.id === currentToolId;
-        return (
-          <Link
-            key={tool.id}
-            href={tool.href}
-            prefetch={true}
-            className={`tool-nav-button ${isActive ? 'active' : ''}`}
-          >
-            {tool.name}
-          </Link>
-        );
-      })}
+    return (
+      <div ref={containerRef} className="tool-nav-container tool-nav-wrap">
+        <div style={{ display: "flex", justifyContent: "center", gap: "8px", width: "100%", flexWrap: "nowrap" }}>
+          {row1.map((btn) => (
+            <Link
+              key={btn.id}
+              href={btn.href}
+              prefetch={true}
+              className={`tool-nav-button ${btn.isCategorySwitch ? 'tool-nav-category-switch' : ''} ${btn.id === currentToolId ? 'active' : ''}`}
+            >
+              {btn.name}{btn.isCategorySwitch ? ' →' : ''}
+            </Link>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", gap: "8px", width: "100%", flexWrap: "nowrap" }}>
+          {row2.map((btn) => (
+            <Link
+              key={btn.id}
+              href={btn.href}
+              prefetch={true}
+              className={`tool-nav-button ${btn.isCategorySwitch ? 'tool-nav-category-switch' : ''} ${btn.id === currentToolId ? 'active' : ''}`}
+            >
+              {btn.name}{btn.isCategorySwitch ? ' →' : ''}
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="tool-nav-container">
+      {allButtons.map((btn) => (
+        <Link
+          key={btn.id}
+          href={btn.href}
+          prefetch={true}
+          className={`tool-nav-button ${btn.isCategorySwitch ? 'tool-nav-category-switch' : ''} ${btn.id === currentToolId ? 'active' : ''}`}
+        >
+          {btn.name}{btn.isCategorySwitch ? ' →' : ''}
+        </Link>
+      ))}
     </div>
   );
 });
