@@ -1,29 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
+
 /**
- * ToolBackground - Renders a subtle gradient background tinted with the tool's color
- * Place this as the first child of the page, positioned fixed behind all content.
+ * ToolBackground - Sets the page background to a gradient using the tool's color.
+ * Applies directly to document.body to guarantee visibility.
  */
 export function ToolBackground({ color }: { color: string }) {
-  // Convert hex to RGB for opacity control
   const hexToRgb = (hex: string): string => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return "99, 102, 241"; // fallback indigo
+    if (!result) return "99, 102, 241";
     return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
   };
 
-  const rgb = hexToRgb(color);
+  useEffect(() => {
+    const rgb = hexToRgb(color);
+    const gradient = `linear-gradient(135deg, rgba(${rgb}, 0.25) 0%, rgba(${rgb}, 0.08) 40%, #0a0a0e 80%)`;
+    document.body.style.background = gradient;
+    
+    return () => {
+      // Reset to default on unmount
+      document.body.style.background = "transparent";
+    };
+  }, [color]);
 
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: "none",
-        background: `linear-gradient(135deg, rgba(${rgb}, 0.12) 0%, rgba(${rgb}, 0.03) 30%, #0a0a0e 70%)`,
-      }}
-    />
-  );
+  return null;
 }
