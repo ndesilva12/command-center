@@ -58,11 +58,18 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
       buttons.forEach((btn, i) => {
         totalWidth += (btn as HTMLElement).offsetWidth + (i > 0 ? 8 : 0);
       });
-      setNeedsWrap(totalWidth > threshold);
+      const wrapping = totalWidth > threshold;
+      setNeedsWrap(wrapping);
+      // Set CSS variable so content can adjust padding
+      document.documentElement.style.setProperty('--tool-nav-height', wrapping ? '100px' : '56px');
     };
     const timer = setTimeout(checkOverflow, 100);
     window.addEventListener("resize", checkOverflow);
-    return () => { clearTimeout(timer); window.removeEventListener("resize", checkOverflow); };
+    return () => { 
+      clearTimeout(timer); 
+      window.removeEventListener("resize", checkOverflow);
+      document.documentElement.style.removeProperty('--tool-nav-height');
+    };
   }, [currentToolId, tools.length]);
 
   if (isMobile) return null;

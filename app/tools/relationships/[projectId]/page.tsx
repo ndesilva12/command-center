@@ -251,7 +251,7 @@ function ProjectDetailContent() {
       <ToolNav currentToolId="relationships" />
       <main
         style={{
-          paddingTop: isMobile ? "80px" : "136px",
+          paddingTop: isMobile ? "80px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
           paddingBottom: isMobile ? "80px" : "32px",
           paddingLeft: isMobile ? "12px" : "24px",
           paddingRight: isMobile ? "12px" : "24px",

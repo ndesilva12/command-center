@@ -145,7 +145,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
         <TopNav />
         <BottomNav />
         <ToolNav currentToolId="people" />
-        <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
+        <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
             <div style={{ animation: "spin 1s linear infinite", width: "32px", height: "32px", border: "3px solid rgba(0, 170, 255, 0.3)", borderTop: "3px solid #00aaff", borderRadius: "50%" }}></div>
           </div>
@@ -166,7 +166,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
         <TopNav />
         <BottomNav />
         <ToolNav currentToolId="people" />
-        <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
+        <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
             <p>{error}</p>
             <button
@@ -195,7 +195,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
       <BottomNav />
       <ToolNav currentToolId="people" />
 
-      <main style={{ paddingTop: "136px", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "136px 24px 32px 24px" }}>
+      <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

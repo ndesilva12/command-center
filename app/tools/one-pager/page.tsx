@@ -118,7 +118,7 @@ export default function OnePagerPage() {
 
   return (
     <>
-      <div style={{ paddingTop: "144px", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
+      <div style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 24px)", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
         <TopNav />
         <ToolNav currentToolId="one-pager" />
       <ToolBackground color={toolCustom.color} />

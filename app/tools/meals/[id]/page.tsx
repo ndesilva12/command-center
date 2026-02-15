@@ -107,7 +107,7 @@ export default function MealDetailPage() {
         <TopNav />
         <BottomNav />
         <ToolNav currentToolId="meals" />
-        <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
+        <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "96px", minHeight: "100vh" }}>
           <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
             <p style={{ textAlign: "center", color: "var(--foreground-muted)" }}>Loading recipe...</p>
           </div>
@@ -122,7 +122,7 @@ export default function MealDetailPage() {
         <TopNav />
         <BottomNav />
         <ToolNav currentToolId="meals" />
-        <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
+        <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "96px", minHeight: "100vh" }}>
           <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
             <p style={{ textAlign: "center", color: "var(--foreground-muted)" }}>Recipe not found</p>
           </div>
@@ -139,7 +139,7 @@ export default function MealDetailPage() {
       <BottomNav />
       <ToolNav currentToolId="meals" />
 
-      <main style={{ paddingTop: "136px", paddingBottom: "96px", minHeight: "100vh" }}>
+      <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "96px", minHeight: "100vh" }}>
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px" }}>

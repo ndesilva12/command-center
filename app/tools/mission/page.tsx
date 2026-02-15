@@ -215,7 +215,7 @@ function MissionContent() {
       <ToolBackground color="#6366f1" />
       
       <main style={{
-        paddingTop: isMobile ? "64px" : "136px",
+        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
         paddingBottom: isMobile ? "88px" : "32px",
         paddingLeft: isMobile ? "12px" : "24px",
         paddingRight: isMobile ? "12px" : "24px",
