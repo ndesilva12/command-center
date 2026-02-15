@@ -22,11 +22,7 @@ export function ToolBackground({ color }: { color: string }) {
         inset: 0,
         zIndex: -1,
         pointerEvents: "none",
-        background: `
-          radial-gradient(ellipse at top left, rgba(${rgb}, 0.04) 0%, transparent 50%),
-          radial-gradient(ellipse at bottom right, rgba(${rgb}, 0.03) 0%, transparent 50%),
-          linear-gradient(180deg, rgba(${rgb}, 0.02) 0%, transparent 40%)
-        `,
+        background: `linear-gradient(135deg, rgba(${rgb}, 0.12) 0%, rgba(${rgb}, 0.03) 30%, #0a0a0e 70%)`,
       }}
     />
   );
