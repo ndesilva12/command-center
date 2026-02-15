@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       sender,
       subject,
       body_text: body_text || "",
-      body_html: body_html || `<p>${(body_text || "").replace(/\n/g, "</p><p>")}</p>`,
+      body_html: body_html || `<p>${(body_text || "").replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br>")}</p>`,
       recipients,
       delay_seconds: 2,
       dry_run: dry_run || false,
