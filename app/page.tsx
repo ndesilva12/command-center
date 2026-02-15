@@ -291,8 +291,8 @@ export default function Home() {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                      gap: "10px",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                      gap: "6px",
                     }}
                   >
                     {category.tools.map((tool) => (
@@ -346,7 +346,7 @@ export default function Home() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: "8px",
+                      gap: "6px",
                     }}
                   >
                     {category.tools.map((tool) => (

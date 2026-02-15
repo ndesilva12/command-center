@@ -33,7 +33,7 @@ export function ToolCard({ id, name, description, icon: Icon, href, color, compa
       <div
         className="card glass-hover"
         style={{
-          padding: compact ? "14px" : "20px",
+          padding: compact ? "10px 12px" : "20px",
           transition: "all 0.3s ease",
           borderColor: lessProminent ? "rgba(255, 255, 255, 0.05)" : "var(--glass-border)",
           background: lessProminent ? "rgba(255, 255, 255, 0.02)" : "rgba(255, 255, 255, 0.03)",
@@ -68,12 +68,12 @@ export function ToolCard({ id, name, description, icon: Icon, href, color, compa
           }}
         />
         <div style={{ position: "relative", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: compact ? "12px" : "16px", minHeight: compact ? "48px" : "64px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: compact ? "10px" : "16px", minHeight: compact ? "36px" : "64px" }}>
             <div
               style={{
-                width: compact ? "40px" : "48px",
-                height: compact ? "40px" : "48px",
-                borderRadius: compact ? "10px" : "12px",
+                width: compact ? "32px" : "48px",
+                height: compact ? "32px" : "48px",
+                borderRadius: compact ? "8px" : "12px",
                 background: `${color}20`,
                 display: "flex",
                 alignItems: "center",
@@ -81,12 +81,12 @@ export function ToolCard({ id, name, description, icon: Icon, href, color, compa
                 flexShrink: 0,
               }}
             >
-              <Icon style={{ width: compact ? "20px" : "24px", height: compact ? "20px" : "24px", color: color }} />
+              <Icon style={{ width: compact ? "16px" : "24px", height: compact ? "16px" : "24px", color: color }} />
             </div>
             <div style={{ flex: 1 }}>
               <div
                 style={{
-                  fontSize: compact ? "15px" : "18px",
+                  fontSize: compact ? "13px" : "18px",
                   fontWeight: 700,
                   color: "var(--foreground)",
                 }}
