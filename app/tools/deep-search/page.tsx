@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
-
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { Radar, Search, ExternalLink, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { Radar, Search, ExternalLink, ChevronDown, ChevronUp, Clock, Lightbulb } from "lucide-react";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface DeepSearchReport {
@@ -22,9 +23,11 @@ interface DeepSearchReport {
   counterintuitiveInsights: string[];
   expertDebates: string[];
   underreportedAngles: string[];
-  socialMediaHighlights: { platform: string; author: string; content: string; url: string }[];
-  podcastReferences: { title: string; episode: string; timestamp?: string; summary: string; url: string }[];
+  keyTakeaways?: string[];
+  socialMediaHighlights?: { platform: string; author: string; content: string; url: string }[];
+  podcastReferences?: { title: string; episode: string; timestamp?: string; summary: string; url: string }[];
   links?: { title: string; url: string; type: string }[];
+  sources?: { title: string; url: string; type: string }[];
   timestamp: number;
 }
 
@@ -39,11 +42,17 @@ export default function DeepSearchPage() {
 function DeepSearchContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
-  const [query, setQuery] = useState("");
+  const [query_text, setQuery] = useState("");
+  const [pageTarget, setPageTarget] = useState(15);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<DeepSearchReport | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  
+  // History state
+  const [history, setHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(10);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -52,8 +61,54 @@ function DeepSearchContent() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  useEffect(() => {
+    loadHistory(historyLimit);
+  }, [historyLimit]);
+
+  const loadHistory = async (limitCount: number = 10) => {
+    try {
+      const q = query(
+        collection(db, "deep_search_history"),
+        orderBy("timestamp", "desc"),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistory(items);
+    } catch (error) {
+      console.error("Error loading history:", error);
+    }
+  };
+
+  const filteredHistory = historySearch.trim()
+    ? history.filter(item =>
+        (item.topic || item.query || "").toLowerCase().includes(historySearch.toLowerCase())
+      )
+    : history;
+
+  const loadFromHistory = (item: any) => {
+    // History items may have results nested or flat
+    const r = item.results || item;
+    setReport({
+      topic: r.topic || item.topic || item.query || "",
+      briefOverview: r.briefOverview || "",
+      sections: r.sections || [],
+      hiddenMechanics: r.hiddenMechanics || [],
+      counterintuitiveInsights: r.counterintuitiveInsights || [],
+      expertDebates: r.expertDebates || [],
+      underreportedAngles: r.underreportedAngles || [],
+      keyTakeaways: r.keyTakeaways || [],
+      socialMediaHighlights: r.socialMediaHighlights || [],
+      podcastReferences: r.podcastReferences || [],
+      links: r.links || [],
+      sources: r.sources || [],
+      timestamp: r.timestamp || (item.timestamp?.seconds ? item.timestamp.seconds * 1000 : Date.now()),
+    });
+    setExpandedSections(new Set((r.sections || []).map((_: any, i: number) => i)));
+  };
+
   const handleSearch = async () => {
-    if (!query.trim()) return;
+    if (!query_text.trim()) return;
 
     setLoading(true);
     setReport(null);
@@ -62,15 +117,15 @@ function DeepSearchContent() {
       const response = await fetch('/api/deep-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: query_text, pageTarget }),
       });
 
       const data = await response.json();
       
       if (data.report) {
         setReport(data.report);
-        // Expand all sections by default
         setExpandedSections(new Set(data.report.sections?.map((_: any, i: number) => i) || []));
+        loadHistory(historyLimit);
       } else if (data.error) {
         alert(`Error: ${data.error}`);
       }
@@ -93,13 +148,10 @@ function DeepSearchContent() {
   };
 
   const sectionColors = [
-    "#8b5cf6", // purple
-    "#10b981", // green
-    "#06b6d4", // cyan
-    "#ef4444", // red
-    "#ec4899", // pink
-    "#6366f1", // indigo
+    "#8b5cf6", "#10b981", "#06b6d4", "#ef4444", "#ec4899", "#6366f1",
   ];
+
+  const allLinks = report?.links || report?.sources || [];
 
   return (
     <>
@@ -137,7 +189,7 @@ function DeepSearchContent() {
               color: "#94a3b8", 
               margin: 0 
             }}>
-              Expert-level research with Google Search grounding
+              Expert-level deep dive research reports
             </p>
           </div>
         </div>
@@ -146,7 +198,7 @@ function DeepSearchContent() {
         <div style={{ 
           display: "flex", 
           gap: "12px", 
-          marginBottom: "32px",
+          marginBottom: "16px",
           flexDirection: isMobile ? "column" : "row",
         }}>
           <div style={{ flex: 1, position: "relative" }}>
@@ -160,7 +212,7 @@ function DeepSearchContent() {
             <input
               type="text"
               placeholder="Enter your research query..."
-              value={query}
+              value={query_text}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && !loading && handleSearch()}
               style={{
@@ -177,10 +229,10 @@ function DeepSearchContent() {
           </div>
           <button
             onClick={handleSearch}
-            disabled={loading || !query.trim()}
+            disabled={loading || !query_text.trim()}
             style={{
               padding: isMobile ? "14px 24px" : "18px 32px",
-              background: loading || !query.trim()
+              background: loading || !query_text.trim()
                 ? "rgba(99, 102, 241, 0.3)"
                 : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
               border: "none",
@@ -188,13 +240,52 @@ function DeepSearchContent() {
               color: "white",
               fontSize: isMobile ? "14px" : "16px",
               fontWeight: "600",
-              cursor: loading || !query.trim() ? "not-allowed" : "pointer",
-              opacity: loading || !query.trim() ? 0.6 : 1,
+              cursor: loading || !query_text.trim() ? "not-allowed" : "pointer",
+              opacity: loading || !query_text.trim() ? 0.6 : 1,
               whiteSpace: "nowrap",
             }}
           >
             {loading ? "Searching..." : "Search"}
           </button>
+        </div>
+
+        {/* Page Target Slider */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          marginBottom: "32px",
+          padding: "12px 16px",
+          background: "rgba(30, 41, 59, 0.4)",
+          borderRadius: "10px",
+          border: "1px solid rgba(148, 163, 184, 0.1)",
+        }}>
+          <span style={{ fontSize: "13px", color: "#94a3b8", whiteSpace: "nowrap" }}>
+            Page Target:
+          </span>
+          <input
+            type="range"
+            min={5}
+            max={50}
+            step={5}
+            value={pageTarget}
+            onChange={(e) => setPageTarget(Number(e.target.value))}
+            style={{
+              flex: 1,
+              accentColor: "#6366f1",
+              height: "6px",
+              cursor: "pointer",
+            }}
+          />
+          <span style={{
+            fontSize: "14px",
+            fontWeight: "700",
+            color: "#6366f1",
+            minWidth: "40px",
+            textAlign: "center",
+          }}>
+            {pageTarget}
+          </span>
         </div>
 
         {/* Loading State */}
@@ -268,6 +359,42 @@ function DeepSearchContent() {
                 </div>
               )}
             </div>
+
+            {/* Key Takeaways */}
+            {report.keyTakeaways && report.keyTakeaways.length > 0 && (
+              <div style={{
+                background: "linear-gradient(135deg, rgba(250, 204, 21, 0.15) 0%, rgba(250, 204, 21, 0.08) 100%)",
+                border: "1px solid rgba(250, 204, 21, 0.3)",
+                borderRadius: "12px",
+                padding: isMobile ? "16px" : "20px",
+                marginBottom: "24px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <Lightbulb size={18} style={{ color: "#facc15" }} />
+                  <h3 style={{
+                    fontSize: isMobile ? "14px" : "16px",
+                    fontWeight: "700",
+                    color: "#facc15",
+                    margin: 0,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}>
+                    Key Takeaways
+                  </h3>
+                </div>
+                <ul style={{
+                  fontSize: isMobile ? "13px" : "14px",
+                  color: "#cbd5e1",
+                  lineHeight: "1.7",
+                  paddingLeft: "20px",
+                  margin: 0,
+                }}>
+                  {report.keyTakeaways.map((item, idx) => (
+                    <li key={idx} style={{ marginBottom: "8px" }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Main Sections */}
             {report.sections && report.sections.length > 0 && (
@@ -463,153 +590,8 @@ function DeepSearchContent() {
               </div>
             )}
 
-            {/* Social Media Highlights */}
-            {report.socialMediaHighlights && report.socialMediaHighlights.length > 0 && (
-              <div style={{
-                background: "linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%)",
-                border: "1px solid rgba(59, 130, 246, 0.3)",
-                borderRadius: "12px",
-                padding: isMobile ? "16px" : "20px",
-                marginBottom: "16px",
-              }}>
-                <h3 style={{
-                  fontSize: isMobile ? "14px" : "16px",
-                  fontWeight: "700",
-                  color: "#3b82f6",
-                  marginBottom: "12px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}>
-                  Social Media Highlights
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {report.socialMediaHighlights.map((highlight, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        background: "rgba(30, 41, 59, 0.5)",
-                        borderRadius: "8px",
-                        padding: isMobile ? "12px" : "14px",
-                      }}
-                    >
-                      <div style={{ 
-                        display: "flex", 
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "8px",
-                      }}>
-                        <span style={{
-                          fontSize: "12px",
-                          color: "#60a5fa",
-                          fontWeight: "600",
-                        }}>
-                          {highlight.platform} - {highlight.author}
-                        </span>
-                        {highlight.url && (
-                          <a
-                            href={highlight.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: "#60a5fa" }}
-                          >
-                            <ExternalLink size={14} />
-                          </a>
-                        )}
-                      </div>
-                      <p style={{
-                        fontSize: isMobile ? "13px" : "14px",
-                        color: "#cbd5e1",
-                        lineHeight: "1.6",
-                        margin: 0,
-                      }}>
-                        {highlight.content}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Podcast References */}
-            {report.podcastReferences && report.podcastReferences.length > 0 && (
-              <div style={{
-                background: "linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%)",
-                border: "1px solid rgba(139, 92, 246, 0.3)",
-                borderRadius: "12px",
-                padding: isMobile ? "16px" : "20px",
-                marginBottom: "16px",
-              }}>
-                <h3 style={{
-                  fontSize: isMobile ? "14px" : "16px",
-                  fontWeight: "700",
-                  color: "#8b5cf6",
-                  marginBottom: "12px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}>
-                  Podcast References
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {report.podcastReferences.map((podcast, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        background: "rgba(30, 41, 59, 0.5)",
-                        borderRadius: "8px",
-                        padding: isMobile ? "12px" : "14px",
-                      }}
-                    >
-                      <div style={{ 
-                        display: "flex", 
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                        marginBottom: "6px",
-                      }}>
-                        <div>
-                          <h4 style={{
-                            fontSize: isMobile ? "13px" : "14px",
-                            fontWeight: "600",
-                            color: "white",
-                            margin: "0 0 4px 0",
-                          }}>
-                            {podcast.title}
-                          </h4>
-                          <p style={{
-                            fontSize: "12px",
-                            color: "#94a3b8",
-                            margin: 0,
-                          }}>
-                            {podcast.episode}
-                            {podcast.timestamp && ` • ${podcast.timestamp}`}
-                          </p>
-                        </div>
-                        {podcast.url && (
-                          <a
-                            href={podcast.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: "#a78bfa" }}
-                          >
-                            <ExternalLink size={14} />
-                          </a>
-                        )}
-                      </div>
-                      <p style={{
-                        fontSize: isMobile ? "13px" : "14px",
-                        color: "#cbd5e1",
-                        lineHeight: "1.6",
-                        margin: 0,
-                      }}>
-                        {podcast.summary}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Grounded Links */}
-            {report.links && report.links.length > 0 && (
+            {/* Sources */}
+            {allLinks.length > 0 && (
               <div style={{
                 background: "linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.08) 100%)",
                 border: "1px solid rgba(148, 163, 184, 0.3)",
@@ -624,14 +606,14 @@ function DeepSearchContent() {
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                 }}>
-                  Sources ({report.links.length})
+                  Sources ({allLinks.length})
                 </h3>
                 <div style={{ 
                   display: "grid", 
                   gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
                   gap: "8px",
                 }}>
-                  {report.links.map((link, idx) => (
+                  {allLinks.map((link, idx) => (
                     <a
                       key={idx}
                       href={link.url}
@@ -648,15 +630,6 @@ function DeepSearchContent() {
                         color: "#60a5fa",
                         fontSize: "13px",
                         textDecoration: "none",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(59, 130, 246, 0.15)";
-                        e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.4)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(30, 41, 59, 0.5)";
-                        e.currentTarget.style.borderColor = "rgba(148, 163, 184, 0.2)";
                       }}
                     >
                       <ExternalLink size={14} />
@@ -682,6 +655,103 @@ function DeepSearchContent() {
                   ))}
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* History */}
+        {!loading && (
+          <div style={{
+            marginTop: "32px",
+            background: "rgba(30, 41, 59, 0.4)",
+            border: "1px solid rgba(148, 163, 184, 0.15)",
+            borderRadius: "16px",
+            padding: isMobile ? "16px" : "24px",
+          }}>
+            <h3 style={{
+              fontSize: isMobile ? "16px" : "18px",
+              fontWeight: 700,
+              color: "white",
+              marginBottom: "16px",
+            }}>
+              History
+            </h3>
+
+            <input
+              type="text"
+              value={historySearch}
+              onChange={(e) => setHistorySearch(e.target.value)}
+              placeholder="Search history..."
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                border: "1px solid rgba(148, 163, 184, 0.2)",
+                background: "rgba(30, 41, 59, 0.6)",
+                color: "white",
+                fontSize: "14px",
+                marginBottom: "16px",
+                outline: "none",
+              }}
+            />
+
+            {filteredHistory.length === 0 ? (
+              <p style={{ color: "#94a3b8", fontSize: "14px" }}>
+                {historySearch.trim() ? "No results found" : "No searches yet"}
+              </p>
+            ) : (
+              <>
+                {filteredHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => loadFromHistory(item)}
+                    style={{
+                      padding: "12px",
+                      marginBottom: "8px",
+                      borderRadius: "8px",
+                      background: "rgba(30, 41, 59, 0.5)",
+                      cursor: "pointer",
+                      border: "1px solid transparent",
+                      transition: "border-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = "#6366f1"}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: "14px", color: "white" }}>
+                      {item.topic || item.query || "Untitled"}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>
+                      {item.timestamp?.seconds
+                        ? new Date(item.timestamp.seconds * 1000).toLocaleString()
+                        : item.timestamp
+                          ? new Date(item.timestamp).toLocaleString()
+                          : ""
+                      }
+                      {item.status && ` • ${item.status}`}
+                    </div>
+                  </div>
+                ))}
+
+                {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
+                  <button
+                    onClick={() => setHistoryLimit(historyLimit + 25)}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      marginTop: "8px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(148, 163, 184, 0.2)",
+                      background: "transparent",
+                      color: "#6366f1",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Show More (currently showing {historyLimit})
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}

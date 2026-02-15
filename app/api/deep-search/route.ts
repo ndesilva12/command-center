@@ -16,6 +16,7 @@ export interface DeepSearchReport {
   counterintuitiveInsights: string[];
   expertDebates: string[];
   underreportedAngles: string[];
+  keyTakeaways: string[];
   socialMediaHighlights: { platform: string; author: string; content: string; url: string }[];
   podcastReferences: { title: string; episode: string; timestamp?: string; summary: string; url: string }[];
   links?: { title: string; url: string; type: string }[];
@@ -63,6 +64,7 @@ REPORT STRUCTURE - You MUST respond with valid JSON in this exact format:
   ],
   "hiddenMechanics": ["How X actually works behind the scenes that most don't realize", "The real mechanism/incentive/dynamic at play"],
   "counterintuitiveInsights": ["Finding that challenges conventional wisdom", "What experts know that contradicts popular belief"],
+  "keyTakeaways": ["Actionable/memorable takeaway 1", "Key insight to remember 2"],
   "expertDebates": ["Current disagreement among experts on X", "Unresolved question that specialists argue about"],
   "underreportedAngles": ["Aspect that deserves more attention", "Connection most people miss"],
   "socialMediaHighlights": [
@@ -136,7 +138,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { query } = body;
+    const { query, pageTarget = 15 } = body;
 
     if (!query || typeof query !== "string" || query.trim().length === 0) {
       return NextResponse.json(
@@ -148,6 +150,7 @@ export async function POST(request: NextRequest) {
     const userPrompt = `Generate an expert-level deep research report on the following topic. The reader is ALREADY an expert on the basics - they want the nuances, hidden mechanics, and insights that even educated people typically miss.
 
 TOPIC: ${query.trim()}
+PAGE TARGET: ${pageTarget} pages (scale depth accordingly)
 
 Remember:
 1. SKIP lengthy introductions - 2-3 sentences of context maximum
@@ -159,6 +162,7 @@ Remember:
 7. Include references to academic sources, expert content, and primary documents from search results
 8. CRITICAL: Include 3-5 social media highlights from experts/insiders sharing nuanced insights
 9. CRITICAL: Include 2-4 podcast references where experts discuss this topic in depth
+10. CRITICAL: Include a "keyTakeaways" array with 5-8 actionable/memorable takeaways
 
 Respond with valid JSON only. No markdown formatting around the JSON.`;
 
@@ -267,6 +271,7 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
       counterintuitiveInsights: report.counterintuitiveInsights || [],
       expertDebates: report.expertDebates || [],
       underreportedAngles: report.underreportedAngles || [],
+      keyTakeaways: report.keyTakeaways || [],
       socialMediaHighlights: report.socialMediaHighlights || [],
       podcastReferences: report.podcastReferences || [],
       links: groundedLinks, // Use verified grounded links
