@@ -29,6 +29,7 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
   { id: 'image-lookup', name: 'Image Lookup', href: '/tools/image-lookup', description: 'Reverse image search' },
   { id: 'investors', name: 'Investors', href: '/tools/investors', description: 'Fundraising pipeline' },
   { id: 'shopping', name: 'Shopping', href: '/tools/shopping', description: 'Shopping wishlist and lists' },
+  { id: 'emailer', name: 'Emailer', href: '/tools/emailer', description: 'Send personalized bulk emails' },
 ];
 
 export const INTELLIGENCE_TOOLS: ToolDefinition[] = [

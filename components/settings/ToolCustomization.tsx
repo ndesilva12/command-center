@@ -36,6 +36,7 @@ import {
   Check,
   FileText,
   ShoppingBag,
+  Send,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -68,6 +69,7 @@ const ICON_MAP: Record<string, any> = {
   "meals": ChefHat,
   "summarizer": FileText,
   "shopping": ShoppingBag,
+  "emailer": Send,
   "white-papers": FileText,
   "one-pager": FileText,
   "cinderella": BarChart3,
@@ -118,6 +120,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "meals": "#10b981",
   "summarizer": "#8b5cf6",
   "shopping": "#10b981",
+  "emailer": "#3b82f6",
   "white-papers": "#6366f1",
   "one-pager": "#7c3aed",
   "cinderella": "#ef4444",
