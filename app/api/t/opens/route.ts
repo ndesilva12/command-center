@@ -1,0 +1,59 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
+
+// GET /api/t/opens?ids=abc123,def456  — check which tracking IDs have been opened
+// GET /api/t/opens?all=true&limit=50   — list recent opens
+export async function GET(request: NextRequest) {
+  const ids = request.nextUrl.searchParams.get('ids');
+  const all = request.nextUrl.searchParams.get('all');
+  const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50');
+
+  if (!adminDb) {
+    return NextResponse.json({ error: 'Firestore not configured' }, { status: 503 });
+  }
+
+  try {
+    if (ids) {
+      // Check specific tracking IDs
+      const idList = ids.split(',').map(s => s.trim()).filter(Boolean);
+      const opens: Record<string, any[]> = {};
+
+      for (const id of idList) {
+        const snap = await adminDb.collection('email_opens')
+          .where('trackingId', '==', id)
+          .orderBy('openedAt', 'desc')
+          .limit(10)
+          .get();
+
+        opens[id] = snap.docs.map(d => ({
+          openedAt: d.data().timestamp,
+          ip: d.data().ip,
+          userAgent: d.data().userAgent,
+        }));
+      }
+
+      return NextResponse.json({ opens });
+    }
+
+    if (all) {
+      const snap = await adminDb.collection('email_opens')
+        .orderBy('openedAt', 'desc')
+        .limit(limit)
+        .get();
+
+      const opens = snap.docs.map(d => ({
+        trackingId: d.data().trackingId,
+        openedAt: d.data().timestamp,
+        ip: d.data().ip,
+        userAgent: d.data().userAgent,
+      }));
+
+      return NextResponse.json({ opens });
+    }
+
+    return NextResponse.json({ error: 'Provide ?ids=... or ?all=true' }, { status: 400 });
+  } catch (e) {
+    console.error('Opens query error:', e);
+    return NextResponse.json({ error: 'Failed to query opens' }, { status: 500 });
+  }
+}
