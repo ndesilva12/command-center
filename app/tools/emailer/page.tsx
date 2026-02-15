@@ -29,15 +29,25 @@ interface SendResult {
   subject?: string;
 }
 
+interface HistoryRecipient {
+  name: string;
+  email: string;
+  status: string;
+  trackingId?: string;
+  detail?: string;
+}
+
 interface HistoryEntry {
   id: string;
   sender: string;
   subject: string;
   recipientCount: number;
   dryRun: boolean;
-  createdAt: string;
-  sentCount?: number;
-  failedCount?: number;
+  timestamp?: any;
+  createdAt?: any;
+  sent?: number;
+  failed?: number;
+  recipients?: HistoryRecipient[];
 }
 
 export default function EmailerPage() {
@@ -189,15 +199,32 @@ export default function EmailerPage() {
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      const { collection, getDocs, orderBy, query: fbQuery } = await import("firebase/firestore");
+      const { collection, getDocs, orderBy, query: fbQuery, limit } = await import("firebase/firestore");
       const { db } = await import("@/lib/firebase");
-      const q = fbQuery(collection(db, "emailer_history"), orderBy("createdAt", "desc"));
+      // Use timestamp (ISO string) instead of createdAt (server timestamp) to avoid index issues
+      const q = fbQuery(collection(db, "emailer_history"), orderBy("timestamp", "desc"), limit(25));
       const snapshot = await getDocs(q);
       const entries: HistoryEntry[] = [];
       snapshot.forEach((doc) => entries.push({ id: doc.id, ...doc.data() } as HistoryEntry));
       setHistory(entries);
     } catch (err) {
       console.error("Failed to load history:", err);
+      // Fallback: try without orderBy
+      try {
+        const { collection, getDocs, limit } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        const snapshot = await getDocs(collection(db, "emailer_history"));
+        const entries: HistoryEntry[] = [];
+        snapshot.forEach((doc) => entries.push({ id: doc.id, ...doc.data() } as HistoryEntry));
+        entries.sort((a, b) => {
+          const ta = a.timestamp || a.createdAt || "";
+          const tb = b.timestamp || b.createdAt || "";
+          return String(tb).localeCompare(String(ta));
+        });
+        setHistory(entries.slice(0, 25));
+      } catch (err2) {
+        console.error("Fallback history load failed:", err2);
+      }
     }
     setHistoryLoading(false);
   };
@@ -316,37 +343,17 @@ export default function EmailerPage() {
             <div>
               {historyLoading ? (
                 <div style={{ ...glassCard, textAlign: "center", padding: "48px" }}>
-                  <Loader2 style={{ width: "32px", height: "32px", color: "#3b82f6", animation: "spin 1s linear infinite", margin: "0 auto" }} />
+                  <Loader2 style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite", margin: "0 auto" }} />
                 </div>
               ) : history.length === 0 ? (
                 <div style={{ ...glassCard, textAlign: "center", padding: "48px" }}>
-                  <Clock style={{ width: "48px", height: "48px", color: "#3b82f6", margin: "0 auto 16px" }} />
+                  <Clock style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
                   <p style={{ color: "var(--foreground-muted)" }}>No email batches sent yet.</p>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {history.map((h) => (
-                    <div key={h.id} style={glassCard}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", flexWrap: "wrap", gap: "8px" }}>
-                        <div>
-                          <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", margin: "0 0 4px" }}>{h.subject}</p>
-                          <p style={{ fontSize: "13px", color: "var(--foreground-muted)", margin: "0 0 8px" }}>From: {h.sender}</p>
-                        </div>
-                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", border: "1px solid rgba(59, 130, 246, 0.3)" }}>
-                            {h.recipientCount} recipients
-                          </span>
-                          {h.dryRun && (
-                            <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "#eab308", border: "1px solid rgba(234, 179, 8, 0.3)" }}>
-                              Dry Run
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <p style={{ fontSize: "12px", color: "var(--foreground-muted)", margin: 0 }}>
-                        {new Date(h.createdAt).toLocaleString()}
-                      </p>
-                    </div>
+                    <HistoryItem key={h.id} entry={h} toolColor={toolCustom.color} />
                   ))}
                 </div>
               )}
@@ -654,5 +661,137 @@ export default function EmailerPage() {
         }
       `}</style>
     </ProtectedRoute>
+  );
+}
+
+function HistoryItem({ entry: h, toolColor }: { entry: HistoryEntry; toolColor: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [opens, setOpens] = useState<Record<string, any[]>>({});
+  const [loadingOpens, setLoadingOpens] = useState(false);
+
+  const formatDate = (val: any): string => {
+    if (!val) return "Unknown date";
+    if (val.toDate) return val.toDate().toLocaleString();
+    if (typeof val === "string") return new Date(val).toLocaleString();
+    if (typeof val === "number") return new Date(val).toLocaleString();
+    return "Unknown date";
+  };
+
+  const handleExpand = async () => {
+    const willExpand = !expanded;
+    setExpanded(willExpand);
+
+    if (willExpand && h.recipients?.length && !loadingOpens && Object.keys(opens).length === 0) {
+      // Fetch open tracking data
+      const trackingIds = h.recipients.filter(r => r.trackingId).map(r => r.trackingId).join(",");
+      if (trackingIds) {
+        setLoadingOpens(true);
+        try {
+          const res = await fetch(`/api/t/opens?ids=${trackingIds}`);
+          const data = await res.json();
+          if (data.opens) setOpens(data.opens);
+        } catch (err) {
+          console.error("Failed to fetch opens:", err);
+        }
+        setLoadingOpens(false);
+      }
+    }
+  };
+
+  const glassCard: React.CSSProperties = {
+    padding: "20px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.03)",
+    border: expanded ? `1px solid ${toolColor}40` : "1px solid rgba(255,255,255,0.06)",
+    cursor: "pointer",
+    transition: "border-color 0.2s",
+  };
+
+  return (
+    <div style={glassCard}>
+      <div onClick={handleExpand}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", flexWrap: "wrap", gap: "8px" }}>
+          <div>
+            <p style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", margin: "0 0 4px" }}>{h.subject || "No subject"}</p>
+            <p style={{ fontSize: "13px", color: "var(--foreground-muted)", margin: "0 0 8px" }}>From: {h.sender || "Unknown"}</p>
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: `${toolColor}1a`, color: toolColor, border: `1px solid ${toolColor}4d` }}>
+              {h.recipientCount || h.recipients?.length || 0} recipients
+            </span>
+            {(h.sent != null && h.sent > 0) && (
+              <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981" }}>
+                {h.sent} sent
+              </span>
+            )}
+            {(h.failed != null && h.failed > 0) && (
+              <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                {h.failed} failed
+              </span>
+            )}
+            {h.dryRun && (
+              <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(139,92,246,0.1)", color: "#a78bfa" }}>
+                Dry Run
+              </span>
+            )}
+          </div>
+        </div>
+        <p style={{ fontSize: "12px", color: "var(--foreground-muted)", margin: 0 }}>
+          {formatDate(h.timestamp || h.createdAt)}
+        </p>
+      </div>
+
+      {expanded && h.recipients && h.recipients.length > 0 && (
+        <div style={{ marginTop: "16px", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "16px" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+            <thead>
+              <tr style={{ color: "var(--foreground-muted)", textAlign: "left" }}>
+                <th style={{ padding: "6px 8px", fontWeight: 600 }}>#</th>
+                <th style={{ padding: "6px 8px", fontWeight: 600 }}>Name</th>
+                <th style={{ padding: "6px 8px", fontWeight: 600 }}>Email</th>
+                <th style={{ padding: "6px 8px", fontWeight: 600 }}>Status</th>
+                <th style={{ padding: "6px 8px", fontWeight: 600 }}>Last Opened</th>
+              </tr>
+            </thead>
+            <tbody>
+              {h.recipients.map((r, i) => {
+                const recipientOpens = r.trackingId ? (opens[r.trackingId] || []) : [];
+                const lastOpen = recipientOpens.length > 0 ? recipientOpens[0] : null;
+                return (
+                  <tr key={i} style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                    <td style={{ padding: "8px", color: "var(--foreground-muted)" }}>{i + 1}</td>
+                    <td style={{ padding: "8px", color: "var(--foreground)" }}>{r.name || "—"}</td>
+                    <td style={{ padding: "8px", color: "var(--foreground-muted)" }}>{r.email}</td>
+                    <td style={{ padding: "8px" }}>
+                      <span style={{
+                        fontSize: "11px", padding: "2px 6px", borderRadius: "4px",
+                        backgroundColor: r.status === "SENT" ? "rgba(16,185,129,0.1)" : r.status === "DRY_RUN" ? "rgba(139,92,246,0.1)" : "rgba(239,68,68,0.1)",
+                        color: r.status === "SENT" ? "#10b981" : r.status === "DRY_RUN" ? "#a78bfa" : "#ef4444",
+                      }}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: "8px", color: lastOpen ? "#10b981" : "var(--foreground-muted)", fontSize: "12px" }}>
+                      {loadingOpens ? "..." : lastOpen ? new Date(lastOpen.openedAt).toLocaleString() : "Not opened"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {loadingOpens && (
+            <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginTop: "8px", textAlign: "center" }}>
+              Loading open tracking data...
+            </p>
+          )}
+        </div>
+      )}
+
+      {expanded && (!h.recipients || h.recipients.length === 0) && (
+        <p style={{ fontSize: "13px", color: "var(--foreground-muted)", marginTop: "12px", fontStyle: "italic" }}>
+          No recipient details saved for this batch (sent before tracking was added).
+        </p>
+      )}
+    </div>
   );
 }

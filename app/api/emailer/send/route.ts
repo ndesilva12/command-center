@@ -18,36 +18,37 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Build the config JSON for the Python script
     const config = {
       sender,
       subject,
       body_text: body_text || "",
-      body_html: body_html || `<p>${(body_text || "").replace(/\n\n+/g, "</p><p>").replace(/\n/g, "<br>")}</p>`,
+      body_html: body_html || `<p>${(body_text || "").replace(/\n/g, "</p><p>")}</p>`,
       recipients,
       delay_seconds: 2,
       dry_run: dry_run || false,
     };
 
-    // Escape the JSON for shell
-    const configJson = JSON.stringify(config).replace(/'/g, "'\\''");
+    // Write config to a temp file on the server via the task
+    const configB64 = Buffer.from(JSON.stringify(config)).toString("base64");
+    const subjectSafe = subject.replace(/['"\\]/g, "");
 
-    // Spawn via OpenClaw gateway — runs on the server where Python + tokens exist
-    const task = `Run the emailer script. Steps:
+    const task = `Send emails using the emailer script. Run these commands in order:
 
-1. Refresh Google OAuth tokens:
-exec: bash /home/ubuntu/openclaw/scripts/refresh_all_google_tokens.sh
+1. Refresh tokens:
+bash /home/ubuntu/openclaw/scripts/refresh_all_google_tokens.sh
 
-2. Write config to temp file and run the emailer:
-exec: echo '${configJson}' > /tmp/emailer_config.json && python3 /home/ubuntu/openclaw/skills/emailer/send_emails.py --config /tmp/emailer_config.json
+2. Write config and run emailer:
+echo '${configB64}' | base64 -d > /tmp/emailer_config.json
+python3 /home/ubuntu/openclaw/skills/emailer/send_emails.py --config /tmp/emailer_config.json > /tmp/emailer_output.json 2>&1
+cat /tmp/emailer_output.json
 
-3. Save results to Firestore:
-exec: cd /home/ubuntu/command-center && node scripts/save-to-firestore.js emailer_history '{"sender":"${sender}","subject":"${subject.replace(/'/g, "\\'")}","recipientCount":${recipients.length},"dryRun":${dry_run || false},"timestamp":"${new Date().toISOString()}"}'
+3. Save results to Firestore with full recipient data:
+cd /home/ubuntu/command-center && node scripts/save-emailer-results.js "${sender}" "${subjectSafe}" "${dry_run || false}" /tmp/emailer_output.json
 
 4. Clean up:
-exec: rm -f /tmp/emailer_config.json
+rm -f /tmp/emailer_config.json /tmp/emailer_output.json
 
-Report the output from step 2 — show which emails were sent and which failed.`;
+Show the output from step 2 so the user can see send results.`;
 
     const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
       method: "POST",
