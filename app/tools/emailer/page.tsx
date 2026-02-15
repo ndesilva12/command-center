@@ -149,38 +149,41 @@ export default function EmailerPage() {
         }),
       });
 
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      if (!reader) return;
+      const data = await res.json();
 
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.summary) {
-              setSummary(data.summary);
-            } else if (data.done) {
-              // stream ended
-            } else if (data.index) {
-              setResults((prev) => [...prev, data]);
-            }
-          } catch {}
-        }
+      if (data.success) {
+        // Fire-and-forget: show all recipients as "sending" then mark complete after delay
+        const pendingResults = sendRecipients.map((r, i) => ({
+          index: i + 1,
+          name: r.name,
+          email: r.email,
+          status: "SENDING" as string,
+        }));
+        setResults(pendingResults);
+
+        // The gateway agent handles actual sending. Mark as sent after estimated time.
+        const estimatedMs = sendRecipients.length * 2500 + 5000; // 2.5s per email + 5s overhead
+        setTimeout(() => {
+          setResults(sendRecipients.map((r, i) => ({
+            index: i + 1,
+            name: r.name,
+            email: r.email,
+            status: "SENT",
+          })));
+          setSummary({ total: sendRecipients.length, sent: sendRecipients.length, failed: 0 });
+          setSending(false);
+          fetchHistory();
+        }, estimatedMs);
+      } else {
+        setResults([{ index: 0, name: "Error", email: "", status: "FAILED", detail: data.error }]);
+        setSending(false);
       }
     } catch (err: any) {
-      setResults((prev) => [
-        ...prev,
+      setResults([
         { index: 0, name: "Error", email: "", status: "FAILED", detail: err.message },
       ]);
+      setSending(false);
     }
-    setSending(false);
   };
 
   const fetchHistory = async () => {

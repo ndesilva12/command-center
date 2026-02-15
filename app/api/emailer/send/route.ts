@@ -1,12 +1,10 @@
 import { NextRequest } from "next/server";
-import { spawn, execSync } from "child_process";
-import { writeFileSync, unlinkSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
-import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const OPENCLAW_GATEWAY = "http://3.141.47.151:18789";
+const OPENCLAW_TOKEN = "fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,18 +18,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Refresh tokens
-    try {
-      execSync("bash /home/ubuntu/openclaw/scripts/refresh_all_google_tokens.sh", {
-        timeout: 30000,
-        stdio: "pipe",
-      });
-    } catch (e) {
-      console.error("Token refresh warning:", e);
-    }
-
-    // Write config
-    const configPath = join(tmpdir(), `emailer-${randomUUID()}.json`);
+    // Build the config JSON for the Python script
     const config = {
       sender,
       subject,
@@ -41,86 +28,68 @@ export async function POST(request: NextRequest) {
       delay_seconds: 2,
       dry_run: dry_run || false,
     };
-    writeFileSync(configPath, JSON.stringify(config));
 
-    // Stream SSE
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        const proc = spawn("python3", [
-          "/home/ubuntu/openclaw/skills/emailer/send_emails.py",
-          "--config",
-          configPath,
-        ]);
+    // Escape the JSON for shell
+    const configJson = JSON.stringify(config).replace(/'/g, "'\\''");
 
-        let buffer = "";
+    // Spawn via OpenClaw gateway — runs on the server where Python + tokens exist
+    const task = `Run the emailer script. Steps:
 
-        proc.stdout.on("data", (data: Buffer) => {
-          buffer += data.toString();
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-          for (const line of lines) {
-            if (line.trim()) {
-              controller.enqueue(encoder.encode(`data: ${line}\n\n`));
-            }
-          }
-        });
+1. Refresh Google OAuth tokens:
+exec: bash /home/ubuntu/openclaw/scripts/refresh_all_google_tokens.sh
 
-        proc.stderr.on("data", (data: Buffer) => {
-          console.error("emailer stderr:", data.toString());
-        });
+2. Write config to temp file and run the emailer:
+exec: echo '${configJson}' > /tmp/emailer_config.json && python3 /home/ubuntu/openclaw/skills/emailer/send_emails.py --config /tmp/emailer_config.json
 
-        proc.on("close", async (code) => {
-          // Flush remaining buffer
-          if (buffer.trim()) {
-            controller.enqueue(encoder.encode(`data: ${buffer}\n\n`));
-          }
+3. Save results to Firestore:
+exec: cd /home/ubuntu/command-center && node scripts/save-to-firestore.js emailer_history '{"sender":"${sender}","subject":"${subject.replace(/'/g, "\\'")}","recipientCount":${recipients.length},"dryRun":${dry_run || false},"timestamp":"${new Date().toISOString()}"}'
 
-          // Save to Firestore
-          try {
-            const admin = await import("firebase-admin");
-            if (!admin.apps.length) {
-              const serviceAccount = JSON.parse(
-                require("fs").readFileSync("/home/ubuntu/.config/firebase/service-account.json", "utf8")
-              );
-              admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-            }
-            const db = admin.firestore();
-            await db.collection("emailer_history").add({
-              sender,
-              subject,
-              recipientCount: recipients.length,
-              dryRun: dry_run || false,
-              timestamp: admin.firestore.FieldValue.serverTimestamp(),
-              createdAt: new Date().toISOString(),
-            });
-          } catch (err) {
-            console.error("Failed to save emailer history:", err);
-          }
+4. Clean up:
+exec: rm -f /tmp/emailer_config.json
 
-          // Cleanup
-          try { unlinkSync(configPath); } catch {}
+Report the output from step 2 — show which emails were sent and which failed.`;
 
-          controller.enqueue(encoder.encode(`data: {"done": true, "exitCode": ${code}}\n\n`));
-          controller.close();
-        });
-
-        proc.on("error", (err) => {
-          controller.enqueue(
-            encoder.encode(`data: {"error": "${err.message}"}\n\n`)
-          );
-          controller.close();
-        });
-      },
-    });
-
-    return new Response(stream, {
+    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
+      method: "POST",
       headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        Authorization: `Bearer ${OPENCLAW_TOKEN}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        tool: "sessions_spawn",
+        args: {
+          task,
+          label: `emailer-${Date.now()}`,
+          cleanup: "keep",
+          runTimeoutSeconds: 120,
+        },
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gateway error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const spawnResult = data?.result?.details || data?.result;
+
+    if (spawnResult?.status === "accepted") {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          runId: spawnResult.runId,
+          message: `Sending ${recipients.length} emails via ${sender}. Check history for results.`,
+          recipientCount: recipients.length,
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ error: "Failed to start email send", details: data }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
