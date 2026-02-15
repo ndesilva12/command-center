@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { FileText, Download, Loader2, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 interface Summary {
   id: string;
@@ -271,7 +272,7 @@ export default function SummarizerPage() {
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px" }}>
                             <div style={{ flex: 1 }}>
                               <h3 style={{ fontSize: "15px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
-                                {summary.title || summary.url}
+                                {summary.title || summary.url || "Untitled Summary"}
                               </h3>
                               {summary.url && summary.title && (
                                 <p style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -320,17 +321,22 @@ export default function SummarizerPage() {
                           </div>
                         </div>
 
-                        {isExpanded && summary.content && (
+                        {isExpanded && (
                           <div style={{
                             marginTop: "16px", padding: "16px", borderRadius: "8px",
                             backgroundColor: "rgba(255, 255, 255, 0.02)", border: "1px solid rgba(255, 255, 255, 0.05)",
                             maxHeight: "400px", overflowY: "auto",
                           }}>
+                            {summary.content && (
+                              <div style={{ marginBottom: "12px" }}>
+                                <ExportPDFButton title={`Summary: ${summary.title || summary.url || "Untitled"}`} />
+                              </div>
+                            )}
                             <pre style={{
                               fontSize: "13px", lineHeight: 1.6, color: "var(--foreground-muted)",
                               whiteSpace: "pre-wrap", wordWrap: "break-word", margin: 0, fontFamily: "inherit",
                             }}>
-                              {summary.content}
+                              {summary.content || (summary.status === 'processing' ? 'Processing... check back shortly.' : 'No content available.')}
                             </pre>
                           </div>
                         )}

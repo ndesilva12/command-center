@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 export default function BusinessPage() {
   const { getCustomization } = useToolCustomizations();
@@ -113,11 +114,14 @@ export default function BusinessPage() {
   const renderResult = (data: any) => (
     <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-        <div>
-          <h3 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "4px" }}>
-            🏢 {data.businessName}
-          </h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "4px" }}>
+            <h3 style={{ fontSize: "20px", fontWeight: 700, margin: 0 }}>
+              🏢 {data.businessName}
+            </h3>
+            <ExportPDFButton title={`Business Intel: ${data.businessName}`} />
+          </div>
           <p style={{ color: "var(--muted)", fontSize: "14px" }}>📍 {data.location}</p>
         </div>
         {data.confidenceScore != null && (
@@ -454,9 +458,9 @@ export default function BusinessPage() {
                       onMouseEnter={(e) => e.currentTarget.style.borderColor = "#6366f1"}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
-                      <div style={{ fontWeight: 600, fontSize: "14px" }}>🏢 {item.businessName}</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px" }}>🏢 {item.businessName || "Untitled Business"}</div>
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                        📍 {item.location} • {new Date(item.timestamp).toLocaleString()}
+                        {item.location ? `📍 ${item.location} • ` : ""}{item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"}
                         {item.confidenceScore != null && ` • Confidence: ${item.confidenceScore}%`}
                       </div>
                       {item.summary && (

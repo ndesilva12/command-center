@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 export default function L3DPage() {
   const { getCustomization } = useToolCustomizations();
@@ -217,9 +218,12 @@ export default function L3DPage() {
           {/* Result */}
           {result && (
             <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <h3 style={{ marginBottom: "8px", fontSize: "18px", fontWeight: 700 }}>
-                {result.topic}
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
+                  {result.topic}
+                </h3>
+                <ExportPDFButton title={`L3D: ${result.topic}`} />
+              </div>
               <p style={{ marginBottom: "24px", fontSize: "13px", color: "var(--muted)" }}>
                 Last {result.days} days • {result.total_items || 0} items
               </p>
@@ -368,10 +372,10 @@ export default function L3DPage() {
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>
-                        {item.query || item.topic}
+                        {item.query || item.topic || "Untitled Research"}
                       </div>
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                        {new Date(item.timestamp).toLocaleString()} • Last {item.days} days
+                        {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"} • Last {item.days || "?"} days
                       </div>
                     </div>
                   ))}

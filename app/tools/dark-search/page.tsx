@@ -10,6 +10,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Eye, Search, ExternalLink, ChevronDown, ChevronUp, Clock, AlertTriangle } from "lucide-react";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 interface DarkSearchReport {
   topic: string;
@@ -308,9 +309,10 @@ function DarkSearchContent() {
             ) : (
               <>
                 {filteredHistory.map((item) => {
-                  const topic = item.results?.topic || item.query || "Unknown";
-                  const summary = item.results?.summary || "";
-                  const ts = item.timestamp || item.results?.timestamp;
+                  const topic = item.query || item.results?.topic || item.topic || "Untitled Search";
+                  const summary = item.results?.summary || item.summary || item.preview || "";
+                  const ts = item.timestamp || item.results?.timestamp || item.completed_at;
+                  const itemMode = item.mode || item.results?.mode;
                   return (
                     <div
                       key={item.id}
@@ -335,8 +337,8 @@ function DarkSearchContent() {
                         </p>
                       )}
                       <div style={{ fontSize: "12px", color: "#64748b" }}>
-                        {ts ? new Date(typeof ts === 'number' ? ts : ts).toLocaleString() : ""}
-                        {item.mode && ` • ${item.mode}`}
+                        {ts ? new Date(typeof ts === 'number' ? ts : ts).toLocaleString() : "Unknown date"}
+                        {itemMode && ` • ${itemMode}`}
                       </div>
                     </div>
                   );
@@ -379,9 +381,10 @@ function ReportDisplay({ report, isMobile, expandedSections, toggleSection, sect
         border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "16px",
         padding: isMobile ? "20px" : "24px", marginBottom: "24px",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
           <Eye size={24} style={{ color: "#ef4444" }} />
-          <h2 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: "bold", color: "white", margin: 0 }}>{report.topic}</h2>
+          <h2 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: "bold", color: "white", margin: 0, flex: 1 }}>{report.topic}</h2>
+          <ExportPDFButton title={`Dark Search: ${report.topic}`} />
         </div>
         <div style={{ fontSize: isMobile ? "13px" : "14px", color: "#cbd5e1", lineHeight: "1.7", whiteSpace: "pre-wrap" }}>{report.summary}</div>
         {report.timestamp && (
@@ -393,7 +396,7 @@ function ReportDisplay({ report, isMobile, expandedSections, toggleSection, sect
       </div>
 
       {/* Sections */}
-      {report.sections?.map((section, idx) => {
+      {report.sections?.filter(s => s.content && s.content.trim()).map((section, idx) => {
         const color = sectionColors[idx % sectionColors.length];
         const isExpanded = expandedSections.has(idx);
         return (

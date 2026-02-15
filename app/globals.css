@@ -193,3 +193,15 @@ a {
   border-color: rgba(139, 92, 246, 0.35);
   color: rgba(139, 92, 246, 0.9);
 }
+
+@media print {
+  .tool-nav-container, nav, .bottom-nav, button, input, select, textarea,
+  .tool-nav-button, .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  * { color: black !important; background: white !important; border-color: #ddd !important; box-shadow: none !important; }
+  main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+  a { text-decoration: underline !important; }
+  a[href]::after { content: " (" attr(href) ")"; font-size: 10px; color: #666 !important; }
+  a[href^="#"]::after, a[href^="javascript"]::after { content: ""; }
+  .print-expand { display: block !important; max-height: none !important; overflow: visible !important; }
+}

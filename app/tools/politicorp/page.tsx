@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 function PoliticalCompass({ economicScore, governmentScore }: { economicScore: number; governmentScore: number }) {
   const cx = 150 + (economicScore / 100) * 130;
@@ -259,7 +260,10 @@ export default function PoliticorpPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Compass + Overview */}
               <div className="glass card" style={{ padding: "24px" }}>
-                <h3 style={{ fontSize: "22px", fontWeight: 700, marginBottom: "4px" }}>{result.companyName}</h3>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "4px" }}>
+                  <h3 style={{ fontSize: "22px", fontWeight: 700, margin: 0 }}>{result.companyName}</h3>
+                  <ExportPDFButton title={`Politicorp: ${result.companyName}`} />
+                </div>
                 {result.ticker && <span style={{ color: "var(--muted)", fontSize: "13px" }}>{result.ticker} • </span>}
                 <span style={{ color: "var(--muted)", fontSize: "13px" }}>{result.industry}</span>
                 <p style={{ marginTop: "8px", marginBottom: "16px", fontSize: "14px", color: "var(--muted)" }}>{result.description}</p>
@@ -452,7 +456,7 @@ export default function PoliticorpPage() {
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.companyName}</div>
+                        <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.companyName || "Untitled Company"}</div>
                         {item.overallLeaning && (
                           <span style={{ fontSize: "12px", padding: "2px 8px", borderRadius: "10px", background: "rgba(255,255,255,0.1)" }}>
                             {item.overallLeaning}
@@ -460,7 +464,7 @@ export default function PoliticorpPage() {
                         )}
                       </div>
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                        {new Date(item.timestamp).toLocaleString()} • Confidence: {item.confidenceScore}%
+                        {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"} {item.confidenceScore != null ? `• Confidence: ${item.confidenceScore}%` : ""}
                       </div>
                     </div>
                   ))}

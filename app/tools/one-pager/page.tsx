@@ -7,6 +7,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 export default function OnePagerPage() {
   const [topic, setTopic] = useState("");
@@ -170,9 +171,12 @@ export default function OnePagerPage() {
           {/* Result */}
           {result && (
             <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <h3 style={{ marginBottom: "20px", fontSize: "18px", fontWeight: 700 }}>
-                {result.topic}
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
+                  {result.topic}
+                </h3>
+                <ExportPDFButton title={`One-Pager: ${result.topic}`} />
+              </div>
               
               {/* Executive Summary */}
               <div style={{ marginBottom: "24px", padding: "16px", background: "var(--glass-bg)", borderRadius: "8px" }}>
@@ -308,9 +312,9 @@ export default function OnePagerPage() {
                       onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
-                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic}</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic || "Untitled One-Pager"}</div>
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                        {new Date(item.timestamp).toLocaleString()}
+                        {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"}
                       </div>
                     </div>
                   ))}

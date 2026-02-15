@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 export default function WhitePapersPage() {
   const { getCustomization } = useToolCustomizations();
@@ -173,9 +174,12 @@ export default function WhitePapersPage() {
           {/* Results */}
           {result && (
             <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <h3 style={{ marginBottom: "20px", fontSize: "18px", fontWeight: 700 }}>
-                Results: {result.topic}
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
+                  Results: {result.topic}
+                </h3>
+                <ExportPDFButton title={`White Papers: ${result.topic}`} />
+              </div>
               
               {/* Worldview-Aligned */}
               <h4 style={{ marginBottom: "12px", fontSize: "16px", fontWeight: 600, color: "#00aaff" }}>
@@ -264,9 +268,9 @@ export default function WhitePapersPage() {
                       onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
-                      <div style={{ fontWeight: 600 }}>{item.topic}</div>
+                      <div style={{ fontWeight: 600 }}>{item.topic || "Untitled"}</div>
                       <div style={{ fontSize: "12px", color: "var(--muted)" }}>
-                        {new Date(item.timestamp).toLocaleString()} • {item.total} papers
+                        {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"} • {item.total || 0} papers
                       </div>
                     </div>
                   ))}

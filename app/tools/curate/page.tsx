@@ -8,6 +8,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 export default function CuratePage() {
   const { getCustomization } = useToolCustomizations();
@@ -262,9 +263,12 @@ export default function CuratePage() {
           {/* Result */}
           {result && result.items && (
             <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <h3 style={{ marginBottom: "20px", fontSize: "18px", fontWeight: 700 }}>
-                {result.topic}
-              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
+                  {result.topic}
+                </h3>
+                <ExportPDFButton title={`Curate: ${result.topic}`} />
+              </div>
               
               {/* Diversity Stats */}
               {result.diversity && (
@@ -409,9 +413,9 @@ export default function CuratePage() {
                       onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
-                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic}</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic || "Untitled Curation"}</div>
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                        {new Date(item.timestamp).toLocaleString()} • {item.total || item.items?.length || 0} items
+                        {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"} • {item.total || item.items?.length || 0} items
                       </div>
                     </div>
                   ))}

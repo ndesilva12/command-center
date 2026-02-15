@@ -10,6 +10,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Radar, Search, ExternalLink, ChevronDown, ChevronUp, Clock, Lightbulb } from "lucide-react";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
 interface DeepSearchReport {
   topic: string;
@@ -326,6 +327,7 @@ function DeepSearchContent() {
                 alignItems: "center", 
                 gap: "12px",
                 marginBottom: "12px",
+                flexWrap: "wrap",
               }}>
                 <Radar size={24} style={{ color: "#6366f1" }} />
                 <h2 style={{
@@ -333,9 +335,11 @@ function DeepSearchContent() {
                   fontWeight: "bold",
                   color: "white",
                   margin: 0,
+                  flex: 1,
                 }}>
                   {report.topic}
                 </h2>
+                <ExportPDFButton title={`Deep Search: ${report.topic}`} />
               </div>
               <div style={{ 
                 fontSize: isMobile ? "13px" : "14px", 
@@ -399,7 +403,7 @@ function DeepSearchContent() {
             {/* Main Sections */}
             {report.sections && report.sections.length > 0 && (
               <div style={{ marginBottom: "24px" }}>
-                {report.sections.map((section, idx) => {
+                {report.sections.filter(s => s.content && s.content.trim()).map((section, idx) => {
                   const sectionColor = sectionColors[idx % sectionColors.length];
                   const isExpanded = expandedSections.has(idx);
 
@@ -718,14 +722,14 @@ function DeepSearchContent() {
                     onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                   >
                     <div style={{ fontWeight: 600, fontSize: "14px", color: "white" }}>
-                      {item.topic || item.query || "Untitled"}
+                      {item.topic || item.results?.topic || item.query || "Untitled Search"}
                     </div>
                     <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>
                       {item.timestamp?.seconds
                         ? new Date(item.timestamp.seconds * 1000).toLocaleString()
                         : item.timestamp
                           ? new Date(item.timestamp).toLocaleString()
-                          : ""
+                          : "Unknown date"
                       }
                       {item.status && ` • ${item.status}`}
                     </div>
