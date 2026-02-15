@@ -48,6 +48,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'politicorp', name: 'Politicorp', href: '/tools/politicorp', description: 'Corporate political analysis and compass' },
   { id: 'cinderella', name: 'Cinderella Project', href: '/tools/cinderella', description: 'PE-backed NCAA basketball acquisition tracker' },
   { id: 'summarizer', name: 'Summarizer', href: '/tools/summarizer', description: 'Condense any content into custom-length summaries' },
+  { id: 'business', name: 'Business Intel', href: '/tools/business', description: 'Private business intelligence and public records' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];

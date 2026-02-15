@@ -74,6 +74,7 @@ const ICON_MAP: Record<string, any> = {
   "white-papers": FileText,
   "one-pager": FileText,
   "cinderella": BarChart3,
+  "business": Building2,
 };
 
 interface ToolCustomization {
@@ -126,6 +127,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "white-papers": "#6366f1",
   "one-pager": "#7c3aed",
   "cinderella": "#ef4444",
+  "business": "#6366f1",
 };
 
 // Build DEFAULT_TOOLS from tool-categories.ts

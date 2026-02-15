@@ -281,7 +281,9 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
     // Save to Firestore
     try {
       await adminDb.collection('deep_search_history').add({
+        topic: query.trim(),
         query: query.trim(),
+        pageTarget,
         status: 'completed',
         timestamp: Timestamp.now(),
         completed_at: Timestamp.now(),
@@ -290,6 +292,22 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
       });
     } catch (saveError) {
       console.error('Failed to save to history:', saveError);
+    }
+
+    // Save to jimmy_deliverables
+    try {
+      await adminDb.collection('jimmy_deliverables').add({
+        title: `Deep Search: ${query.trim()}`,
+        date: new Date().toISOString(),
+        status: 'completed',
+        preview: (fullReport.briefOverview || '').slice(0, 200),
+        content: `# Deep Search: ${query.trim()}\n\n${fullReport.briefOverview}\n\n${fullReport.sections.map(s => `## ${s.title}\n\n${s.content}`).join('\n\n')}`,
+        createdBy: 'cc_jimmy_command',
+        commandText: `deep-search ${query.trim()}`,
+        timestamp: Timestamp.now(),
+      });
+    } catch (saveError) {
+      console.error('Failed to save to jimmy_deliverables:', saveError);
     }
 
     return NextResponse.json({ report: fullReport });
