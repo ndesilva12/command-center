@@ -121,16 +121,22 @@ a {
   top: 64px;
   left: 0;
   right: 0;
-  height: 56px;
+  min-height: 56px;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 16px;
+  padding: 8px 16px;
   z-index: 40;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+}
+
+.tool-nav-container.tool-nav-wrap {
+  flex-wrap: wrap;
+  overflow-x: visible;
 }
 
 .tool-nav-button {
@@ -174,4 +180,16 @@ a {
   box-shadow: 
     0 6px 20px rgba(0, 170, 255, 0.2),
     0 0 0 1px rgba(0, 170, 255, 0.15);
+}
+
+.tool-nav-button.tool-nav-category-switch {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+  color: rgba(139, 92, 246, 0.7);
+}
+
+.tool-nav-button.tool-nav-category-switch:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: rgba(139, 92, 246, 0.9);
 }
