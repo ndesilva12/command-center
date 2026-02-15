@@ -116,7 +116,7 @@ export default function ContactsPage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Users style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <Users style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
             {!loading && !error && (
               <span style={{ fontSize: "14px", color: "var(--foreground-muted)", marginLeft: "4px" }}>
@@ -136,7 +136,7 @@ export default function ContactsPage() {
                   padding: "8px",
                   borderRadius: "6px",
                   backgroundColor: viewMode === "grid" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                  color: viewMode === "grid" ? "#00aaff" : "var(--foreground-muted)",
+                  color: viewMode === "grid" ? toolCustom.color : "var(--foreground-muted)",
                   border: "none",
                   cursor: "pointer",
                   transition: "all 0.15s",
@@ -153,7 +153,7 @@ export default function ContactsPage() {
                   padding: "8px",
                   borderRadius: "6px",
                   backgroundColor: viewMode === "list" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                  color: viewMode === "list" ? "#00aaff" : "var(--foreground-muted)",
+                  color: viewMode === "list" ? toolCustom.color : "var(--foreground-muted)",
                   border: "none",
                   cursor: "pointer",
                   transition: "all 0.15s",
@@ -182,7 +182,7 @@ export default function ContactsPage() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                e.currentTarget.style.color = "#00aaff";
+                e.currentTarget.style.color = toolCustom.color;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
@@ -212,7 +212,7 @@ export default function ContactsPage() {
               onMouseEnter={(e) => {
                 if (!loading && !refreshing) {
                   e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                  e.currentTarget.style.color = "#00aaff";
+                  e.currentTarget.style.color = toolCustom.color;
                 }
               }}
               onMouseLeave={(e) => {
@@ -276,7 +276,7 @@ export default function ContactsPage() {
               style={{
                 width: "32px",
                 height: "32px",
-                color: "#00aaff",
+                color: toolCustom.color,
                 margin: "0 auto 16px",
                 animation: "spin 1s linear infinite"
               }}
@@ -309,7 +309,7 @@ export default function ContactsPage() {
             padding: "60px 20px",
             textAlign: "center"
           }}>
-            <Users style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+            <Users style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
             <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
               No contacts found
             </h2>
@@ -365,7 +365,7 @@ export default function ContactsPage() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "#00aaff",
+                      color: toolCustom.color,
                       fontSize: "20px",
                       fontWeight: 600,
                       border: "2px solid rgba(0, 170, 255, 0.3)"
@@ -402,7 +402,7 @@ export default function ContactsPage() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {contact.email && (
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <Mail style={{ width: "14px", height: "14px", color: "#00aaff", flexShrink: 0 }} />
+                      <Mail style={{ width: "14px", height: "14px", color: toolCustom.color, flexShrink: 0 }} />
                       <a
                         href={`mailto:${contact.email}`}
                         style={{
@@ -414,7 +414,7 @@ export default function ContactsPage() {
                           whiteSpace: "nowrap"
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "#00aaff";
+                          e.currentTarget.style.color = toolCustom.color;
                           e.currentTarget.style.textDecoration = "underline";
                         }}
                         onMouseLeave={(e) => {
@@ -428,7 +428,7 @@ export default function ContactsPage() {
                   )}
                   {contact.phone && (
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <Phone style={{ width: "14px", height: "14px", color: "#00aaff", flexShrink: 0 }} />
+                      <Phone style={{ width: "14px", height: "14px", color: toolCustom.color, flexShrink: 0 }} />
                       <a
                         href={`tel:${contact.phone}`}
                         style={{
@@ -437,7 +437,7 @@ export default function ContactsPage() {
                           textDecoration: "none"
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "#00aaff";
+                          e.currentTarget.style.color = toolCustom.color;
                           e.currentTarget.style.textDecoration = "underline";
                         }}
                         onMouseLeave={(e) => {
@@ -513,7 +513,7 @@ export default function ContactsPage() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#00aaff",
+                    color: toolCustom.color,
                     fontSize: "16px",
                     fontWeight: 600,
                     border: "2px solid rgba(0, 170, 255, 0.3)",
@@ -551,7 +551,7 @@ export default function ContactsPage() {
                 <div style={{ flex: "1 1 auto", display: "flex", alignItems: "center", gap: "24px", fontSize: "13px" }}>
                   {contact.email && (
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
-                      <Mail style={{ width: "14px", height: "14px", color: "#00aaff", flexShrink: 0 }} />
+                      <Mail style={{ width: "14px", height: "14px", color: toolCustom.color, flexShrink: 0 }} />
                       <a
                         href={`mailto:${contact.email}`}
                         style={{
@@ -562,7 +562,7 @@ export default function ContactsPage() {
                           whiteSpace: "nowrap"
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "#00aaff";
+                          e.currentTarget.style.color = toolCustom.color;
                           e.currentTarget.style.textDecoration = "underline";
                         }}
                         onMouseLeave={(e) => {
@@ -576,7 +576,7 @@ export default function ContactsPage() {
                   )}
                   {contact.phone && (
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Phone style={{ width: "14px", height: "14px", color: "#00aaff", flexShrink: 0 }} />
+                      <Phone style={{ width: "14px", height: "14px", color: toolCustom.color, flexShrink: 0 }} />
                       <a
                         href={`tel:${contact.phone}`}
                         style={{
@@ -584,7 +584,7 @@ export default function ContactsPage() {
                           textDecoration: "none"
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.color = "#00aaff";
+                          e.currentTarget.style.color = toolCustom.color;
                           e.currentTarget.style.textDecoration = "underline";
                         }}
                         onMouseLeave={(e) => {

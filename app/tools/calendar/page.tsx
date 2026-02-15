@@ -234,7 +234,7 @@ export default function CalendarPage() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.25)")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0, 170, 255, 0.15)")}
                     >
-                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#00aaff", marginBottom: "2px" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: toolCustom.color, marginBottom: "2px" }}>
                         {event.summary}
                       </div>
                       {event.location && (
@@ -288,7 +288,7 @@ export default function CalendarPage() {
                   fontSize: "13px",
                   fontWeight: 600,
                   marginBottom: "8px",
-                  color: isToday ? "#00aaff" : "var(--foreground)",
+                  color: isToday ? toolCustom.color : "var(--foreground)",
                   flexShrink: 0,
                 }}
               >
@@ -307,7 +307,7 @@ export default function CalendarPage() {
                       borderRadius: "4px",
                       fontSize: "11px",
                       fontWeight: 500,
-                      color: "#00aaff",
+                      color: toolCustom.color,
                       cursor: "pointer",
                       transition: "all 0.15s",
                       overflow: "hidden",
@@ -390,7 +390,7 @@ export default function CalendarPage() {
                     fontSize: "13px",
                     fontWeight: 600,
                     marginBottom: "6px",
-                    color: isToday ? "#00aaff" : "var(--foreground)",
+                    color: isToday ? toolCustom.color : "var(--foreground)",
                     flexShrink: 0,
                   }}
                 >
@@ -408,7 +408,7 @@ export default function CalendarPage() {
                         borderRadius: "3px",
                         fontSize: "10px",
                         fontWeight: 500,
-                        color: "#00aaff",
+                        color: toolCustom.color,
                         cursor: "pointer",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -455,7 +455,7 @@ export default function CalendarPage() {
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <CalendarIcon style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <CalendarIcon style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
               Calendar {events.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({events.length})</span>}
             </h1>
@@ -518,7 +518,7 @@ export default function CalendarPage() {
                   padding: "8px 14px",
                   borderRadius: "8px",
                   backgroundColor: timeRange === range ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                  color: timeRange === range ? "#00aaff" : "var(--foreground-muted)",
+                  color: timeRange === range ? toolCustom.color : "var(--foreground-muted)",
                   border: timeRange === range ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
                   cursor: "pointer",
                   fontSize: "13px",
@@ -544,7 +544,7 @@ export default function CalendarPage() {
                 padding: "6px 12px",
                 borderRadius: "6px",
                 backgroundColor: viewMode === "event" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === "event" ? "#00aaff" : "var(--foreground-muted)",
+                color: viewMode === "event" ? toolCustom.color : "var(--foreground-muted)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -565,7 +565,7 @@ export default function CalendarPage() {
                 padding: "6px 12px",
                 borderRadius: "6px",
                 backgroundColor: viewMode === "full" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === "full" ? "#00aaff" : "var(--foreground-muted)",
+                color: viewMode === "full" ? toolCustom.color : "var(--foreground-muted)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -583,7 +583,7 @@ export default function CalendarPage() {
         <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
           {loading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+              <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           ) : error ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
@@ -611,7 +611,7 @@ export default function CalendarPage() {
             </div>
           ) : events.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <CalendarIcon style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+              <CalendarIcon style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
               <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
               <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
                 No events scheduled for the selected time range
@@ -765,7 +765,7 @@ export default function CalendarPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Time */}
               <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
-                <Clock style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                <Clock style={{ width: "20px", height: "20px", color: toolCustom.color, flexShrink: 0, marginTop: "2px" }} />
                 <div>
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
                     Time
@@ -779,7 +779,7 @@ export default function CalendarPage() {
               {/* Location */}
               {selectedEvent.location && (
                 <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
-                  <MapPin style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                  <MapPin style={{ width: "20px", height: "20px", color: toolCustom.color, flexShrink: 0, marginTop: "2px" }} />
                   <div>
                     <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
                       Location
@@ -794,7 +794,7 @@ export default function CalendarPage() {
               {/* Description */}
               {selectedEvent.description && (
                 <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
-                  <FileText style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                  <FileText style={{ width: "20px", height: "20px", color: toolCustom.color, flexShrink: 0, marginTop: "2px" }} />
                   <div>
                     <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
                       Description
@@ -809,7 +809,7 @@ export default function CalendarPage() {
               {/* Attendees */}
               {selectedEvent.attendees && selectedEvent.attendees.length > 0 && (
                 <div style={{ display: "flex", alignItems: "start", gap: "12px" }}>
-                  <Users style={{ width: "20px", height: "20px", color: "#00aaff", flexShrink: 0, marginTop: "2px" }} />
+                  <Users style={{ width: "20px", height: "20px", color: toolCustom.color, flexShrink: 0, marginTop: "2px" }} />
                   <div>
                     <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
                       Attendees

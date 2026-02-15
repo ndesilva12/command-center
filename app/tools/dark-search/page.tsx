@@ -140,7 +140,7 @@ function DarkSearchContent() {
     setExpandedSections(newExpanded);
   };
 
-  const sectionColors = ["#ef4444", "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#dc2626"];
+  const sectionColors = [toolCustom.color, "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#dc2626"];
 
   return (
     <>
@@ -160,7 +160,7 @@ function DarkSearchContent() {
       }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: isMobile ? "12px" : "16px" }}>
-          <Eye size={isMobile ? 32 : 40} style={{ color: "#ef4444" }} />
+          <Eye size={isMobile ? 32 : 40} style={{ color: toolCustom.color }} />
           <div>
             <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: "bold", color: "white", margin: 0 }}>
               {toolCustom.name}
@@ -182,7 +182,7 @@ function DarkSearchContent() {
                 borderRadius: "8px",
                 border: activeTab === tab ? "1px solid rgba(239, 68, 68, 0.5)" : "1px solid rgba(148, 163, 184, 0.2)",
                 background: activeTab === tab ? "rgba(239, 68, 68, 0.15)" : "rgba(30, 41, 59, 0.6)",
-                color: activeTab === tab ? "#ef4444" : "#94a3b8",
+                color: activeTab === tab ? toolCustom.color : "#94a3b8",
                 fontSize: "14px",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -203,7 +203,7 @@ function DarkSearchContent() {
               background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)",
               borderRadius: "8px", marginBottom: isMobile ? "16px" : "20px",
             }}>
-              <AlertTriangle size={18} style={{ color: "#ef4444", marginTop: "2px", flexShrink: 0 }} />
+              <AlertTriangle size={18} style={{ color: toolCustom.color, marginTop: "2px", flexShrink: 0 }} />
               <p style={{ fontSize: isMobile ? "12px" : "13px", color: "#fca5a5", margin: 0, lineHeight: "1.5" }}>
                 This tool explores alternative perspectives, conspiracy theories, and fringe viewpoints. Results may include controversial or unverified claims. Think critically.
               </p>
@@ -283,7 +283,7 @@ function DarkSearchContent() {
             )}
 
             {/* Results */}
-            {report && !loading && <ReportDisplay report={report} isMobile={isMobile} expandedSections={expandedSections} toggleSection={toggleSection} sectionColors={sectionColors} />}
+            {report && !loading && <ReportDisplay report={report} isMobile={isMobile} expandedSections={expandedSections} toggleSection={toggleSection} sectionColors={sectionColors} accentColor={toolCustom.color} />}
           </>
         )}
 
@@ -350,7 +350,7 @@ function DarkSearchContent() {
                     style={{
                       width: "100%", padding: "12px", marginTop: "8px", borderRadius: "8px",
                       border: "1px solid rgba(239, 68, 68, 0.3)", background: "transparent",
-                      color: "#ef4444", fontSize: "14px", fontWeight: 600, cursor: "pointer",
+                      color: toolCustom.color, fontSize: "14px", fontWeight: 600, cursor: "pointer",
                     }}
                   >
                     Show More
@@ -369,9 +369,9 @@ function DarkSearchContent() {
   );
 }
 
-function ReportDisplay({ report, isMobile, expandedSections, toggleSection, sectionColors }: {
+function ReportDisplay({ report, isMobile, expandedSections, toggleSection, sectionColors, accentColor }: {
   report: DarkSearchReport; isMobile: boolean; expandedSections: Set<number>;
-  toggleSection: (i: number) => void; sectionColors: string[];
+  toggleSection: (i: number) => void; sectionColors: string[]; accentColor: string;
 }) {
   return (
     <div>
@@ -382,7 +382,7 @@ function ReportDisplay({ report, isMobile, expandedSections, toggleSection, sect
         padding: isMobile ? "20px" : "24px", marginBottom: "24px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
-          <Eye size={24} style={{ color: "#ef4444" }} />
+          <Eye size={24} style={{ color: accentColor }} />
           <h2 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: "bold", color: "white", margin: 0, flex: 1 }}>{report.topic}</h2>
           <ExportPDFButton title={`Dark Search: ${report.topic}`} />
         </div>

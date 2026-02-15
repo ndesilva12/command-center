@@ -8,8 +8,11 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 export default function OnePagerPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('one-pager', 'One-Pager', '#7c3aed');
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -118,7 +121,7 @@ export default function OnePagerPage() {
       <div style={{ paddingTop: "144px", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
         <TopNav />
         <ToolNav currentToolId="one-pager" />
-      <ToolBackground color="#7c3aed" />
+      <ToolBackground color={toolCustom.color} />
         
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
           {/* Input Form */}
@@ -180,7 +183,7 @@ export default function OnePagerPage() {
               
               {/* Executive Summary */}
               <div style={{ marginBottom: "24px", padding: "16px", background: "var(--glass-bg)", borderRadius: "8px" }}>
-                <h4 style={{ marginBottom: "8px", fontSize: "14px", fontWeight: 600, color: "#00aaff" }}>
+                <h4 style={{ marginBottom: "8px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
                   📋 EXECUTIVE SUMMARY
                 </h4>
                 <p style={{ fontSize: "15px", lineHeight: 1.7 }}>{result.executive_summary}</p>
@@ -189,7 +192,7 @@ export default function OnePagerPage() {
               {/* Key Data */}
               {result.key_data && result.key_data.length > 0 && (
                 <div style={{ marginBottom: "24px" }}>
-                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: "#00aaff" }}>
+                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
                     📊 KEY DATA
                   </h4>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -208,7 +211,7 @@ export default function OnePagerPage() {
               {/* Visual Concept */}
               {result.visual_concept && (
                 <div style={{ marginBottom: "24px", padding: "16px", background: "var(--glass-bg)", borderRadius: "8px" }}>
-                  <h4 style={{ marginBottom: "8px", fontSize: "14px", fontWeight: 600, color: "#00aaff" }}>
+                  <h4 style={{ marginBottom: "8px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
                     📈 VISUAL CONCEPT
                   </h4>
                   <p style={{ fontSize: "13px", fontStyle: "italic", color: "var(--muted)" }}>{result.visual_concept}</p>
@@ -218,7 +221,7 @@ export default function OnePagerPage() {
               {/* Key Points */}
               {result.key_points && result.key_points.length > 0 && (
                 <div style={{ marginBottom: "24px" }}>
-                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: "#00aaff" }}>
+                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
                     🎯 KEY POINTS
                   </h4>
                   <ul style={{ paddingLeft: "20px" }}>
@@ -232,7 +235,7 @@ export default function OnePagerPage() {
               {/* Context */}
               {result.context && (
                 <div style={{ marginBottom: "24px" }}>
-                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: "#00aaff" }}>
+                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
                     🔍 CONTEXT & IMPLICATIONS
                   </h4>
                   <p style={{ fontSize: "14px", lineHeight: 1.7 }}>{result.context}</p>
@@ -242,7 +245,7 @@ export default function OnePagerPage() {
               {/* Further Reading */}
               {result.further_reading && result.further_reading.length > 0 && (
                 <div>
-                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: "#00aaff" }}>
+                  <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
                     📚 FURTHER READING
                   </h4>
                   {result.further_reading.map((link: any, i: number) => (
@@ -251,7 +254,7 @@ export default function OnePagerPage() {
                         {link.title}
                       </div>
                       <a href={link.url} target="_blank" rel="noopener noreferrer" 
-                         style={{ color: "#00aaff", fontSize: "12px", wordBreak: "break-all" }}>
+                         style={{ color: toolCustom.color, fontSize: "12px", wordBreak: "break-all" }}>
                         {link.url}
                       </a>
                       {link.source && (
@@ -309,7 +312,7 @@ export default function OnePagerPage() {
                         cursor: "pointer",
                         border: "1px solid transparent"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic || "Untitled One-Pager"}</div>
@@ -330,7 +333,7 @@ export default function OnePagerPage() {
                         borderRadius: "6px",
                         border: "1px solid var(--glass-border)",
                         background: "transparent",
-                        color: "#00aaff",
+                        color: toolCustom.color,
                         fontSize: "14px",
                         fontWeight: 600,
                         cursor: "pointer"

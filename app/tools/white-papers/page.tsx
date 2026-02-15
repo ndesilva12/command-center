@@ -182,7 +182,7 @@ export default function WhitePapersPage() {
               </div>
               
               {/* Worldview-Aligned */}
-              <h4 style={{ marginBottom: "12px", fontSize: "16px", fontWeight: 600, color: "#00aaff" }}>
+              <h4 style={{ marginBottom: "12px", fontSize: "16px", fontWeight: 600, color: toolCustom.color }}>
                 🎯 Worldview-Aligned (3)
               </h4>
               {result.papers?.worldview_aligned?.map((paper: any, i: number) => (
@@ -191,7 +191,7 @@ export default function WhitePapersPage() {
                     {i + 1}. {paper.title}
                   </div>
                   <a href={paper.url} target="_blank" rel="noopener noreferrer" 
-                     style={{ color: "#00aaff", fontSize: "13px", wordBreak: "break-all" }}>
+                     style={{ color: toolCustom.color, fontSize: "13px", wordBreak: "break-all" }}>
                     {paper.url}
                   </a>
                   {paper.description && (
@@ -212,7 +212,7 @@ export default function WhitePapersPage() {
                     {i + 1}. {paper.title}
                   </div>
                   <a href={paper.url} target="_blank" rel="noopener noreferrer" 
-                     style={{ color: "#00aaff", fontSize: "13px", wordBreak: "break-all" }}>
+                     style={{ color: toolCustom.color, fontSize: "13px", wordBreak: "break-all" }}>
                     {paper.url}
                   </a>
                   {paper.description && (
@@ -265,7 +265,7 @@ export default function WhitePapersPage() {
                         cursor: "pointer",
                         border: "1px solid transparent"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600 }}>{item.topic || "Untitled"}</div>

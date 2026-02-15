@@ -141,7 +141,7 @@ export default function FilesPage() {
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FolderOpen style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <FolderOpen style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
             {!loading && !error && (
               <span style={{ fontSize: "14px", color: "var(--foreground-muted)", marginLeft: "4px" }}>
@@ -168,7 +168,7 @@ export default function FilesPage() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                e.currentTarget.style.color = "#00aaff";
+                e.currentTarget.style.color = toolCustom.color;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
@@ -198,7 +198,7 @@ export default function FilesPage() {
               onMouseEnter={(e) => {
                 if (!loading && !refreshing) {
                   e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                  e.currentTarget.style.color = "#00aaff";
+                  e.currentTarget.style.color = toolCustom.color;
                 }
               }}
               onMouseLeave={(e) => {
@@ -231,7 +231,7 @@ export default function FilesPage() {
               style={{
                 width: "32px",
                 height: "32px",
-                color: "#00aaff",
+                color: toolCustom.color,
                 margin: "0 auto 16px",
                 animation: "spin 1s linear infinite"
               }}
@@ -264,7 +264,7 @@ export default function FilesPage() {
             padding: "60px 20px",
             textAlign: "center"
           }}>
-            <FolderOpen style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+            <FolderOpen style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
             <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
               No files found
             </h2>
@@ -302,7 +302,7 @@ export default function FilesPage() {
                   }}
                 >
                   <div style={{ marginRight: "16px", flexShrink: 0 }}>
-                    <FileIcon style={{ width: "20px", height: "20px", color: "#00aaff" }} />
+                    <FileIcon style={{ width: "20px", height: "20px", color: toolCustom.color }} />
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0, marginRight: "16px" }}>

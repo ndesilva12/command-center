@@ -149,7 +149,7 @@ function DeepSearchContent() {
   };
 
   const sectionColors = [
-    "#8b5cf6", "#10b981", "#06b6d4", "#ef4444", "#ec4899", "#6366f1",
+    "#8b5cf6", "#10b981", "#06b6d4", toolCustom.color, "#ec4899", toolCustom.color,
   ];
 
   const allLinks = report?.links || report?.sources || [];
@@ -177,7 +177,7 @@ function DeepSearchContent() {
           gap: "12px",
           marginBottom: isMobile ? "16px" : "24px",
         }}>
-          <Radar size={isMobile ? 32 : 40} style={{ color: "#6366f1" }} />
+          <Radar size={isMobile ? 32 : 40} style={{ color: toolCustom.color }} />
           <div>
             <h1 style={{
               fontSize: isMobile ? "24px" : "32px",
@@ -273,7 +273,7 @@ function DeepSearchContent() {
             onChange={(e) => setPageTarget(Number(e.target.value))}
             style={{
               flex: 1,
-              accentColor: "#6366f1",
+              accentColor: toolCustom.color,
               height: "6px",
               cursor: "pointer",
             }}
@@ -281,7 +281,7 @@ function DeepSearchContent() {
           <span style={{
             fontSize: "14px",
             fontWeight: "700",
-            color: "#6366f1",
+            color: toolCustom.color,
             minWidth: "40px",
             textAlign: "center",
           }}>
@@ -329,7 +329,7 @@ function DeepSearchContent() {
                 marginBottom: "12px",
                 flexWrap: "wrap",
               }}>
-                <Radar size={24} style={{ color: "#6366f1" }} />
+                <Radar size={24} style={{ color: toolCustom.color }} />
                 <h2 style={{
                   fontSize: isMobile ? "20px" : "24px",
                   fontWeight: "bold",
@@ -507,7 +507,7 @@ function DeepSearchContent() {
                 <h3 style={{
                   fontSize: isMobile ? "14px" : "16px",
                   fontWeight: "700",
-                  color: "#ef4444",
+                  color: toolCustom.color,
                   marginBottom: "12px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
@@ -718,7 +718,7 @@ function DeepSearchContent() {
                       border: "1px solid transparent",
                       transition: "border-color 0.2s",
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = "#6366f1"}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
                     onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                   >
                     <div style={{ fontWeight: 600, fontSize: "14px", color: "white" }}>
@@ -746,7 +746,7 @@ function DeepSearchContent() {
                       borderRadius: "8px",
                       border: "1px solid rgba(148, 163, 184, 0.2)",
                       background: "transparent",
-                      color: "#6366f1",
+                      color: toolCustom.color,
                       fontSize: "14px",
                       fontWeight: 600,
                       cursor: "pointer",

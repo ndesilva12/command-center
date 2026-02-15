@@ -160,7 +160,7 @@ export default function BookmarksPage() {
             borderRadius: "16px",
             border: "1px solid rgba(255, 255, 255, 0.1)",
           }}>
-            <Bookmark style={{ width: "64px", height: "64px", color: "#00aaff", margin: "0 auto 24px" }} />
+            <Bookmark style={{ width: "64px", height: "64px", color: toolCustom.color, margin: "0 auto 24px" }} />
             <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)", marginBottom: "12px" }}>{toolCustom.name}</h2>
             <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px", maxWidth: "400px", margin: "0 auto 24px" }}>
               Link your Raindrop.io account to access your bookmarks from Command Center
@@ -204,7 +204,7 @@ export default function BookmarksPage() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Bookmark style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <Bookmark style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
               Bookmarks
             </h1>
@@ -324,7 +324,7 @@ export default function BookmarksPage() {
                 borderRadius: "6px",
                 border: "none",
                 background: viewMode === 'grid' ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === 'grid' ? "#00aaff" : "var(--foreground-muted)",
+                color: viewMode === 'grid' ? toolCustom.color : "var(--foreground-muted)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -343,7 +343,7 @@ export default function BookmarksPage() {
                 borderRadius: "6px",
                 border: "none",
                 background: viewMode === 'list' ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === 'list' ? "#00aaff" : "var(--foreground-muted)",
+                color: viewMode === 'list' ? toolCustom.color : "var(--foreground-muted)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -456,7 +456,7 @@ export default function BookmarksPage() {
                           padding: "4px 10px",
                           borderRadius: "6px",
                           background: "rgba(0, 170, 255, 0.1)",
-                          color: "#00aaff",
+                          color: toolCustom.color,
                           fontSize: "11px",
                           fontWeight: 500,
                         }}
@@ -543,7 +543,7 @@ export default function BookmarksPage() {
                                 padding: "2px 8px",
                                 borderRadius: "4px",
                                 background: "rgba(0, 170, 255, 0.1)",
-                                color: "#00aaff",
+                                color: toolCustom.color,
                                 fontSize: "11px",
                                 fontWeight: 500,
                               }}

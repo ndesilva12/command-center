@@ -129,7 +129,7 @@ export default function BusinessPage() {
             padding: "6px 14px",
             borderRadius: "20px",
             background: data.confidenceScore >= 70 ? "rgba(16, 185, 129, 0.15)" : data.confidenceScore >= 40 ? "rgba(245, 158, 11, 0.15)" : "rgba(220, 38, 38, 0.15)",
-            color: data.confidenceScore >= 70 ? "#10b981" : data.confidenceScore >= 40 ? "#f59e0b" : "#dc2626",
+            color: data.confidenceScore >= 70 ? toolCustom.color : data.confidenceScore >= 40 ? "#f59e0b" : "#dc2626",
             fontSize: "13px",
             fontWeight: 700,
           }}>
@@ -141,7 +141,7 @@ export default function BusinessPage() {
       {/* Summary */}
       {data.summary && (
         <div style={{ marginBottom: "20px", padding: "16px", background: "var(--glass-bg)", borderRadius: "8px" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#00aaff" }}>Summary</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: toolCustom.color }}>Summary</h4>
           <p style={{ fontSize: "14px", lineHeight: 1.6, color: "var(--foreground)" }}>{data.summary}</p>
         </div>
       )}
@@ -149,7 +149,7 @@ export default function BusinessPage() {
       {/* Key Facts */}
       {data.keyFacts?.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#00aaff" }}>📋 Key Facts</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: toolCustom.color }}>📋 Key Facts</h4>
           <ul style={{ margin: 0, paddingLeft: "20px" }}>
             {data.keyFacts.map((fact: string, i: number) => (
               <li key={i} style={{ fontSize: "14px", lineHeight: 1.6, marginBottom: "4px", color: "var(--foreground)" }}>{fact}</li>
@@ -161,7 +161,7 @@ export default function BusinessPage() {
       {/* Officers */}
       {data.officers?.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#00aaff" }}>👤 Officers / Principals</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: toolCustom.color }}>👤 Officers / Principals</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {data.officers.map((officer: any, i: number) => (
               <div key={i} style={{ padding: "10px 14px", background: "var(--glass-bg)", borderRadius: "6px", fontSize: "14px" }}>
@@ -177,7 +177,7 @@ export default function BusinessPage() {
       {/* Filings */}
       {data.filings?.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#00aaff" }}>📄 Filings & Registrations</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: toolCustom.color }}>📄 Filings & Registrations</h4>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
@@ -196,7 +196,7 @@ export default function BusinessPage() {
                     <td style={{ padding: "8px", color: "var(--foreground)" }}>{filing.details}</td>
                     <td style={{ padding: "8px" }}>
                       {filing.url && (
-                        <a href={filing.url} target="_blank" rel="noopener noreferrer" style={{ color: "#00aaff", textDecoration: "none" }}>
+                        <a href={filing.url} target="_blank" rel="noopener noreferrer" style={{ color: toolCustom.color, textDecoration: "none" }}>
                           View →
                         </a>
                       )}
@@ -212,7 +212,7 @@ export default function BusinessPage() {
       {/* Public Records */}
       {data.publicRecords?.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#00aaff" }}>🔍 Public Records</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: toolCustom.color }}>🔍 Public Records</h4>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
@@ -231,7 +231,7 @@ export default function BusinessPage() {
                     <td style={{ padding: "8px", color: "var(--foreground)" }}>{record.summary}</td>
                     <td style={{ padding: "8px" }}>
                       {record.url && (
-                        <a href={record.url} target="_blank" rel="noopener noreferrer" style={{ color: "#00aaff", textDecoration: "none" }}>
+                        <a href={record.url} target="_blank" rel="noopener noreferrer" style={{ color: toolCustom.color, textDecoration: "none" }}>
                           View →
                         </a>
                       )}
@@ -247,7 +247,7 @@ export default function BusinessPage() {
       {/* Related Entities */}
       {data.relatedEntities?.length > 0 && (
         <div style={{ marginBottom: "20px" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#00aaff" }}>🔗 Related Entities</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: toolCustom.color }}>🔗 Related Entities</h4>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
             {data.relatedEntities.map((entity: any, i: number) => (
               <div key={i} style={{
@@ -286,7 +286,7 @@ export default function BusinessPage() {
       {/* AI Insights */}
       {data.insights && (
         <div style={{ marginBottom: "20px", padding: "16px", background: "rgba(99, 102, 241, 0.08)", borderRadius: "8px", border: "1px solid rgba(99, 102, 241, 0.2)" }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: "#6366f1" }}>💡 AI Insights</h4>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px", color: toolCustom.color }}>💡 AI Insights</h4>
           <p style={{ fontSize: "14px", lineHeight: 1.7, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{data.insights}</p>
         </div>
       )}
@@ -302,7 +302,7 @@ export default function BusinessPage() {
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ fontSize: "13px", color: "#00aaff", textDecoration: "none" }}
+                style={{ fontSize: "13px", color: toolCustom.color, textDecoration: "none" }}
               >
                 {source.title || source.url}
               </a>
@@ -332,7 +332,7 @@ export default function BusinessPage() {
                   borderRadius: "8px",
                   border: "1px solid var(--glass-border)",
                   background: activeTab === tab ? "rgba(99, 102, 241, 0.15)" : "transparent",
-                  color: activeTab === tab ? "#6366f1" : "var(--muted)",
+                  color: activeTab === tab ? toolCustom.color : "var(--muted)",
                   fontWeight: 600,
                   fontSize: "14px",
                   cursor: "pointer",
@@ -455,7 +455,7 @@ export default function BusinessPage() {
                         cursor: "pointer",
                         border: "1px solid transparent"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#6366f1"}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>🏢 {item.businessName || "Untitled Business"}</div>
@@ -481,7 +481,7 @@ export default function BusinessPage() {
                         borderRadius: "6px",
                         border: "1px solid var(--glass-border)",
                         background: "transparent",
-                        color: "#6366f1",
+                        color: toolCustom.color,
                         fontSize: "14px",
                         fontWeight: 600,
                         cursor: "pointer"

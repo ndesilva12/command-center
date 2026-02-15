@@ -10,7 +10,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 
-function PoliticalCompass({ economicScore, governmentScore }: { economicScore: number; governmentScore: number }) {
+function PoliticalCompass({ economicScore, governmentScore, color = "#10b981" }: { economicScore: number; governmentScore: number; color?: string }) {
   const cx = 150 + (economicScore / 100) * 130;
   const cy = 150 + (governmentScore / 100) * 130;
 
@@ -40,7 +40,7 @@ function PoliticalCompass({ economicScore, governmentScore }: { economicScore: n
       <text x="295" y="153" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="10" transform="rotate(90,295,153)">Right</text>
 
       {/* Dot */}
-      <circle cx={cx} cy={cy} r="8" fill="#00aaff" stroke="#fff" strokeWidth="2" />
+      <circle cx={cx} cy={cy} r="8" fill={color} stroke="#fff" strokeWidth="2" />
       <circle cx={cx} cy={cy} r="3" fill="#fff" />
     </svg>
   );
@@ -52,7 +52,7 @@ function LeaningBadge({ leaning, confidence }: { leaning: string; confidence: nu
     "Left": "#ef4444",
     "Center-Left": "#f97316",
     "Center": "#a855f7",
-    "Center-Right": "#3b82f6",
+    "Center-Right": "#10b981",
     "Right": "#2563eb",
     "Far Right": "#1d4ed8",
   };
@@ -271,7 +271,7 @@ export default function PoliticorpPage() {
                 <LeaningBadge leaning={result.overallLeaning} confidence={result.confidenceScore} />
 
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-                  <PoliticalCompass economicScore={result.economicScore || 0} governmentScore={result.governmentScore || 0} />
+                  <PoliticalCompass economicScore={result.economicScore || 0} governmentScore={result.governmentScore || 0} color={toolCustom.color} />
                 </div>
                 <div style={{ textAlign: "center", fontSize: "13px", color: "var(--muted)" }}>
                   Economic: {result.economicScore} • Government: {result.governmentScore}
@@ -316,7 +316,7 @@ export default function PoliticorpPage() {
                                 borderRadius: "10px",
                                 fontSize: "12px",
                                 background: d.party === "Democrat" ? "rgba(59,130,246,0.2)" : d.party === "Republican" ? "rgba(239,68,68,0.2)" : "rgba(168,85,247,0.2)",
-                                color: d.party === "Democrat" ? "#3b82f6" : d.party === "Republican" ? "#ef4444" : "#a855f7"
+                                color: d.party === "Democrat" ? toolCustom.color : d.party === "Republican" ? "#ef4444" : "#a855f7"
                               }}>
                                 {d.party}
                               </span>
@@ -372,7 +372,7 @@ export default function PoliticorpPage() {
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
                         {n.source} • {n.date} •{" "}
                         <span style={{
-                          color: n.sentiment === "positive" ? "#10b981" : n.sentiment === "negative" ? "#ef4444" : "var(--muted)"
+                          color: n.sentiment === "positive" ? toolCustom.color : n.sentiment === "negative" ? "#ef4444" : "var(--muted)"
                         }}>
                           {n.sentiment}
                         </span>

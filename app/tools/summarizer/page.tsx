@@ -153,7 +153,7 @@ export default function SummarizerPage() {
           {/* Header */}
           <div style={{ marginBottom: "24px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-              <FileText style={{ width: "32px", height: "32px", color: "#8b5cf6" }} />
+              <FileText style={{ width: "32px", height: "32px", color: toolCustom.color }} />
               <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
                 {toolCustom.name}
               </h1>
@@ -173,7 +173,7 @@ export default function SummarizerPage() {
                   padding: "10px 20px", borderRadius: "8px",
                   border: activeTab === tab ? "1px solid rgba(139, 92, 246, 0.5)" : "1px solid rgba(255, 255, 255, 0.1)",
                   background: activeTab === tab ? "rgba(139, 92, 246, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                  color: activeTab === tab ? "#8b5cf6" : "var(--foreground-muted)",
+                  color: activeTab === tab ? toolCustom.color : "var(--foreground-muted)",
                   fontSize: "14px", fontWeight: 600, cursor: "pointer", textTransform: "capitalize",
                 }}
               >
@@ -210,7 +210,7 @@ export default function SummarizerPage() {
                   </label>
                   <input type="range" min="1" max="50" value={targetPages}
                     onChange={(e) => setTargetPages(parseInt(e.target.value))}
-                    disabled={processing} style={{ width: "100%", accentColor: "#8b5cf6" }}
+                    disabled={processing} style={{ width: "100%", accentColor: toolCustom.color }}
                   />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "var(--foreground-muted)", marginTop: "6px" }}>
                     <span>1 page</span><span>50 pages</span>
@@ -251,7 +251,7 @@ export default function SummarizerPage() {
 
               {filteredHistory.length === 0 ? (
                 <div className="glass" style={{ padding: "48px 24px", borderRadius: "12px", textAlign: "center" }}>
-                  <FileText style={{ width: "48px", height: "48px", color: "#8b5cf6", margin: "0 auto 16px" }} />
+                  <FileText style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
                   <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
                     {historySearch.trim() ? "No results found" : "No summaries yet"}
                   </p>
@@ -282,7 +282,7 @@ export default function SummarizerPage() {
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                                 <span style={{
                                   fontSize: "12px", padding: "3px 8px", borderRadius: "4px",
-                                  backgroundColor: "rgba(139, 92, 246, 0.1)", color: "#8b5cf6",
+                                  backgroundColor: "rgba(139, 92, 246, 0.1)", color: toolCustom.color,
                                   border: "1px solid rgba(139, 92, 246, 0.3)",
                                 }}>
                                   {summary.targetPages} pages
@@ -290,7 +290,7 @@ export default function SummarizerPage() {
                                 <span style={{
                                   fontSize: "12px", padding: "3px 8px", borderRadius: "4px",
                                   backgroundColor: summary.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : summary.status === 'failed' ? "rgba(239, 68, 68, 0.1)" : "rgba(0, 170, 255, 0.1)",
-                                  color: summary.status === 'completed' ? "#10b981" : summary.status === 'failed' ? "#ef4444" : "#00aaff",
+                                  color: summary.status === 'completed' ? "#10b981" : summary.status === 'failed' ? "#ef4444" : toolCustom.color,
                                   display: "flex", alignItems: "center", gap: "4px",
                                 }}>
                                   {summary.status === 'completed' && <CheckCircle style={{ width: "12px", height: "12px" }} />}
@@ -309,7 +309,7 @@ export default function SummarizerPage() {
                                   style={{
                                     padding: "6px 12px", borderRadius: "6px",
                                     border: "1px solid rgba(139, 92, 246, 0.3)", backgroundColor: "rgba(139, 92, 246, 0.1)",
-                                    color: "#8b5cf6", fontSize: "12px", fontWeight: 600, cursor: "pointer",
+                                    color: toolCustom.color, fontSize: "12px", fontWeight: 600, cursor: "pointer",
                                     display: "flex", alignItems: "center", gap: "4px",
                                   }}
                                 >
@@ -350,7 +350,7 @@ export default function SummarizerPage() {
                       style={{
                         width: "100%", padding: "12px", marginTop: "8px", borderRadius: "8px",
                         border: "1px solid rgba(139, 92, 246, 0.3)", background: "transparent",
-                        color: "#8b5cf6", fontSize: "14px", fontWeight: 600, cursor: "pointer",
+                        color: toolCustom.color, fontSize: "14px", fontWeight: 600, cursor: "pointer",
                       }}
                     >
                       Show More

@@ -17,10 +17,14 @@ export function ToolBackground({ color }: { color: string }) {
     const rgb = hexToRgb(color);
     const gradient = `linear-gradient(135deg, rgba(${rgb}, 0.25) 0%, rgba(${rgb}, 0.08) 40%, #0a0a0e 80%)`;
     document.body.style.background = gradient;
+    // Set CSS variables for tool-wide accent color
+    document.documentElement.style.setProperty('--tool-color', color);
+    document.documentElement.style.setProperty('--tool-color-rgb', rgb);
     
     return () => {
-      // Reset to default on unmount
       document.body.style.background = "transparent";
+      document.documentElement.style.removeProperty('--tool-color');
+      document.documentElement.style.removeProperty('--tool-color-rgb');
     };
   }, [color]);
 

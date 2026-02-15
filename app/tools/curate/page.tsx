@@ -139,7 +139,7 @@ export default function CuratePage() {
   const categoryColors: Record<string, string> = {
     popular: "#ff6b6b",
     technology: "#4ecdc4",
-    politics: "#00aaff",
+    politics: toolCustom.color,
     culture: "#95e1d3"
   };
 
@@ -203,7 +203,7 @@ export default function CuratePage() {
                         padding: "8px 16px",
                         borderRadius: "6px",
                         border: "1px solid var(--glass-border)",
-                        background: sources.includes(option.value) ? "#00aaff" : "transparent",
+                        background: sources.includes(option.value) ? toolCustom.color : "transparent",
                         color: sources.includes(option.value) ? "#fff" : "var(--foreground)",
                         fontSize: "14px",
                         cursor: "pointer"
@@ -295,7 +295,7 @@ export default function CuratePage() {
                       marginBottom: "16px", 
                       fontSize: "16px", 
                       fontWeight: 600,
-                      color: categoryColors[category] || "#00aaff",
+                      color: categoryColors[category] || toolCustom.color,
                       textTransform: "capitalize"
                     }}>
                       {category}
@@ -320,7 +320,7 @@ export default function CuratePage() {
                               target="_blank" 
                               rel="noopener noreferrer"
                               style={{ 
-                                color: "#00aaff", 
+                                color: toolCustom.color, 
                                 textDecoration: "none",
                                 fontWeight: 600,
                                 fontSize: "15px",
@@ -352,7 +352,7 @@ export default function CuratePage() {
                             {item.score && (
                               <div style={{ 
                                 fontSize: "12px", 
-                                color: categoryColors[category] || "#00aaff",
+                                color: categoryColors[category] || toolCustom.color,
                                 marginTop: "4px"
                               }}>
                                 Score: {item.score}/10
@@ -410,7 +410,7 @@ export default function CuratePage() {
                         cursor: "pointer",
                         border: "1px solid transparent"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic || "Untitled Curation"}</div>
@@ -430,7 +430,7 @@ export default function CuratePage() {
                         borderRadius: "6px",
                         border: "1px solid var(--glass-border)",
                         background: "transparent",
-                        color: "#00aaff",
+                        color: toolCustom.color,
                         fontSize: "14px",
                         fontWeight: 600,
                         cursor: "pointer"

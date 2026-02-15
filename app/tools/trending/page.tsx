@@ -132,7 +132,7 @@ export default function TrendingPage() {
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <TrendingUp style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <TrendingUp style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
               Trending {totalCount > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({totalCount})</span>}
             </h1>
@@ -164,7 +164,7 @@ export default function TrendingPage() {
         {loading ? (
           <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+              <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           </div>
         ) : error ? (
@@ -190,7 +190,7 @@ export default function TrendingPage() {
         ) : totalCount === 0 ? (
           <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <TrendingUp style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+              <TrendingUp style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
               <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
               <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
                 Unable to fetch trending topics at this time

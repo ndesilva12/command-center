@@ -170,20 +170,20 @@ a {
 }
 
 .tool-nav-button.active {
-  border-color: rgba(0, 170, 255, 0.3);
-  background: rgba(0, 170, 255, 0.08);
-  color: #00aaff;
+  border-color: rgba(var(--tool-color-rgb, 0, 170, 255), 0.3);
+  background: rgba(var(--tool-color-rgb, 0, 170, 255), 0.08);
+  color: var(--tool-color, #00aaff);
   box-shadow: 
-    0 4px 16px rgba(0, 170, 255, 0.15),
-    0 0 0 1px rgba(0, 170, 255, 0.1);
+    0 4px 16px rgba(var(--tool-color-rgb, 0, 170, 255), 0.15),
+    0 0 0 1px rgba(var(--tool-color-rgb, 0, 170, 255), 0.1);
 }
 
 .tool-nav-button.active:hover {
-  background: rgba(0, 170, 255, 0.12);
-  border-color: rgba(0, 170, 255, 0.4);
+  background: rgba(var(--tool-color-rgb, 0, 170, 255), 0.12);
+  border-color: rgba(var(--tool-color-rgb, 0, 170, 255), 0.4);
   box-shadow: 
-    0 6px 20px rgba(0, 170, 255, 0.2),
-    0 0 0 1px rgba(0, 170, 255, 0.15);
+    0 6px 20px rgba(var(--tool-color-rgb, 0, 170, 255), 0.2),
+    0 0 0 1px rgba(var(--tool-color-rgb, 0, 170, 255), 0.15);
 }
 
 .tool-nav-button.tool-nav-category-switch {

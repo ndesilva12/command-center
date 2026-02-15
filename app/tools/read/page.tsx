@@ -197,7 +197,7 @@ export default function ReadPage() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <BookOpen style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <BookOpen style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
               Read {entries.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({entries.length})</span>}
             </h1>
@@ -262,7 +262,7 @@ export default function ReadPage() {
             justifyContent: "space-between",
           }}>
             <div>
-              <div style={{ fontSize: "18px", fontWeight: 600, color: "#00aaff", marginBottom: "4px" }}>
+              <div style={{ fontSize: "18px", fontWeight: 600, color: toolCustom.color, marginBottom: "4px" }}>
                 {currentFeed.title}
               </div>
               <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
@@ -281,7 +281,7 @@ export default function ReadPage() {
                   padding: "8px 14px",
                   borderRadius: "8px",
                   backgroundColor: "rgba(0, 170, 255, 0.15)",
-                  color: "#00aaff",
+                  color: toolCustom.color,
                   textDecoration: "none",
                   fontSize: "13px",
                   fontWeight: 500,
@@ -369,7 +369,7 @@ export default function ReadPage() {
                   borderRadius: "8px",
                   border: "1px solid rgba(255, 255, 255, 0.2)",
                   background: "rgba(255, 255, 255, 0.05)",
-                  color: "#00aaff",
+                  color: toolCustom.color,
                   fontSize: "14px",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -664,7 +664,7 @@ export default function ReadPage() {
                       <div style={{ 
                         fontSize: "14px", 
                         fontWeight: 600, 
-                        color: selectedFeedId === feed.id ? "#00aaff" : "white", 
+                        color: selectedFeedId === feed.id ? toolCustom.color : "white", 
                         marginBottom: "4px" 
                       }}>
                         {selectedFeedId === feed.id && "✓ "}{feed.title}
@@ -797,7 +797,7 @@ export default function ReadPage() {
                           gap: "12px",
                         }}
                       >
-                        <span style={{ fontSize: "14px", fontWeight: 600, color: "#00aaff", minWidth: "20px" }}>
+                        <span style={{ fontSize: "14px", fontWeight: 600, color: toolCustom.color, minWidth: "20px" }}>
                           #{index + 1}
                         </span>
                         <div style={{ flex: 1 }}>
@@ -886,7 +886,7 @@ export default function ReadPage() {
                         opacity: 1,
                       }}
                     >
-                      <div style={{ fontSize: "14px", fontWeight: 600, color: isSelected ? "#00aaff" : "white", marginBottom: "2px" }}>
+                      <div style={{ fontSize: "14px", fontWeight: 600, color: isSelected ? toolCustom.color : "white", marginBottom: "2px" }}>
                         {isSelected && "✓ "}{feed.title}
                       </div>
                       <div style={{ fontSize: "12px", color: "#64748b" }}>

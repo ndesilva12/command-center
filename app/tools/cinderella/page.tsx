@@ -988,7 +988,7 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
           background: "rgba(0, 0, 0, 0.3)",
           borderRadius: "6px",
           fontSize: "13px",
-          color: "#00aaff",
+          color: "#3b82f6",
           fontFamily: "monospace",
         }}>
           /home/ubuntu/.openclaw/workspace/cinderella/

@@ -70,7 +70,7 @@ export default function LegalPage() {
         {/* Header */}
         <div style={{ marginBottom: "32px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <Scale style={{ width: "32px", height: "32px", color: "#00aaff" }} />
+            <Scale style={{ width: "32px", height: "32px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
           </div>
           <p style={{ color: "var(--foreground-muted)", fontSize: "15px" }}>
@@ -112,7 +112,7 @@ export default function LegalPage() {
               borderRadius: "8px",
               border: "none",
               background: activeTab === "question" ? "rgba(0, 170, 255, 0.1)" : "transparent",
-              color: activeTab === "question" ? "#00aaff" : "var(--foreground-muted)",
+              color: activeTab === "question" ? toolCustom.color : "var(--foreground-muted)",
               fontSize: "14px",
               fontWeight: 600,
               cursor: "pointer",
@@ -132,7 +132,7 @@ export default function LegalPage() {
               borderRadius: "8px",
               border: "none",
               background: activeTab === "review" ? "rgba(0, 170, 255, 0.1)" : "transparent",
-              color: activeTab === "review" ? "#00aaff" : "var(--foreground-muted)",
+              color: activeTab === "review" ? toolCustom.color : "var(--foreground-muted)",
               fontSize: "14px",
               fontWeight: 600,
               cursor: "pointer",
@@ -250,7 +250,7 @@ export default function LegalPage() {
                 transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#00aaff";
+                e.currentTarget.style.borderColor = toolCustom.color;
                 e.currentTarget.style.background = "rgba(0, 170, 255, 0.05)";
               }}
               onMouseLeave={(e) => {
@@ -325,8 +325,8 @@ export default function LegalPage() {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "rgba(0, 170, 255, 0.1)";
-                  e.currentTarget.style.borderColor = "#00aaff";
-                  e.currentTarget.style.color = "#00aaff";
+                  e.currentTarget.style.borderColor = toolCustom.color;
+                  e.currentTarget.style.color = toolCustom.color;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";

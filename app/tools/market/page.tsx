@@ -183,7 +183,7 @@ export default function MarketPage() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
             <div>
               <h1 style={{ fontSize: "28px", fontWeight: 700, color: "var(--foreground)", marginBottom: "4px", display: "flex", alignItems: "center", gap: "12px" }}>
-                <TrendingUp style={{ width: "28px", height: "28px", color: "#00aaff" }} />
+                <TrendingUp style={{ width: "28px", height: "28px", color: toolCustom.color }} />
                 Market
               </h1>
               <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
@@ -209,7 +209,7 @@ export default function MarketPage() {
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                e.currentTarget.style.borderColor = "#00aaff";
+                e.currentTarget.style.borderColor = toolCustom.color;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
@@ -286,7 +286,7 @@ export default function MarketPage() {
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "translateY(-2px)";
                         e.currentTarget.style.boxShadow = "0 4px 20px rgba(0, 170, 255, 0.2)";
-                        e.currentTarget.style.borderColor = "#00aaff";
+                        e.currentTarget.style.borderColor = toolCustom.color;
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = "translateY(0)";
@@ -343,7 +343,7 @@ export default function MarketPage() {
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
                           e.currentTarget.style.color = "var(--foreground)";
-                          e.currentTarget.style.borderColor = "#00aaff";
+                          e.currentTarget.style.borderColor = toolCustom.color;
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";

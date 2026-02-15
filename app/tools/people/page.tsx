@@ -177,7 +177,7 @@ export default function PeoplePage() {
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Users style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <Users style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
               {toolCustom.name} {people.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({people.length})</span>}
             </h1>
@@ -287,7 +287,7 @@ export default function PeoplePage() {
                 padding: "8px",
                 borderRadius: "6px",
                 backgroundColor: viewMode === "grid" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === "grid" ? "#00aaff" : "var(--foreground-muted)",
+                color: viewMode === "grid" ? toolCustom.color : "var(--foreground-muted)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -304,7 +304,7 @@ export default function PeoplePage() {
                 padding: "8px",
                 borderRadius: "6px",
                 backgroundColor: viewMode === "list" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === "list" ? "#00aaff" : "var(--foreground-muted)",
+                color: viewMode === "list" ? toolCustom.color : "var(--foreground-muted)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -319,7 +319,7 @@ export default function PeoplePage() {
         <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
           {loading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+              <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           ) : error ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
@@ -341,7 +341,7 @@ export default function PeoplePage() {
             </div>
           ) : displayPeople.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <Users style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+              <Users style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
               <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
                 {searchQuery ? "No people found" : "No people yet"}
               </h2>
@@ -386,7 +386,7 @@ export default function PeoplePage() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {person.relationship && (
                       <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
-                        <span style={{ color: "#00aaff", fontWeight: 500 }}>{person.relationship}</span>
+                        <span style={{ color: toolCustom.color, fontWeight: 500 }}>{person.relationship}</span>
                         {person.relationshipDetail && <span> • {person.relationshipDetail}</span>}
                       </div>
                     )}
@@ -408,7 +408,7 @@ export default function PeoplePage() {
                     {person.email && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
                         <Mail style={{ width: "13px", height: "13px", flexShrink: 0 }} />
-                        <span style={{ color: "#00aaff" }}>
+                        <span style={{ color: toolCustom.color }}>
                           {person.email}
                         </span>
                       </div>
@@ -417,7 +417,7 @@ export default function PeoplePage() {
                     {person.phone && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
                         <Phone style={{ width: "13px", height: "13px", flexShrink: 0 }} />
-                        <span style={{ color: "#00aaff" }}>
+                        <span style={{ color: toolCustom.color }}>
                           {person.phone}
                         </span>
                       </div>
@@ -467,7 +467,7 @@ export default function PeoplePage() {
 
                   <div style={{ flex: "0 0 150px", fontSize: "13px", color: "var(--foreground-muted)" }}>
                     {person.relationship && (
-                      <span style={{ color: "#00aaff", fontWeight: 500 }}>{person.relationship}</span>
+                      <span style={{ color: toolCustom.color, fontWeight: 500 }}>{person.relationship}</span>
                     )}
                   </div>
 
@@ -489,14 +489,14 @@ export default function PeoplePage() {
                     {person.email && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <Mail style={{ width: "13px", height: "13px", flexShrink: 0 }} />
-                        <span style={{ color: "#00aaff" }}>{person.email}</span>
+                        <span style={{ color: toolCustom.color }}>{person.email}</span>
                       </div>
                     )}
 
                     {person.phone && (
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                         <Phone style={{ width: "13px", height: "13px", flexShrink: 0 }} />
-                        <span style={{ color: "#00aaff" }}>{person.phone}</span>
+                        <span style={{ color: toolCustom.color }}>{person.phone}</span>
                       </div>
                     )}
                   </div>

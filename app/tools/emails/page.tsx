@@ -434,7 +434,7 @@ export default function EmailsPage() {
                       borderRadius: "4px",
                       border: "none",
                       backgroundColor: emailViewMode === "html" ? "rgba(0, 170, 255, 0.2)" : "transparent",
-                      color: emailViewMode === "html" ? "#00aaff" : "var(--foreground-muted)",
+                      color: emailViewMode === "html" ? toolCustom.color : "var(--foreground-muted)",
                       fontSize: "12px",
                       fontWeight: 500,
                       cursor: "pointer",
@@ -450,7 +450,7 @@ export default function EmailsPage() {
                       borderRadius: "4px",
                       border: "none",
                       backgroundColor: emailViewMode === "text" ? "rgba(0, 170, 255, 0.2)" : "transparent",
-                      color: emailViewMode === "text" ? "#00aaff" : "var(--foreground-muted)",
+                      color: emailViewMode === "text" ? toolCustom.color : "var(--foreground-muted)",
                       fontSize: "12px",
                       fontWeight: 500,
                       cursor: "pointer",
@@ -484,7 +484,7 @@ export default function EmailsPage() {
             <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
               {loadingEmailBody ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-                  <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+                  <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
                 </div>
               ) : emailViewMode === "html" ? (
                 <div
@@ -524,7 +524,7 @@ export default function EmailsPage() {
                   gap: "6px",
                   padding: "10px 16px",
                   borderRadius: "8px",
-                  backgroundColor: "#00aaff",
+                  backgroundColor: toolCustom.color,
                   color: "#000",
                   border: "none",
                   cursor: "pointer",
@@ -699,7 +699,7 @@ export default function EmailsPage() {
                   padding: "10px 16px",
                   borderRadius: "8px",
                   border: "none",
-                  backgroundColor: (!composeTo || !composeSubject || !composeBody || sending) ? "rgba(0, 170, 255, 0.3)" : "#00aaff",
+                  backgroundColor: (!composeTo || !composeSubject || !composeBody || sending) ? "rgba(0, 170, 255, 0.3)" : toolCustom.color,
                   color: "#000",
                   fontSize: "14px",
                   fontWeight: 500,
@@ -810,7 +810,7 @@ export default function EmailsPage() {
         {/* Page Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Mail style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <Mail style={{ width: "24px", height: "24px", color: toolCustom.color }} />
             <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
           </div>
           
@@ -859,7 +859,7 @@ export default function EmailsPage() {
                   >
                     {selectedAccount === "all" ? (
                       <>
-                        <Users style={{ width: "14px", height: "14px", color: "#00aaff" }} />
+                        <Users style={{ width: "14px", height: "14px", color: toolCustom.color }} />
                         <span>All Accounts</span>
                       </>
                     ) : (
@@ -914,9 +914,9 @@ export default function EmailsPage() {
                             textAlign: "left",
                           }}
                         >
-                          <Users style={{ width: "16px", height: "16px", color: "#00aaff" }} />
+                          <Users style={{ width: "16px", height: "16px", color: toolCustom.color }} />
                           <span style={{ flex: 1 }}>All Accounts</span>
-                          {selectedAccount === "all" && <span style={{ color: "#00aaff" }}>✓</span>}
+                          {selectedAccount === "all" && <span style={{ color: toolCustom.color }}>✓</span>}
                         </button>
 
                         <div style={{ height: "1px", backgroundColor: "rgba(255, 255, 255, 0.1)", margin: "4px 0" }} />
@@ -965,7 +965,7 @@ export default function EmailsPage() {
                                   {account.email}
                                 </div>
                               </div>
-                              {selectedAccount === account.email && <span style={{ color: "#00aaff" }}>✓</span>}
+                              {selectedAccount === account.email && <span style={{ color: toolCustom.color }}>✓</span>}
                             </button>
                             <button
                               onClick={(e) => {
@@ -1001,7 +1001,7 @@ export default function EmailsPage() {
                             padding: "10px 12px",
                             borderRadius: "6px",
                             backgroundColor: "transparent",
-                            color: "#00aaff",
+                            color: toolCustom.color,
                             border: "none",
                             cursor: "pointer",
                             fontSize: "13px",
@@ -1045,7 +1045,7 @@ export default function EmailsPage() {
                   gap: "6px",
                   padding: "8px 14px",
                   borderRadius: "8px",
-                  backgroundColor: "#00aaff",
+                  backgroundColor: toolCustom.color,
                   color: "#000",
                   border: "none",
                   cursor: "pointer",
@@ -1078,7 +1078,7 @@ export default function EmailsPage() {
                     padding: "8px 14px",
                     borderRadius: "8px",
                     backgroundColor: isActive ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                    color: isActive ? "#00aaff" : "var(--foreground-muted)",
+                    color: isActive ? toolCustom.color : "var(--foreground-muted)",
                     border: isActive ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
                     cursor: "pointer",
                     fontSize: "13px",
@@ -1121,7 +1121,7 @@ export default function EmailsPage() {
         <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
           {!isConnected ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <Mail style={{ width: "48px", height: "48px", color: "#00aaff", margin: "0 auto 16px" }} />
+              <Mail style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
               <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
                 Connect Gmail
               </h2>
@@ -1133,7 +1133,7 @@ export default function EmailsPage() {
                 style={{
                   padding: "12px 24px",
                   borderRadius: "8px",
-                  backgroundColor: "#00aaff",
+                  backgroundColor: toolCustom.color,
                   color: "#000",
                   border: "none",
                   fontSize: "14px",
@@ -1146,7 +1146,7 @@ export default function EmailsPage() {
             </div>
           ) : loading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: "#00aaff", animation: "spin 1s linear infinite" }} />
+              <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           ) : error ? (
             <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
@@ -1186,7 +1186,7 @@ export default function EmailsPage() {
                         {formatEmailSender(email.from)}
                       </span>
                       {selectedAccount === "all" && accounts.length > 1 && email.accountEmail && (
-                        <span style={{ fontSize: "11px", color: "#00aaff", backgroundColor: "rgba(0, 170, 255, 0.1)", padding: "2px 6px", borderRadius: "4px", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        <span style={{ fontSize: "11px", color: toolCustom.color, backgroundColor: "rgba(0, 170, 255, 0.1)", padding: "2px 6px", borderRadius: "4px", whiteSpace: "nowrap", flexShrink: 0 }}>
                           {email.accountName || email.accountEmail.split("@")[0]}
                         </span>
                       )}

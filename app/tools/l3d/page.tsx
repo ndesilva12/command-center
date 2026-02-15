@@ -124,7 +124,7 @@ export default function L3DPage() {
   const categoryColors: Record<string, string> = {
     major_developments: "#ff6b6b",
     analysis_commentary: "#4ecdc4",
-    discussions: "#00aaff",
+    discussions: toolCustom.color,
     data_research: "#95e1d3"
   };
 
@@ -260,7 +260,7 @@ export default function L3DPage() {
                       marginBottom: "16px", 
                       fontSize: "16px", 
                       fontWeight: 600,
-                      color: categoryColors[category] || "#00aaff"
+                      color: categoryColors[category] || toolCustom.color
                     }}>
                       {categoryLabels[category] || category}
                     </h4>
@@ -279,7 +279,7 @@ export default function L3DPage() {
                           target="_blank" 
                           rel="noopener noreferrer"
                           style={{ 
-                            color: "#00aaff", 
+                            color: toolCustom.color, 
                             textDecoration: "none",
                             fontWeight: 600,
                             fontSize: "15px",
@@ -310,10 +310,10 @@ export default function L3DPage() {
                         {item.worldview_note && (
                           <p style={{ 
                             fontSize: "12px", 
-                            color: categoryColors[category] || "#00aaff",
+                            color: categoryColors[category] || toolCustom.color,
                             fontStyle: "italic",
                             paddingLeft: "12px",
-                            borderLeft: `2px solid ${categoryColors[category] || "#00aaff"}`
+                            borderLeft: `2px solid ${categoryColors[category] || toolCustom.color}`
                           }}>
                             💡 {item.worldview_note}
                           </p>
@@ -368,7 +368,7 @@ export default function L3DPage() {
                         cursor: "pointer",
                         border: "1px solid transparent"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "#00aaff"}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>
@@ -390,7 +390,7 @@ export default function L3DPage() {
                         borderRadius: "6px",
                         border: "1px solid var(--glass-border)",
                         background: "transparent",
-                        color: "#00aaff",
+                        color: toolCustom.color,
                         fontSize: "14px",
                         fontWeight: 600,
                         cursor: "pointer"
