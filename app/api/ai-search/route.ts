@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
         return streamGrok(query);
       case 'gemini':
         return streamGemini(query);
+      case 'claude':
+        return streamClaude(query);
       default:
         return new Response('Invalid model', { status: 400 });
     }
@@ -245,6 +247,88 @@ async function streamGemini(query: string) {
                   const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
                   if (text) {
                     controller.enqueue(new TextEncoder().encode(text));
+                  }
+                } catch (e) {
+                  // Skip malformed JSON
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Stream error:', error);
+        } finally {
+          controller.close();
+        }
+      },
+    }),
+    {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    }
+  );
+}
+
+// Stream from Claude (Anthropic API)
+async function streamClaude(query: string) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return new Response('Anthropic API key not configured', { status: 500 });
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-5-20250514',
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [
+        { role: 'user', content: query }
+      ],
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => response.statusText);
+    throw new Error(`Anthropic API error: ${errText}`);
+  }
+
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        try {
+          let buffer = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                    controller.enqueue(new TextEncoder().encode(parsed.delta.text));
                   }
                 } catch (e) {
                   // Skip malformed JSON
