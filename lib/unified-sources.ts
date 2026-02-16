@@ -162,3 +162,8 @@ export function getAIModelUrl(sourceId: UnifiedSourceId): string {
   }
   return "";
 }
+
+// Check if AI source is handled in-house (not external)
+export function isInHouseAI(sourceId: UnifiedSourceId): boolean {
+  return sourceId === "chatgpt" || sourceId === "grok" || sourceId === "gemini";
+}

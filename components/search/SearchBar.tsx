@@ -13,7 +13,12 @@ export interface SearchBarRef {
   setSource: (s: UnifiedSourceId) => void;
 }
 
-export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, ref) {
+interface SearchBarProps {
+  onAISearch?: (query: string, model: string) => void;
+}
+
+export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function SearchBar(props, ref) {
+  const { onAISearch } = props;
   const [query, setQuery] = useState("");
   const [selectedSource, setSelectedSource] = useState<UnifiedSourceId>("google");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -71,10 +76,16 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
 
     saveToRecent(query);
 
-    // Open search URL in new tab (works for both web and AI sources)
-    const searchUrl = getSearchUrl(selectedSource, query.trim());
-    if (searchUrl) {
-      window.open(searchUrl, "_blank");
+    // Check if this is an AI source we can handle in-house
+    if (sourceConfig.type === "ai" && selectedSource !== "claude" && onAISearch) {
+      // Use in-house AI search for chatgpt, grok, gemini
+      onAISearch(query.trim(), selectedSource);
+    } else {
+      // Open search URL in new tab (for web sources and Claude)
+      const searchUrl = getSearchUrl(selectedSource, query.trim());
+      if (searchUrl) {
+        window.open(searchUrl, "_blank");
+      }
     }
 
     setQuery("");

@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef } from "react";
 import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
 import Link from "next/link";
+import { isInHouseAI } from "@/lib/unified-sources";
 import {
   Sparkles,
   TrendingUp,
@@ -78,6 +79,38 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   shopping: ShoppingBag,
   summarizer: FileText,
 };
+
+// Simple markdown to HTML converter
+function simpleMarkdownToHtml(markdown: string): string {
+  let html = markdown;
+
+  // Code blocks (must be done before inline code)
+  html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
+
+  // Bold
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Italic
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Headers
+  html = html.replace(/^## (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^# (.+)$/gm, '<h3>$1</h3>');
+
+  // List items
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+
+  // Wrap consecutive <li> in <ul>
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+  // Double newlines
+  html = html.replace(/\n\n/g, '<br><br>');
+
+  // Single newlines (in non-pre contexts)
+  html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
+
+  return html;
+}
 
 // Color mapping for tools
 const TOOL_COLORS: Record<string, string> = {
@@ -151,6 +184,12 @@ export default function Home() {
     "Intelligence": true,
   });
 
+  // AI Search state
+  const [aiSearchQuery, setAiSearchQuery] = useState<string>("");
+  const [aiSearchModel, setAiSearchModel] = useState<string>("");
+  const [aiSearchResult, setAiSearchResult] = useState<string>("");
+  const [aiSearchLoading, setAiSearchLoading] = useState<boolean>(false);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -177,6 +216,58 @@ export default function Home() {
     trendingTopicsRef.current.refresh();
     // Reset refreshing state after animation completes
     setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  // Handle AI search
+  const handleAISearch = async (query: string, model: string) => {
+    setAiSearchQuery(query);
+    setAiSearchModel(model);
+    setAiSearchResult("");
+    setAiSearchLoading(true);
+
+    try {
+      const response = await fetch('/api/ai-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, model }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        setAiSearchResult(prev => prev + chunk);
+      }
+    } catch (error: any) {
+      console.error('AI search error:', error);
+      setAiSearchResult(`Error: ${error.message}`);
+    } finally {
+      setAiSearchLoading(false);
+    }
+  };
+
+  // Close AI search
+  const handleCloseAISearch = () => {
+    setAiSearchQuery("");
+    setAiSearchModel("");
+    setAiSearchResult("");
+    setAiSearchLoading(false);
+  };
+
+  // Copy AI response
+  const handleCopyAIResponse = () => {
+    navigator.clipboard.writeText(aiSearchResult);
   };
 
   // Apply customizations and filter by permissions
@@ -229,16 +320,154 @@ export default function Home() {
 
           {/* Search Section - Above on Mobile */}
           <div id="search-section" style={{ marginBottom: isMobile ? "12px" : "24px" }}>
-            <SearchBar ref={searchBarRef} />
+            <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
           </div>
 
           {/* Trending Topics - Below on Mobile */}
-          <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
-            <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
-          </div>
+          {!aiSearchQuery && (
+            <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
+              <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
+            </div>
+          )}
+
+          {/* AI Search Response Area */}
+          {aiSearchQuery && (
+            <div style={{
+              maxWidth: "900px",
+              margin: "0 auto 32px",
+              padding: isMobile ? "16px" : "24px",
+              borderRadius: "16px",
+              background: "rgba(10, 10, 10, 0.95)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
+            }}>
+              {/* Header */}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                paddingBottom: "16px",
+                marginBottom: "16px",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              }}>
+                <Sparkles style={{ width: "20px", height: "20px", color: "#00aaff" }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "#00aaff", textTransform: "capitalize" }}>
+                    {aiSearchModel}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginTop: "2px" }}>
+                    {aiSearchQuery}
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div style={{
+                fontSize: "14px",
+                lineHeight: "1.6",
+                color: "var(--foreground)",
+                minHeight: "100px",
+              }}>
+                {aiSearchResult ? (
+                  <div
+                    className="ai-response"
+                    dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(aiSearchResult) }}
+                    style={{
+                      whiteSpace: "pre-wrap",
+                    }}
+                  />
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--foreground-muted)" }}>
+                    <div style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: "#00aaff",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }} />
+                    Thinking...
+                  </div>
+                )}
+                {aiSearchLoading && (
+                  <span style={{
+                    display: "inline-block",
+                    width: "8px",
+                    height: "16px",
+                    marginLeft: "2px",
+                    background: "#00aaff",
+                    animation: "blink 1s step-end infinite",
+                  }} />
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{
+                display: "flex",
+                gap: "12px",
+                marginTop: "20px",
+                paddingTop: "16px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+              }}>
+                <button
+                  onClick={handleCloseAISearch}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleCopyAIResponse}
+                  disabled={!aiSearchResult || aiSearchLoading}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(0, 170, 255, 0.3)",
+                    background: "rgba(0, 170, 255, 0.1)",
+                    color: "#00aaff",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    cursor: (!aiSearchResult || aiSearchLoading) ? "not-allowed" : "pointer",
+                    opacity: (!aiSearchResult || aiSearchLoading) ? 0.5 : 1,
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (aiSearchResult && !aiSearchLoading) {
+                      e.currentTarget.style.background = "rgba(0, 170, 255, 0.2)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (aiSearchResult && !aiSearchLoading) {
+                      e.currentTarget.style.background = "rgba(0, 170, 255, 0.1)";
+                    }
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Tool Categories - Desktop: Toggle all on/off */}
-          {!isMobile && !loading && customizedCategories.map((category, index) => {
+          {!aiSearchQuery && !isMobile && !loading && customizedCategories.map((category, index) => {
             if (category.tools.length === 0) return null;
 
             const expanded = expandedCategories[category.name] !== undefined 
@@ -305,7 +534,7 @@ export default function Home() {
           })}
 
           {/* Tool Categories - Mobile: Toggle all on/off */}
-          {isMobile && !loading && customizedCategories.map((category, index) => {
+          {!aiSearchQuery && isMobile && !loading && customizedCategories.map((category, index) => {
             if (category.tools.length === 0) return null;
 
             const expanded = expandedCategories[category.name] !== undefined 
@@ -359,7 +588,7 @@ export default function Home() {
           })}
 
           {/* Settings & Refresh - Bottom on Mobile */}
-          {isMobile && (
+          {!aiSearchQuery && isMobile && (
             <div style={{
               display: "flex",
               justifyContent: "center",
@@ -421,10 +650,57 @@ export default function Home() {
               </Link>
             </div>
           )}
-          <style jsx>{`
+          <style jsx global>{`
             @keyframes spin {
               from { transform: rotate(0deg); }
               to { transform: rotate(360deg); }
+            }
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.3; }
+            }
+            @keyframes blink {
+              0%, 50% { opacity: 1; }
+              51%, 100% { opacity: 0; }
+            }
+            /* AI response markdown styling */
+            .ai-response h3 {
+              font-size: 18px;
+              font-weight: 600;
+              margin: 16px 0 8px;
+              color: var(--foreground);
+            }
+            .ai-response h4 {
+              font-size: 16px;
+              font-weight: 600;
+              margin: 12px 0 6px;
+              color: var(--foreground);
+            }
+            .ai-response strong {
+              font-weight: 600;
+              color: var(--foreground);
+            }
+            .ai-response em {
+              font-style: italic;
+            }
+            .ai-response ul {
+              margin: 8px 0;
+              padding-left: 20px;
+            }
+            .ai-response li {
+              margin: 4px 0;
+              list-style-type: disc;
+            }
+            .ai-response pre {
+              background: rgba(0, 0, 0, 0.3);
+              padding: 12px;
+              border-radius: 8px;
+              overflow-x: auto;
+              margin: 12px 0;
+            }
+            .ai-response code {
+              font-family: 'Monaco', 'Courier New', monospace;
+              font-size: 13px;
             }
           `}</style>
         </div>
