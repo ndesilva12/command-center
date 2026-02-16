@@ -5,7 +5,7 @@ import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { TaskCard } from "@/components/jimmy/TaskCard";
 import { TaskList } from "@/components/jimmy/TaskList";
-import { Sparkles, Grid3X3, List, MessageSquare } from "lucide-react";
+import { Sparkles, Grid3X3, List, MessageSquare, FileDown } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
@@ -135,6 +135,39 @@ export default function JimmyPage() {
             </h1>
           </div>
 
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+          {/* Business Plan Download */}
+          <a
+            href="/jimmy/Demand-Business-Plan.pdf"
+            download
+            style={{
+              padding: "12px 24px",
+              borderRadius: "12px",
+              border: "1px solid rgba(0, 170, 255, 0.3)",
+              background: "rgba(0, 170, 255, 0.1)",
+              color: "#00aaff",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              textDecoration: "none",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 8px 16px rgba(0, 170, 255, 0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <FileDown style={{ width: "18px", height: "18px" }} />
+            Demand Business Plan (PDF)
+          </a>
+
           {/* Telegram Chat Button */}
           <a
             href="https://t.me/jimmy_chief_bot"
@@ -167,6 +200,7 @@ export default function JimmyPage() {
             <MessageSquare style={{ width: "18px", height: "18px" }} />
             Chat with Jimmy
           </a>
+          </div>
         </div>
 
         {/* View Toggle - moved to right */}
