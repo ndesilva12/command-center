@@ -14,22 +14,32 @@ export async function GET(request: NextRequest) {
 
   try {
     if (ids) {
-      // Check specific tracking IDs
       const idList = ids.split(',').map(s => s.trim()).filter(Boolean);
       const opens: Record<string, any[]> = {};
 
       for (const id of idList) {
         const snap = await adminDb.collection('email_opens')
           .where('trackingId', '==', id)
-          .limit(10)
+          .limit(20)
           .get();
 
         const entries = snap.docs.map(d => ({
           openedAt: d.data().timestamp || d.data().openedAt?.toDate?.()?.toISOString() || '',
-          ip: d.data().ip,
-          userAgent: d.data().userAgent,
-        }));
-        // Sort by openedAt desc client-side
+          ip: d.data().ip || '',
+          userAgent: d.data().userAgent || '',
+        })).filter(e => {
+          // Filter out Gmail/Google image proxy pre-fetches
+          // These fire immediately on delivery, NOT when the human opens
+          // Signature: Chrome/42.0.2311.135 + Edge/12.246 from 74.125.x.x IPs
+          const ua = e.userAgent.toLowerCase();
+          const ip = e.ip;
+          const isGmailProxy =
+            ua.includes('googleimageproxy') ||
+            ua.includes('feedfetcher') ||
+            (ua.includes('chrome/42.0.2311') && ua.includes('edge/12.246')) ||
+            (ip.startsWith('74.125.') && ua.includes('chrome/42.0'));
+          return !isGmailProxy;
+        });
         entries.sort((a, b) => String(b.openedAt).localeCompare(String(a.openedAt)));
         opens[id] = entries;
       }
