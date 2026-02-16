@@ -21,15 +21,17 @@ export async function GET(request: NextRequest) {
       for (const id of idList) {
         const snap = await adminDb.collection('email_opens')
           .where('trackingId', '==', id)
-          .orderBy('openedAt', 'desc')
           .limit(10)
           .get();
 
-        opens[id] = snap.docs.map(d => ({
-          openedAt: d.data().timestamp,
+        const entries = snap.docs.map(d => ({
+          openedAt: d.data().timestamp || d.data().openedAt?.toDate?.()?.toISOString() || '',
           ip: d.data().ip,
           userAgent: d.data().userAgent,
         }));
+        // Sort by openedAt desc client-side
+        entries.sort((a, b) => String(b.openedAt).localeCompare(String(a.openedAt)));
+        opens[id] = entries;
       }
 
       return NextResponse.json({ opens });
@@ -37,7 +39,6 @@ export async function GET(request: NextRequest) {
 
     if (all) {
       const snap = await adminDb.collection('email_opens')
-        .orderBy('openedAt', 'desc')
         .limit(limit)
         .get();
 
