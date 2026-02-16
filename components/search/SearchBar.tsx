@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Search, Clock, X } from "lucide-react";
-import { UnifiedSourceId, getSearchUrl, getSourceConfig, getAIModelUrl } from "@/lib/unified-sources";
+import { UnifiedSourceId, getSearchUrl, getSourceConfig } from "@/lib/unified-sources";
 import { SourceSelector } from "./SourceSelector";
 
 const RECENT_SEARCHES_KEY = "cc-recent-searches";
@@ -71,14 +71,10 @@ export const SearchBar = forwardRef<SearchBarRef, {}>(function SearchBar(props, 
 
     saveToRecent(query);
 
-    if (sourceConfig.type === "web") {
-      // Open web search in new tab
-      const searchUrl = getSearchUrl(selectedSource, query.trim());
+    // Open search URL in new tab (works for both web and AI sources)
+    const searchUrl = getSearchUrl(selectedSource, query.trim());
+    if (searchUrl) {
       window.open(searchUrl, "_blank");
-    } else if (sourceConfig.type === "ai") {
-      // Open AI model in new tab
-      const aiUrl = getAIModelUrl(selectedSource);
-      window.open(aiUrl, "_blank");
     }
 
     setQuery("");

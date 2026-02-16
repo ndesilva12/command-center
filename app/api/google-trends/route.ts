@@ -288,7 +288,7 @@ function parseGoogleTrendsRSS(xml: string): GoogleTrend[] {
           }
         }
 
-        const searchUrl = linkMatch?.[1] || `https://www.google.com/search?q=${encodeURIComponent(title)}`;
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(title)}&tbm=nws`;
 
         trends.push({
           title,

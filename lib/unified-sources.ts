@@ -111,6 +111,7 @@ export const UNIFIED_SOURCES: UnifiedSourceConfig[] = [
     description: "xAI Grok",
     type: "ai",
     apiEndpoint: "https://grok.com",
+    searchUrlTemplate: "https://grok.com/?q={query}",
   },
   {
     id: "gemini",
@@ -118,6 +119,7 @@ export const UNIFIED_SOURCES: UnifiedSourceConfig[] = [
     description: "Google Gemini",
     type: "ai",
     apiEndpoint: "https://gemini.google.com/app",
+    searchUrlTemplate: "https://gemini.google.com/app?text={query}",
   },
   {
     id: "claude",
@@ -125,6 +127,7 @@ export const UNIFIED_SOURCES: UnifiedSourceConfig[] = [
     description: "Anthropic Claude",
     type: "ai",
     apiEndpoint: "https://claude.ai/new",
+    searchUrlTemplate: "https://claude.ai/new?q={query}",
   },
   {
     id: "chatgpt",
@@ -132,6 +135,7 @@ export const UNIFIED_SOURCES: UnifiedSourceConfig[] = [
     description: "OpenAI ChatGPT",
     type: "ai",
     apiEndpoint: "https://chatgpt.com",
+    searchUrlTemplate: "https://chatgpt.com/?q={query}",
   },
 ];
 
