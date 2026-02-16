@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from 'next/headers';
-import { archiveEmail, trashEmail } from "@/lib/gmail";
+import { archiveEmail, trashEmail, markEmailAsRead, markEmailAsUnread, starEmail } from "@/lib/gmail";
 import { getValidAccessToken } from "@/lib/google-auth";
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -84,6 +84,18 @@ export async function POST(
         break;
       case "trash":
         await trashEmail(accessToken, id);
+        break;
+      case "markAsRead":
+        await markEmailAsRead(accessToken, id);
+        break;
+      case "markAsUnread":
+        await markEmailAsUnread(accessToken, id);
+        break;
+      case "star":
+        await starEmail(accessToken, id, true);
+        break;
+      case "unstar":
+        await starEmail(accessToken, id, false);
         break;
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });

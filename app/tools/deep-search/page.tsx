@@ -44,7 +44,7 @@ function DeepSearchContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
   const [query_text, setQuery] = useState("");
-  const [pageTarget, setPageTarget] = useState(15);
+  const [pageTarget, setPageTarget] = useState(2);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<DeepSearchReport | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -266,9 +266,9 @@ function DeepSearchContent() {
           </span>
           <input
             type="range"
-            min={5}
-            max={50}
-            step={5}
+            min={1}
+            max={25}
+            step={1}
             value={pageTarget}
             onChange={(e) => setPageTarget(Number(e.target.value))}
             style={{

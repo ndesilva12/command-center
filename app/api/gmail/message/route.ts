@@ -3,7 +3,16 @@ import { cookies } from 'next/headers';
 import { getValidAccessToken } from '@/lib/google-auth';
 import { adminDb } from '@/lib/firebase-admin';
 
-async function getEmailBody(accessToken: string, messageId: string): Promise<{ html: string; text: string }> {
+async function getEmailBody(accessToken: string, messageId: string): Promise<{ 
+  html: string; 
+  text: string; 
+  to: string; 
+  cc: string; 
+  from: string; 
+  subject: string; 
+  messageId: string;
+  threadId: string;
+}> {
   try {
     const response = await fetch(
       `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
@@ -19,6 +28,11 @@ async function getEmailBody(accessToken: string, messageId: string): Promise<{ h
     }
 
     const data = await response.json();
+    
+    // Extract headers
+    const headers = data.payload?.headers || [];
+    const getHeader = (name: string) =>
+      headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
 
     // Extract both HTML and plain text versions
     let htmlBody = '';
@@ -59,6 +73,12 @@ async function getEmailBody(accessToken: string, messageId: string): Promise<{ h
     return {
       html: htmlBody || 'No content available',
       text: textBody || 'No content available',
+      to: getHeader('To'),
+      cc: getHeader('Cc'),
+      from: getHeader('From'),
+      subject: getHeader('Subject'),
+      messageId: getHeader('Message-ID'),
+      threadId: data.threadId,
     };
   } catch (error) {
     console.error('Error fetching email body:', error);
@@ -138,12 +158,17 @@ export async function GET(request: Request) {
     const accessToken = await getValidAccessToken(tokens);
 
     // Fetch email body (both HTML and text)
-    const { html, text } = await getEmailBody(accessToken, messageId);
+    const { html, text, to, cc, from, subject, messageId: gmailMessageId, threadId } = await getEmailBody(accessToken, messageId);
 
     return NextResponse.json({
       body: html,
       textBody: text,
-      messageId,
+      to,
+      cc,
+      from,
+      subject,
+      messageId: gmailMessageId,
+      threadId,
     });
   } catch (error) {
     console.error('Error fetching email message:', error);

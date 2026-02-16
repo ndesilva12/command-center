@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, RefreshCw, Archive, Trash2, Search, X, ExternalLink, Plus, Users, UserPlus, ChevronDown, Inbox, Send, FileEdit } from "lucide-react";
+import { Mail, RefreshCw, Archive, Trash2, Search, X, ExternalLink, Plus, Users, UserPlus, ChevronDown, Inbox, Send, FileEdit, Reply, Forward, Star, MailOpen } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -55,14 +55,27 @@ export default function EmailsPage() {
   const [selectedEmail, setSelectedEmail] = useState<EmailWithAccount | null>(null);
   const [emailBody, setEmailBody] = useState<string>("");
   const [emailBodyText, setEmailBodyText] = useState<string>("");
+  const [emailMetadata, setEmailMetadata] = useState<{
+    to: string;
+    cc: string;
+    from: string;
+    subject: string;
+    messageId: string;
+    threadId: string;
+  } | null>(null);
   const [loadingEmailBody, setLoadingEmailBody] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
   const [composeTo, setComposeTo] = useState("");
+  const [composeCc, setComposeCc] = useState("");
+  const [showCc, setShowCc] = useState(false);
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
+  const [composeThreadId, setComposeThreadId] = useState<string | undefined>(undefined);
+  const [composeReplyToMessageId, setComposeReplyToMessageId] = useState<string | undefined>(undefined);
   const [sending, setSending] = useState(false);
   const [emailViewMode, setEmailViewMode] = useState<"html" | "text">("html");
   const [isMobile, setIsMobile] = useState(false);
+  const [isStarred, setIsStarred] = useState(false);
 
   // Mobile detection
   useEffect(() => {
@@ -293,6 +306,8 @@ export default function EmailsPage() {
     setLoadingEmailBody(true);
     setEmailBody("");
     setEmailBodyText("");
+    setEmailMetadata(null);
+    setIsStarred(false); // Will be updated from API if needed
 
     try {
       const accountParam = email.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
@@ -305,6 +320,14 @@ export default function EmailsPage() {
       const data = await response.json();
       setEmailBody(data.body || data.snippet || "No content available");
       setEmailBodyText(data.textBody || data.snippet || "No content available");
+      setEmailMetadata({
+        to: data.to || "",
+        cc: data.cc || "",
+        from: data.from || email.from,
+        subject: data.subject || email.subject,
+        messageId: data.messageId || "",
+        threadId: data.threadId || email.threadId,
+      });
 
       // Mark as read if unread
       if (email.isUnread) {
@@ -347,17 +370,24 @@ export default function EmailsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: composeTo,
+          cc: composeCc || undefined,
           subject: composeSubject,
           body: composeBody,
           account: accountParam,
+          threadId: composeThreadId,
+          replyToMessageId: composeReplyToMessageId,
         }),
       });
 
       if (response.ok) {
         setShowCompose(false);
         setComposeTo("");
+        setComposeCc("");
+        setShowCc(false);
         setComposeSubject("");
         setComposeBody("");
+        setComposeThreadId(undefined);
+        setComposeReplyToMessageId(undefined);
         // Refresh inbox after sending
         fetchEmails();
       } else {
@@ -368,6 +398,163 @@ export default function EmailsPage() {
       alert("Failed to send email. Please try again.");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleReply = () => {
+    if (!selectedEmail || !emailMetadata) return;
+    
+    const quotedBody = `<br><br>On ${new Date(parseInt(selectedEmail.date)).toLocaleString()}, ${formatEmailSender(emailMetadata.from)} wrote:<br><blockquote style="margin: 0 0 0 10px; padding-left: 10px; border-left: 2px solid #ccc;">${emailBody}</blockquote>`;
+    
+    setComposeTo(emailMetadata.from);
+    setComposeCc("");
+    setShowCc(false);
+    setComposeSubject(emailMetadata.subject.startsWith("Re: ") ? emailMetadata.subject : `Re: ${emailMetadata.subject}`);
+    setComposeBody(quotedBody);
+    setComposeThreadId(emailMetadata.threadId);
+    setComposeReplyToMessageId(emailMetadata.messageId);
+    setSelectedEmail(null);
+    setShowCompose(true);
+  };
+
+  const handleReplyAll = () => {
+    if (!selectedEmail || !emailMetadata) return;
+    
+    const quotedBody = `<br><br>On ${new Date(parseInt(selectedEmail.date)).toLocaleString()}, ${formatEmailSender(emailMetadata.from)} wrote:<br><blockquote style="margin: 0 0 0 10px; padding-left: 10px; border-left: 2px solid #ccc;">${emailBody}</blockquote>`;
+    
+    // Parse all recipients
+    const toAddresses = emailMetadata.to.split(',').map(a => a.trim());
+    const ccAddresses = emailMetadata.cc ? emailMetadata.cc.split(',').map(a => a.trim()) : [];
+    const allRecipients = [...toAddresses, ...ccAddresses].filter(Boolean);
+    
+    // Remove current user's email from recipients
+    const accountParam = selectedEmail.accountEmail || (selectedAccount !== "all" ? selectedAccount : accounts[0]?.email);
+    const filteredRecipients = allRecipients.filter(addr => !addr.includes(accountParam || ''));
+    
+    setComposeTo(emailMetadata.from);
+    setComposeCc(filteredRecipients.join(', '));
+    setShowCc(true);
+    setComposeSubject(emailMetadata.subject.startsWith("Re: ") ? emailMetadata.subject : `Re: ${emailMetadata.subject}`);
+    setComposeBody(quotedBody);
+    setComposeThreadId(emailMetadata.threadId);
+    setComposeReplyToMessageId(emailMetadata.messageId);
+    setSelectedEmail(null);
+    setShowCompose(true);
+  };
+
+  const handleForward = () => {
+    if (!selectedEmail || !emailMetadata) return;
+    
+    const forwardedBody = `<br><br>---------- Forwarded message ---------<br>From: ${emailMetadata.from}<br>Date: ${new Date(parseInt(selectedEmail.date)).toLocaleString()}<br>Subject: ${emailMetadata.subject}<br>To: ${emailMetadata.to}<br><br>${emailBody}`;
+    
+    setComposeTo("");
+    setComposeCc("");
+    setShowCc(false);
+    setComposeSubject(emailMetadata.subject.startsWith("Fwd: ") ? emailMetadata.subject : `Fwd: ${emailMetadata.subject}`);
+    setComposeBody(forwardedBody);
+    setComposeThreadId(undefined);
+    setComposeReplyToMessageId(undefined);
+    setSelectedEmail(null);
+    setShowCompose(true);
+  };
+
+  const handleArchiveFromModal = async () => {
+    if (!selectedEmail) return;
+    
+    const accountParam = selectedEmail.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
+    
+    try {
+      const response = await fetch(`/api/gmail/${selectedEmail.id}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "archive",
+          account: accountParam,
+        }),
+      });
+
+      if (response.ok) {
+        setEmails((prev) => prev.filter((e) => e.id !== selectedEmail.id));
+        setSelectedEmail(null);
+      }
+    } catch (err) {
+      console.error("Failed to archive email:", err);
+    }
+  };
+
+  const handleDeleteFromModal = async () => {
+    if (!selectedEmail) return;
+    
+    if (!confirm(`Delete "${selectedEmail.subject}"?`)) return;
+    
+    const accountParam = selectedEmail.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
+    
+    try {
+      const response = await fetch(`/api/gmail/${selectedEmail.id}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "trash",
+          account: accountParam,
+        }),
+      });
+
+      if (response.ok) {
+        setEmails((prev) => prev.filter((e) => e.id !== selectedEmail.id));
+        setSelectedEmail(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete email:", err);
+    }
+  };
+
+  const handleMarkAsUnread = async () => {
+    if (!selectedEmail) return;
+    
+    const accountParam = selectedEmail.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
+    
+    try {
+      const response = await fetch(`/api/gmail/${selectedEmail.id}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "markAsUnread",
+          account: accountParam,
+        }),
+      });
+
+      if (response.ok) {
+        setEmails((prev) =>
+          prev.map((e) => (e.id === selectedEmail.id ? { ...e, isUnread: true } : e))
+        );
+        setSelectedEmail(null);
+      }
+    } catch (err) {
+      console.error("Failed to mark as unread:", err);
+    }
+  };
+
+  const handleToggleStar = async () => {
+    if (!selectedEmail) return;
+    
+    const accountParam = selectedEmail.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
+    const action = isStarred ? "unstar" : "star";
+    
+    try {
+      const response = await fetch(`/api/gmail/${selectedEmail.id}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          account: accountParam,
+        }),
+      });
+
+      if (response.ok) {
+        setIsStarred(!isStarred);
+      }
+    } catch (err) {
+      console.error("Failed to toggle star:", err);
     }
   };
 
@@ -513,29 +700,172 @@ export default function EmailsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-              <a
-                href={getSuperhumanUrl(selectedEmail.threadId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  backgroundColor: toolCustom.color,
-                  color: "#000",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  textDecoration: "none",
-                }}
-              >
-                <ExternalLink style={{ width: "14px", height: "14px" }} />
-                Open in Superhuman
-              </a>
+            <div style={{ padding: "16px 24px", borderTop: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", gap: "12px", justifyContent: "space-between", alignItems: "center" }}>
+              {/* Left side: Reply, Reply All, Forward */}
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button
+                  onClick={handleReply}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Reply style={{ width: "14px", height: "14px" }} />
+                  Reply
+                </button>
+                <button
+                  onClick={handleReplyAll}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Reply style={{ width: "14px", height: "14px" }} />
+                  Reply All
+                </button>
+                <button
+                  onClick={handleForward}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Forward style={{ width: "14px", height: "14px" }} />
+                  Forward
+                </button>
+              </div>
+
+              {/* Right side: Archive, Delete, Star, Mark Unread, Open in Superhuman */}
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <button
+                  onClick={handleArchiveFromModal}
+                  title="Archive"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground-muted)",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Archive style={{ width: "16px", height: "16px" }} />
+                </button>
+                <button
+                  onClick={handleDeleteFromModal}
+                  title="Delete"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground-muted)",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Trash2 style={{ width: "16px", height: "16px" }} />
+                </button>
+                <button
+                  onClick={handleToggleStar}
+                  title={isStarred ? "Unstar" : "Star"}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: isStarred ? toolCustom.color : "var(--foreground-muted)",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Star style={{ width: "16px", height: "16px", fill: isStarred ? "currentColor" : "none" }} />
+                </button>
+                <button
+                  onClick={handleMarkAsUnread}
+                  title="Mark as Unread"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground-muted)",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <MailOpen style={{ width: "16px", height: "16px" }} />
+                </button>
+                <a
+                  href={getSuperhumanUrl(selectedEmail.threadId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    backgroundColor: toolCustom.color,
+                    color: "#000",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    textDecoration: "none",
+                  }}
+                >
+                  <ExternalLink style={{ width: "14px", height: "14px" }} />
+                  Open in Superhuman
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -604,9 +934,26 @@ export default function EmailsPage() {
             <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground)", marginBottom: "8px" }}>
-                    To
-                  </label>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--foreground)" }}>
+                      To
+                    </label>
+                    {!showCc && (
+                      <button
+                        onClick={() => setShowCc(true)}
+                        style={{
+                          fontSize: "12px",
+                          color: toolCustom.color,
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "2px 6px",
+                        }}
+                      >
+                        + CC
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="email"
                     value={composeTo}
@@ -624,6 +971,47 @@ export default function EmailsPage() {
                     }}
                   />
                 </div>
+                {showCc && (
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <label style={{ fontSize: "13px", fontWeight: 500, color: "var(--foreground)" }}>
+                        CC
+                      </label>
+                      <button
+                        onClick={() => {
+                          setShowCc(false);
+                          setComposeCc("");
+                        }}
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--foreground-muted)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "2px 6px",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      type="email"
+                      value={composeCc}
+                      onChange={(e) => setComposeCc(e.target.value)}
+                      placeholder="cc@example.com (comma-separated for multiple)"
+                      style={{
+                        width: "100%",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        color: "var(--foreground)",
+                        fontSize: "14px",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+                )}
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "var(--foreground)", marginBottom: "8px" }}>
                     Subject

@@ -3,18 +3,38 @@ import { cookies } from 'next/headers';
 import { getValidAccessToken } from '@/lib/google-auth';
 import { adminDb } from '@/lib/firebase-admin';
 
-async function sendGmailEmail(accessToken: string, to: string, subject: string, body: string, from: string): Promise<any> {
+async function sendGmailEmail(
+  accessToken: string, 
+  to: string, 
+  subject: string, 
+  body: string, 
+  from: string,
+  cc?: string,
+  threadId?: string,
+  replyToMessageId?: string
+): Promise<any> {
   try {
     // Create email in RFC 2822 format
-    const email = [
+    const emailParts = [
       `From: ${from}`,
       `To: ${to}`,
-      `Subject: ${subject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      body,
-    ].join('\r\n');
+    ];
+    
+    if (cc) emailParts.push(`Cc: ${cc}`);
+    
+    emailParts.push(`Subject: ${subject}`);
+    
+    if (replyToMessageId) {
+      emailParts.push(`In-Reply-To: ${replyToMessageId}`);
+      emailParts.push(`References: ${replyToMessageId}`);
+    }
+    
+    emailParts.push('MIME-Version: 1.0');
+    emailParts.push('Content-Type: text/html; charset=utf-8');
+    emailParts.push('');
+    emailParts.push(body);
+    
+    const email = emailParts.join('\r\n');
 
     // Encode email as base64url
     const encodedEmail = Buffer.from(email)
@@ -22,6 +42,9 @@ async function sendGmailEmail(accessToken: string, to: string, subject: string, 
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
+
+    const requestBody: any = { raw: encodedEmail };
+    if (threadId) requestBody.threadId = threadId;
 
     const response = await fetch(
       'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
@@ -31,7 +54,7 @@ async function sendGmailEmail(accessToken: string, to: string, subject: string, 
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ raw: encodedEmail }),
+        body: JSON.stringify(requestBody),
       }
     );
 
@@ -50,7 +73,7 @@ async function sendGmailEmail(accessToken: string, to: string, subject: string, 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { to, subject, body: emailBody, account } = body;
+    const { to, subject, body: emailBody, account, cc, threadId, replyToMessageId } = body;
 
     // Validate
     if (!to || !subject || !emailBody) {
@@ -119,7 +142,7 @@ export async function POST(request: Request) {
     const accessToken = await getValidAccessToken(tokens);
 
     // Send email
-    const result = await sendGmailEmail(accessToken, to, subject, emailBody, targetEmail);
+    const result = await sendGmailEmail(accessToken, to, subject, emailBody, targetEmail, cc, threadId, replyToMessageId);
 
     return NextResponse.json({
       success: true,

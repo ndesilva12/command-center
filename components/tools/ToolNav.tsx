@@ -29,8 +29,19 @@ export const ToolNav = memo(function ToolNav({ currentToolId }: ToolNavProps) {
   
   // Category switch button: shows OWN category name, links to OTHER category's first tool
   const ownLabel = currentCategory === 'productivity' ? 'Productivity' : 'Intelligence';
-  const otherTools = currentCategory === 'productivity' ? INTELLIGENCE_TOOLS : PRODUCTIVITY_TOOLS;
-  const otherFirstHref = otherTools[0]?.href || '/';
+  const otherToolsRaw = currentCategory === 'productivity' ? INTELLIGENCE_TOOLS : PRODUCTIVITY_TOOLS;
+  
+  // Apply same customization logic to other category's tools
+  const otherToolsCustomized = otherToolsRaw
+    .map((tool) => {
+      const custom = getCustomization(tool.id, tool.name, "#6366f1");
+      return { ...tool, name: custom.name, visible: custom.visible, order: custom.order };
+    })
+    .filter((tool) => tool.visible)
+    .filter((tool) => isAdmin || hasPermission(tool.id))
+    .sort((a, b) => a.order - b.order);
+  
+  const otherFirstHref = otherToolsCustomized[0]?.href || '/';
 
   // Filter by visibility and permissions
   const tools = allTools
