@@ -143,6 +143,32 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
     
+    // Emailer
+    match /emailer_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Email open tracking
+    match /email_opens/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if true;  // Pixel tracking needs unauthenticated writes (server-side)
+    }
+    
+    // Politicorp
+    match /politicorp_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Business intel
+    match /business_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Summarizer
+    match /summarizer_history/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
     // Default deny
     match /{document=**} {
       allow read, write: if false;
