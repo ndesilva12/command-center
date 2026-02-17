@@ -127,7 +127,9 @@ a {
   left: 0;
   right: 0;
   min-height: 56px;
-  background: transparent;
+  background: rgba(10, 10, 14, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,19 +139,6 @@ a {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   flex-wrap: nowrap;
-}
-
-/* Fade mask: sits just below the nav, dissolves content as it scrolls up */
-.tool-nav-container::after {
-  content: '';
-  position: fixed;
-  top: calc(64px + var(--tool-nav-height, 56px));
-  left: 0;
-  right: 0;
-  height: 32px;
-  background: linear-gradient(to bottom, #0a0a0e, transparent);
-  z-index: 39;
-  pointer-events: none;
 }
 
 .tool-nav-container.tool-nav-wrap {
