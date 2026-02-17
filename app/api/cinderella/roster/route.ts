@@ -4,12 +4,7 @@ import { google } from 'googleapis';
 
 
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-const cache: { roster?: CacheEntry } = {};
-const CACHE_TTL_MS = 15 * 60 * 1000;
+// Cache disabled — always fetch fresh from Google Sheets
 
 
 function parseRisk(riskStr: string): 'low' | 'moderate' | 'high' {
@@ -21,11 +16,6 @@ function parseRisk(riskStr: string): 'low' | 'moderate' | 'high' {
 
 export async function GET() {
   try {
-    const now = Date.now();
-    if (cache.roster && now - cache.roster.timestamp < CACHE_TTL_MS) {
-      return NextResponse.json(cache.roster.data, { headers: { 'X-Cache': 'HIT' } });
-    }
-
     const auth = await getCinderellaAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
@@ -176,8 +166,13 @@ export async function GET() {
       }));
 
     const result = { configs, strikeOrder };
-    cache.roster = { data: result, timestamp: now };
-    return NextResponse.json(result, { headers: { 'X-Cache': 'MISS' } });
+    return NextResponse.json(result, {
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Synced-At': new Date().toISOString(),
+        'Cache-Control': 'no-store',
+      }
+    });
   } catch (error: any) {
     console.error('Roster API error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -2,15 +2,7 @@ import { getCinderellaAuth } from '@/lib/cinderella-auth';
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-
-
-// In-memory cache with 15-minute TTL
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-const cache: { connections?: CacheEntry } = {};
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+// Cache disabled — always fetch fresh from Google Sheets
 
 export interface CoachingConnection {
   targetPlayer: string;
@@ -29,14 +21,6 @@ export interface CoachingConnection {
 
 export async function GET() {
   try {
-    // Check cache
-    const now = Date.now();
-    if (cache.connections && now - cache.connections.timestamp < CACHE_TTL_MS) {
-      return NextResponse.json(cache.connections.data, {
-        headers: { 'X-Cache': 'HIT', 'X-Cache-Age': String(Math.floor((now - cache.connections.timestamp) / 1000)) }
-      });
-    }
-
     const auth = await getCinderellaAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
@@ -70,11 +54,12 @@ export async function GET() {
       // Sort by strength descending (5 first)
       .sort((a, b) => b.strength - a.strength);
 
-    // Update cache
-    cache.connections = { data, timestamp: now };
-
     return NextResponse.json(data, {
-      headers: { 'X-Cache': 'MISS' }
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Synced-At': new Date().toISOString(),
+        'Cache-Control': 'no-store',
+      }
     });
   } catch (error: any) {
     console.error('Coaching Connections API error:', error);

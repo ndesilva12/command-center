@@ -2,15 +2,7 @@ import { getCinderellaAuth } from '@/lib/cinderella-auth';
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-
-
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-const cache: { rankings?: CacheEntry } = {};
-const CACHE_TTL_MS = 15 * 60 * 1000;
-
+// Cache disabled — always fetch fresh from Google Sheets
 
 interface PlayerRanking {
   tier: string;
@@ -23,13 +15,15 @@ interface PlayerRanking {
   scoutNotes: string;
   section: string;
   isRedFlag: boolean;
+  rowIndex: number; // 1-based row index in the sheet for write-back
 }
 
-function parseRankingRows(rows: any[][]): PlayerRanking[] {
+function parseRankingRows(rows: any[][], sectionLabel: string): PlayerRanking[] {
   const players: PlayerRanking[] = [];
   let currentSection = 'Guards';
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
     if (!row || row.length === 0) continue;
     const first = row[0] || '';
 
@@ -67,8 +61,9 @@ function parseRankingRows(rows: any[][]): PlayerRanking[] {
       bestBatchRank: row[5] || '',
       exercise: row[6] || '',
       scoutNotes: row[7] || '',
-      section: currentSection,
+      section: sectionLabel === 'BigMen' ? 'BigMen' : currentSection,
       isRedFlag: (row[0] || '').includes('RF'),
+      rowIndex: i + 1, // 1-based
     });
   }
 
@@ -77,11 +72,6 @@ function parseRankingRows(rows: any[][]): PlayerRanking[] {
 
 export async function GET() {
   try {
-    const now = Date.now();
-    if (cache.rankings && now - cache.rankings.timestamp < CACHE_TTL_MS) {
-      return NextResponse.json(cache.rankings.data, { headers: { 'X-Cache': 'HIT' } });
-    }
-
     const auth = await getCinderellaAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
@@ -91,7 +81,7 @@ export async function GET() {
       range: "Norman's Rankings!A1:H200",
     });
     const mainRows = mainResponse.data.values || [];
-    const mainPlayers = parseRankingRows(mainRows);
+    const mainPlayers = parseRankingRows(mainRows, 'Main');
 
     // Try to fetch Big Men Rankings tab (may not exist)
     let bigMen: PlayerRanking[] = [];
@@ -101,28 +91,8 @@ export async function GET() {
         range: "Big Men Rankings!A1:H100",
       });
       const bigMenRows = bigMenResponse.data.values || [];
-      // Parse big men — all rows in this tab are treated as the same section
-      for (const row of bigMenRows) {
-        if (!row || row.length === 0) continue;
-        const first = row[0] || '';
-        if (first === 'MASTER TIER' || first === '' || !first) continue;
-        const validTiers = ['T1', 'T2', 'T3', 'T4-RF', 'T4', 'NR'];
-        if (!validTiers.some((t) => first === t || first.startsWith(t + ' '))) continue;
-        bigMen.push({
-          tier: row[0] || '',
-          name: row[1] || '',
-          school: row[2] || '',
-          pos: row[3] || '',
-          yr: row[4] || '',
-          bestBatchRank: row[5] || '',
-          exercise: row[6] || '',
-          scoutNotes: row[7] || '',
-          section: 'BigMen',
-          isRedFlag: (row[0] || '').includes('RF'),
-        });
-      }
+      bigMen = parseRankingRows(bigMenRows, 'BigMen');
     } catch {
-      // Tab doesn't exist or read error — silently skip
       bigMen = [];
     }
 
@@ -132,10 +102,53 @@ export async function GET() {
       bigMen,
     };
 
-    cache.rankings = { data: result, timestamp: now };
-    return NextResponse.json(result, { headers: { 'X-Cache': 'MISS' } });
+    return NextResponse.json(result, {
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Synced-At': new Date().toISOString(),
+        'Cache-Control': 'no-store',
+      }
+    });
   } catch (error: any) {
     console.error('Rankings API error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// PUT /api/cinderella/rankings — reorder players by writing SortKey back
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { section, players } = body as {
+      section: 'guards' | 'forwards' | 'bigMen';
+      players: { name: string; rowIndex: number; newRank: number }[];
+    };
+
+    if (!section || !players || !Array.isArray(players)) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+
+    const auth = await getCinderellaAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
+    const sheetName = section === 'bigMen' ? 'Big Men Rankings' : "Norman's Rankings";
+
+    // Write new rank (bestBatchRank = col F = index 5) for each player
+    const data = players.map(p => ({
+      range: `${sheetName}!F${p.rowIndex}`,
+      values: [[String(p.newRank)]],
+    }));
+
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: '1yrpyWk1CA9wvHXngmWilFJZlQPd_1-QC8lKeAS1YPcs',
+      requestBody: {
+        valueInputOption: 'RAW',
+        data,
+      },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error('Rankings PUT error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

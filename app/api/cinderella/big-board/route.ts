@@ -2,26 +2,11 @@ import { getCinderellaAuth } from '@/lib/cinderella-auth';
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-
-
-// In-memory cache with 15-minute TTL
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-const cache: { bigBoard?: CacheEntry } = {};
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+// Cache disabled — always fetch fresh from Google Sheets
+// Use ?bust=timestamp for explicit cache busting (same behavior, just fresh)
 
 export async function GET() {
   try {
-    // Check cache
-    const now = Date.now();
-    if (cache.bigBoard && now - cache.bigBoard.timestamp < CACHE_TTL_MS) {
-      return NextResponse.json(cache.bigBoard.data, {
-        headers: { 'X-Cache': 'HIT', 'X-Cache-Age': String(Math.floor((now - cache.bigBoard.timestamp) / 1000)) }
-      });
-    }
-
     const auth = await getCinderellaAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
@@ -46,11 +31,12 @@ export async function GET() {
         return obj;
       });
 
-    // Update cache
-    cache.bigBoard = { data, timestamp: now };
-
     return NextResponse.json(data, {
-      headers: { 'X-Cache': 'MISS' }
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Synced-At': new Date().toISOString(),
+        'Cache-Control': 'no-store',
+      }
     });
   } catch (error: any) {
     console.error('Big Board API error:', error);
