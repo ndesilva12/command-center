@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp, Sword } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ToolBackground } from "@/components/tools/ToolBackground";
+import { WarRoom } from "./WarRoom";
 
 export default function CinderellaPage() {
   return (
@@ -20,7 +21,7 @@ export default function CinderellaPage() {
 function CinderellaContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('cinderella', 'Cinderella Project', '#3b82f6');
-  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'tasks' | 'financials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'tasks' | 'financials' | 'warroom'>('overview');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -76,6 +77,7 @@ function CinderellaContent() {
             { id: 'legal', label: 'Legal', icon: Scale },
             { id: 'tasks', label: 'Tasks', icon: FileText },
             { id: 'financials', label: 'Financials', icon: Building2 },
+            { id: 'warroom', label: '⚔️ War Room', icon: Sword },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -83,9 +85,15 @@ function CinderellaContent() {
               style={{
                 padding: isMobile ? "8px 16px" : "10px 20px",
                 borderRadius: "8px",
-                border: activeTab === id ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
-                background: activeTab === id ? "rgba(245, 158, 11, 0.1)" : "rgba(255, 255, 255, 0.03)",
-                color: activeTab === id ? "#3b82f6" : "rgba(255, 255, 255, 0.7)",
+                border: id === 'warroom'
+                  ? activeTab === id ? "1px solid rgba(16,185,129,0.5)" : "1px solid rgba(16,185,129,0.25)"
+                  : activeTab === id ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
+                background: id === 'warroom'
+                  ? activeTab === id ? "rgba(16,185,129,0.15)" : "rgba(16,185,129,0.05)"
+                  : activeTab === id ? "rgba(245, 158, 11, 0.1)" : "rgba(255, 255, 255, 0.03)",
+                color: id === 'warroom'
+                  ? activeTab === id ? "#10b981" : "rgba(16,185,129,0.8)"
+                  : activeTab === id ? "#3b82f6" : "rgba(255, 255, 255, 0.7)",
                 fontSize: isMobile ? "13px" : "14px",
                 fontWeight: activeTab === id ? 600 : 500,
                 cursor: "pointer",
@@ -110,6 +118,7 @@ function CinderellaContent() {
         {activeTab === 'legal' && <LegalTab isMobile={isMobile} />}
         {activeTab === 'tasks' && <TasksTab isMobile={isMobile} />}
         {activeTab === 'financials' && <FinancialsTab isMobile={isMobile} />}
+        {activeTab === 'warroom' && <WarRoom isMobile={isMobile} />}
       </main>
     </>
   );
