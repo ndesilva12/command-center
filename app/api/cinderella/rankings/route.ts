@@ -36,7 +36,7 @@ export async function GET() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: '1yrpyWk1CA9wvHXngmWilFJZlQPd_1-QC8lKeAS1YPcs',
-      range: "Norman's Rankings!A1:H70",
+      range: "Norman's Rankings!A1:H100",
     });
 
     const rows = response.data.values || [];

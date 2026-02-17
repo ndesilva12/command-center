@@ -38,7 +38,7 @@ export async function GET() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: '1yrpyWk1CA9wvHXngmWilFJZlQPd_1-QC8lKeAS1YPcs',
-      range: 'Portal Big Board!A:AB',
+      range: 'Portal Big Board!A:AE',
     });
 
     const rows = response.data.values || [];
@@ -48,7 +48,7 @@ export async function GET() {
 
     const headers = rows[0];
     const data = rows.slice(1)
-      .filter(row => row.length > 0 && row[0] && row[0].startsWith('T'))
+      .filter(row => row[1] && row[0] && !row[0].includes('──'))
       .map(row => {
         const obj: Record<string, string> = {};
         headers.forEach((header: string, i: number) => {

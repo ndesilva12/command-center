@@ -39,6 +39,8 @@ interface BigBoardPlayer {
   "Cin. Score": string;
   "Net Adj.Rtg": string;
   "Team Impact Flag": string;
+  "Flight Risk Score": string;
+  "Conference Check": string;
 }
 
 interface RankingPlayer {
@@ -205,6 +207,7 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
   const [filterPos, setFilterPos] = useState("");
   const [filterConfTier, setFilterConfTier] = useState("");
   const [filterTier, setFilterTier] = useState("");
+  const [filterConfCheck, setFilterConfCheck] = useState("");
   const [sortKey, setSortKey] = useState<"grade" | "cin" | "netrtg">("grade");
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
@@ -230,9 +233,10 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
         if (filterTier === "T2" && !p.Tier.startsWith("T2")) return false;
         if (filterTier === "T3" && !p.Tier.startsWith("T3")) return false;
       }
+      if (filterConfCheck && p["Conference Check"] !== filterConfCheck) return false;
       return true;
     });
-  }, [players, filterPos, filterConfTier, filterTier]);
+  }, [players, filterPos, filterConfTier, filterTier, filterConfCheck]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -349,6 +353,17 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
           ))}
         </div>
 
+        {/* Conference Check */}
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontSize: "11px", color: "#6b7280", minWidth: "42px", fontWeight: 600 }}>CONF✓</span>
+          <FilterBtn active={filterConfCheck === ""} onClick={() => setFilterConfCheck("")}>All</FilterBtn>
+          {["P6", "High-Major", "Mid-Major", "Low-Major"].map((c) => (
+            <FilterBtn key={c} active={filterConfCheck === c} onClick={() => setFilterConfCheck(c === filterConfCheck ? "" : c)}>
+              {c}
+            </FilterBtn>
+          ))}
+        </div>
+
         {/* Sort */}
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontSize: "11px", color: "#6b7280", minWidth: "42px", fontWeight: 600 }}>SORT</span>
@@ -379,6 +394,10 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
           const cinScore = parseFloat(player["Cin. Score"] || "0");
           const netRtg = parseFloat(player["Net Adj.Rtg"] || "0");
           const hasFlag = player["Team Impact Flag"] && player["Team Impact Flag"].trim() !== "";
+          const flightRisk = parseFloat(player["Flight Risk Score"] || "0");
+          const hasFlightRisk = !isNaN(flightRisk) && flightRisk > 0;
+          const flightRiskColor = flightRisk >= 7 ? "#ef4444" : flightRisk >= 5 ? "#f59e0b" : "#10b981";
+          const flightRiskBg = flightRisk >= 7 ? "rgba(239,68,68,0.12)" : flightRisk >= 5 ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)";
 
           return (
             <div
@@ -551,6 +570,58 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
                 >
                   <Zap size={10} />
                   {player["Team Impact Flag"]}
+                </div>
+              )}
+
+              {/* Flight Risk badge */}
+              {hasFlightRisk && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "3px 10px",
+                    borderRadius: "6px",
+                    background: flightRiskBg,
+                    border: `1px solid ${flightRiskColor}40`,
+                    fontSize: "11px",
+                    color: flightRiskColor,
+                    fontWeight: 600,
+                    marginTop: hasFlag ? "6px" : "0",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "7px",
+                      height: "7px",
+                      borderRadius: "50%",
+                      background: flightRiskColor,
+                      flexShrink: 0,
+                    }}
+                  />
+                  Flight Risk: {player["Flight Risk Score"]}
+                </div>
+              )}
+
+              {/* Conference Check tag */}
+              {player["Conference Check"] && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    background: "rgba(107,114,128,0.1)",
+                    border: "1px solid rgba(107,114,128,0.25)",
+                    fontSize: "10px",
+                    color: "#9ca3af",
+                    fontWeight: 600,
+                    marginTop: "4px",
+                    marginLeft: hasFlightRisk ? "6px" : "0",
+                  }}
+                >
+                  {player["Conference Check"]}
                 </div>
               )}
 
@@ -1158,15 +1229,352 @@ function RosterPlayerRow({
   );
 }
 
+// ─── VIEW 4: COACHING CONNECTIONS ────────────────────────────────────────────
+
+interface CoachingConnection {
+  targetPlayer: string;
+  school: string;
+  position: string;
+  playersCoach: string;
+  coachBackground: string;
+  uicGroverBridge: string;
+  bridgeRole: string;
+  relationshipType: string;
+  strength: number;
+  priority: string;
+  actionableStep: string;
+  notes: string;
+}
+
+function getStrengthStyle(strength: number): { glow: string; border: string; text: string; bg: string } {
+  if (strength >= 5) return {
+    glow: "0 0 12px rgba(16,185,129,0.35)",
+    border: "rgba(16,185,129,0.45)",
+    text: "#10b981",
+    bg: "rgba(16,185,129,0.08)",
+  };
+  if (strength === 4) return {
+    glow: "0 0 8px rgba(59,130,246,0.25)",
+    border: "rgba(59,130,246,0.4)",
+    text: "#3b82f6",
+    bg: "rgba(59,130,246,0.07)",
+  };
+  if (strength === 3) return {
+    glow: "none",
+    border: "rgba(245,158,11,0.35)",
+    text: "#f59e0b",
+    bg: "rgba(245,158,11,0.07)",
+  };
+  return {
+    glow: "none",
+    border: "rgba(107,114,128,0.25)",
+    text: "#6b7280",
+    bg: "rgba(107,114,128,0.05)",
+  };
+}
+
+function CoachingConnections({ isMobile }: { isMobile: boolean }) {
+  const [connections, setConnections] = useState<CoachingConnection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/cinderella/connections")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) throw new Error(data.error);
+        setConnections(data);
+        setLastFetched(new Date());
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const grouped = useMemo(() => {
+    const order = ["High", "Medium", "Low"];
+    const result: Record<string, CoachingConnection[]> = {};
+    order.forEach((p) => {
+      result[p] = connections.filter((c) =>
+        c.priority.toLowerCase() === p.toLowerCase()
+      );
+    });
+    return { order, result };
+  }, [connections]);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorBanner message={error} />;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Stats bar */}
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
+          padding: "12px 16px",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          alignItems: "center",
+        }}
+      >
+        <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+          🤝 <strong style={{ color: "#e5e7eb" }}>{connections.length}</strong> coaching connections
+          {" · "}
+          <strong style={{ color: "#10b981" }}>
+            {connections.filter((c) => c.strength === 5).length} Strength-5
+          </strong>
+          {" · "}
+          <strong style={{ color: "#3b82f6" }}>
+            {connections.filter((c) => c.strength === 4).length} Strength-4
+          </strong>
+          {" · "}
+          <strong style={{ color: "#ef4444" }}>
+            {connections.filter((c) => c.priority.toLowerCase() === "high").length} High-Priority
+          </strong>
+        </span>
+        {lastFetched && (
+          <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>
+            Last fetched: {lastFetched.toLocaleTimeString()} · 15-min cache
+          </span>
+        )}
+      </div>
+
+      {/* Priority groups */}
+      {grouped.order.map((priority) => {
+        const group = grouped.result[priority];
+        if (!group || group.length === 0) return null;
+
+        const priorityColor = priority === "High" ? "#ef4444" : priority === "Medium" ? "#f59e0b" : "#6b7280";
+        const priorityBg = priority === "High" ? "rgba(239,68,68,0.08)" : priority === "Medium" ? "rgba(245,158,11,0.06)" : "rgba(107,114,128,0.05)";
+
+        return (
+          <div key={priority}>
+            {/* Group header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "12px",
+                paddingBottom: "8px",
+                borderBottom: `1px solid ${priorityColor}30`,
+              }}
+            >
+              <div
+                style={{
+                  padding: "3px 10px",
+                  borderRadius: "6px",
+                  background: priorityBg,
+                  border: `1px solid ${priorityColor}40`,
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  color: priorityColor,
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {priority.toUpperCase()} PRIORITY
+              </div>
+              <span style={{ fontSize: "12px", color: "#6b7280" }}>
+                {group.length} connection{group.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            {/* Connection cards */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(420px, 1fr))",
+                gap: "10px",
+                marginBottom: "16px",
+              }}
+            >
+              {group.map((conn, i) => {
+                const ss = getStrengthStyle(conn.strength);
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: "12px",
+                      background: ss.bg,
+                      border: `1px solid ${ss.border}`,
+                      boxShadow: ss.glow,
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {/* Strength accent */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: "3px",
+                        background: ss.text,
+                        borderRadius: "12px 0 0 12px",
+                      }}
+                    />
+
+                    {/* Header row */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            marginBottom: "3px",
+                          }}
+                        >
+                          <span style={{ fontSize: "15px", fontWeight: 700, color: "#f3f4f6" }}>
+                            {conn.targetPlayer}
+                          </span>
+                          {/* Relationship type badge */}
+                          {conn.relationshipType && (
+                            <span
+                              style={{
+                                padding: "2px 7px",
+                                borderRadius: "10px",
+                                fontSize: "10px",
+                                fontWeight: 600,
+                                background: "rgba(139,92,246,0.15)",
+                                color: "#a78bfa",
+                              }}
+                            >
+                              {conn.relationshipType}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#9ca3af", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <span>{conn.school}</span>
+                          {conn.position && <><span>·</span><span>{conn.position}</span></>}
+                        </div>
+                      </div>
+
+                      {/* Strength bubble */}
+                      <div
+                        style={{
+                          minWidth: "44px",
+                          height: "44px",
+                          borderRadius: "50%",
+                          background: ss.bg,
+                          border: `2px solid ${ss.border}`,
+                          boxShadow: ss.glow,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <span style={{ fontSize: "16px", fontWeight: 800, color: ss.text, lineHeight: 1 }}>
+                          {conn.strength}
+                        </span>
+                        <span style={{ fontSize: "8px", color: "#6b7280", marginTop: "1px" }}>STR</span>
+                      </div>
+                    </div>
+
+                    {/* Bridge info */}
+                    <div
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: "8px",
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                        marginBottom: "8px",
+                        fontSize: "12px",
+                        color: "#9ca3af",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <div>
+                        <strong style={{ color: "#d1d5db" }}>Coach:</strong> {conn.playersCoach}
+                        {conn.coachBackground && (
+                          <span style={{ color: "#6b7280" }}> — {conn.coachBackground}</span>
+                        )}
+                      </div>
+                      {conn.uicGroverBridge && (
+                        <div>
+                          <strong style={{ color: "#d1d5db" }}>Bridge:</strong> {conn.uicGroverBridge}
+                          {conn.bridgeRole && <span style={{ color: "#6b7280" }}> ({conn.bridgeRole})</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actionable step */}
+                    {conn.actionableStep && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "6px",
+                          padding: "7px 10px",
+                          borderRadius: "7px",
+                          background: "rgba(59,130,246,0.07)",
+                          border: "1px solid rgba(59,130,246,0.2)",
+                          fontSize: "11px",
+                          color: "#93c5fd",
+                          marginBottom: conn.notes ? "6px" : "0",
+                        }}
+                      >
+                        <Zap size={11} style={{ flexShrink: 0, marginTop: "1px" }} />
+                        {conn.actionableStep}
+                      </div>
+                    )}
+
+                    {/* Notes */}
+                    {conn.notes && (
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          color: "#6b7280",
+                          fontStyle: "italic",
+                          lineHeight: 1.5,
+                          marginTop: "4px",
+                        }}
+                      >
+                        {conn.notes}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {connections.length === 0 && (
+        <div style={{ padding: "40px", textAlign: "center", color: "#6b7280", fontSize: "14px" }}>
+          No coaching connections found in the sheet.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"bigboard" | "rankings" | "roster">("bigboard");
+  const [activeView, setActiveView] = useState<"bigboard" | "rankings" | "roster" | "connections">("bigboard");
 
   const views = [
     { id: "bigboard" as const, label: "Portal Big Board", icon: TrendingUp },
     { id: "rankings" as const, label: "Norman's Rankings", icon: Star },
     { id: "roster" as const, label: "Roster Builder", icon: Users },
+    { id: "connections" as const, label: "Coaching Connections", icon: Zap },
   ];
 
   return (
@@ -1189,7 +1597,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
             Live War Room
           </div>
           <div style={{ fontSize: "12px", color: "#9ca3af" }}>
-            Real-time data from Google Sheets · Portal Big Board (148 players) · Norman's Rankings (48) · 3 Configs
+            Real-time data from Google Sheets · Portal Big Board (147 players, 30 cols) · Norman&apos;s Rankings (48+) · 3 Configs
           </div>
         </div>
       </div>
@@ -1239,6 +1647,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
         {activeView === "bigboard" && <PortalBigBoard isMobile={isMobile} />}
         {activeView === "rankings" && <NormansRankings isMobile={isMobile} />}
         {activeView === "roster" && <RosterBuilder isMobile={isMobile} />}
+        {activeView === "connections" && <CoachingConnections isMobile={isMobile} />}
       </div>
     </div>
   );
