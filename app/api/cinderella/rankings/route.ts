@@ -1,7 +1,8 @@
+import { getCinderellaAuth } from '@/lib/cinderella-auth';
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
-import fs from 'fs';
+
+
 
 interface CacheEntry {
   data: any;
@@ -10,20 +11,6 @@ interface CacheEntry {
 const cache: { rankings?: CacheEntry } = {};
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
-function getAuth() {
-  const token = JSON.parse(
-    fs.readFileSync(
-      '/Users/normandesilva/.config-ec2/.config/google/token_norman_desilva_gmail_com.json',
-      'utf8'
-    )
-  );
-  const auth = new OAuth2Client(token.client_id, token.client_secret);
-  auth.setCredentials({
-    access_token: token.access_token,
-    refresh_token: token.refresh_token,
-  });
-  return auth;
-}
 
 interface PlayerRanking {
   tier: string;
@@ -95,7 +82,7 @@ export async function GET() {
       return NextResponse.json(cache.rankings.data, { headers: { 'X-Cache': 'HIT' } });
     }
 
-    const auth = getAuth();
+    const auth = await getCinderellaAuth();
     const sheets = google.sheets({ version: 'v4', auth });
 
     // Fetch Norman's Rankings (guards + forwards)

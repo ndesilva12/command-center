@@ -71,13 +71,13 @@ function CinderellaContent() {
         }}>
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
+            { id: 'warroom', label: '⚔️ War Room', icon: Sword },
             { id: 'communications', label: 'Communications', icon: Mail },
             { id: 'calendar', label: 'Calendar', icon: Calendar },
             { id: 'targets', label: 'Targets', icon: Target },
             { id: 'legal', label: 'Legal', icon: Scale },
             { id: 'tasks', label: 'Tasks', icon: FileText },
             { id: 'financials', label: 'Financials', icon: Building2 },
-            { id: 'warroom', label: '⚔️ War Room', icon: Sword },
           ].map(({ id, label, icon: Icon }) => (
             <button
               key={id}
