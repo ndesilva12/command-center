@@ -29,7 +29,7 @@ export default function TaskDetailPage() {
         const { doc, getDoc } = await import("firebase/firestore");
         const { db } = await import("@/lib/firebase");
         
-        const docRef = doc(db, "jimmy_deliverables", params.id as string);
+        const docRef = doc(db, "jimmy_deliverables", (params?.id ?? "") as string);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
@@ -49,7 +49,7 @@ export default function TaskDetailPage() {
     };
     
     loadTask();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleCopy = () => {
     if (task?.content) {

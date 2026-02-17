@@ -45,10 +45,10 @@ export default function MealDetailPage() {
   const [addingToWeek, setAddingToWeek] = useState(false);
 
   useEffect(() => {
-    if (params.id) {
+    if (params?.id) {
       fetchMeal(params.id as string);
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   const fetchMeal = async (id: string) => {
     try {

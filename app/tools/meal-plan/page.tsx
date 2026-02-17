@@ -56,7 +56,7 @@ interface WeeklyPlan {
 function MealPlanContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get('tab');
+  const tabParam = searchParams?.get('tab') ?? null;
   
   const [activeTab, setActiveTab] = useState<'all-recipes' | 'this-week' | 'next-week' | 'shopping'>(
     (tabParam as any) || 'all-recipes'

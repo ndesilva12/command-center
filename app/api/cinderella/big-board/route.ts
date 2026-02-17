@@ -38,7 +38,7 @@ export async function GET() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: '1yrpyWk1CA9wvHXngmWilFJZlQPd_1-QC8lKeAS1YPcs',
-      range: 'Portal Big Board!A:AE',
+      range: 'Portal Big Board!A:AF',
     });
 
     const rows = response.data.values || [];

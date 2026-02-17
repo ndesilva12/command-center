@@ -54,7 +54,7 @@ function MealPlanContent() {
   const toolCustom = getCustomization('meal-plan', 'Meal Plan', '#6366f1');
   const { user } = useAuth();
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get('tab');
+  const tabParam = searchParams?.get('tab') ?? null;
   const [activeTab, setActiveTab] = useState<'this-week' | 'next-week' | 'shopping' | 'all-recipes'>(
     (tabParam === 'next-week' || tabParam === 'shopping') ? tabParam as any : 'this-week'
   );

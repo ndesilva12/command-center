@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
+// Initialize Firebase Admin if not already initialized and env vars are present
+if (!admin.apps.length && process.env.FIREBASE_PROJECT_ID) {
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
@@ -12,9 +12,12 @@ if (!admin.apps.length) {
   });
 }
 
-const db = admin.firestore();
+const db = admin.apps.length ? admin.firestore() : null;
 
 export async function POST(request: NextRequest) {
+  if (!db) {
+    return NextResponse.json({ error: 'Firebase not configured' }, { status: 503 });
+  }
   try {
     const recipes = await request.json();
     

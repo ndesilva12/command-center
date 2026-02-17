@@ -45,6 +45,7 @@ interface BigBoardPlayer {
   "Team Impact Flag": string;
   "Flight Risk Score": string;
   "Conference Check": string;
+  "Cin Score v2": string;
 }
 
 interface RankingPlayer {
@@ -271,7 +272,11 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
     return [...filtered].sort((a, b) => {
       if (sortKey === "grade") return parseFloat(b["Grade (20-80)"] || "0") - parseFloat(a["Grade (20-80)"] || "0");
       if (sortKey === "cin") return parseFloat(b["Cin. Score"] || "0") - parseFloat(a["Cin. Score"] || "0");
-      if (sortKey === "netrtg") return parseFloat(b["Net Adj.Rtg"] || "0") - parseFloat(a["Net Adj.Rtg"] || "0");
+      if (sortKey === "netrtg") {
+        const aVal = parseFloat((a["Net Adj.Rtg"] || "").replace(/est\.\s*/i, "") || "0");
+        const bVal = parseFloat((b["Net Adj.Rtg"] || "").replace(/est\.\s*/i, "") || "0");
+        return bVal - aVal;
+      }
       return 0;
     });
   }, [filtered, sortKey]);
@@ -339,6 +344,17 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
           <strong style={{ color: "#f59e0b" }}>
             {players.filter((p) => p.Tier.includes("T3") && !p.Tier.includes("RF")).length} T3
           </strong>
+          {(() => {
+            const unverified = players.filter((p) => p["Net Adj.Rtg"].toLowerCase().includes("est.")).length;
+            return unverified > 0 ? (
+              <>
+                {" · "}
+                <strong style={{ color: "#f59e0b" }} title="Players with estimated (unverified) Net Adj Rtg">
+                  ~{unverified} unverified
+                </strong>
+              </>
+            ) : null;
+          })()}
         </span>
         {lastFetched && (
           <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>
@@ -421,7 +437,11 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
           const tierStyle = getTierStyle(player.Tier);
           const grade = parseFloat(player["Grade (20-80)"] || "0");
           const cinScore = parseFloat(player["Cin. Score"] || "0");
-          const netRtg = parseFloat(player["Net Adj.Rtg"] || "0");
+          const netRtgRaw = player["Net Adj.Rtg"] || "";
+          const netRtgIsEst = netRtgRaw.toLowerCase().includes("est.");
+          const netRtg = parseFloat(netRtgRaw.replace(/est\.\s*/i, "") || "0");
+          const cinScoreV2 = parseFloat(player["Cin Score v2"] || "0");
+          const cinV2Downgraded = !isNaN(cinScore) && !isNaN(cinScoreV2) && cinScoreV2 > 0 && (cinScore - cinScoreV2) > 5;
           const hasFlag = player["Team Impact Flag"] && player["Team Impact Flag"].trim() !== "";
           const flightRisk = parseFloat(player["Flight Risk Score"] || "0");
           const hasFlightRisk = !isNaN(flightRisk) && flightRisk > 0;
@@ -480,6 +500,15 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
                     >
                       {player.Player}
                     </span>
+                    {/* Walter Clayton Jr. data correction warning */}
+                    {player.Player === "Walter Clayton Jr." && (
+                      <span
+                        title="Net Adj Rtg corrected: was est. +5.8, actual +0.5 — downgraded T1→T2"
+                        style={{ cursor: "help", fontSize: "13px", lineHeight: 1 }}
+                      >
+                        ⚠️
+                      </span>
+                    )}
                     {/* Tier badge */}
                     <span
                       style={{
@@ -571,11 +600,52 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
                 }}
               >
                 <StatPill label="Cin.Score" value={cinScore ? cinScore.toFixed(1) : "—"} highlight={cinScore > 85} />
-                <StatPill
-                  label="Net Adj.Rtg"
-                  value={player["Net Adj.Rtg"] ? `+${netRtg > 0 ? "" : ""}${player["Net Adj.Rtg"]}` : "—"}
-                  highlight={netRtg > 5}
-                />
+                {/* Cin Score v2 — reality-check corrected */}
+                {player["Cin Score v2"] && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                    <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>
+                      Cin.Score v2
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        color: cinV2Downgraded ? "#f59e0b" : "#d1d5db",
+                      }}
+                    >
+                      {cinV2Downgraded && <span style={{ fontSize: "11px", marginRight: "2px" }}>↓</span>}
+                      {cinScoreV2 ? cinScoreV2.toFixed(1) : "—"}
+                    </span>
+                  </div>
+                )}
+                {/* Net Adj.Rtg with estimated-value indicator */}
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: "1px" }}
+                  title={netRtgIsEst ? "Estimated value — not yet verified" : undefined}
+                >
+                  <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>
+                    Net Adj.Rtg
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: netRtgIsEst ? "#f59e0b" : (netRtg > 5 ? "#10b981" : "#d1d5db"),
+                      cursor: netRtgIsEst ? "help" : "default",
+                    }}
+                  >
+                    {netRtgRaw ? (
+                      netRtgIsEst ? (
+                        <>
+                          <span style={{ color: "#f59e0b" }}>~</span>
+                          {netRtgRaw.replace(/est\.\s*/i, "").trim() || "—"}
+                        </>
+                      ) : (
+                        netRtgRaw
+                      )
+                    ) : "—"}
+                  </span>
+                </div>
                 <StatPill label="PPG" value={player.PPG || "—"} />
                 <StatPill label="APG" value={player.APG || "—"} />
                 <StatPill label="3P%" value={player["3P%"] ? `${player["3P%"]}%` : "—"} />
