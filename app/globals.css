@@ -127,7 +127,9 @@ a {
   left: 0;
   right: 0;
   min-height: 56px;
-  background: transparent;
+  background: rgba(10, 10, 14, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
