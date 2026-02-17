@@ -8,6 +8,7 @@ import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Users, Plus, Trash2, Save, X } from "lucide-react";
+import { ALL_TOOLS as TOOL_DEFINITIONS } from "@/lib/tool-categories";
 
 interface User {
   id: string;
@@ -19,35 +20,8 @@ interface User {
   lastLogin: number;
 }
 
-// All available tools
-const ALL_TOOLS = [
-  { id: "emails", name: "Emails" },
-  { id: "calendar", name: "Calendar" },
-  { id: "contacts", name: "Contacts" },
-  { id: "people", name: "People" },
-  { id: "recommendations", name: "Recommendations" },
-  { id: "news", name: "News" },
-  { id: "rss", name: "RSS" },
-  { id: "bookmarks", name: "Bookmarks" },
-  { id: "market", name: "Market" },
-  { id: "notes", name: "Notes" },
-  { id: "files", name: "Files" },
-  { id: "spotify", name: "Spotify" },
-  { id: "trending", name: "Trending" },
-  { id: "rosters", name: "Rosters" },
-  { id: "meals", name: "Meal Plan" },
-  { id: "curate", name: "Curate" },
-  { id: "l3d", name: "L3D" },
-  { id: "deep-search", name: "Deep Search" },
-  { id: "dark-search", name: "Dark Search" },
-  { id: "image-lookup", name: "Image Lookup" },
-  { id: "contact-finder", name: "Contact Finder" },
-  { id: "relationships", name: "Relationships" },
-  { id: "mission", name: "Mission" },
-  { id: "investors", name: "Investors" },
-  { id: "business-info", name: "Business Info" },
-  { id: "corporate", name: "Corporate" },
-];
+// All available tools — sourced from tool-categories.ts so it stays in sync
+const ALL_TOOLS = TOOL_DEFINITIONS.map(t => ({ id: t.id, name: t.name }));
 
 export default function AdminPage() {
   const { userData, loading: authLoading } = useAuth();
