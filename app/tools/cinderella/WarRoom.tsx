@@ -11,6 +11,10 @@ import {
   ChevronDown,
   Star,
   Zap,
+  Target,
+  Clock,
+  Crosshair,
+  Shield,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -91,6 +95,31 @@ interface StrikeTarget {
   nilEst: string;
   timeline: string;
   riskLevel: string;
+}
+
+interface StrikeListPlayer {
+  wave: number;
+  player: string;
+  school: string;
+  pos: string;
+  cls: string;
+  grade: string;
+  cinScore: string;
+  flightRisk: string;
+  confCheck: string;
+  onOff: string;
+  whyWeWantHim: string;
+  coachingConnection: string;
+  nilTier: string;
+  contactStatus: string;
+  notes: string;
+}
+
+interface WarRoomStats {
+  totalPlayers: number;
+  t1Count: number;
+  t2Count: number;
+  t3Count: number;
 }
 
 // ─── Color helpers ────────────────────────────────────────────────────────────
@@ -300,15 +329,15 @@ function PortalBigBoard({ isMobile }: { isMobile: boolean }) {
           📊 <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> players tracked
           {" · "}
           <strong style={{ color: "#10b981" }}>
-            {players.filter((p) => p.Tier === "T1").length} T1
+            {players.filter((p) => p.Tier.includes("T1") && !p.Tier.includes("RF")).length} T1
           </strong>
           {" · "}
           <strong style={{ color: "#3b82f6" }}>
-            {players.filter((p) => p.Tier === "T2").length} T2
+            {players.filter((p) => p.Tier.includes("T2") && !p.Tier.includes("RF")).length} T2
           </strong>
           {" · "}
           <strong style={{ color: "#f59e0b" }}>
-            {players.filter((p) => p.Tier === "T3").length} T3
+            {players.filter((p) => p.Tier.includes("T3") && !p.Tier.includes("RF")).length} T3
           </strong>
         </span>
         {lastFetched && (
@@ -678,6 +707,7 @@ function StatPill({
 function NormansRankings({ isMobile }: { isMobile: boolean }) {
   const [guards, setGuards] = useState<RankingPlayer[]>([]);
   const [forwards, setForwards] = useState<RankingPlayer[]>([]);
+  const [bigMen, setBigMen] = useState<RankingPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -688,6 +718,7 @@ function NormansRankings({ isMobile }: { isMobile: boolean }) {
         if (data.error) throw new Error(data.error);
         setGuards(data.guards || []);
         setForwards(data.forwards || []);
+        setBigMen(data.bigMen || []);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -700,6 +731,9 @@ function NormansRankings({ isMobile }: { isMobile: boolean }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <SectionGroup title="🏀 Guards" players={guards} isMobile={isMobile} />
       <SectionGroup title="💪 Forwards / Bigs" players={forwards} isMobile={isMobile} />
+      {bigMen.length > 0 && (
+        <SectionGroup title="🏗️ Big Men Rankings" players={bigMen} isMobile={isMobile} />
+      )}
     </div>
   );
 }
@@ -1565,17 +1599,510 @@ function CoachingConnections({ isMobile }: { isMobile: boolean }) {
   );
 }
 
+// ─── VIEW 5: STRIKE LIST ──────────────────────────────────────────────────────
+
+const WAVE_COLORS = {
+  1: { bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.35)", text: "#10b981", badge: "rgba(16,185,129,0.15)", label: "WAVE 1" },
+  2: { bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.35)", text: "#3b82f6", badge: "rgba(59,130,246,0.15)", label: "WAVE 2" },
+  3: { bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.35)", text: "#f59e0b", badge: "rgba(245,158,11,0.15)", label: "WAVE 3" },
+} as const;
+
+function getWaveStyle(wave: number) {
+  return WAVE_COLORS[wave as keyof typeof WAVE_COLORS] || WAVE_COLORS[3];
+}
+
+function nilTierColor(nilTier: string): { color: string; bg: string } {
+  if (nilTier.includes("ANCHOR")) return { color: "#a78bfa", bg: "rgba(139,92,246,0.12)" };
+  if (nilTier.includes("STARTER")) return { color: "#10b981", bg: "rgba(16,185,129,0.10)" };
+  if (nilTier.includes("KEY ROTATION")) return { color: "#3b82f6", bg: "rgba(59,130,246,0.10)" };
+  if (nilTier.includes("SLEEPER")) return { color: "#f59e0b", bg: "rgba(245,158,11,0.10)" };
+  return { color: "#9ca3af", bg: "rgba(107,114,128,0.08)" };
+}
+
+function flightRiskColor(risk: string): string {
+  const r = parseFloat(risk);
+  if (isNaN(r)) return "#6b7280";
+  if (r >= 7) return "#ef4444";
+  if (r >= 5) return "#f59e0b";
+  return "#10b981";
+}
+
+function StrikeList({ isMobile }: { isMobile: boolean }) {
+  const [players, setPlayers] = useState<StrikeListPlayer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filterWave, setFilterWave] = useState<number | null>(null);
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/cinderella/strike-list")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) throw new Error(data.error);
+        setPlayers(data);
+        setLastFetched(new Date());
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = filterWave ? players.filter((p) => p.wave === filterWave) : players;
+  const wave1 = players.filter((p) => p.wave === 1);
+  const wave2 = players.filter((p) => p.wave === 2);
+  const wave3 = players.filter((p) => p.wave === 3);
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorBanner message={error} />;
+
+  const FilterBtn = ({
+    active,
+    onClick,
+    children,
+    color,
+  }: {
+    active: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+    color?: string;
+  }) => (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "6px 14px",
+        borderRadius: "20px",
+        border: active ? `1px solid ${color || "#3b82f6"}` : "1px solid rgba(255,255,255,0.12)",
+        background: active ? `${color || "#3b82f6"}20` : "rgba(255,255,255,0.04)",
+        color: active ? (color || "#60a5fa") : "#9ca3af",
+        fontSize: "12px",
+        fontWeight: active ? 600 : 400,
+        cursor: "pointer",
+        transition: "all 0.15s",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Stats bar */}
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
+          padding: "12px 16px",
+          borderRadius: "10px",
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          alignItems: "center",
+        }}
+      >
+        <span style={{ fontSize: "13px", color: "#9ca3af" }}>
+          🎯 <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> strike targets
+          {" · "}
+          <strong style={{ color: "#10b981" }}>{wave1.length} Wave 1</strong>
+          {" · "}
+          <strong style={{ color: "#3b82f6" }}>{wave2.length} Wave 2</strong>
+          {" · "}
+          <strong style={{ color: "#f59e0b" }}>{wave3.length} Wave 3</strong>
+        </span>
+        {lastFetched && (
+          <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>
+            Last fetched: {lastFetched.toLocaleTimeString()} · 15-min cache
+          </span>
+        )}
+      </div>
+
+      {/* Wave filter */}
+      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ fontSize: "11px", color: "#6b7280", fontWeight: 600, minWidth: "46px" }}>WAVE</span>
+        <FilterBtn active={filterWave === null} onClick={() => setFilterWave(null)}>All</FilterBtn>
+        <FilterBtn active={filterWave === 1} onClick={() => setFilterWave(filterWave === 1 ? null : 1)} color="#10b981">
+          🟢 Wave 1 ({wave1.length})
+        </FilterBtn>
+        <FilterBtn active={filterWave === 2} onClick={() => setFilterWave(filterWave === 2 ? null : 2)} color="#3b82f6">
+          🔵 Wave 2 ({wave2.length})
+        </FilterBtn>
+        <FilterBtn active={filterWave === 3} onClick={() => setFilterWave(filterWave === 3 ? null : 3)} color="#f59e0b">
+          🟡 Wave 3 ({wave3.length})
+        </FilterBtn>
+      </div>
+
+      {/* Note */}
+      <div
+        style={{
+          padding: "10px 14px",
+          borderRadius: "8px",
+          background: "rgba(59,130,246,0.06)",
+          border: "1px solid rgba(59,130,246,0.2)",
+          fontSize: "12px",
+          color: "#93c5fd",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <Zap size={12} />
+        Portal opens ~<strong>March 23, 2026</strong>. Wave 1 contacts go out Day 1. Contact Status column is yours to fill.
+      </div>
+
+      {/* Player cards */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(420px, 1fr))",
+          gap: "12px",
+        }}
+      >
+        {filtered.map((player, i) => {
+          const waveStyle = getWaveStyle(player.wave);
+          const nilStyle = nilTierColor(player.nilTier);
+          const fRiskColor = flightRiskColor(player.flightRisk);
+          const grade = parseFloat(player.grade);
+          const cin = parseFloat(player.cinScore);
+
+          return (
+            <div
+              key={i}
+              style={{
+                padding: "16px",
+                borderRadius: "12px",
+                background: waveStyle.bg,
+                border: `1px solid ${waveStyle.border}`,
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* Wave accent bar */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: "4px",
+                  background: waveStyle.text,
+                  borderRadius: "12px 0 0 12px",
+                }}
+              />
+
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
+                    {/* Wave badge */}
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: "10px",
+                        fontSize: "10px",
+                        fontWeight: 800,
+                        background: waveStyle.badge,
+                        color: waveStyle.text,
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      {waveStyle.label}
+                    </span>
+                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#f3f4f6" }}>
+                      {player.player}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#9ca3af", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <span>{player.school}</span>
+                    {player.pos && <><span>·</span><span>{player.pos}</span></>}
+                    {player.cls && <><span>·</span><span>{player.cls}</span></>}
+                  </div>
+                </div>
+
+                {/* Grade bubble */}
+                {player.grade && !isNaN(grade) && (
+                  <div
+                    style={{
+                      minWidth: "46px",
+                      height: "46px",
+                      borderRadius: "50%",
+                      background: grade >= 70 ? "rgba(16,185,129,0.15)" : grade >= 55 ? "rgba(59,130,246,0.15)" : "rgba(107,114,128,0.15)",
+                      border: `2px solid ${grade >= 70 ? "rgba(16,185,129,0.5)" : grade >= 55 ? "rgba(59,130,246,0.5)" : "rgba(107,114,128,0.3)"}`,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: "15px", fontWeight: 800, color: grade >= 70 ? "#10b981" : grade >= 55 ? "#60a5fa" : "#9ca3af", lineHeight: 1 }}>
+                      {player.grade}
+                    </span>
+                    <span style={{ fontSize: "8px", color: "#6b7280", marginTop: "1px" }}>GRD</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Stats row */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                  marginBottom: "10px",
+                  paddingTop: "8px",
+                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                {player.cinScore && (
+                  <StatPill label="Cin.Score" value={cin ? cin.toFixed(1) : player.cinScore} highlight={cin > 85} />
+                )}
+                {player.onOff && <StatPill label="Net Adj.Rtg" value={player.onOff} />}
+                {player.flightRisk && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                    <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>FLIGHT RISK</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: fRiskColor }}>{player.flightRisk}</span>
+                  </div>
+                )}
+                {player.confCheck && <StatPill label="CONF" value={player.confCheck} />}
+              </div>
+
+              {/* NIL Tier */}
+              {player.nilTier && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
+                    background: nilStyle.bg,
+                    border: `1px solid ${nilStyle.color}40`,
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: nilStyle.color,
+                    marginBottom: "8px",
+                  }}
+                >
+                  💰 {player.nilTier}
+                </div>
+              )}
+
+              {/* Contact Status */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  fontSize: "12px",
+                  marginBottom: "8px",
+                }}
+              >
+                <Shield size={12} color="#6b7280" />
+                <span style={{ color: "#6b7280", fontWeight: 600 }}>Contact Status:</span>
+                <span style={{ color: player.contactStatus ? "#10b981" : "#4b5563", fontStyle: player.contactStatus ? "normal" : "italic" }}>
+                  {player.contactStatus || "—  (fill when portal opens)"}
+                </span>
+              </div>
+
+              {/* Scouting Rationale */}
+              {player.whyWeWantHim && (
+                <div
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "7px",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    fontSize: "11px",
+                    color: "#9ca3af",
+                    lineHeight: 1.6,
+                    fontStyle: "italic",
+                    marginBottom: "6px",
+                  }}
+                >
+                  <span style={{ color: "#6b7280", fontStyle: "normal", fontWeight: 600 }}>Why: </span>
+                  {player.whyWeWantHim}
+                </div>
+              )}
+
+              {/* Coaching Connection */}
+              {player.coachingConnection && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "6px",
+                    padding: "6px 10px",
+                    borderRadius: "7px",
+                    background: "rgba(139,92,246,0.06)",
+                    border: "1px solid rgba(139,92,246,0.2)",
+                    fontSize: "11px",
+                    color: "#c4b5fd",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <Users size={11} style={{ flexShrink: 0, marginTop: "1px" }} />
+                  {player.coachingConnection}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 && (
+        <div style={{ padding: "40px", textAlign: "center", color: "#6b7280", fontSize: "14px" }}>
+          No strike targets found.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
+// ─── Quick Stats Bar ──────────────────────────────────────────────────────────
+
+function QuickStatsBar() {
+  const [stats, setStats] = useState<WarRoomStats | null>(null);
+
+  // Countdown to March 23, 2026
+  const portalOpensDate = new Date("2026-03-23T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysUntilPortal = Math.ceil(
+    (portalOpensDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const portalOpen = daysUntilPortal <= 0;
+
+  // Fetch lightweight stats from big-board (cached)
+  useEffect(() => {
+    fetch("/api/cinderella/big-board")
+      .then((r) => r.json())
+      .then((data: any[]) => {
+        if (!Array.isArray(data)) return;
+        setStats({
+          totalPlayers: data.length,
+          t1Count: data.filter((p) => p.Tier && p.Tier.includes("T1") && !p.Tier.includes("RF")).length,
+          t2Count: data.filter((p) => p.Tier && p.Tier.includes("T2") && !p.Tier.includes("RF")).length,
+          t3Count: data.filter((p) => p.Tier && p.Tier.includes("T3") && !p.Tier.includes("RF")).length,
+        });
+      })
+      .catch(() => null); // silently fail — stats are non-critical
+  }, []);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: "0",
+        borderRadius: "10px",
+        border: "1px solid rgba(255,255,255,0.1)",
+        overflow: "hidden",
+        background: "rgba(255,255,255,0.02)",
+      }}
+    >
+      {/* Stat: Total Players */}
+      <StatBlock
+        icon={<Users size={14} color="#9ca3af" />}
+        label="Players Tracked"
+        value={stats ? String(stats.totalPlayers) : "158"}
+        valueColor="#e5e7eb"
+      />
+
+      {/* Stat: T1 Players */}
+      <StatBlock
+        icon={<Star size={14} color="#10b981" />}
+        label="T1 Targets"
+        value={stats ? String(stats.t1Count) : "—"}
+        valueColor="#10b981"
+      />
+
+      {/* Stat: Portal Countdown */}
+      <StatBlock
+        icon={<Clock size={14} color={portalOpen ? "#ef4444" : "#f59e0b"} />}
+        label={portalOpen ? "Portal OPEN" : "Portal Opens"}
+        value={portalOpen ? "NOW" : `${daysUntilPortal}d`}
+        valueColor={portalOpen ? "#ef4444" : "#f59e0b"}
+        sub="Mar 23, 2026"
+      />
+
+      {/* Stat: Wave 1 Targets */}
+      <StatBlock
+        icon={<Target size={14} color="#3b82f6" />}
+        label="Wave 1 Strikes"
+        value="6"
+        valueColor="#3b82f6"
+        sub="Day 1 contacts"
+      />
+    </div>
+  );
+}
+
+function StatBlock({
+  icon,
+  label,
+  value,
+  valueColor,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  valueColor: string;
+  sub?: string;
+}) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        padding: "12px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+        borderRight: "1px solid rgba(255,255,255,0.07)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+        {icon}
+        <span style={{ fontSize: "10px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>
+          {label.toUpperCase()}
+        </span>
+      </div>
+      <span style={{ fontSize: "20px", fontWeight: 800, color: valueColor, lineHeight: 1 }}>
+        {value}
+      </span>
+      {sub && <span style={{ fontSize: "9px", color: "#4b5563" }}>{sub}</span>}
+    </div>
+  );
+}
+
+// ─── Main WarRoom ─────────────────────────────────────────────────────────────
+
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"bigboard" | "rankings" | "roster" | "connections">("bigboard");
+  const [activeView, setActiveView] = useState<
+    "bigboard" | "rankings" | "roster" | "connections" | "strikelist"
+  >("bigboard");
 
   const views = [
     { id: "bigboard" as const, label: "Portal Big Board", icon: TrendingUp },
     { id: "rankings" as const, label: "Norman's Rankings", icon: Star },
     { id: "roster" as const, label: "Roster Builder", icon: Users },
     { id: "connections" as const, label: "Coaching Connections", icon: Zap },
+    { id: "strikelist" as const, label: "⚡ Strike List", icon: Crosshair },
   ];
+
+  // Tab accent color per view
+  const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
+    bigboard: { active: "#60a5fa", border: "rgba(59,130,246,0.4)", bg: "rgba(59,130,246,0.12)" },
+    rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
+    roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
+    connections: { active: "#fbbf24", border: "rgba(251,191,36,0.4)", bg: "rgba(251,191,36,0.10)" },
+    strikelist: { active: "#f87171", border: "rgba(239,68,68,0.45)", bg: "rgba(239,68,68,0.10)" },
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -1597,10 +2124,13 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
             Live War Room
           </div>
           <div style={{ fontSize: "12px", color: "#9ca3af" }}>
-            Real-time data from Google Sheets · Portal Big Board (147 players, 30 cols) · Norman&apos;s Rankings (48+) · 3 Configs
+            Real-time data from Google Sheets · Portal Big Board (158 players, 31 cols) · Norman&apos;s Rankings · Strike List (Wave 1–3)
           </div>
         </div>
       </div>
+
+      {/* Quick Stats Bar */}
+      <QuickStatsBar />
 
       {/* View tabs */}
       <div
@@ -1610,36 +2140,34 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
           flexWrap: "wrap",
         }}
       >
-        {views.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveView(id)}
-            style={{
-              padding: isMobile ? "8px 14px" : "10px 20px",
-              borderRadius: "8px",
-              border:
-                activeView === id
-                  ? "1px solid rgba(59,130,246,0.4)"
-                  : "1px solid rgba(255,255,255,0.1)",
-              background:
-                activeView === id
-                  ? "rgba(59,130,246,0.12)"
-                  : "rgba(255,255,255,0.03)",
-              color: activeView === id ? "#60a5fa" : "rgba(255,255,255,0.6)",
-              fontSize: isMobile ? "12px" : "13px",
-              fontWeight: activeView === id ? 600 : 400,
-              cursor: "pointer",
-              transition: "all 0.15s",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <Icon size={15} />
-            {label}
-          </button>
-        ))}
+        {views.map(({ id, label, icon: Icon }) => {
+          const accent = tabAccent[id];
+          const isActive = activeView === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveView(id)}
+              style={{
+                padding: isMobile ? "8px 14px" : "10px 20px",
+                borderRadius: "8px",
+                border: isActive ? `1px solid ${accent.border}` : "1px solid rgba(255,255,255,0.1)",
+                background: isActive ? accent.bg : "rgba(255,255,255,0.03)",
+                color: isActive ? accent.active : "rgba(255,255,255,0.6)",
+                fontSize: isMobile ? "12px" : "13px",
+                fontWeight: isActive ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 0.15s",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Icon size={15} />
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* View content */}
@@ -1648,6 +2176,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
         {activeView === "rankings" && <NormansRankings isMobile={isMobile} />}
         {activeView === "roster" && <RosterBuilder isMobile={isMobile} />}
         {activeView === "connections" && <CoachingConnections isMobile={isMobile} />}
+        {activeView === "strikelist" && <StrikeList isMobile={isMobile} />}
       </div>
     </div>
   );
