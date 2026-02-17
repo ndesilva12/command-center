@@ -139,15 +139,15 @@ a {
   flex-wrap: nowrap;
 }
 
-/* Fade mask: content dissolves before reaching the tool nav */
-.tool-nav-container::before {
+/* Fade mask: sits just below the nav, dissolves content as it scrolls up */
+.tool-nav-container::after {
   content: '';
   position: fixed;
-  top: 64px;
+  top: calc(64px + var(--tool-nav-height, 56px));
   left: 0;
   right: 0;
-  height: calc(var(--tool-nav-height, 56px) + 16px);
-  background: linear-gradient(to bottom, #0a0a0e 60%, transparent 100%);
+  height: 32px;
+  background: linear-gradient(to bottom, #0a0a0e, transparent);
   z-index: 39;
   pointer-events: none;
 }
