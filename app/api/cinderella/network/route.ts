@@ -110,6 +110,42 @@ export async function POST(req: NextRequest) {
     const sheets = google.sheets({ version: 'v4', auth });
     await ensureSheetExists(sheets);
 
+    // Support bulk import: if body is an array, insert all at once
+    if (Array.isArray(body)) {
+      const now = new Date().toISOString().split('T')[0];
+      // Get existing names to skip duplicates
+      const res = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME}!B:B`,
+      });
+      const existingNames = new Set((res.data.values || []).slice(1).map((r: string[]) => (r[0] || '').toLowerCase().trim()));
+
+      const rows: string[][] = [];
+      const importedIds: string[] = [];
+      for (const person of body) {
+        const nameNorm = (person.name || '').toLowerCase().trim();
+        if (!nameNorm) continue;
+        // Skip duplicates
+        if (existingNames.has(nameNorm)) continue;
+        const newId = `P${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+        rows.push(personToRow({ ...person, id: newId, dateAdded: now }));
+        importedIds.push(newId);
+        existingNames.add(nameNorm);
+      }
+
+      if (rows.length > 0) {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${SHEET_NAME}!A:N`,
+          valueInputOption: 'RAW',
+          requestBody: { values: rows },
+        });
+      }
+
+      return NextResponse.json({ ok: true, imported: importedIds.length, skipped: body.length - importedIds.length });
+    }
+
+    // Single person insert
     const newId = `P${Date.now()}`;
     const row = personToRow({ ...body, id: newId, dateAdded: new Date().toISOString().split('T')[0] });
 

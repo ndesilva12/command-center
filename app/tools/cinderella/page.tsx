@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp, UserCheck, RefreshCw, Search, Plus, X, Check } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
@@ -20,7 +20,7 @@ export default function CinderellaPage() {
 function CinderellaContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('cinderella', 'Cinderella Project', '#3b82f6');
-  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'financials'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'financials' | 'reps'>('overview');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -73,6 +73,7 @@ function CinderellaContent() {
             { id: 'communications', label: 'Communications', icon: Mail },
             { id: 'calendar', label: 'Calendar', icon: Calendar },
             { id: 'targets', label: 'Targets', icon: Target },
+            { id: 'reps', label: 'Reps', icon: UserCheck },
             { id: 'legal', label: 'Legal', icon: Scale },
             { id: 'financials', label: 'Financials', icon: Building2 },
           ].map(({ id, label, icon: Icon }) => (
@@ -106,6 +107,7 @@ function CinderellaContent() {
         {activeTab === 'communications' && <CommunicationsTab isMobile={isMobile} />}
         {activeTab === 'calendar' && <CalendarTab isMobile={isMobile} />}
         {activeTab === 'targets' && <TargetsTab isMobile={isMobile} />}
+        {activeTab === 'reps' && <RepsTab isMobile={isMobile} />}
         {activeTab === 'legal' && <LegalTab isMobile={isMobile} />}
         {activeTab === 'financials' && <FinancialsTab isMobile={isMobile} />}
       </main>
@@ -927,6 +929,29 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
   );
 }
 
+// Known reps data for celebrity targets
+const CELEBRITY_REPS: Record<string, { agent?: string; manager?: string; agency?: string }> = {
+  "Liev Schreiber": { agent: "Bryan Lourd", agency: "CAA", manager: "Rick Yorn (LBI Entertainment)" },
+  "Mark Wahlberg": { agent: "Patrick Whitesell", agency: "WME", manager: "Stephen Levinson (Leverage Management)" },
+  "Drake": { manager: "Adel 'Future' Nur (OVO)" },
+  "Kevin Hart": { agent: "Dave Becky (3 Arts)", manager: "Scooter Braun (SB Projects)" },
+  "Ryan Reynolds": { agent: "Joe Machota", agency: "CAA", manager: "George Dewey" },
+  "Will Ferrell": { agent: "Jimmy Miller", agency: "Mosaic", manager: "Jimmy Miller (Mosaic)" },
+  "Adam Sandler": { agent: "Brad Slater", agency: "WME" },
+  "Ice Cube": { agent: "Jeff Kwatinetz (Prospect Park)", manager: "Self (Cube Vision)" },
+  "Snoop Dogg": { agency: "WME", manager: "Nick Adler" },
+  "Shaquille O'Neal": { manager: "Perry Rogers (PRP Management)" },
+  "LeBron James": { agent: "Rich Paul", agency: "Klutch Sports", manager: "Maverick Carter (SpringHill)" },
+  "Michael Jordan": { agent: "David Falk (FAME)", manager: "Curtis Polk" },
+  "Jay-Z": { agency: "Roc Nation (self)" },
+  "Travis Scott": { manager: "David Stromberg (Cactus Jack)", agent: "David Grutman" },
+  "Tim Grover": { manager: "Self — Attack Athletics" },
+  "Jason Sudeikis": { agency: "WME" },
+  "Dana White": { manager: "Self" },
+  "CJ McCollum": { agency: "CAA" },
+  "Taylor Sheridan": { agency: "WME" },
+};
+
 function TargetsTab({ isMobile }: { isMobile: boolean }) {
   const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set(['elite']));
 
@@ -1169,9 +1194,23 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
                           ⚪ Not Contacted
                         </span>
                       </div>
-                      <div style={{ fontSize: "13px", color: "#3b82f6", marginBottom: "6px" }}>
+                      <div style={{ fontSize: "13px", color: "#3b82f6", marginBottom: "4px" }}>
                         📍 {target.school}
                       </div>
+                      {CELEBRITY_REPS[target.name] && (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+                          {CELEBRITY_REPS[target.name].agent && (
+                            <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", background: "rgba(59,130,246,0.1)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}>
+                              Agent: {CELEBRITY_REPS[target.name].agent}{CELEBRITY_REPS[target.name].agency ? ` · ${CELEBRITY_REPS[target.name].agency}` : ""}
+                            </span>
+                          )}
+                          {CELEBRITY_REPS[target.name].manager && (
+                            <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", background: "rgba(139,92,246,0.1)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.2)" }}>
+                              Manager: {CELEBRITY_REPS[target.name].manager}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: 1.5, opacity: 0.9 }}>
                         {target.reasoning}
                       </div>
@@ -1258,9 +1297,23 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
                           ⚪ Not Contacted
                         </span>
                       </div>
-                      <div style={{ fontSize: "13px", color: "#10b981", marginBottom: "6px" }}>
+                      <div style={{ fontSize: "13px", color: "#10b981", marginBottom: "4px" }}>
                         📍 {target.school}
                       </div>
+                      {CELEBRITY_REPS[target.name] && (
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+                          {CELEBRITY_REPS[target.name].agent && (
+                            <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", background: "rgba(59,130,246,0.1)", color: "#93c5fd", border: "1px solid rgba(59,130,246,0.2)" }}>
+                              Agent: {CELEBRITY_REPS[target.name].agent}{CELEBRITY_REPS[target.name].agency ? ` · ${CELEBRITY_REPS[target.name].agency}` : ""}
+                            </span>
+                          )}
+                          {CELEBRITY_REPS[target.name].manager && (
+                            <span style={{ padding: "2px 8px", borderRadius: "6px", fontSize: "11px", background: "rgba(139,92,246,0.1)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.2)" }}>
+                              Manager: {CELEBRITY_REPS[target.name].manager}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: 1.5, opacity: 0.9 }}>
                         {target.reasoning}
                       </div>
@@ -1675,6 +1728,197 @@ function FinancialsTab({ isMobile }: { isMobile: boolean }) {
           <FinancialRow label="ROI" value="33%" color="#10b981" bold />
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── REPS TAB ─────────────────────────────────────────────────────────────────
+
+interface Rep {
+  id: string;
+  name: string;
+  agency: string;
+  role: string;
+  clients: string;
+  phone: string;
+  email: string;
+  notes: string;
+}
+
+function RepsTab({ isMobile }: { isMobile: boolean }) {
+  const [reps, setReps] = useState<Rep[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterAgency, setFilterAgency] = useState("All");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/cinderella/reps")
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
+        setReps(data);
+      })
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const agencies = ["All", ...Array.from(new Set(reps.map(r => r.agency).filter(Boolean))).sort()];
+
+  const filtered = reps.filter(r => {
+    if (filterAgency !== "All" && r.agency !== filterAgency) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return r.name.toLowerCase().includes(q) || r.agency.toLowerCase().includes(q) || r.clients.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  // Group by agency
+  const byAgency = filtered.reduce((acc, rep) => {
+    const agency = rep.agency || "Independent";
+    if (!acc[agency]) acc[agency] = [];
+    acc[agency].push(rep);
+    return acc;
+  }, {} as Record<string, Rep[]>);
+
+  const AGENCY_COLORS: Record<string, string> = {
+    "CAA": "#3b82f6",
+    "WME": "#10b981",
+    "UTA": "#8b5cf6",
+    "ICM": "#f59e0b",
+    "3 Arts": "#ec4899",
+    "Mosaic": "#6366f1",
+    "Klutch Sports": "#ef4444",
+    "Roc Nation": "#f59e0b",
+    "OVO": "#a78bfa",
+    "SB Projects": "#06b6d4",
+  };
+
+  const getAgencyColor = (agency: string) => AGENCY_COLORS[agency] || "#6b7280";
+
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: "12px" }}>
+      <RefreshCw size={20} style={{ animation: "spin 1s linear infinite", color: "#3b82f6" }} />
+      <span style={{ color: "#9ca3af", fontSize: "14px" }}>Loading reps…</span>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px" }}>{error}</div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Header */}
+      <div style={{ padding: isMobile ? "16px" : "20px 24px", borderRadius: "12px", background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+          <UserCheck size={20} color="#a78bfa" />
+          <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", margin: 0 }}>Celebrity Reps Directory</h2>
+        </div>
+        <p style={{ fontSize: "13px", color: "var(--foreground-muted)", margin: 0 }}>
+          Inverse view of Targets — organized by agent/manager. {reps.length} reps tracked across {agencies.length - 1} agencies.
+        </p>
+      </div>
+
+      {/* Search + Filter */}
+      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+        <div style={{ position: "relative", flex: 1, minWidth: "200px" }}>
+          <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#6b7280" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by rep name, agency, or client…"
+            style={{ width: "100%", padding: "8px 12px 8px 32px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--foreground)", fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+          />
+        </div>
+        <select
+          value={filterAgency}
+          onChange={e => setFilterAgency(e.target.value)}
+          style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--foreground)", fontSize: "13px", outline: "none" }}
+        >
+          {agencies.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </div>
+
+      {/* Reps grouped by agency */}
+      {filterAgency !== "All" ? (
+        // Flat list when filtering by agency
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {filtered.map(rep => (
+            <RepCard key={rep.id} rep={rep} expanded={expandedId === rep.id} onToggle={() => setExpandedId(expandedId === rep.id ? null : rep.id)} isMobile={isMobile} agencyColor={getAgencyColor(rep.agency)} />
+          ))}
+        </div>
+      ) : (
+        // Grouped by agency
+        Object.entries(byAgency).sort(([a], [b]) => a.localeCompare(b)).map(([agency, agencyReps]) => {
+          const color = getAgencyColor(agency);
+          return (
+            <div key={agency} style={{ borderRadius: "12px", background: "rgba(255,255,255,0.02)", border: `1px solid rgba(255,255,255,0.08)`, overflow: "hidden" }}>
+              <div style={{ padding: "12px 16px", background: `${color}10`, borderBottom: `1px solid ${color}25`, display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: color }} />
+                <span style={{ fontSize: "14px", fontWeight: 700, color }}>{agency}</span>
+                <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>{agencyReps.length} rep{agencyReps.length !== 1 ? "s" : ""}</span>
+              </div>
+              <div style={{ padding: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                {agencyReps.map(rep => (
+                  <RepCard key={rep.id} rep={rep} expanded={expandedId === rep.id} onToggle={() => setExpandedId(expandedId === rep.id ? null : rep.id)} isMobile={isMobile} agencyColor={color} />
+                ))}
+              </div>
+            </div>
+          );
+        })
+      )}
+
+      {filtered.length === 0 && !loading && (
+        <div style={{ padding: "40px", textAlign: "center", color: "var(--foreground-muted)", fontSize: "14px" }}>No reps found matching your filters.</div>
+      )}
+    </div>
+  );
+}
+
+function RepCard({ rep, expanded, onToggle, isMobile, agencyColor }: { rep: Rep; expanded: boolean; onToggle: () => void; isMobile: boolean; agencyColor: string }) {
+  const clientList = rep.clients.split(",").map(c => c.trim()).filter(Boolean);
+  return (
+    <div style={{ borderRadius: "8px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+      <div onClick={onToggle} style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "12px" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+            <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>{rep.name}</span>
+            <span style={{ padding: "1px 7px", borderRadius: "6px", fontSize: "10px", fontWeight: 600, background: `${agencyColor}20`, color: agencyColor }}>{rep.role}</span>
+          </div>
+          <div style={{ fontSize: "12px", color: "var(--foreground-muted)", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {clientList.length > 0 && (
+              <span>
+                <span style={{ color: "#6b7280" }}>Clients: </span>
+                {clientList.slice(0, 3).join(", ")}{clientList.length > 3 ? ` +${clientList.length - 3} more` : ""}
+              </span>
+            )}
+          </div>
+        </div>
+        <div style={{ color: "#6b7280", flexShrink: 0 }}>{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}</div>
+      </div>
+      {expanded && (
+        <div style={{ padding: "10px 14px", borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(0,0,0,0.15)" }}>
+          {clientList.length > 0 && (
+            <div style={{ marginBottom: "10px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--foreground-muted)", marginBottom: "6px" }}>ALL CLIENTS</div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {clientList.map((client, i) => (
+                  <span key={i} style={{ padding: "3px 10px", borderRadius: "12px", fontSize: "12px", background: `${agencyColor}15`, color: agencyColor, border: `1px solid ${agencyColor}30` }}>{client}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontSize: "12px" }}>
+            {rep.email && <a href={`mailto:${rep.email}`} style={{ color: "#60a5fa", textDecoration: "none" }}>{rep.email}</a>}
+            {rep.phone && <span style={{ color: "var(--foreground-muted)" }}>{rep.phone}</span>}
+            {rep.notes && <span style={{ color: "var(--foreground-muted)", fontStyle: "italic" }}>{rep.notes}</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

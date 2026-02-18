@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import {
   DndContext,
@@ -45,6 +45,9 @@ import {
   Edit2,
   ChevronUp,
   FileText,
+  Bookmark,
+  Upload,
+  Flag,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -76,6 +79,9 @@ interface BigBoardPlayer {
   "Flight Risk Score": string;
   "Conference Check": string;
   "Cin Score v2": string;
+  "Flagged"?: string;
+  "User Notes"?: string;
+  "School History"?: string;
 }
 
 interface RankingPlayer {
@@ -388,6 +394,16 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
   const [filterConfCheck, setFilterConfCheck] = useState("");
   const [sortKey, setSortKey] = useState<"grade" | "cin" | "netrtg">("grade");
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  // List view + flags + notes
+  const [listView, setListView] = useState(false);
+  const [listSortCol, setListSortCol] = useState("Grade");
+  const [listSortDir, setListSortDir] = useState<"asc" | "desc">("desc");
+  const [localFlags, setLocalFlags] = useState<Record<string, boolean>>({});
+  const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
+  const [filterFlagged, setFilterFlagged] = useState(false);
+  const [openNotesFor, setOpenNotesFor] = useState<string | null>(null);
+  const [savingFlag, setSavingFlag] = useState<string | null>(null);
+  const [savingNotes, setSavingNotes] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -397,10 +413,46 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
         if (data.error) throw new Error(data.error);
         setPlayers(data);
         setLastFetched(new Date());
+        // Merge server flags/notes (server authoritative on first load, local overrides after)
+        const serverFlags: Record<string, boolean> = {};
+        const serverNotes: Record<string, string> = {};
+        data.forEach((p: BigBoardPlayer) => {
+          if (p.Flagged === "TRUE") serverFlags[p.Player] = true;
+          if (p["User Notes"]) serverNotes[p.Player] = p["User Notes"];
+        });
+        setLocalFlags(prev => ({ ...serverFlags, ...prev }));
+        setLocalNotes(prev => ({ ...serverNotes, ...prev }));
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [syncTrigger]);
+
+  const toggleFlag = async (playerName: string) => {
+    const newFlagged = !localFlags[playerName];
+    setLocalFlags(prev => ({ ...prev, [playerName]: newFlagged }));
+    setSavingFlag(playerName);
+    try {
+      await fetch("/api/cinderella/big-board", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName, field: "Flagged", value: newFlagged ? "TRUE" : "FALSE" }),
+      });
+    } catch (e) { console.error("Flag save failed:", e); }
+    finally { setSavingFlag(null); }
+  };
+
+  const saveNote = async (playerName: string) => {
+    const noteText = localNotes[playerName] || "";
+    setSavingNotes(playerName);
+    try {
+      await fetch("/api/cinderella/big-board", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerName, field: "User Notes", value: noteText }),
+      });
+    } catch (e) { console.error("Note save failed:", e); }
+    finally { setSavingNotes(null); }
+  };
 
   const filtered = useMemo(() => {
     return players.filter((p) => {
@@ -412,9 +464,10 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
         if (filterTier === "T3" && !p.Tier.startsWith("T3")) return false;
       }
       if (filterConfCheck && p["Conference Check"] !== filterConfCheck) return false;
+      if (filterFlagged && !localFlags[p.Player]) return false;
       return true;
     });
-  }, [players, filterPos, filterConfTier, filterTier, filterConfCheck]);
+  }, [players, filterPos, filterConfTier, filterTier, filterConfCheck, filterFlagged, localFlags]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -429,8 +482,38 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
     });
   }, [filtered, sortKey]);
 
+  // List view sort
+  const LIST_COLS = ["Player", "School", "Pos", "PPG", "RPG", "APG", "FG%", "3P%", "Tier", "Grade"];
+  const listSorted = useMemo(() => {
+    const colMap: Record<string, (p: BigBoardPlayer) => number | string> = {
+      "Player": p => p.Player,
+      "School": p => p["Current School"],
+      "Pos": p => p.Position,
+      "PPG": p => parseFloat(p.PPG || "0"),
+      "RPG": p => parseFloat(p.RPG || "0"),
+      "APG": p => parseFloat(p.APG || "0"),
+      "FG%": p => parseFloat(p["FG%"] || "0"),
+      "3P%": p => parseFloat(p["3P%"] || "0"),
+      "Tier": p => p.Tier,
+      "Grade": p => parseFloat(p["Grade (20-80)"] || "0"),
+    };
+    const getVal = colMap[listSortCol] || (() => 0);
+    return [...filtered].sort((a, b) => {
+      const av = getVal(a), bv = getVal(b);
+      if (typeof av === "number" && typeof bv === "number") return listSortDir === "desc" ? bv - av : av - bv;
+      if (typeof av === "string" && typeof bv === "string") return listSortDir === "desc" ? bv.localeCompare(av) : av.localeCompare(bv);
+      return 0;
+    });
+  }, [filtered, listSortCol, listSortDir]);
+
+  const handleListSort = (col: string) => {
+    if (listSortCol === col) setListSortDir(d => d === "desc" ? "asc" : "desc");
+    else { setListSortCol(col); setListSortDir("desc"); }
+  };
+
   const confTiers = useMemo(() => [...new Set(players.map((p) => p["Conf Tier"]).filter(Boolean))].sort(), [players]);
   const positions = useMemo(() => [...new Set(players.map((p) => p.Position).filter(Boolean))].sort(), [players]);
+  const flaggedCount = useMemo(() => Object.values(localFlags).filter(Boolean).length, [localFlags]);
 
   const FilterBtn = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
     <button onClick={onClick} style={{ padding: "6px 14px", borderRadius: "20px", border: active ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.12)", background: active ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.04)", color: active ? "#60a5fa" : "#9ca3af", fontSize: "12px", fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap" }}>
@@ -443,6 +526,7 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Stats bar */}
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", padding: "12px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", alignItems: "center" }}>
         <span style={{ fontSize: "13px", color: "#9ca3af" }}>
           <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> players tracked
@@ -453,6 +537,7 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
             const unverified = players.filter((p) => p["Net Adj.Rtg"].toLowerCase().includes("est.")).length;
             return unverified > 0 ? <>{" · "}<strong style={{ color: "#6b7280" }} title="Players with estimated Net Adj Rtg">~{unverified} unverified</strong></> : null;
           })()}
+          {flaggedCount > 0 && <>{" · "}<strong style={{ color: "#ef4444" }}>🚩 {flaggedCount} flagged</strong></>}
         </span>
         {lastFetched && (
           <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>
@@ -461,6 +546,23 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
         )}
       </div>
 
+      {/* View toggle + Flagged filter */}
+      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+        <span style={{ fontSize: "11px", color: "#6b7280", fontWeight: 600 }}>VIEW</span>
+        <button onClick={() => setListView(false)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "20px", border: !listView ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.12)", background: !listView ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.04)", color: !listView ? "#60a5fa" : "#9ca3af", fontSize: "12px", fontWeight: !listView ? 600 : 400, cursor: "pointer" }}>
+          <LayoutGrid size={13} />Grid
+        </button>
+        <button onClick={() => setListView(true)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "20px", border: listView ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.12)", background: listView ? "rgba(59,130,246,0.18)" : "rgba(255,255,255,0.04)", color: listView ? "#60a5fa" : "#9ca3af", fontSize: "12px", fontWeight: listView ? 600 : 400, cursor: "pointer" }}>
+          <List size={13} />List
+        </button>
+        <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)" }} />
+        <button onClick={() => setFilterFlagged(v => !v)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "20px", border: filterFlagged ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.12)", background: filterFlagged ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)", color: filterFlagged ? "#ef4444" : "#9ca3af", fontSize: "12px", fontWeight: filterFlagged ? 600 : 400, cursor: "pointer" }}>
+          <Bookmark size={12} fill={filterFlagged ? "#ef4444" : "none"} stroke={filterFlagged ? "#ef4444" : "#9ca3af"} />
+          Flagged{flaggedCount > 0 ? ` (${flaggedCount})` : ""}
+        </button>
+      </div>
+
+      {/* Filters */}
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontSize: "11px", color: "#6b7280", minWidth: "42px", fontWeight: 600 }}>POS</span>
@@ -482,78 +584,202 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
           <FilterBtn active={filterConfCheck === ""} onClick={() => setFilterConfCheck("")}>All</FilterBtn>
           {["P6", "High-Major", "Mid-Major", "Low-Major"].map((c) => <FilterBtn key={c} active={filterConfCheck === c} onClick={() => setFilterConfCheck(c === filterConfCheck ? "" : c)}>{c}</FilterBtn>)}
         </div>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: "11px", color: "#6b7280", minWidth: "42px", fontWeight: 600 }}>SORT</span>
-          {([["grade", "Grade"], ["cin", "Cin. Score"], ["netrtg", "Net Adj.Rtg"]] as const).map(([key, label]) => (
-            <FilterBtn key={key} active={sortKey === key} onClick={() => setSortKey(key)}>{label} {sortKey === key ? "↓" : ""}</FilterBtn>
-          ))}
-        </div>
+        {!listView && (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: "11px", color: "#6b7280", minWidth: "42px", fontWeight: 600 }}>SORT</span>
+            {([["grade", "Grade"], ["cin", "Cin. Score"], ["netrtg", "Net Adj.Rtg"]] as const).map(([key, label]) => (
+              <FilterBtn key={key} active={sortKey === key} onClick={() => setSortKey(key)}>{label} {sortKey === key ? "↓" : ""}</FilterBtn>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ fontSize: "12px", color: "#6b7280" }}>
-        Showing <strong style={{ color: "#e5e7eb" }}>{sorted.length}</strong> of {players.length} players
+        Showing <strong style={{ color: "#e5e7eb" }}>{listView ? listSorted.length : sorted.length}</strong> of {players.length} players
+        {listView && <span style={{ color: "#4b5563", marginLeft: "8px" }}>· Click column headers to sort</span>}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(380px, 1fr))", gap: "10px" }}>
-        {sorted.map((player, i) => {
-          const tierStyle = getTierStyle(player.Tier);
-          const grade = parseFloat(player["Grade (20-80)"] || "0");
-          const cinScore = parseFloat(player["Cin. Score"] || "0");
-          const netRtgRaw = player["Net Adj.Rtg"] || "";
-          const netRtgIsEst = netRtgRaw.toLowerCase().includes("est.");
-          const netRtg = parseFloat(netRtgRaw.replace(/est\.\s*/i, "") || "0");
-          const cinScoreV2 = parseFloat(player["Cin Score v2"] || "0");
-          const cinV2Downgraded = !isNaN(cinScore) && !isNaN(cinScoreV2) && cinScoreV2 > 0 && (cinScore - cinScoreV2) > 5;
-          const hasFlag = player["Team Impact Flag"] && player["Team Impact Flag"].trim() !== "";
-          const flightRisk = parseFloat(player["Flight Risk Score"] || "0");
-          const hasFlightRisk = !isNaN(flightRisk) && flightRisk > 0;
-          const flightRiskColor = flightRisk >= 7 ? "#ef4444" : flightRisk >= 5 ? "#3b82f6" : "#10b981";
-          const flightRiskBg = flightRisk >= 7 ? "rgba(239,68,68,0.12)" : flightRisk >= 5 ? "rgba(59,130,246,0.12)" : "rgba(16,185,129,0.12)";
-          return (
-            <div key={i} style={{ padding: "14px 16px", borderRadius: "12px", background: tierStyle.bg, border: `1px solid ${tierStyle.border}`, position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: tierStyle.text, borderRadius: "12px 0 0 12px" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#f3f4f6" }}>{player.Player}</span>
-                    <span style={{ padding: "2px 7px", borderRadius: "10px", fontSize: "10px", fontWeight: 700, background: tierStyle.badge, color: tierStyle.text, letterSpacing: "0.04em" }}>{player.Tier}</span>
-                    {player.Tier.includes("RF") && <AlertTriangle size={13} color="#ef4444" />}
+      {/* LIST VIEW */}
+      {listView ? (
+        <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.01)" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)" }}>
+                <th style={{ padding: "10px 8px", textAlign: "center", width: "36px", color: "#6b7280", fontSize: "11px" }}>🚩</th>
+                {LIST_COLS.map(col => {
+                  const isActive = listSortCol === col;
+                  const isNum = ["PPG","RPG","APG","FG%","3P%","Grade"].includes(col);
+                  return (
+                    <th key={col} onClick={() => handleListSort(col)} style={{ padding: "10px 8px", textAlign: isNum ? "right" : "left", cursor: "pointer", color: isActive ? "#60a5fa" : "#9ca3af", fontWeight: 600, fontSize: "11px", letterSpacing: "0.05em", whiteSpace: "nowrap", userSelect: "none" }}>
+                      {col}{isActive ? (listSortDir === "desc" ? " ↓" : " ↑") : ""}
+                    </th>
+                  );
+                })}
+                <th style={{ padding: "10px 8px", textAlign: "center", width: "36px", color: "#6b7280", fontSize: "11px" }}>📝</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listSorted.map((player, i) => {
+                const tierStyle = getTierStyle(player.Tier);
+                const isFlagged = !!localFlags[player.Player];
+                const hasNotes = !!(localNotes[player.Player]);
+                const noteText = localNotes[player.Player] || "";
+                const grade = parseFloat(player["Grade (20-80)"] || "0");
+                const isOpen = openNotesFor === player.Player;
+                return (
+                  <React.Fragment key={i}>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: isFlagged ? "rgba(239,68,68,0.04)" : i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
+                      <td style={{ padding: "7px 8px", textAlign: "center" }}>
+                        <button onClick={() => toggleFlag(player.Player)} title={isFlagged ? "Unflag" : "Flag player"} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", alignItems: "center", opacity: savingFlag === player.Player ? 0.5 : 1 }}>
+                          <Bookmark size={13} fill={isFlagged ? "#ef4444" : "none"} stroke={isFlagged ? "#ef4444" : "#4b5563"} />
+                        </button>
+                      </td>
+                      <td style={{ padding: "7px 8px", fontWeight: 600, color: "#f3f4f6", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: tierStyle.text, flexShrink: 0 }} />
+                          {player.Player}
+                          {player.Tier.includes("RF") && <AlertTriangle size={11} color="#ef4444" />}
+                        </div>
+                      </td>
+                      <td style={{ padding: "7px 8px", color: "#9ca3af", whiteSpace: "nowrap" }}>{player["Current School"]}</td>
+                      <td style={{ padding: "7px 8px", color: "#9ca3af" }}>{player.Position}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right", color: "#d1d5db" }}>{player.PPG || "—"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right", color: "#d1d5db" }}>{player.RPG || "—"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right", color: "#d1d5db" }}>{player.APG || "—"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right", color: "#d1d5db" }}>{player["FG%"] ? `${player["FG%"]}%` : "—"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "right", color: "#d1d5db" }}>{player["3P%"] ? `${player["3P%"]}%` : "—"}</td>
+                      <td style={{ padding: "7px 8px" }}>
+                        <span style={{ padding: "2px 7px", borderRadius: "8px", fontSize: "10px", fontWeight: 700, background: tierStyle.badge, color: tierStyle.text }}>{player.Tier}</span>
+                      </td>
+                      <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 800, color: grade >= 70 ? "#10b981" : grade >= 55 ? "#60a5fa" : "#9ca3af" }}>{player["Grade (20-80)"] || "—"}</td>
+                      <td style={{ padding: "7px 8px", textAlign: "center" }}>
+                        <button onClick={() => setOpenNotesFor(isOpen ? null : player.Player)} title="Player notes" style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", alignItems: "center", color: hasNotes ? "#60a5fa" : "#4b5563" }}>
+                          <FileText size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr>
+                        <td colSpan={LIST_COLS.length + 2} style={{ padding: "8px 12px", background: "rgba(59,130,246,0.05)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
+                          <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                            <div style={{ fontSize: "12px", color: "#60a5fa", fontWeight: 600, minWidth: "80px", paddingTop: "6px" }}>{player.Player}</div>
+                            <textarea
+                              value={noteText}
+                              onChange={(e) => setLocalNotes(prev => ({ ...prev, [player.Player]: e.target.value }))}
+                              onBlur={() => saveNote(player.Player)}
+                              placeholder="Add notes for this player… (auto-saves on blur)"
+                              rows={2}
+                              autoFocus
+                              style={{ flex: 1, padding: "6px 10px", borderRadius: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(59,130,246,0.3)", color: "#d1d5db", fontSize: "12px", resize: "vertical", outline: "none", fontFamily: "inherit" }}
+                            />
+                            <button onClick={() => { saveNote(player.Player); setOpenNotesFor(null); }} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", padding: "4px", marginTop: "2px" }}><X size={14} /></button>
+                          </div>
+                          {savingNotes === player.Player && <div style={{ fontSize: "10px", color: "#6b7280", marginTop: "4px", marginLeft: "88px" }}>Saving to sheet…</div>}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+          {listSorted.length === 0 && <div style={{ padding: "40px", textAlign: "center", color: "#6b7280", fontSize: "14px" }}>No players match filters.</div>}
+        </div>
+      ) : (
+        /* GRID VIEW */
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(380px, 1fr))", gap: "10px" }}>
+          {sorted.map((player, i) => {
+            const tierStyle = getTierStyle(player.Tier);
+            const grade = parseFloat(player["Grade (20-80)"] || "0");
+            const cinScore = parseFloat(player["Cin. Score"] || "0");
+            const netRtgRaw = player["Net Adj.Rtg"] || "";
+            const netRtgIsEst = netRtgRaw.toLowerCase().includes("est.");
+            const netRtg = parseFloat(netRtgRaw.replace(/est\.\s*/i, "") || "0");
+            const cinScoreV2 = parseFloat(player["Cin Score v2"] || "0");
+            const cinV2Downgraded = !isNaN(cinScore) && !isNaN(cinScoreV2) && cinScoreV2 > 0 && (cinScore - cinScoreV2) > 5;
+            const hasImpactFlag = player["Team Impact Flag"] && player["Team Impact Flag"].trim() !== "";
+            const flightRisk = parseFloat(player["Flight Risk Score"] || "0");
+            const hasFlightRisk = !isNaN(flightRisk) && flightRisk > 0;
+            const flightRiskColor = flightRisk >= 7 ? "#ef4444" : flightRisk >= 5 ? "#3b82f6" : "#10b981";
+            const flightRiskBg = flightRisk >= 7 ? "rgba(239,68,68,0.12)" : flightRisk >= 5 ? "rgba(59,130,246,0.12)" : "rgba(16,185,129,0.12)";
+            const isFlagged = !!localFlags[player.Player];
+            const hasNotes = !!(localNotes[player.Player]);
+            const noteText = localNotes[player.Player] || "";
+            const isOpen = openNotesFor === player.Player;
+            return (
+              <div key={i} style={{ padding: "14px 16px", borderRadius: "12px", background: isFlagged ? "rgba(239,68,68,0.05)" : tierStyle.bg, border: `1px solid ${isFlagged ? "rgba(239,68,68,0.35)" : tierStyle.border}`, position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: isFlagged ? "#ef4444" : tierStyle.text, borderRadius: "12px 0 0 12px" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
+                      <span style={{ fontSize: "15px", fontWeight: 700, color: "#f3f4f6" }}>{player.Player}</span>
+                      <span style={{ padding: "2px 7px", borderRadius: "10px", fontSize: "10px", fontWeight: 700, background: tierStyle.badge, color: tierStyle.text, letterSpacing: "0.04em" }}>{player.Tier}</span>
+                      {player.Tier.includes("RF") && <AlertTriangle size={13} color="#ef4444" />}
+                      {/* Flag button */}
+                      <button onClick={(e) => { e.stopPropagation(); toggleFlag(player.Player); }} title={isFlagged ? "Unflag player" : "Flag player"} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", marginLeft: "2px", opacity: savingFlag === player.Player ? 0.5 : 1 }}>
+                        <Bookmark size={13} fill={isFlagged ? "#ef4444" : "none"} stroke={isFlagged ? "#ef4444" : "#4b5563"} />
+                      </button>
+                      {/* Notes button */}
+                      <button onClick={(e) => { e.stopPropagation(); setOpenNotesFor(isOpen ? null : player.Player); }} title="Player notes" style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", color: hasNotes ? "#60a5fa" : "#4b5563" }}>
+                        <FileText size={13} />
+                      </button>
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#9ca3af", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      <span>{player["Current School"]}</span><span>·</span><span>{player.Position}</span><span>·</span><span>{player.Class}</span><span>·</span><span style={{ color: "#6b7280" }}>{player.Conference}</span>
+                    </div>
                   </div>
-                  <div style={{ fontSize: "12px", color: "#9ca3af", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    <span>{player["Current School"]}</span><span>·</span><span>{player.Position}</span><span>·</span><span>{player.Class}</span><span>·</span><span style={{ color: "#6b7280" }}>{player.Conference}</span>
+                  <div style={{ minWidth: "48px", height: "48px", borderRadius: "50%", background: grade >= 70 ? "rgba(16,185,129,0.15)" : grade >= 55 ? "rgba(59,130,246,0.15)" : "rgba(107,114,128,0.15)", border: `2px solid ${grade >= 70 ? "rgba(16,185,129,0.5)" : grade >= 55 ? "rgba(59,130,246,0.5)" : "rgba(107,114,128,0.3)"}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ fontSize: "16px", fontWeight: 800, color: grade >= 70 ? "#10b981" : grade >= 55 ? "#60a5fa" : "#9ca3af", lineHeight: 1 }}>{player["Grade (20-80)"] || "—"}</span>
+                    <span style={{ fontSize: "9px", color: "#6b7280", marginTop: "1px" }}>GRADE</span>
                   </div>
                 </div>
-                <div style={{ minWidth: "48px", height: "48px", borderRadius: "50%", background: grade >= 70 ? "rgba(16,185,129,0.15)" : grade >= 55 ? "rgba(59,130,246,0.15)" : "rgba(107,114,128,0.15)", border: `2px solid ${grade >= 70 ? "rgba(16,185,129,0.5)" : grade >= 55 ? "rgba(59,130,246,0.5)" : "rgba(107,114,128,0.3)"}`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: "16px", fontWeight: 800, color: grade >= 70 ? "#10b981" : grade >= 55 ? "#60a5fa" : "#9ca3af", lineHeight: 1 }}>{player["Grade (20-80)"] || "—"}</span>
-                  <span style={{ fontSize: "9px", color: "#6b7280", marginTop: "1px" }}>GRADE</span>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                <StatPill label="Cin.Score" value={cinScore ? cinScore.toFixed(1) : "—"} highlight={cinScore > 85} />
-                {player["Cin Score v2"] && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                    <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>Cin.v2</span>
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: cinV2Downgraded ? "#6b7280" : "#d1d5db" }}>{cinV2Downgraded && <span style={{ fontSize: "11px", marginRight: "2px" }}>↓</span>}{cinScoreV2 ? cinScoreV2.toFixed(1) : "—"}</span>
+                {/* Notes popover */}
+                {isOpen && (
+                  <div style={{ marginBottom: "10px", padding: "8px 10px", borderRadius: "8px", background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.25)" }}>
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => setLocalNotes(prev => ({ ...prev, [player.Player]: e.target.value }))}
+                      onBlur={() => saveNote(player.Player)}
+                      placeholder="Notes… (auto-saves on blur)"
+                      rows={2}
+                      autoFocus
+                      style={{ width: "100%", padding: "5px 8px", borderRadius: "6px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(59,130,246,0.3)", color: "#d1d5db", fontSize: "12px", resize: "vertical", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+                    />
+                    {savingNotes === player.Player && <div style={{ fontSize: "10px", color: "#6b7280", marginTop: "2px" }}>Saving…</div>}
                   </div>
                 )}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1px" }} title={netRtgIsEst ? "Estimated value" : undefined}>
-                  <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>Net Adj.Rtg</span>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: netRtgIsEst ? "#6b7280" : (netRtg > 5 ? "#10b981" : "#d1d5db") }}>
-                    {netRtgRaw ? (netRtgIsEst ? <><span style={{ color: "#6b7280" }}>~</span>{netRtgRaw.replace(/est\.\s*/i, "").trim() || "—"}</> : netRtgRaw) : "—"}
-                  </span>
+                {hasNotes && !isOpen && (
+                  <div style={{ marginBottom: "6px", padding: "5px 8px", borderRadius: "6px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.15)", fontSize: "11px", color: "#93c5fd", fontStyle: "italic", cursor: "pointer" }} onClick={() => setOpenNotesFor(player.Player)}>
+                    📝 {noteText.slice(0, 80)}{noteText.length > 80 ? "…" : ""}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", marginBottom: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  <StatPill label="Cin.Score" value={cinScore ? cinScore.toFixed(1) : "—"} highlight={cinScore > 85} />
+                  {player["Cin Score v2"] && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                      <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>Cin.v2</span>
+                      <span style={{ fontSize: "13px", fontWeight: 700, color: cinV2Downgraded ? "#6b7280" : "#d1d5db" }}>{cinV2Downgraded && <span style={{ fontSize: "11px", marginRight: "2px" }}>↓</span>}{cinScoreV2 ? cinScoreV2.toFixed(1) : "—"}</span>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }} title={netRtgIsEst ? "Estimated value" : undefined}>
+                    <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>Net Adj.Rtg</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: netRtgIsEst ? "#6b7280" : (netRtg > 5 ? "#10b981" : "#d1d5db") }}>
+                      {netRtgRaw ? (netRtgIsEst ? <><span style={{ color: "#6b7280" }}>~</span>{netRtgRaw.replace(/est\.\s*/i, "").trim() || "—"}</> : netRtgRaw) : "—"}
+                    </span>
+                  </div>
+                  <StatPill label="PPG" value={player.PPG || "—"} />
+                  <StatPill label="APG" value={player.APG || "—"} />
+                  <StatPill label="3P%" value={player["3P%"] ? `${player["3P%"]}%` : "—"} />
                 </div>
-                <StatPill label="PPG" value={player.PPG || "—"} />
-                <StatPill label="APG" value={player.APG || "—"} />
-                <StatPill label="3P%" value={player["3P%"] ? `${player["3P%"]}%` : "—"} />
+                {hasImpactFlag && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: "rgba(107,114,128,0.12)", border: "1px solid rgba(107,114,128,0.3)", fontSize: "11px", color: "#9ca3af", fontWeight: 600 }}><Zap size={10} />{player["Team Impact Flag"]}</div>}
+                {hasFlightRisk && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: flightRiskBg, border: `1px solid ${flightRiskColor}40`, fontSize: "11px", color: flightRiskColor, fontWeight: 600, marginTop: hasImpactFlag ? "6px" : "0" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: flightRiskColor, flexShrink: 0 }} />Flight Risk: {player["Flight Risk Score"]}</div>}
+                {player["Conference Check"] && <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", borderRadius: "6px", background: "rgba(107,114,128,0.1)", border: "1px solid rgba(107,114,128,0.25)", fontSize: "10px", color: "#9ca3af", fontWeight: 600, marginTop: "4px", marginLeft: hasFlightRisk ? "6px" : "0" }}>{player["Conference Check"]}</div>}
+                {player["Role Fit"] && <div style={{ marginTop: "6px", fontSize: "11px", color: "#6b7280", fontStyle: "italic" }}>Role: {player["Role Fit"]}</div>}
               </div>
-              {hasFlag && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: "rgba(107,114,128,0.12)", border: "1px solid rgba(107,114,128,0.3)", fontSize: "11px", color: "#9ca3af", fontWeight: 600 }}><Zap size={10} />{player["Team Impact Flag"]}</div>}
-              {hasFlightRisk && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: flightRiskBg, border: `1px solid ${flightRiskColor}40`, fontSize: "11px", color: flightRiskColor, fontWeight: 600, marginTop: hasFlag ? "6px" : "0" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: flightRiskColor, flexShrink: 0 }} />Flight Risk: {player["Flight Risk Score"]}</div>}
-              {player["Conference Check"] && <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", borderRadius: "6px", background: "rgba(107,114,128,0.1)", border: "1px solid rgba(107,114,128,0.25)", fontSize: "10px", color: "#9ca3af", fontWeight: 600, marginTop: "4px", marginLeft: hasFlightRisk ? "6px" : "0" }}>{player["Conference Check"]}</div>}
-              {player["Role Fit"] && <div style={{ marginTop: "6px", fontSize: "11px", color: "#6b7280", fontStyle: "italic" }}>Role: {player["Role Fit"]}</div>}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1373,7 +1599,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
   );
 }
 
-// ─── VIEW 5: NETWORK / CONNECTIONS ────────────────────────────────────────────
+// ─── VIEW 5: NETWORK ──────────────────────────────────────────────────────────
 
 function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger: number }) {
   const [people, setPeople] = useState<NetworkPerson[]>([]);
@@ -1388,6 +1614,12 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
   const [showAddForm, setShowAddForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedNode, setSelectedNode] = useState<NetworkPerson | null>(null);
+  // Bulk import state
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkParsed, setBulkParsed] = useState<Partial<NetworkPerson>[]>([]);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ imported: number; skipped: number } | null>(null);
 
   const emptyPerson: Partial<NetworkPerson> = {
     name: "", role: "Coach", organization: "", relationship: "1st", strength: "Medium",
@@ -1462,6 +1694,98 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
     setShowAddForm(true);
     setExpandedId(null);
   };
+
+  // Bulk import: parse CSV/TSV text
+  const parseBulkText = (text: string) => {
+    const lines = text.trim().split("\n").filter(l => l.trim());
+    const parsed: Partial<NetworkPerson>[] = lines.map(line => {
+      // Support comma or tab separated: Name, Role, Organization, Phone, Email, Notes
+      const parts = line.includes("\t") ? line.split("\t") : line.split(",");
+      const clean = (s?: string) => (s || "").trim().replace(/^["']|["']$/g, "");
+      return {
+        name: clean(parts[0]),
+        role: clean(parts[1]) || "Other",
+        organization: clean(parts[2]) || "",
+        phone: clean(parts[3]) || "",
+        email: clean(parts[4]) || "",
+        notes: clean(parts[5]) || "",
+        relationship: "1st" as const,
+        strength: "Medium" as const,
+      };
+    }).filter(p => p.name);
+    setBulkParsed(parsed);
+  };
+
+  const handleBulkImport = async () => {
+    if (bulkParsed.length === 0) return;
+    setBulkImporting(true);
+    setBulkResult(null);
+    try {
+      const res = await fetch("/api/cinderella/network", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bulkParsed),
+      });
+      const data = await res.json();
+      setBulkResult({ imported: data.imported || 0, skipped: data.skipped || 0 });
+      setBulkText("");
+      setBulkParsed([]);
+      loadPeople();
+    } catch (e) {
+      console.error("Bulk import failed:", e);
+    } finally {
+      setBulkImporting(false);
+    }
+  };
+
+  const BulkImportModal = () => (
+    <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.3)", display: "flex", flexDirection: "column", gap: "12px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: "#f3f4f6" }}>Bulk Import — Network</span>
+        <button onClick={() => { setShowBulkImport(false); setBulkText(""); setBulkParsed([]); setBulkResult(null); }} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer" }}><X size={16} /></button>
+      </div>
+      <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(107,114,128,0.1)", border: "1px solid rgba(107,114,128,0.2)", fontSize: "11px", color: "#9ca3af" }}>
+        Format: <strong style={{ color: "#d1d5db" }}>Name, Role, Organization, Phone, Email, Notes</strong> (one per line)<br />
+        Supports CSV or tab-separated. Duplicate names are skipped.
+      </div>
+      <textarea
+        value={bulkText}
+        onChange={(e) => { setBulkText(e.target.value); parseBulkText(e.target.value); }}
+        placeholder={"Tim Grover, Coach, ATTACK Athletics, , , Key Cinderella partner\nObi Toppin, NBA Player, Indiana Pacers, , @ObiToppin1, Knicks network"}
+        rows={6}
+        style={{ padding: "10px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(139,92,246,0.3)", color: "#f3f4f6", fontSize: "12px", resize: "vertical", outline: "none", fontFamily: "monospace" }}
+      />
+      {bulkParsed.length > 0 && (
+        <div>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: "#a78bfa", marginBottom: "8px" }}>Preview — {bulkParsed.length} contacts</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "200px", overflowY: "auto" }}>
+            {bulkParsed.map((p, i) => (
+              <div key={i} style={{ padding: "6px 10px", borderRadius: "6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", fontSize: "12px", color: "#d1d5db", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                <strong style={{ color: "#f3f4f6" }}>{p.name}</strong>
+                {p.role && p.role !== "Other" && <span style={{ color: "#9ca3af" }}>{p.role}</span>}
+                {p.organization && <span style={{ color: "#6b7280" }}>@ {p.organization}</span>}
+                {p.email && <span style={{ color: "#60a5fa" }}>{p.email}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {bulkResult && (
+        <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", fontSize: "12px", color: "#10b981" }}>
+          ✓ Imported {bulkResult.imported} contacts{bulkResult.skipped > 0 ? ` · Skipped ${bulkResult.skipped} duplicates` : ""}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button
+          onClick={handleBulkImport}
+          disabled={bulkParsed.length === 0 || bulkImporting}
+          style={{ flex: 1, padding: "10px", borderRadius: "8px", background: bulkParsed.length === 0 ? "rgba(107,114,128,0.1)" : "rgba(139,92,246,0.15)", border: `1px solid ${bulkParsed.length === 0 ? "rgba(107,114,128,0.2)" : "rgba(139,92,246,0.4)"}`, color: bulkParsed.length === 0 ? "#4b5563" : "#a78bfa", fontSize: "13px", fontWeight: 600, cursor: bulkParsed.length === 0 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}
+        >
+          {bulkImporting ? <><RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} />Importing…</> : <><Upload size={14} />Import {bulkParsed.length > 0 ? `${bulkParsed.length} contacts` : ""}</>}
+        </button>
+      </div>
+    </div>
+  );
 
   const PersonForm = () => (
     <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.25)", display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1543,12 +1867,16 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
         </button>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
           <span style={{ fontSize: "12px", color: "#6b7280" }}>{people.length} contacts</span>
-          <button onClick={() => { setShowAddForm(v => !v); setEditingId(null); setFormData(emptyPerson); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.35)", color: "#10b981", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={() => { setShowBulkImport(v => !v); setShowAddForm(false); setBulkResult(null); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.3)", color: "#a78bfa", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+            <Upload size={13} />Bulk Import
+          </button>
+          <button onClick={() => { setShowAddForm(v => !v); setEditingId(null); setFormData(emptyPerson); setShowBulkImport(false); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.35)", color: "#10b981", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
             <Plus size={13} />Add Person
           </button>
         </div>
       </div>
 
+      {showBulkImport && <BulkImportModal />}
       {showAddForm && <PersonForm />}
 
       {subView === "directory" && (
@@ -2124,7 +2452,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     { id: "rankings" as const, label: "Norman's Rankings", icon: Star },
     { id: "roster" as const, label: "Roster Builder", icon: Users },
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
-    { id: "network" as const, label: "Network / Connections", icon: Network },
+    { id: "network" as const, label: "Network", icon: Network },
     { id: "connections" as const, label: "Coaching Connections", icon: Zap },
     { id: "strikelist" as const, label: "Strike List", icon: Crosshair },
   ];
