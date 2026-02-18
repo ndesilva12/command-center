@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp, Sword } from "lucide-react";
+import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ToolBackground } from "@/components/tools/ToolBackground";
-import { WarRoom } from "./WarRoom";
 
 export default function CinderellaPage() {
   return (
@@ -21,7 +20,7 @@ export default function CinderellaPage() {
 function CinderellaContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('cinderella', 'Cinderella Project', '#3b82f6');
-  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'tasks' | 'financials' | 'warroom'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'communications' | 'calendar' | 'targets' | 'legal' | 'financials'>('overview');
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -71,12 +70,10 @@ function CinderellaContent() {
         }}>
           {[
             { id: 'overview', label: 'Overview', icon: TrendingUp },
-            { id: 'warroom', label: '⚔️ War Room', icon: Sword },
             { id: 'communications', label: 'Communications', icon: Mail },
             { id: 'calendar', label: 'Calendar', icon: Calendar },
             { id: 'targets', label: 'Targets', icon: Target },
             { id: 'legal', label: 'Legal', icon: Scale },
-            { id: 'tasks', label: 'Tasks', icon: FileText },
             { id: 'financials', label: 'Financials', icon: Building2 },
           ].map(({ id, label, icon: Icon }) => (
             <button
@@ -85,15 +82,9 @@ function CinderellaContent() {
               style={{
                 padding: isMobile ? "8px 16px" : "10px 20px",
                 borderRadius: "8px",
-                border: id === 'warroom'
-                  ? activeTab === id ? "1px solid rgba(16,185,129,0.5)" : "1px solid rgba(16,185,129,0.25)"
-                  : activeTab === id ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid rgba(255, 255, 255, 0.1)",
-                background: id === 'warroom'
-                  ? activeTab === id ? "rgba(16,185,129,0.15)" : "rgba(16,185,129,0.05)"
-                  : activeTab === id ? "rgba(245, 158, 11, 0.1)" : "rgba(255, 255, 255, 0.03)",
-                color: id === 'warroom'
-                  ? activeTab === id ? "#10b981" : "rgba(16,185,129,0.8)"
-                  : activeTab === id ? "#3b82f6" : "rgba(255, 255, 255, 0.7)",
+                border: activeTab === id ? "1px solid rgba(59, 130, 246, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                background: activeTab === id ? "rgba(59, 130, 246, 0.12)" : "rgba(255, 255, 255, 0.03)",
+                color: activeTab === id ? "#60a5fa" : "rgba(255, 255, 255, 0.7)",
                 fontSize: isMobile ? "13px" : "14px",
                 fontWeight: activeTab === id ? 600 : 500,
                 cursor: "pointer",
@@ -116,9 +107,7 @@ function CinderellaContent() {
         {activeTab === 'calendar' && <CalendarTab isMobile={isMobile} />}
         {activeTab === 'targets' && <TargetsTab isMobile={isMobile} />}
         {activeTab === 'legal' && <LegalTab isMobile={isMobile} />}
-        {activeTab === 'tasks' && <TasksTab isMobile={isMobile} />}
         {activeTab === 'financials' && <FinancialsTab isMobile={isMobile} />}
-        {activeTab === 'warroom' && <WarRoom isMobile={isMobile} />}
       </main>
     </>
   );
@@ -646,76 +635,7 @@ function CalendarTab({ isMobile }: { isMobile: boolean }) {
         )}
       </div>
 
-      {/* Task Deadlines */}
-      <div style={{
-        padding: isMobile ? "16px" : "24px",
-        borderRadius: "12px",
-        background: "rgba(255, 255, 255, 0.03)",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-      }}>
-        <h2 style={{ fontSize: "20px", fontWeight: 600, color: "var(--foreground)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-          <FileText size={20} />
-          Task Deadlines
-        </h2>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {taskDeadlines.map((task, i) => {
-            const daysUntil = getDaysUntil(task.due);
-            const isOverdue = daysUntil < 0;
-            const isUrgent = daysUntil <= 2 && daysUntil >= 0;
-
-            return (
-              <div
-                key={i}
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: "8px",
-                  background: isOverdue ? "rgba(239, 68, 68, 0.05)" : isUrgent ? "rgba(245, 158, 11, 0.05)" : "rgba(255, 255, 255, 0.03)",
-                  border: `1px solid ${isOverdue ? "rgba(239, 68, 68, 0.2)" : isUrgent ? "rgba(245, 158, 11, 0.2)" : "rgba(255, 255, 255, 0.1)"}`,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "12px",
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 500, color: "var(--foreground)" }}>
-                      {task.task}
-                    </span>
-                    <span style={{ fontSize: "11px", color: "var(--foreground-muted)" }}>
-                      {task.status}
-                    </span>
-                  </div>
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    <span style={{
-                      fontSize: "11px",
-                      padding: "2px 6px",
-                      borderRadius: "10px",
-                      background: `${getPriorityColor(task.priority)}20`,
-                      color: getPriorityColor(task.priority),
-                      fontWeight: 600,
-                    }}>
-                      {task.priority}
-                    </span>
-                    <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
-                      Due: {task.due}
-                    </span>
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: isOverdue ? "#ef4444" : isUrgent ? "#6366f1" : "var(--foreground-muted)",
-                  whiteSpace: "nowrap",
-                }}>
-                  {isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? "Due today" : `${daysUntil}d left`}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Task deadlines removed — see War Room for project tracking */}
 
       {/* Project Milestones */}
       <div style={{
@@ -898,11 +818,11 @@ function OverviewTab({ isMobile }: { isMobile: boolean }) {
       <div style={{
         padding: isMobile ? "16px" : "24px",
         borderRadius: "12px",
-        background: "rgba(245, 158, 11, 0.05)",
-        border: "1px solid rgba(245, 158, 11, 0.2)",
+        background: "rgba(99, 102, 241, 0.05)",
+        border: "1px solid rgba(99, 102, 241, 0.2)",
       }}>
         <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#6366f1", marginBottom: "12px" }}>
-          🎯 Current Status
+          Current Status
         </h2>
         <div style={{ fontSize: "14px", color: "var(--foreground)", lineHeight: 1.6 }}>
           <p><strong>First Target:</strong> Tim Grover + University of Illinois-Chicago (UIC)</p>
@@ -1431,7 +1351,7 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
           style={{
             padding: isMobile ? "14px 16px" : "16px 20px",
             cursor: "pointer",
-            background: expandedTiers.has('tier3') ? "rgba(245, 158, 11, 0.08)" : "rgba(255, 255, 255, 0.03)",
+            background: expandedTiers.has('tier3') ? "rgba(107, 114, 128, 0.08)" : "rgba(255, 255, 255, 0.03)",
             borderBottom: expandedTiers.has('tier3') ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
             transition: "all 0.2s",
           }}
@@ -1468,8 +1388,8 @@ function TargetsTab({ isMobile }: { isMobile: boolean }) {
                   style={{
                     padding: "10px 12px",
                     borderRadius: "6px",
-                    background: "rgba(245, 158, 11, 0.05)",
-                    border: "1px solid rgba(245, 158, 11, 0.15)",
+                    background: "rgba(107, 114, 128, 0.05)",
+                    border: "1px solid rgba(107, 114, 128, 0.15)",
                   }}
                 >
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)", marginBottom: "2px" }}>
