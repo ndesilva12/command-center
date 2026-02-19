@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
+import { ALL_TOOLS } from "@/lib/tool-categories";
 import {
   ChevronUp,
   ChevronDown,
@@ -37,6 +37,7 @@ import {
   FileText,
   ShoppingBag,
   Send,
+  Globe,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -51,7 +52,7 @@ const ICON_MAP: Record<string, any> = {
   "investors": TrendingDown,
   "business-info": Building2,
   "corporate": Briefcase,
-  "politicorp": Briefcase,
+  "politicorp": Globe,
   "jimmy": Sparkles,
   "emails": Mail,
   "calendar": Calendar,
@@ -75,6 +76,7 @@ const ICON_MAP: Record<string, any> = {
   "one-pager": FileText,
   "cinderella": BarChart3,
   "business": Building2,
+  "war-room": Target,
 };
 
 interface ToolCustomization {
@@ -89,7 +91,6 @@ interface Tool {
   id: string;
   name: string;
   color: string;
-  category: string;
 }
 
 // Default colors for tools
@@ -105,7 +106,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "investors": "#3b82f6",
   "business-info": "#8b5cf6",
   "corporate": "#10b981",
-  "politicorp": "#10b981",
+  "politicorp": "#ef4444",
   "emails": "#3b82f6",
   "calendar": "#10b981",
   "contacts": "#8b5cf6",
@@ -116,7 +117,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "market": "#3b82f6",
   "notes": "#a78bfa",
   "files": "#6366f1",
-  "legal": "#6366f1",
+  "legal": "#f59e0b",
   "spotify": "#1DB954",
   "trending": "#14b8a6",
   "rosters": "#3b82f6",
@@ -128,23 +129,15 @@ const DEFAULT_COLORS: Record<string, string> = {
   "one-pager": "#7c3aed",
   "cinderella": "#ef4444",
   "business": "#6366f1",
+  "war-room": "#dc2626",
 };
 
-// Build DEFAULT_TOOLS from tool-categories.ts
-const DEFAULT_TOOLS: Tool[] = [
-  ...PRODUCTIVITY_TOOLS.map(tool => ({
-    id: tool.id,
-    name: tool.name,
-    color: DEFAULT_COLORS[tool.id] || "#3b82f6",
-    category: "Productivity"
-  })),
-  ...INTELLIGENCE_TOOLS.map(tool => ({
-    id: tool.id,
-    name: tool.name,
-    color: DEFAULT_COLORS[tool.id] || "#8b5cf6",
-    category: "Intelligence"
-  }))
-];
+// Build flat DEFAULT_TOOLS from ALL_TOOLS (no category separation)
+const DEFAULT_TOOLS: Tool[] = ALL_TOOLS.map(tool => ({
+  id: tool.id,
+  name: tool.name,
+  color: DEFAULT_COLORS[tool.id] || "#6366f1",
+}));
 
 export function ToolCustomization() {
   const [tools, setTools] = useState<Tool[]>(DEFAULT_TOOLS);
@@ -157,7 +150,7 @@ export function ToolCustomization() {
 
   useEffect(() => {
     loadCustomizations();
-    
+
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -169,20 +162,18 @@ export function ToolCustomization() {
       const res = await fetch('/api/settings/tools');
       if (res.ok) {
         const data = await res.json();
-        
-        // Filter customizations to ONLY include tools that exist in DEFAULT_TOOLS
+
         const validToolIds = new Set(DEFAULT_TOOLS.map(t => t.id));
         const filteredCustomizations: Record<string, ToolCustomization> = {};
-        
+
         for (const [toolId, customization] of Object.entries(data.customizations || {})) {
           if (validToolIds.has(toolId)) {
             filteredCustomizations[toolId] = customization as ToolCustomization;
           }
         }
-        
+
         setCustomizations(filteredCustomizations);
 
-        // Apply saved order if available
         if (Object.keys(filteredCustomizations).length > 0) {
           const sortedTools = [...DEFAULT_TOOLS].sort((a, b) => {
             const orderA = filteredCustomizations[a.id]?.order ?? DEFAULT_TOOLS.findIndex(t => t.id === a.id);
@@ -191,7 +182,6 @@ export function ToolCustomization() {
           });
           setTools(sortedTools);
         } else {
-          // No customizations, use default order
           setTools(DEFAULT_TOOLS);
         }
       }
@@ -223,58 +213,36 @@ export function ToolCustomization() {
     }));
   };
 
-  const moveToolUp = (index: number, category: string) => {
-    const categoryTools = tools.filter(t => t.category === category);
+  const moveToolUp = (index: number) => {
     if (index === 0) return;
-
-    const toolToMove = categoryTools[index];
-    const toolToSwap = categoryTools[index - 1];
-
-    const newTools = tools.map(t => {
-      if (t.id === toolToMove.id) return toolToSwap;
-      if (t.id === toolToSwap.id) return toolToMove;
-      return t;
-    });
-
+    const newTools = [...tools];
+    [newTools[index - 1], newTools[index]] = [newTools[index], newTools[index - 1]];
     setTools(newTools);
-
-    // Update order in customizations - ensure complete objects
     newTools.forEach((tool, i) => {
       const existing = getToolCustomization(tool.id);
-      updateCustomization(tool.id, { 
+      updateCustomization(tool.id, {
         name: existing.name,
         color: existing.color,
         visible: existing.visible,
         mobileVisible: existing.mobileVisible,
-        order: i 
+        order: i,
       });
     });
   };
 
-  const moveToolDown = (index: number, category: string) => {
-    const categoryTools = tools.filter(t => t.category === category);
-    if (index === categoryTools.length - 1) return;
-
-    const toolToMove = categoryTools[index];
-    const toolToSwap = categoryTools[index + 1];
-
-    const newTools = tools.map(t => {
-      if (t.id === toolToMove.id) return toolToSwap;
-      if (t.id === toolToSwap.id) return toolToMove;
-      return t;
-    });
-
+  const moveToolDown = (index: number) => {
+    if (index === tools.length - 1) return;
+    const newTools = [...tools];
+    [newTools[index], newTools[index + 1]] = [newTools[index + 1], newTools[index]];
     setTools(newTools);
-
-    // Update order in customizations - ensure complete objects
     newTools.forEach((tool, i) => {
       const existing = getToolCustomization(tool.id);
-      updateCustomization(tool.id, { 
+      updateCustomization(tool.id, {
         name: existing.name,
         color: existing.color,
         visible: existing.visible,
         mobileVisible: existing.mobileVisible,
-        order: i 
+        order: i,
       });
     });
   };
@@ -283,15 +251,13 @@ export function ToolCustomization() {
     setSaving(true);
     setError(null);
     setSaved(false);
-    
+
     try {
-      // Only save customizations for tools that currently exist
       const validToolIds = new Set(DEFAULT_TOOLS.map(t => t.id));
       const filteredCustomizations: Record<string, ToolCustomization> = {};
-      
+
       for (const [toolId, customization] of Object.entries(customizations)) {
         if (validToolIds.has(toolId)) {
-          // Ensure all required fields are present
           const tool = DEFAULT_TOOLS.find(t => t.id === toolId);
           filteredCustomizations[toolId] = {
             name: customization.name || tool?.name || toolId,
@@ -302,19 +268,18 @@ export function ToolCustomization() {
           };
         }
       }
-      
+
       const res = await fetch('/api/settings/tools', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           customizations: filteredCustomizations,
-          cleanupOldTools: true // Signal to API to remove old tools
+          cleanupOldTools: true,
         }),
       });
 
       if (res.ok) {
         setSaved(true);
-        // Clear saved message after 3 seconds
         setTimeout(() => setSaved(false), 3000);
       } else {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
@@ -336,24 +301,76 @@ export function ToolCustomization() {
     );
   }
 
-  const productivityTools = tools.filter(t => t.category === "Productivity");
-  const intelligenceTools = tools.filter(t => t.category === "Intelligence");
-
-  const renderToolSection = (categoryName: string, categoryTools: Tool[]) => (
-    <div key={categoryName} style={{ marginBottom: "32px" }}>
-      <h3 style={{
-        fontSize: "16px",
-        fontWeight: 600,
-        color: "var(--foreground)",
-        marginBottom: "12px",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        opacity: 0.7
+  return (
+    <div className="card" style={{ padding: "24px" }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "16px",
+        flexWrap: "wrap",
+        gap: "12px",
       }}>
-        {categoryName}
-      </h3>
+        <div>
+          <h2 style={{
+            fontSize: "20px",
+            fontWeight: 600,
+            marginBottom: "4px",
+            color: "var(--foreground)",
+          }}>
+            Tool Customization
+          </h2>
+          <p style={{ fontSize: "14px", color: "var(--muted)" }}>
+            Rename, reorder, change colors, and toggle visibility{!isMobile && " (desktop & mobile)"}
+          </p>
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            padding: "10px 20px",
+            background: saved
+              ? "linear-gradient(135deg, #10b981, #059669)"
+              : "linear-gradient(135deg, #00aaff, #0088cc)",
+            border: "none",
+            borderRadius: "8px",
+            color: "white",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: saving ? "wait" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            opacity: saving ? 0.6 : 1,
+            transition: "all 0.3s ease",
+          }}
+        >
+          {saved ? (
+            <><Check style={{ width: "16px", height: "16px" }} />Saved!</>
+          ) : (
+            <><Save style={{ width: "16px", height: "16px" }} />{saving ? "Saving..." : "Save Changes"}</>
+          )}
+        </button>
+      </div>
+
+      {error && (
+        <div style={{
+          padding: "12px 16px",
+          background: "rgba(220, 38, 38, 0.1)",
+          border: "1px solid rgba(220, 38, 38, 0.2)",
+          borderRadius: "8px",
+          color: "#dc2626",
+          fontSize: "14px",
+          marginBottom: "16px",
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* Single unified tool list */}
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {categoryTools.map((tool, categoryIndex) => {
+        {tools.map((tool, index) => {
           const Icon = ICON_MAP[tool.id] || Sparkles;
           const customization = getToolCustomization(tool.id);
 
@@ -364,7 +381,7 @@ export function ToolCustomization() {
               style={{
                 padding: "16px",
                 display: "grid",
-                gridTemplateColumns: isMobile 
+                gridTemplateColumns: isMobile
                   ? "40px 1fr 120px 80px 80px"
                   : "40px 1fr 120px 80px 80px 80px",
                 gap: "12px",
@@ -376,17 +393,15 @@ export function ToolCustomization() {
               }}
             >
               {/* Icon */}
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "8px",
-                  background: `${customization.color}20`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <div style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "8px",
+                background: `${customization.color}20`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
                 <Icon style={{ width: "20px", height: "20px", color: customization.color }} />
               </div>
 
@@ -430,29 +445,29 @@ export function ToolCustomization() {
               {/* Reorder Buttons */}
               <div style={{ display: "flex", gap: "4px" }}>
                 <button
-                  onClick={() => moveToolUp(categoryIndex, categoryName)}
-                  disabled={categoryIndex === 0}
+                  onClick={() => moveToolUp(index)}
+                  disabled={index === 0}
                   style={{
                     padding: "6px",
                     background: "rgba(255, 255, 255, 0.05)",
                     border: "1px solid var(--glass-border)",
                     borderRadius: "6px",
-                    color: categoryIndex === 0 ? "var(--muted)" : "var(--foreground)",
-                    cursor: categoryIndex === 0 ? "not-allowed" : "pointer",
+                    color: index === 0 ? "var(--muted)" : "var(--foreground)",
+                    cursor: index === 0 ? "not-allowed" : "pointer",
                   }}
                 >
                   <ChevronUp style={{ width: "16px", height: "16px" }} />
                 </button>
                 <button
-                  onClick={() => moveToolDown(categoryIndex, categoryName)}
-                  disabled={categoryIndex === categoryTools.length - 1}
+                  onClick={() => moveToolDown(index)}
+                  disabled={index === tools.length - 1}
                   style={{
                     padding: "6px",
                     background: "rgba(255, 255, 255, 0.05)",
                     border: "1px solid var(--glass-border)",
                     borderRadius: "6px",
-                    color: categoryIndex === categoryTools.length - 1 ? "var(--muted)" : "var(--foreground)",
-                    cursor: categoryIndex === categoryTools.length - 1 ? "not-allowed" : "pointer",
+                    color: index === tools.length - 1 ? "var(--muted)" : "var(--foreground)",
+                    cursor: index === tools.length - 1 ? "not-allowed" : "pointer",
                   }}
                 >
                   <ChevronDown style={{ width: "16px", height: "16px" }} />
@@ -510,85 +525,6 @@ export function ToolCustomization() {
           );
         })}
       </div>
-    </div>
-  );
-
-  return (
-    <div className="card" style={{ padding: "24px" }}>
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "16px",
-        flexWrap: "wrap",
-        gap: "12px"
-      }}>
-        <div>
-          <h2 style={{
-            fontSize: "20px",
-            fontWeight: 600,
-            marginBottom: "4px",
-            color: "var(--foreground)"
-          }}>
-            Tool Customization
-          </h2>
-          <p style={{ fontSize: "14px", color: "var(--muted)" }}>
-            Rename, reorder, change colors, and toggle visibility{!isMobile && " (desktop & mobile)"}
-          </p>
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            padding: "10px 20px",
-            background: saved 
-              ? "linear-gradient(135deg, #10b981, #059669)"
-              : "linear-gradient(135deg, #00aaff, #0088cc)",
-            border: "none",
-            borderRadius: "8px",
-            color: "white",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: saving ? "wait" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            opacity: saving ? 0.6 : 1,
-            transition: "all 0.3s ease",
-          }}
-        >
-          {saved ? (
-            <>
-              <Check style={{ width: "16px", height: "16px" }} />
-              Saved!
-            </>
-          ) : (
-            <>
-              <Save style={{ width: "16px", height: "16px" }} />
-              {saving ? "Saving..." : "Save Changes"}
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div style={{
-          padding: "12px 16px",
-          background: "rgba(220, 38, 38, 0.1)",
-          border: "1px solid rgba(220, 38, 38, 0.2)",
-          borderRadius: "8px",
-          color: "#dc2626",
-          fontSize: "14px",
-          marginBottom: "16px",
-        }}>
-          {error}
-        </div>
-      )}
-
-      {renderToolSection("Productivity", productivityTools)}
-      {renderToolSection("Intelligence", intelligenceTools)}
     </div>
   );
 }

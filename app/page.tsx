@@ -463,18 +463,22 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Tool grid */}
+              {/* Tool grid — flex so incomplete last rows center */}
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: isMobile
-                    ? "repeat(2, 1fr)"
-                    : "repeat(auto-fill, minmax(160px, 1fr))",
+                  display: "flex",
+                  flexWrap: "wrap",
                   gap: "6px",
+                  justifyContent: "center",
                 }}
               >
                 {displayedTools.map((tool) => (
-                  <ToolCard key={tool.id} {...tool} compact />
+                  <div
+                    key={tool.id}
+                    style={{ width: isMobile ? "calc(50% - 3px)" : "160px" }}
+                  >
+                    <ToolCard {...tool} compact />
+                  </div>
                 ))}
               </div>
             </div>
