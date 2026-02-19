@@ -10,7 +10,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef } from "react";
-import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
+import { ALL_TOOLS } from "@/lib/tool-categories";
 import Link from "next/link";
 import { isInHouseAI } from "@/lib/unified-sources";
 import {
@@ -44,6 +44,8 @@ import {
   RefreshCw,
   ShoppingBag,
   FileText,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -78,37 +80,27 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   cinderella: TrendingUp,
   shopping: ShoppingBag,
   summarizer: FileText,
+  legal: BookOpen,
+  'one-pager': FileText,
+  'white-papers': BookOpen,
+  politicorp: Globe,
+  'war-room': Target,
+  business: Building2,
+  emailer: Mail,
 };
 
 // Simple markdown to HTML converter
 function simpleMarkdownToHtml(markdown: string): string {
   let html = markdown;
-
-  // Code blocks (must be done before inline code)
   html = html.replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>');
-
-  // Bold
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-  // Italic
   html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-  // Headers
   html = html.replace(/^## (.+)$/gm, '<h4>$1</h4>');
   html = html.replace(/^# (.+)$/gm, '<h3>$1</h3>');
-
-  // List items
   html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-
-  // Wrap consecutive <li> in <ul>
   html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-
-  // Double newlines
   html = html.replace(/\n\n/g, '<br><br>');
-
-  // Single newlines (in non-pre contexts)
   html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
-
   return html;
 }
 
@@ -144,32 +136,14 @@ const TOOL_COLORS: Record<string, string> = {
   insights: "#a78bfa",
   shopping: "#10b981",
   summarizer: "#8b5cf6",
+  legal: "#f59e0b",
+  'one-pager': "#6366f1",
+  'white-papers': "#8b5cf6",
+  politicorp: "#ef4444",
+  'war-room': "#dc2626",
+  business: "#6366f1",
+  emailer: "#3b82f6",
 };
-
-const TOOL_CATEGORIES = [
-  {
-    name: "Productivity",
-    tools: PRODUCTIVITY_TOOLS.map(tool => ({
-      id: tool.id,
-      name: tool.name,
-      description: tool.description || "",
-      icon: TOOL_ICONS[tool.id] || Users,
-      href: tool.href,
-      color: TOOL_COLORS[tool.id] || "#6366f1",
-    })),
-  },
-  {
-    name: "Intelligence",
-    tools: INTELLIGENCE_TOOLS.map(tool => ({
-      id: tool.id,
-      name: tool.name,
-      description: tool.description || "",
-      icon: TOOL_ICONS[tool.id] || Sparkles,
-      href: tool.href,
-      color: TOOL_COLORS[tool.id] || "#8b5cf6",
-    })),
-  },
-];
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
@@ -178,11 +152,7 @@ export default function Home() {
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
   const trendingTopicsRef = useRef<TrendingTopicsRef>(null);
   const [refreshing, setRefreshing] = useState(false);
-  // Default all categories to expanded
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    "Productivity": true,
-    "Intelligence": true,
-  });
+  const [showAll, setShowAll] = useState(false);
 
   // AI Search state
   const [aiSearchQuery, setAiSearchQuery] = useState<string>("");
@@ -198,12 +168,10 @@ export default function Home() {
   }, []);
 
   const handleTrendingClick = (query: string) => {
-    // Scroll to search bar
     const searchSection = document.getElementById('search-section');
     if (searchSection) {
       searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    // Populate search with query and set source to news
     if (searchBarRef.current) {
       searchBarRef.current.setQuery(query);
       searchBarRef.current.setSource('news');
@@ -214,11 +182,9 @@ export default function Home() {
     if (refreshing || !trendingTopicsRef.current) return;
     setRefreshing(true);
     trendingTopicsRef.current.refresh();
-    // Reset refreshing state after animation completes
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  // Handle AI search
   const handleAISearch = async (query: string, model: string) => {
     setAiSearchQuery(query);
     setAiSearchModel(model);
@@ -232,16 +198,11 @@ export default function Home() {
         body: JSON.stringify({ query, model }),
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`API error: ${response.statusText}`);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error('No response body');
-      }
+      if (!reader) throw new Error('No response body');
 
       while (true) {
         const { done, value } = await reader.read();
@@ -257,7 +218,6 @@ export default function Home() {
     }
   };
 
-  // Close AI search
   const handleCloseAISearch = () => {
     setAiSearchQuery("");
     setAiSearchModel("");
@@ -265,29 +225,35 @@ export default function Home() {
     setAiSearchLoading(false);
   };
 
-  // Copy AI response
   const handleCopyAIResponse = () => {
     navigator.clipboard.writeText(aiSearchResult);
   };
 
-  // Apply customizations and filter by permissions
-  const customizedCategories = TOOL_CATEGORIES.map(category => ({
-    ...category,
-    tools: category.tools
-      .map(tool => {
-        const custom = getCustomization(tool.id, tool.name, tool.color);
-        return {
-          ...tool,
-          name: custom.name,
-          color: custom.color,
-          visible: custom.visible,
-          order: custom.order,
-        };
-      })
-      .filter(tool => tool.visible)
-      .filter(tool => isAdmin || hasPermission(tool.id)) // Filter by permissions
-      .sort((a, b) => a.order - b.order),
-  }));
+  // Build all tools with customizations applied
+  const allToolsWithCustomization = ALL_TOOLS.map(tool => {
+    const custom = getCustomization(tool.id, tool.name, TOOL_COLORS[tool.id] || "#6366f1");
+    return {
+      id: tool.id,
+      name: custom.name,
+      description: tool.description || "",
+      icon: TOOL_ICONS[tool.id] || Users,
+      href: tool.href,
+      color: custom.color,
+      visible: custom.visible,
+      order: custom.order,
+    };
+  }).filter(tool => isAdmin || hasPermission(tool.id));
+
+  // Default view: only visible tools, sorted by settings order
+  const defaultTools = allToolsWithCustomization
+    .filter(tool => tool.visible)
+    .sort((a, b) => a.order - b.order);
+
+  // Show All view: ALL tools sorted by settings order
+  const allToolsSorted = [...allToolsWithCustomization]
+    .sort((a, b) => a.order - b.order);
+
+  const displayedTools = showAll ? allToolsSorted : defaultTools;
 
   return (
     <ProtectedRoute>
@@ -308,7 +274,7 @@ export default function Home() {
           </div>
         ) : (
         <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Clock Section - Centered */}
+          {/* Clock Section */}
           <div style={{
             display: "flex",
             justifyContent: "center",
@@ -318,12 +284,12 @@ export default function Home() {
             <DigitalClock />
           </div>
 
-          {/* Search Section - Above on Mobile */}
+          {/* Search Section */}
           <div id="search-section" style={{ marginBottom: isMobile ? "12px" : "24px" }}>
             <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
           </div>
 
-          {/* Trending Topics - Below on Mobile */}
+          {/* Trending Topics */}
           {!aiSearchQuery && (
             <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
               <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
@@ -343,7 +309,6 @@ export default function Home() {
               border: "1px solid rgba(255, 255, 255, 0.1)",
               boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
             }}>
-              {/* Header */}
               <div style={{
                 display: "flex",
                 alignItems: "center",
@@ -362,8 +327,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
-              {/* Body */}
               <div style={{
                 fontSize: "14px",
                 lineHeight: "1.6",
@@ -374,9 +337,7 @@ export default function Home() {
                   <div
                     className="ai-response"
                     dangerouslySetInnerHTML={{ __html: simpleMarkdownToHtml(aiSearchResult) }}
-                    style={{
-                      whiteSpace: "pre-wrap",
-                    }}
+                    style={{ whiteSpace: "pre-wrap" }}
                   />
                 ) : (
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--foreground-muted)" }}>
@@ -401,8 +362,6 @@ export default function Home() {
                   }} />
                 )}
               </div>
-
-              {/* Footer */}
               <div style={{
                 display: "flex",
                 gap: "12px",
@@ -424,12 +383,8 @@ export default function Home() {
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"; }}
                 >
                   Close
                 </button>
@@ -450,14 +405,10 @@ export default function Home() {
                     transition: "all 0.2s",
                   }}
                   onMouseEnter={(e) => {
-                    if (aiSearchResult && !aiSearchLoading) {
-                      e.currentTarget.style.background = "rgba(0, 170, 255, 0.2)";
-                    }
+                    if (aiSearchResult && !aiSearchLoading) e.currentTarget.style.background = "rgba(0, 170, 255, 0.2)";
                   }}
                   onMouseLeave={(e) => {
-                    if (aiSearchResult && !aiSearchLoading) {
-                      e.currentTarget.style.background = "rgba(0, 170, 255, 0.1)";
-                    }
+                    if (aiSearchResult && !aiSearchLoading) e.currentTarget.style.background = "rgba(0, 170, 255, 0.1)";
                   }}
                 >
                   Copy
@@ -466,126 +417,68 @@ export default function Home() {
             </div>
           )}
 
-          {/* Tool Categories - Desktop: Toggle all on/off */}
-          {!aiSearchQuery && !isMobile && !loading && customizedCategories.map((category, index) => {
-            if (category.tools.length === 0) return null;
-
-            const expanded = expandedCategories[category.name] !== undefined 
-              ? expandedCategories[category.name] 
-              : true;
-
-            return (
-              <div key={category.name} style={{ marginBottom: "32px", marginTop: index === 0 ? "32px" : "0" }}>
-                {/* Clickable Header with underline */}
-                <div
-                  onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
+          {/* Single unified tool grid */}
+          {!aiSearchQuery && !loading && (
+            <div style={{ marginTop: isMobile ? "24px" : "32px" }}>
+              {/* Show All / Hide toggle */}
+              <div style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginBottom: "16px",
+              }}>
+                <button
+                  onClick={() => setShowAll(!showAll)}
                   style={{
-                    textAlign: "center",
-                    paddingBottom: "10px",
-                    marginBottom: "20px",
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "6px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    background: showAll
+                      ? "rgba(99, 102, 241, 0.12)"
+                      : "rgba(255, 255, 255, 0.04)",
+                    color: showAll
+                      ? "rgba(165, 180, 252, 0.9)"
+                      : "rgba(255, 255, 255, 0.4)",
+                    fontSize: "12px",
+                    fontWeight: 500,
                     cursor: "pointer",
                     transition: "all 0.2s",
+                    letterSpacing: "0.03em",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.borderBottomColor = "rgba(255, 255, 255, 0.3)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
+                    e.currentTarget.style.color = showAll ? "rgba(165, 180, 252, 1)" : "rgba(255,255,255,0.65)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderBottomColor = "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+                    e.currentTarget.style.color = showAll ? "rgba(165, 180, 252, 0.9)" : "rgba(255,255,255,0.4)";
                   }}
                 >
-                  <h2
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.15em",
-                      color: "rgba(255, 255, 255, 0.4)",
-                      margin: 0,
-                      transition: "color 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "rgba(255, 255, 255, 0.4)";
-                    }}
-                  >
-                    {category.name}
-                  </h2>
-                </div>
-                
-                {/* All Tools - Show when expanded */}
-                {expanded && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                      gap: "6px",
-                    }}
-                  >
-                    {category.tools.map((tool) => (
-                      <ToolCard key={tool.id} {...tool} compact />
-                    ))}
-                  </div>
-                )}
+                  {showAll
+                    ? <><EyeOff style={{ width: "13px", height: "13px" }} /> Hide All</>
+                    : <><Eye style={{ width: "13px", height: "13px" }} /> Show All</>
+                  }
+                </button>
               </div>
-            );
-          })}
 
-          {/* Tool Categories - Mobile: Toggle all on/off */}
-          {!aiSearchQuery && isMobile && !loading && customizedCategories.map((category, index) => {
-            if (category.tools.length === 0) return null;
-
-            const expanded = expandedCategories[category.name] !== undefined 
-              ? expandedCategories[category.name] 
-              : true;
-
-            return (
-              <div key={category.name} style={{ marginBottom: "24px", marginTop: index === 0 ? "24px" : "0" }}>
-                {/* Clickable Header with underline */}
-                <div
-                  onClick={() => setExpandedCategories({...expandedCategories, [category.name]: !expanded})}
-                  style={{
-                    textAlign: "center",
-                    paddingBottom: "8px",
-                    marginBottom: "16px",
-                    borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <h2
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.15em",
-                      color: "rgba(255, 255, 255, 0.4)",
-                      margin: 0,
-                    }}
-                  >
-                    {category.name}
-                  </h2>
-                </div>
-                
-                {/* All Tools - Show when expanded */}
-                {expanded && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: "6px",
-                    }}
-                  >
-                    {category.tools.map((tool) => (
-                      <ToolCard key={tool.id} {...tool} compact />
-                    ))}
-                  </div>
-                )}
+              {/* Tool grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: isMobile
+                    ? "repeat(2, 1fr)"
+                    : "repeat(auto-fill, minmax(160px, 1fr))",
+                  gap: "6px",
+                }}
+              >
+                {displayedTools.map((tool) => (
+                  <ToolCard key={tool.id} {...tool} compact />
+                ))}
               </div>
-            );
-          })}
+            </div>
+          )}
 
           {/* Settings & Refresh - Bottom on Mobile */}
           {!aiSearchQuery && isMobile && (
@@ -617,12 +510,12 @@ export default function Home() {
                   opacity: refreshing ? 0.5 : 1,
                 }}
               >
-                <RefreshCw 
-                  style={{ 
-                    width: "20px", 
+                <RefreshCw
+                  style={{
+                    width: "20px",
                     height: "20px",
                     animation: refreshing ? "spin 1s linear infinite" : "none",
-                  }} 
+                  }}
                 />
                 Refresh
               </button>
@@ -650,6 +543,7 @@ export default function Home() {
               </Link>
             </div>
           )}
+
           <style jsx global>{`
             @keyframes spin {
               from { transform: rotate(0deg); }
@@ -663,7 +557,6 @@ export default function Home() {
               0%, 50% { opacity: 1; }
               51%, 100% { opacity: 0; }
             }
-            /* AI response markdown styling */
             .ai-response h3 {
               font-size: 18px;
               font-weight: 600;
@@ -680,17 +573,9 @@ export default function Home() {
               font-weight: 600;
               color: var(--foreground);
             }
-            .ai-response em {
-              font-style: italic;
-            }
-            .ai-response ul {
-              margin: 8px 0;
-              padding-left: 20px;
-            }
-            .ai-response li {
-              margin: 4px 0;
-              list-style-type: disc;
-            }
+            .ai-response em { font-style: italic; }
+            .ai-response ul { margin: 8px 0; padding-left: 20px; }
+            .ai-response li { margin: 4px 0; list-style-type: disc; }
             .ai-response pre {
               background: rgba(0, 0, 0, 0.3);
               padding: 12px;

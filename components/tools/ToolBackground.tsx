@@ -5,6 +5,8 @@ import { useEffect } from "react";
 /**
  * ToolBackground - Sets the page background to a gradient using the tool's color.
  * Applies directly to document.body to guarantee visibility.
+ * background-attachment: fixed ensures the gradient covers the full visible
+ * viewport regardless of page height.
  */
 export function ToolBackground({ color }: { color: string }) {
   const hexToRgb = (hex: string): string => {
@@ -15,14 +17,18 @@ export function ToolBackground({ color }: { color: string }) {
 
   useEffect(() => {
     const rgb = hexToRgb(color);
-    const gradient = `linear-gradient(135deg, rgba(${rgb}, 0.25) 0%, rgba(${rgb}, 0.08) 40%, #0a0a0e 80%)`;
+    const gradient = `linear-gradient(135deg, rgba(${rgb}, 0.25) 0%, rgba(${rgb}, 0.08) 40%, #0a0a0e 100%)`;
     document.body.style.background = gradient;
+    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.minHeight = "100vh";
     // Set CSS variables for tool-wide accent color
     document.documentElement.style.setProperty('--tool-color', color);
     document.documentElement.style.setProperty('--tool-color-rgb', rgb);
-    
+
     return () => {
       document.body.style.background = "transparent";
+      document.body.style.backgroundAttachment = "";
+      document.body.style.minHeight = "";
       document.documentElement.style.removeProperty('--tool-color');
       document.documentElement.style.removeProperty('--tool-color-rgb');
     };
