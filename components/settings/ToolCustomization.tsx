@@ -77,6 +77,7 @@ const ICON_MAP: Record<string, any> = {
   "cinderella": BarChart3,
   "business": Building2,
   "war-room": Target,
+  "jmail": Mail,
 };
 
 interface ToolCustomization {
@@ -130,6 +131,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "cinderella": "#ef4444",
   "business": "#6366f1",
   "war-room": "#dc2626",
+  "jmail": "#dc2626",
 };
 
 // Build flat DEFAULT_TOOLS from ALL_TOOLS (no category separation)

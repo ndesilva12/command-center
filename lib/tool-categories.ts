@@ -39,6 +39,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'one-pager', name: 'One-Pager', href: '/tools/one-pager', description: 'Generate comprehensive single-page summaries with data, visuals, and links' },
   { id: 'deep-search', name: 'Deep Search', href: '/tools/deep-search', description: 'Deep web search' },
   { id: 'dark-search', name: 'Dark Search', href: '/tools/dark-search', description: 'Dark web search' },
+  { id: 'jmail', name: 'JMail', href: '/tools/jmail', description: 'Search Jeffrey Epstein\'s emails (2002-2011)' },
   { id: 'legal', name: 'Legal', href: '/tools/legal', description: 'Legal assistant and contract review' },
   { id: 'contact-finder', name: 'Contact Finder', href: '/tools/contact-finder', description: 'Find contact info' },
   { id: 'relationships', name: 'Relationships', href: '/tools/relationships', description: 'Contact insights' },
