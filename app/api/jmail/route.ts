@@ -4,6 +4,10 @@ const OPENCLAW_GATEWAY = 'http://3.141.47.151:18789';
 const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
 const DB_PATH = '/Users/normandesilva/.openclaw/workspace/jmail/epstein_emails.db';
 
+export async function GET() {
+  return NextResponse.json({ status: 'JMail API ready' });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
