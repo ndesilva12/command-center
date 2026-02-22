@@ -3,6 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 const MINIFLUX_BASE_URL = process.env.MINIFLUX_BASE_URL || 'http://localhost:8080';
 const MINIFLUX_API_KEY = process.env.MINIFLUX_API_KEY || '';
 
+// Extract base URL from feed URL (protocol + hostname)
+function getBaseUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.hostname}`;
+  } catch {
+    return url;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!MINIFLUX_API_KEY) {
@@ -35,7 +45,9 @@ export async function GET(request: NextRequest) {
       const simplifiedFeeds = feeds.map((feed: any) => ({
         id: feed.id,
         title: feed.title,
-        site_url: feed.site_url,
+        site_url: feed.site_url && feed.site_url.trim() !== '' 
+          ? getBaseUrl(feed.site_url)
+          : getBaseUrl(feed.feed_url),
         feed_url: feed.feed_url,
         category: feed.category?.title || 'Uncategorized',
       }));
