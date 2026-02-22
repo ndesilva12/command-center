@@ -2,8 +2,7 @@
 
 import { useState, FormEvent, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Search, Clock, X } from "lucide-react";
-import { UnifiedSourceId, getSearchUrl, getSourceConfig } from "@/lib/unified-sources";
-import { SourceSelector } from "./SourceSelector";
+import { UnifiedSourceId, getSearchUrl, getSourceConfig, UNIFIED_SOURCES } from "@/lib/unified-sources";
 
 const RECENT_SEARCHES_KEY = "cc-recent-searches";
 const MAX_RECENT = 5;
@@ -67,8 +66,8 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
   };
 
   // Handle search submission
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSearch = (e?: FormEvent) => {
+    e?.preventDefault();
     if (!query.trim()) return;
 
     const sourceConfig = getSourceConfig(selectedSource);
@@ -98,130 +97,199 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
     setShowRecent(false);
   };
 
+  // Group sources by type
+  const webSources = UNIFIED_SOURCES.filter(s => s.type === "web");
+  const aiSources = UNIFIED_SOURCES.filter(s => s.type === "ai");
+
   return (
     <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative", width: "100%" }}>
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "10px" : "12px", alignItems: isMobile ? "stretch" : "center" }}>
-          {/* Search Input */}
-          <div
-            className={isMobile ? "" : "glass"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: isMobile ? "8px" : "10px",
-              padding: isMobile ? "8px 16px" : "12px 20px",
-              borderRadius: isMobile ? "25px" : "50px",
-              border: "1px solid var(--glass-border)",
-              background: isMobile ? "rgba(255, 255, 255, 0.05)" : undefined,
-              backdropFilter: isMobile ? "blur(12px)" : undefined,
-              WebkitBackdropFilter: isMobile ? "blur(12px)" : undefined,
-              transition: "all 0.3s ease",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
-              flex: 1,
-              width: isMobile ? "100%" : undefined,
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 170, 255, 0.15)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--glass-border)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
-            }}
-          >
-            {!isMobile && <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />}
-
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setShowRecent(true)}
-              placeholder={isMobile ? "Search..." : "Search anything..."}
-              style={{
-                flex: 1,
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                color: "var(--foreground)",
-                fontSize: isMobile ? "14px" : "15px",
-                fontWeight: 400,
-                minWidth: 0,
-              }}
-            />
-
-            {/* Clear button - visible when there's text */}
-            {query.trim() && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                style={{
-                  padding: 0,
-                  border: "none",
-                  background: "rgba(255, 255, 255, 0.1)",
-                  color: "var(--foreground-muted)",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "50%",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <X style={{ width: "14px", height: "14px" }} />
-              </button>
-            )}
-
+        {/* Search Input */}
+        <div
+          className={isMobile ? "" : "glass"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? "8px" : "10px",
+            padding: isMobile ? "8px 16px" : "12px 20px",
+            borderRadius: isMobile ? "25px" : "50px",
+            border: "1px solid var(--glass-border)",
+            background: isMobile ? "rgba(255, 255, 255, 0.05)" : undefined,
+            backdropFilter: isMobile ? "blur(12px)" : undefined,
+            WebkitBackdropFilter: isMobile ? "blur(12px)" : undefined,
+            transition: "all 0.3s ease",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
+            width: "100%",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 170, 255, 0.15)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "var(--glass-border)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
+          }}
+        >
+          {/* Left side: X button when text present, Search icon when empty */}
+          {query.trim() ? (
             <button
-              type="submit"
-              disabled={!query.trim()}
+              type="button"
+              onClick={() => setQuery("")}
               style={{
                 padding: 0,
-                borderRadius: "50%",
                 border: "none",
-                background: query.trim() ? "rgba(0, 170, 255, 0.2)" : "transparent",
-                color: query.trim() ? "#00aaff" : "var(--foreground-muted)",
-                cursor: query.trim() ? "pointer" : "not-allowed",
-                transition: "all 0.2s ease",
+                background: "rgba(255, 255, 255, 0.1)",
+                color: "var(--foreground-muted)",
+                cursor: "pointer",
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: isMobile ? "30px" : "32px",
-                height: isMobile ? "30px" : "32px",
-                minWidth: isMobile ? "30px" : "32px",
-                minHeight: isMobile ? "30px" : "32px",
-                maxWidth: isMobile ? "30px" : "32px",
-                maxHeight: isMobile ? "30px" : "32px",
-                aspectRatio: "1 / 1",
-                boxSizing: "content-box",
+                width: "24px",
+                height: "24px",
+                borderRadius: "50%",
+                transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => {
-                if (query.trim()) {
-                  e.currentTarget.style.background = "rgba(0, 170, 255, 0.3)";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+              }}
+            >
+              <X style={{ width: "14px", height: "14px" }} />
+            </button>
+          ) : (
+            !isMobile && <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+          )}
+
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setShowRecent(true)}
+            placeholder={isMobile ? "Search..." : "Search anything..."}
+            style={{
+              flex: 1,
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              color: "var(--foreground)",
+              fontSize: isMobile ? "14px" : "15px",
+              fontWeight: 400,
+              minWidth: 0,
+            }}
+          />
+
+          {/* Right side: Blue "Search" button when text present */}
+          {query.trim() && (
+            <button
+              type="submit"
+              style={{
+                padding: "6px 16px",
+                borderRadius: "20px",
+                border: "none",
+                background: "#00aaff",
+                color: "white",
+                fontSize: "13px",
+                fontWeight: 600,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#0099ee";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#00aaff";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              Search
+            </button>
+          )}
+        </div>
+
+        {/* Source Selector - Text links below search bar */}
+        <div style={{
+          marginTop: "12px",
+          display: "flex",
+          gap: isMobile ? "8px" : "12px",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          fontSize: isMobile ? "12px" : "13px",
+        }}>
+          {/* Web Sources */}
+          {webSources.map((source) => (
+            <button
+              key={source.id}
+              type="button"
+              onClick={() => setSelectedSource(source.id)}
+              style={{
+                padding: "4px 8px",
+                border: "none",
+                background: "transparent",
+                color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
+                fontSize: "inherit",
+                fontWeight: selectedSource === source.id ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                textDecoration: selectedSource === source.id ? "underline" : "none",
+                textUnderlineOffset: "3px",
+              }}
+              onMouseEnter={(e) => {
+                if (selectedSource !== source.id) {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
                 }
               }}
               onMouseLeave={(e) => {
-                if (query.trim()) {
-                  e.currentTarget.style.background = "rgba(0, 170, 255, 0.2)";
+                if (selectedSource !== source.id) {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
                 }
               }}
             >
-              <Search style={{ width: "16px", height: "16px", minWidth: "16px", minHeight: "16px", maxWidth: "16px", maxHeight: "16px", flexShrink: 0 }} />
+              {source.name}
             </button>
-          </div>
+          ))}
+          
+          {/* Separator */}
+          <span style={{ color: "rgba(255, 255, 255, 0.2)", userSelect: "none" }}>|</span>
 
-          {/* Source Selector - Outside search bar on desktop, separate row on mobile */}
-          {isMobile ? (
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
-            </div>
-          ) : (
-            <SourceSelector selectedSource={selectedSource} onSelectSource={setSelectedSource} />
-          )}
+          {/* AI Sources */}
+          {aiSources.map((source) => (
+            <button
+              key={source.id}
+              type="button"
+              onClick={() => setSelectedSource(source.id)}
+              style={{
+                padding: "4px 8px",
+                border: "none",
+                background: "transparent",
+                color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
+                fontSize: "inherit",
+                fontWeight: selectedSource === source.id ? 600 : 400,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                textDecoration: selectedSource === source.id ? "underline" : "none",
+                textUnderlineOffset: "3px",
+              }}
+              onMouseEnter={(e) => {
+                if (selectedSource !== source.id) {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedSource !== source.id) {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                }
+              }}
+            >
+              {source.name}
+            </button>
+          ))}
         </div>
 
         {/* Recent Searches Dropdown */}
