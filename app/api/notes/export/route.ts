@@ -70,12 +70,12 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    // Generate ZIP buffer (use uint8array for Next.js compatibility)
-    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
+    // Generate ZIP as blob for Next.js compatibility
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
 
     // Return as downloadable file
     const timestamp = new Date().toISOString().split('T')[0];
-    return new NextResponse(zipBuffer, {
+    return new NextResponse(zipBlob, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="command-center-notes-${timestamp}.zip"`,
