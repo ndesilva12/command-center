@@ -135,7 +135,7 @@ export function Sidebar() {
   // Update CSS variable for sidebar width so content can adjust
   useEffect(() => {
     if (!isMobile) {
-      document.documentElement.style.setProperty('--sidebar-width', collapsed ? '60px' : '260px');
+      document.documentElement.style.setProperty('--sidebar-width', collapsed ? '60px' : '240px');
     }
     return () => {
       document.documentElement.style.removeProperty('--sidebar-width');
@@ -178,7 +178,7 @@ export function Sidebar() {
         left: 0,
         top: 0,
         height: "100vh",
-        width: collapsed ? "60px" : "260px",
+        width: collapsed ? "60px" : "240px",
         background: "rgba(10, 10, 14, 0.95)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
