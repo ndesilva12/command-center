@@ -102,3 +102,93 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const cookieStore = await cookies();
+    const raindropToken = cookieStore.get('raindrop_access_token');
+
+    if (!raindropToken || !raindropToken.value) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, title, tags, collectionId } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Bookmark ID is required' }, { status: 400 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (title !== undefined) updateData.title = title;
+    if (tags !== undefined) updateData.tags = tags;
+    if (collectionId !== undefined) updateData.collection = { $id: parseInt(collectionId) };
+
+    const response = await fetch(`https://api.raindrop.io/rest/v1/raindrop/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${raindropToken.value}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Failed to update bookmark' },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+
+  } catch (error) {
+    console.error('Raindrop update error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const cookieStore = await cookies();
+    const raindropToken = cookieStore.get('raindrop_access_token');
+
+    if (!raindropToken || !raindropToken.value) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Bookmark ID is required' }, { status: 400 });
+    }
+
+    const response = await fetch(`https://api.raindrop.io/rest/v1/raindrop/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${raindropToken.value}`,
+      },
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Failed to delete bookmark' },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('Raindrop delete error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}

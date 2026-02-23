@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bookmark, Plus, RefreshCw, ExternalLink, Search, Folder, Tag, Clock, Grid3x3, List } from "lucide-react";
+import { Bookmark, Plus, RefreshCw, ExternalLink, Search, Folder, Tag, Clock, Grid3x3, List, Edit2, Trash2, X, Check } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -42,6 +42,10 @@ export default function BookmarksPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [editingBookmark, setEditingBookmark] = useState<RaindropItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editCollection, setEditCollection] = useState("");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -130,6 +134,66 @@ export default function BookmarksPage() {
       }).format(date);
     } catch {
       return '';
+    }
+  };
+
+  const handleEditClick = (bookmark: RaindropItem, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingBookmark(bookmark);
+    setEditTitle(bookmark.title);
+    setEditTags(bookmark.tags.join(', '));
+    setEditCollection(bookmark.collection.$id.toString());
+  };
+
+  const handleUpdateBookmark = async () => {
+    if (!editingBookmark) return;
+
+    try {
+      const tagsArray = editTags.split(',').map(t => t.trim()).filter(t => t);
+      
+      const res = await fetch('/api/raindrop', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingBookmark._id,
+          title: editTitle,
+          tags: tagsArray,
+          collectionId: editCollection,
+        }),
+      });
+
+      if (res.ok) {
+        setEditingBookmark(null);
+        fetchBookmarks();
+      } else {
+        alert('Failed to update bookmark');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert('Failed to update bookmark');
+    }
+  };
+
+  const handleDeleteClick = async (bookmarkId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm('Delete this bookmark?')) return;
+
+    try {
+      const res = await fetch(`/api/raindrop?id=${bookmarkId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        fetchBookmarks();
+      } else {
+        alert('Failed to delete bookmark');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete bookmark');
     }
   };
 
@@ -374,18 +438,15 @@ export default function BookmarksPage() {
             gap: "16px",
           }}>
             {bookmarks.map(bookmark => (
-              <a
+              <div
                 key={bookmark._id}
-                href={bookmark.link}
-                target="_blank"
-                rel="noopener noreferrer"
                 style={{
+                  position: "relative",
                   display: "block",
                   padding: "20px",
                   background: "rgba(255, 255, 255, 0.03)",
                   borderRadius: "12px",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
-                  textDecoration: "none",
                   transition: "all 0.15s",
                 }}
                 onMouseEnter={(e) => {
@@ -397,6 +458,55 @@ export default function BookmarksPage() {
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
                 }}
               >
+                {/* Action Buttons */}
+                <div style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  display: "flex",
+                  gap: "6px",
+                }}>
+                  <button
+                    onClick={(e) => handleEditClick(bookmark, e)}
+                    style={{
+                      padding: "6px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "var(--foreground-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteClick(bookmark._id, e)}
+                    style={{
+                      padding: "6px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#ef4444",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                <a
+                  href={bookmark.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block",
+                    textDecoration: "none",
+                  }}
+                >
                 <div style={{ marginBottom: "12px" }}>
                   <div style={{
                     fontSize: "16px",
@@ -468,27 +578,25 @@ export default function BookmarksPage() {
                   </div>
                 )}
               </a>
+              </div>
             ))}
           </div>
         ) : (
           /* List View */
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {bookmarks.map(bookmark => (
-              <a
+              <div
                 key={bookmark._id}
-                href={bookmark.link}
-                target="_blank"
-                rel="noopener noreferrer"
                 style={{
                   display: "flex",
                   padding: "16px 20px",
                   background: "rgba(255, 255, 255, 0.03)",
                   borderRadius: "8px",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
-                  textDecoration: "none",
                   transition: "all 0.15s",
                   alignItems: "center",
                   gap: "16px",
+                  position: "relative",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
@@ -499,7 +607,18 @@ export default function BookmarksPage() {
                   e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <a
+                  href={bookmark.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    textDecoration: "none",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
                   <div style={{
                     fontSize: "16px",
                     fontWeight: 600,
@@ -561,9 +680,206 @@ export default function BookmarksPage() {
                       </>
                     )}
                   </div>
+                </a>
+
+                {/* Action Buttons */}
+                <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                  <button
+                    onClick={(e) => handleEditClick(bookmark, e)}
+                    style={{
+                      padding: "8px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "var(--foreground-muted)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteClick(bookmark._id, e)}
+                    style={{
+                      padding: "8px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#ef4444",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
-              </a>
+              </div>
             ))}
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {editingBookmark && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0, 0, 0, 0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+              padding: "20px",
+            }}
+            onClick={() => setEditingBookmark(null)}
+          >
+            <div
+              style={{
+                background: "#1a1a2e",
+                borderRadius: "12px",
+                padding: "24px",
+                maxWidth: "500px",
+                width: "100%",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)" }}>
+                  Edit Bookmark
+                </h3>
+                <button
+                  onClick={() => setEditingBookmark(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--foreground-muted)",
+                    cursor: "pointer",
+                    padding: "4px",
+                    display: "flex",
+                  }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      color: "white",
+                      fontSize: "14px",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                    Tags (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    placeholder="tag1, tag2, tag3"
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      color: "white",
+                      fontSize: "14px",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", color: "var(--foreground-muted)", marginBottom: "6px" }}>
+                    Collection
+                  </label>
+                  <select
+                    value={editCollection}
+                    onChange={(e) => setEditCollection(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      color: "white",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      outline: "none",
+                    }}
+                  >
+                    <option value="0">Unsorted</option>
+                    {collections.map(col => (
+                      <option key={col._id} value={col._id}>
+                        {col.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                  <button
+                    onClick={handleUpdateBookmark}
+                    style={{
+                      flex: 1,
+                      padding: "12px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #00aaff, #0088cc)",
+                      border: "none",
+                      color: "white",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Check size={16} />
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => setEditingBookmark(null)}
+                    style={{
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "var(--foreground-muted)",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
