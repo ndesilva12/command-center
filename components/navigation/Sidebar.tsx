@@ -123,6 +123,7 @@ export function Sidebar() {
   const { hasPermission, isAdmin } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [showAllTools, setShowAllTools] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -134,8 +135,8 @@ export function Sidebar() {
   // Don't render sidebar on mobile
   if (isMobile) return null;
 
-  // Build tool list
-  const tools = ALL_TOOLS
+  // Build all tools with customizations
+  const allTools = ALL_TOOLS
     .map((tool) => {
       const custom = getCustomization(tool.id, tool.name, TOOL_COLORS[tool.id] || "#6366f1");
       return {
@@ -148,9 +149,11 @@ export function Sidebar() {
         order: custom.order,
       };
     })
-    .filter((tool) => tool.visible)
     .filter((tool) => isAdmin || hasPermission(tool.id))
     .sort((a, b) => a.order - b.order);
+
+  const visibleTools = allTools.filter((tool) => tool.visible);
+  const hiddenTools = allTools.filter((tool) => !tool.visible);
 
   const isActive = (path: string) => {
     if (path === "/" && pathname === "/") return true;
@@ -236,8 +239,8 @@ export function Sidebar() {
       {/* Divider */}
       <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "12px 0" }} />
 
-      {/* Tools */}
-      {tools.map((tool) => (
+      {/* Visible Tools */}
+      {visibleTools.map((tool) => (
         <SidebarItem
           key={tool.id}
           label={tool.name}
@@ -249,6 +252,53 @@ export function Sidebar() {
           collapsed={collapsed}
         />
       ))}
+
+      {/* Hidden Tools (when showAllTools is true) */}
+      {showAllTools && hiddenTools.map((tool) => (
+        <SidebarItem
+          key={tool.id}
+          label={tool.name}
+          icon={tool.icon}
+          color={tool.color}
+          href={tool.href}
+          active={isActive(tool.href)}
+          onClick={() => router.push(tool.href)}
+          collapsed={collapsed}
+        />
+      ))}
+
+      {/* Show All / Hide Button (only if there are hidden tools) */}
+      {hiddenTools.length > 0 && !collapsed && (
+        <button
+          onClick={() => setShowAllTools(!showAllTools)}
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            marginTop: "8px",
+            borderRadius: "6px",
+            background: "transparent",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            color: "rgba(255, 255, 255, 0.5)",
+            fontSize: "12px",
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            textAlign: "center",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+          }}
+        >
+          {showAllTools ? `Hide ${hiddenTools.length}` : `Show All (${hiddenTools.length})`}
+        </button>
+      )}
 
       {/* Divider */}
       <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "12px 0" }} />
