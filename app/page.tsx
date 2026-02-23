@@ -3,7 +3,6 @@
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
-import { ToolCard } from "@/components/tools/ToolCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
 import { DigitalClock } from "@/components/home/DigitalClock";
@@ -45,8 +44,6 @@ import {
   RefreshCw,
   ShoppingBag,
   FileText,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 
 // Icon mapping for tools
@@ -155,7 +152,6 @@ export default function Home() {
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
   const trendingTopicsRef = useRef<TrendingTopicsRef>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [showAll, setShowAll] = useState(false);
 
   // AI Search state
   const [aiSearchQuery, setAiSearchQuery] = useState<string>("");
@@ -231,32 +227,6 @@ export default function Home() {
   const handleCopyAIResponse = () => {
     navigator.clipboard.writeText(aiSearchResult);
   };
-
-  // Build all tools with customizations applied
-  const allToolsWithCustomization = ALL_TOOLS.map(tool => {
-    const custom = getCustomization(tool.id, tool.name, TOOL_COLORS[tool.id] || "#6366f1");
-    return {
-      id: tool.id,
-      name: custom.name,
-      description: tool.description || "",
-      icon: TOOL_ICONS[tool.id] || Users,
-      href: tool.href,
-      color: custom.color,
-      visible: custom.visible,
-      order: custom.order,
-    };
-  }).filter(tool => isAdmin || hasPermission(tool.id));
-
-  // Default view: only visible tools, sorted by settings order
-  const defaultTools = allToolsWithCustomization
-    .filter(tool => tool.visible)
-    .sort((a, b) => a.order - b.order);
-
-  // Show All view: ALL tools sorted by settings order
-  const allToolsSorted = [...allToolsWithCustomization]
-    .sort((a, b) => a.order - b.order);
-
-  const displayedTools = showAll ? allToolsSorted : defaultTools;
 
   return (
     <ProtectedRoute>
@@ -417,73 +387,6 @@ export default function Home() {
                 >
                   Copy
                 </button>
-              </div>
-            </div>
-          )}
-
-          {/* Single unified tool grid */}
-          {!aiSearchQuery && !loading && (
-            <div style={{ marginTop: isMobile ? "24px" : "32px" }}>
-              {/* Show All / Hide toggle */}
-              <div style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginBottom: "16px",
-              }}>
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "6px 14px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    background: showAll
-                      ? "rgba(99, 102, 241, 0.12)"
-                      : "rgba(255, 255, 255, 0.04)",
-                    color: showAll
-                      ? "rgba(165, 180, 252, 0.9)"
-                      : "rgba(255, 255, 255, 0.4)",
-                    fontSize: "12px",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    letterSpacing: "0.03em",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
-                    e.currentTarget.style.color = showAll ? "rgba(165, 180, 252, 1)" : "rgba(255,255,255,0.65)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                    e.currentTarget.style.color = showAll ? "rgba(165, 180, 252, 0.9)" : "rgba(255,255,255,0.4)";
-                  }}
-                >
-                  {showAll
-                    ? <><EyeOff style={{ width: "13px", height: "13px" }} /> Hide All</>
-                    : <><Eye style={{ width: "13px", height: "13px" }} /> Show All</>
-                  }
-                </button>
-              </div>
-
-              {/* Tool grid — flex so incomplete last rows center */}
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "6px",
-                  justifyContent: "center",
-                }}
-              >
-                {displayedTools.map((tool) => (
-                  <div
-                    key={tool.id}
-                    style={{ width: isMobile ? "calc(50% - 3px)" : "160px" }}
-                  >
-                    <ToolCard {...tool} compact />
-                  </div>
-                ))}
               </div>
             </div>
           )}

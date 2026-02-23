@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, Sparkles, Settings as SettingsIcon, LucideIcon } from "lucide-react";
+import { Home, Sparkles, Settings as SettingsIcon, LucideIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { ALL_TOOLS } from "@/lib/tool-categories";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,12 +76,53 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   emailer: Send,
 };
 
+const TOOL_COLORS: Record<string, string> = {
+  emails: "#3b82f6",
+  calendar: "#10b981",
+  contacts: "#8b5cf6",
+  people: "#06b6d4",
+  recommendations: "#ec4899",
+  read: "#10b981",
+  bookmarks: "#06b6d4",
+  market: "#3b82f6",
+  notes: "#a78bfa",
+  files: "#6366f1",
+  spotify: "#1DB954",
+  trending: "#14b8a6",
+  rosters: "#3b82f6",
+  meals: "#10b981",
+  curate: "#8b5cf6",
+  l3d: "#10b981",
+  'deep-search': "#6366f1",
+  'dark-search': "#dc2626",
+  'image-lookup': "#a78bfa",
+  'contact-finder': "#6366f1",
+  relationships: "#14b8a6",
+  mission: "#6366f1",
+  investors: "#3b82f6",
+  'business-info': "#8b5cf6",
+  corporate: "#10b981",
+  cinderella: "#3b82f6",
+  analyze: "#6366f1",
+  insights: "#a78bfa",
+  shopping: "#10b981",
+  summarizer: "#8b5cf6",
+  legal: "#f59e0b",
+  'one-pager': "#6366f1",
+  'white-papers': "#8b5cf6",
+  politicorp: "#ef4444",
+  'war-room': "#dc2626",
+  business: "#6366f1",
+  emailer: "#3b82f6",
+};
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { getCustomization } = useToolCustomizations();
   const { hasPermission, isAdmin } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -96,12 +137,13 @@ export function Sidebar() {
   // Build tool list
   const tools = ALL_TOOLS
     .map((tool) => {
-      const custom = getCustomization(tool.id, tool.name, "#6366f1");
+      const custom = getCustomization(tool.id, tool.name, TOOL_COLORS[tool.id] || "#6366f1");
       return {
         id: tool.id,
         name: custom.name,
         href: tool.href,
         icon: TOOL_ICONS[tool.id] || Sparkles,
+        color: custom.color,
         visible: custom.visible,
         order: custom.order,
       };
@@ -121,34 +163,74 @@ export function Sidebar() {
       style={{
         position: "fixed",
         left: 0,
-        top: 64,
+        top: 0,
         bottom: 0,
-        width: "240px",
-        background: "rgba(10, 10, 14, 0.6)",
+        width: collapsed ? "60px" : "240px",
+        background: "rgba(10, 10, 14, 0.95)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
         overflowY: "auto",
-        zIndex: 50,
-        padding: "16px 12px",
+        overflowX: "hidden",
+        zIndex: 1001,
+        padding: collapsed ? "76px 8px 16px 8px" : "76px 12px 16px 12px",
+        transition: "width 0.3s ease, padding 0.3s ease",
       }}
     >
+      {/* Collapse/Expand Button */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        style={{
+          position: "absolute",
+          top: "16px",
+          right: "8px",
+          padding: "6px",
+          background: "rgba(255, 255, 255, 0.05)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          borderRadius: "6px",
+          color: "rgba(255, 255, 255, 0.6)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+          e.currentTarget.style.color = "#00aaff";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+          e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
+        }}
+      >
+        {collapsed ? (
+          <ChevronRight style={{ width: "16px", height: "16px" }} />
+        ) : (
+          <ChevronLeft style={{ width: "16px", height: "16px" }} />
+        )}
+      </button>
+
       {/* Home */}
       <SidebarItem
         label="Home"
         icon={Home}
+        color="#00aaff"
         href="/"
         active={isActive("/")}
         onClick={() => router.push("/")}
+        collapsed={collapsed}
       />
 
       {/* Jimmy */}
       <SidebarItem
         label="Jimmy"
         icon={Sparkles}
+        color="#8b5cf6"
         href="/jimmy"
         active={isActive("/jimmy")}
         onClick={() => router.push("/jimmy")}
+        collapsed={collapsed}
       />
 
       {/* Divider */}
@@ -160,9 +242,11 @@ export function Sidebar() {
           key={tool.id}
           label={tool.name}
           icon={tool.icon}
+          color={tool.color}
           href={tool.href}
           active={isActive(tool.href)}
           onClick={() => router.push(tool.href)}
+          collapsed={collapsed}
         />
       ))}
 
@@ -173,9 +257,11 @@ export function Sidebar() {
       <SidebarItem
         label="Settings"
         icon={SettingsIcon}
+        color="#6366f1"
         href="/settings"
         active={isActive("/settings")}
         onClick={() => router.push("/settings")}
+        collapsed={collapsed}
       />
     </aside>
   );
@@ -184,25 +270,30 @@ export function Sidebar() {
 function SidebarItem({
   label,
   icon: Icon,
+  color,
   href,
   active,
   onClick,
+  collapsed,
 }: {
   label: string;
   icon: LucideIcon;
+  color: string;
   href: string;
   active: boolean;
   onClick: () => void;
+  collapsed: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      title={collapsed ? label : undefined}
       style={{
         width: "100%",
         display: "flex",
         alignItems: "center",
         gap: "10px",
-        padding: "10px 12px",
+        padding: collapsed ? "10px" : "10px 12px",
         borderRadius: "8px",
         background: active ? "rgba(0, 170, 255, 0.12)" : "transparent",
         border: "1px solid transparent",
@@ -212,6 +303,7 @@ function SidebarItem({
         cursor: "pointer",
         transition: "all 0.2s ease",
         textAlign: "left",
+        justifyContent: collapsed ? "center" : "flex-start",
       }}
       onMouseEnter={(e) => {
         if (!active) {
@@ -226,10 +318,19 @@ function SidebarItem({
         }
       }}
     >
-      <Icon style={{ width: "18px", height: "18px", flexShrink: 0 }} />
-      <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {label}
-      </span>
+      <Icon
+        style={{
+          width: "18px",
+          height: "18px",
+          flexShrink: 0,
+          color: color,
+        }}
+      />
+      {!collapsed && (
+        <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {label}
+        </span>
+      )}
     </button>
   );
 }
