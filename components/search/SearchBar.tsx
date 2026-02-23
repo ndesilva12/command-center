@@ -80,10 +80,14 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
       // Use in-house AI search for chatgpt, grok, gemini
       onAISearch(query.trim(), selectedSource);
     } else {
-      // Open search URL in new tab (for web sources and Claude)
+      // Open search URL - same tab on mobile to avoid overlay issues
       const searchUrl = getSearchUrl(selectedSource, query.trim());
       if (searchUrl) {
-        window.open(searchUrl, "_blank");
+        if (isMobile) {
+          window.location.href = searchUrl;
+        } else {
+          window.open(searchUrl, "_blank");
+        }
       }
     }
 
@@ -139,26 +143,20 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
               style={{
                 padding: 0,
                 border: "none",
-                background: "rgba(255, 255, 255, 0.1)",
-                color: "var(--foreground-muted)",
+                background: "transparent",
+                color: "rgba(255, 255, 255, 0.9)",
                 cursor: "pointer",
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "24px",
-                height: "24px",
+                width: isMobile ? "28px" : "24px",
+                height: isMobile ? "28px" : "24px",
                 borderRadius: "50%",
                 transition: "all 0.2s ease",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-              }}
             >
-              <X style={{ width: "14px", height: "14px" }} />
+              <X style={{ width: isMobile ? "18px" : "14px", height: isMobile ? "18px" : "14px", strokeWidth: 2.5 }} />
             </button>
           ) : (
             !isMobile && <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
