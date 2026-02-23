@@ -2,7 +2,7 @@
 
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useParams } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -56,8 +56,8 @@ export default function ToolPage() {
   return (
     <>
       <TopNav />
-      <ToolNav currentToolId={slug} />
       <BottomNav />
+      <Sidebar />
       <main
         style={{
           minHeight: "100vh",

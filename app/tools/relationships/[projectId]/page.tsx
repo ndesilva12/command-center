@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { 
   Network, Loader2, Mail, Calendar, Building, ArrowLeft, 
@@ -248,12 +248,12 @@ function ProjectDetailContent() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="relationships" />
+      <Sidebar />
       <main
         style={{
-          paddingTop: isMobile ? "80px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+          paddingTop: isMobile ? "72px" : "76px",
           paddingBottom: isMobile ? "80px" : "32px",
-          paddingLeft: isMobile ? "12px" : "24px",
+          paddingLeft: isMobile ? "12px" : "264px",
           paddingRight: isMobile ? "12px" : "24px",
           minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
           maxWidth: "1400px",

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { Scale, Upload, FileText, AlertTriangle, Send } from "lucide-react";
@@ -56,7 +56,6 @@ export default function LegalPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--background)" }}>
       <TopNav />
-      <ToolNav currentToolId="legal" />
       <ToolBackground color={toolCustom.color} />
 
       <div
@@ -342,6 +341,7 @@ export default function LegalPage() {
       </div>
 
       <BottomNav />
+      <Sidebar />
     </div>
   );
 }

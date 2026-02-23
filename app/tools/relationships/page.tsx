@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Network, Plus, Loader2, Users, ArrowRight, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -129,13 +129,13 @@ function RelationshipsContent() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="relationships" />
+      <Sidebar />
       <ToolBackground color="#14b8a6" />
       <main
         style={{
-          paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+          paddingTop: isMobile ? "72px" : "76px",
           paddingBottom: isMobile ? "88px" : "32px",
-          paddingLeft: isMobile ? "12px" : "24px",
+          paddingLeft: isMobile ? "12px" : "264px",
           paddingRight: isMobile ? "12px" : "24px",
           minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
           maxWidth: "1400px",

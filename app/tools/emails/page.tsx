@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Mail, RefreshCw, Archive, Trash2, Search, X, ExternalLink, Plus, Users, UserPlus, ChevronDown, Inbox, Send, FileEdit, Reply, Forward, Star, MailOpen } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { formatEmailSender, getSuperhumanUrl } from "@/lib/gmail";
@@ -562,7 +562,7 @@ export default function EmailsPage() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="emails" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       {/* View Email Modal */}
@@ -1187,9 +1187,9 @@ export default function EmailsPage() {
       )}
 
       <main style={{ 
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "88px" : "32px",
-        paddingLeft: isMobile ? "12px" : "24px",
+        paddingLeft: isMobile ? "12px" : "264px",
         paddingRight: isMobile ? "12px" : "24px",
         minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
         maxWidth: "1400px",

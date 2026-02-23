@@ -4,7 +4,7 @@ import { useEffect, useRef, memo, useState } from "react";
 import { TrendingUp, ExternalLink } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 
@@ -166,11 +166,11 @@ export default function MarketPage() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="market" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "80px" : "96px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>

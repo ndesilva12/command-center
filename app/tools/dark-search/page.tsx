@@ -5,7 +5,7 @@ import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Eye, Search, ExternalLink, ChevronDown, ChevronUp, Clock, AlertTriangle } from "lucide-react";
@@ -146,13 +146,13 @@ function DarkSearchContent() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="dark-search" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
       
       <main style={{
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "80px" : "32px",
-        paddingLeft: isMobile ? "12px" : "24px",
+        paddingLeft: isMobile ? "12px" : "264px",
         paddingRight: isMobile ? "12px" : "24px",
         minHeight: "100vh",
         maxWidth: "1200px",

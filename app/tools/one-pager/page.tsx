@@ -5,7 +5,7 @@ import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 import { ExportPDFButton } from "@/components/tools/ExportPDFButton";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
@@ -120,7 +120,6 @@ export default function OnePagerPage() {
     <>
       <div style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 24px)", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
         <TopNav />
-        <ToolNav currentToolId="one-pager" />
       <ToolBackground color={toolCustom.color} />
         
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
@@ -349,6 +348,7 @@ export default function OnePagerPage() {
         </div>
       </div>
       <BottomNav />
+      <Sidebar />
 
     </>
   );

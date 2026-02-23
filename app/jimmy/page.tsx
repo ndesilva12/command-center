@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { TaskCard } from "@/components/jimmy/TaskCard";
 import { TaskList } from "@/components/jimmy/TaskList";
 import { Sparkles, Grid3X3, List, MessageSquare } from "lucide-react";
@@ -101,12 +102,13 @@ export default function JimmyPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--background)" }}>
       <TopNav />
+      <Sidebar />
 
       <div
         style={{
           maxWidth: "1400px",
           margin: "0 auto",
-          padding: "80px 20px 100px",
+          padding: "80px 20px 100px 264px",
         }}
       >
         {/* Header */}

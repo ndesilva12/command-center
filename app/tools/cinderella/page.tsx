@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Trophy, Target, Users, Building2, FileText, TrendingUp, ExternalLink, Mail, Calendar, Scale, ChevronDown, ChevronUp, UserCheck, RefreshCw, Search, Plus, X, Check } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ToolBackground } from "@/components/tools/ToolBackground";
@@ -34,13 +34,13 @@ function CinderellaContent() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="cinderella" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
       <main
         style={{
-          paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+          paddingTop: isMobile ? "72px" : "76px",
           paddingBottom: isMobile ? "88px" : "32px",
-          paddingLeft: isMobile ? "12px" : "24px",
+          paddingLeft: isMobile ? "12px" : "264px",
           paddingRight: isMobile ? "12px" : "24px",
           minHeight: "100vh",
           maxWidth: "1400px",

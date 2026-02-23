@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon, Plus, RefreshCw, ExternalLink, Clock, MapPin, Users, List, Grid3x3, FileText } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 
@@ -440,13 +440,13 @@ export default function CalendarPage() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="calendar" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "80px" : "32px",
-        paddingLeft: isMobile ? "12px" : "24px",
+        paddingLeft: isMobile ? "12px" : "264px",
         paddingRight: isMobile ? "12px" : "24px",
         minHeight: isMobile ? "100vh" : "calc(100vh - 136px)",
         maxWidth: "1400px",

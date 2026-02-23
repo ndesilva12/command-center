@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 
 interface Person {
   id: string;
@@ -144,7 +144,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
       <>
         <TopNav />
         <BottomNav />
-        <ToolNav currentToolId="people" />
+      <Sidebar />
         <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
             <div style={{ animation: "spin 1s linear infinite", width: "32px", height: "32px", border: "3px solid rgba(0, 170, 255, 0.3)", borderTop: "3px solid #00aaff", borderRadius: "50%" }}></div>
@@ -165,7 +165,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
       <>
         <TopNav />
         <BottomNav />
-        <ToolNav currentToolId="people" />
+      <Sidebar />
         <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
             <p>{error}</p>
@@ -193,7 +193,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="people" />
+      <Sidebar />
 
       <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
         {/* Header */}

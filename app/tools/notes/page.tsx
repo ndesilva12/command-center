@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { FileText, Plus, Search, RefreshCw, ExternalLink, Calendar, Edit, Database, File, ChevronDown, ChevronRight, Save, X } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 
@@ -400,7 +399,7 @@ export default function NotesPage() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="notes" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       <main style={{

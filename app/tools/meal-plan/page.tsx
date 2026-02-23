@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { 
   Calendar, ShoppingCart, ChefHat, X, Check, 
@@ -442,11 +442,11 @@ function MealPlanContent() {
     <ProtectedRoute requiredPermission="meal-plan">
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="meals" />
+      <Sidebar />
       <ToolBackground color="#10b981" />
 
       <main style={{
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "80px" : "96px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>
@@ -1250,7 +1250,7 @@ export default function MealPlanPage() {
       <>
         <TopNav />
         <BottomNav />
-        <ToolNav currentToolId="meals" />
+      <Sidebar />
         <main style={{ paddingTop: "80px", paddingBottom: "80px", minHeight: "calc(100vh - 160px)" }}>
           <div style={{ textAlign: "center", padding: "60px 20px" }}>
             <p style={{ color: "var(--foreground-muted)" }}>Loading...</p>

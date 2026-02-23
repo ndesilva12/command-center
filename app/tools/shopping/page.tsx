@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { 
   ShoppingBag, Plus, Search, Filter, X, 
@@ -320,11 +320,11 @@ export default function ShoppingPage() {
     <ProtectedRoute requiredPermission="shopping">
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="shopping" />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "80px" : "96px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>

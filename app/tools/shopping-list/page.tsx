@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ShoppingCart, Package } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -291,13 +291,13 @@ export default function ShoppingListPage() {
     <ProtectedRoute requiredPermission="shopping-list">
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="meals" />
+      <Sidebar />
       <ToolBackground color="#10b981" />
 
       <main style={{
-        paddingTop: isMobile ? "64px" : "calc(64px + var(--tool-nav-height, 56px) + 16px)",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "calc(80px + env(safe-area-inset-bottom))" : "96px",
-        paddingLeft: isMobile ? "8px" : "0",
+        paddingLeft: isMobile ? "12px" : "264px",
         paddingRight: isMobile ? "8px" : "0",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>

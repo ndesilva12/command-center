@@ -2,6 +2,7 @@
 
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
@@ -261,12 +262,13 @@ export default function Home() {
     <ProtectedRoute>
       <TopNav />
       <BottomNav />
+      <Sidebar />
       <main
         style={{
           minHeight: "100vh",
           paddingTop: isMobile ? "72px" : "76px",
           paddingBottom: isMobile ? "88px" : "24px",
-          paddingLeft: isMobile ? "12px" : "20px",
+          paddingLeft: isMobile ? "12px" : "264px",
           paddingRight: isMobile ? "12px" : "20px",
         }}
       >

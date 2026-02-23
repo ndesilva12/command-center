@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
-import { ToolNav } from "@/components/tools/ToolNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ArrowLeft, Clock, Flame, Star, ExternalLink, Edit2, Save, Calendar } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -106,7 +106,7 @@ export default function MealDetailPage() {
       <>
         <TopNav />
         <BottomNav />
-        <ToolNav currentToolId="meals" />
+      <Sidebar />
         <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "96px", minHeight: "100vh" }}>
           <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
             <p style={{ textAlign: "center", color: "var(--foreground-muted)" }}>Loading recipe...</p>
@@ -121,7 +121,7 @@ export default function MealDetailPage() {
       <>
         <TopNav />
         <BottomNav />
-        <ToolNav currentToolId="meals" />
+      <Sidebar />
         <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "96px", minHeight: "100vh" }}>
           <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>
             <p style={{ textAlign: "center", color: "var(--foreground-muted)" }}>Recipe not found</p>
@@ -137,7 +137,7 @@ export default function MealDetailPage() {
     <>
       <TopNav />
       <BottomNav />
-      <ToolNav currentToolId="meals" />
+      <Sidebar />
 
       <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "96px", minHeight: "100vh" }}>
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 24px" }}>

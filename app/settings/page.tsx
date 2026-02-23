@@ -2,6 +2,7 @@
 
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
 import { ConnectedAccounts } from "@/components/settings/ConnectedAccounts";
 import { ToolCustomization } from "@/components/settings/ToolCustomization";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,12 +55,13 @@ export default function SettingsPage() {
     <>
       <TopNav />
       <BottomNav />
+      <Sidebar />
       <main
         style={{
           minHeight: "100vh",
           paddingTop: "80px",
           paddingBottom: isMobile ? "96px" : "32px",
-          padding: isMobile ? "80px 16px 96px 16px" : "80px 24px 32px 24px",
+          padding: isMobile ? "80px 16px 96px 16px" : "80px 264px 32px 264px",
         }}
       >
         <div className="container" style={{ maxWidth: "1200px", margin: "0 auto" }}>
