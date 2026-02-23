@@ -1,4 +1,4 @@
-import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
 import { adminDb } from '@/lib/firebase-admin';
 import fs from 'fs';
 
@@ -9,7 +9,7 @@ const FIRESTORE_ACCOUNT_EMAIL = 'norman.desilva@gmail.com';
  * Get Google OAuth2 client for Cinderella Sheets API access.
  * Tries Firestore first (works on Vercel), falls back to local file (dev).
  */
-export async function getCinderellaAuth(): Promise<OAuth2Client> {
+export async function getCinderellaAuth() {
   // Try Firestore first (production / Vercel)
   try {
     const accountId = FIRESTORE_ACCOUNT_EMAIL.replace(/[^a-zA-Z0-9@.]/g, '_');
@@ -21,7 +21,7 @@ export async function getCinderellaAuth(): Promise<OAuth2Client> {
         const clientId = process.env.GOOGLE_CLIENT_ID || data.client_id;
         const clientSecret = process.env.GOOGLE_CLIENT_SECRET || data.client_secret;
         
-        const auth = new OAuth2Client(clientId, clientSecret);
+        const auth = new google.auth.OAuth2(clientId, clientSecret);
         auth.setCredentials({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
@@ -36,7 +36,7 @@ export async function getCinderellaAuth(): Promise<OAuth2Client> {
   // Fallback: local token file (development)
   try {
     const token = JSON.parse(fs.readFileSync(LOCAL_TOKEN_PATH, 'utf8'));
-    const auth = new OAuth2Client(token.client_id, token.client_secret);
+    const auth = new google.auth.OAuth2(token.client_id, token.client_secret);
     auth.setCredentials({
       access_token: token.access_token,
       refresh_token: token.refresh_token,
