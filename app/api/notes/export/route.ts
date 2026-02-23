@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    // Generate ZIP buffer
-    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+    // Generate ZIP buffer (use uint8array for Next.js compatibility)
+    const zipBuffer = await zip.generateAsync({ type: 'uint8array' });
 
     // Return as downloadable file
     const timestamp = new Date().toISOString().split('T')[0];
