@@ -105,10 +105,11 @@ export default function JimmyPage() {
       <Sidebar />
 
       <div
+        className="jimmy-content"
         style={{
           maxWidth: "1400px",
           margin: "0 auto",
-          padding: "80px 20px 100px calc(var(--sidebar-width, 240px) + 24px)",
+          padding: "80px 20px 100px 20px",
         }}
       >
         {/* Header */}
@@ -333,6 +334,11 @@ export default function JimmyPage() {
         @keyframes spin {
           to {
             transform: rotate(360deg);
+          }
+        }
+        @media (min-width: 1024px) {
+          .jimmy-content {
+            padding-left: calc(var(--sidebar-width, 240px) + 24px) !important;
           }
         }
       `}</style>
