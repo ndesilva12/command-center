@@ -1,59 +1,44 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Plus, Search, RefreshCw, ExternalLink, Calendar, Edit, Database, File, ChevronDown, ChevronRight, Save, X } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Edit2, Save, X, Tag, Folder, Calendar, Clock } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 
-
-interface TreeNode {
+interface Note {
   id: string;
-  type: 'page' | 'database';
   title: string;
-  icon?: any;
-  url?: string;
-  children?: TreeNode[];
-  hasChildren: boolean;
-}
-
-interface NotionPage {
-  id: string;
-  object: string;
-  properties?: any;
-  icon?: any;
-  cover?: any;
-  url?: string;
-  last_edited_time?: string;
-  title?: any;
-}
-
-interface NotionBlock {
-  id: string;
-  type: string;
-  [key: string]: any;
+  content: string;
+  tags: string[];
+  folder: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export default function NotesPage() {
   const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('notes', 'Notes', '#6366f1');
-  const [rootTree, setRootTree] = useState<TreeNode | null>(null);
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<NotionPage | null>(null);
-  const [pageContent, setPageContent] = useState<NotionBlock[]>([]);
-  const [loadingContent, setLoadingContent] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState("");
-  const [loadingChildren, setLoadingChildren] = useState<Set<string>>(new Set());
+  const toolCustom = getCustomization('notes', 'Notes', '#10b981');
+  
   const [isMobile, setIsMobile] = useState(false);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFolder, setSelectedFolder] = useState("all");
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showNewNote, setShowNewNote] = useState(false);
+  
+  // Edit state
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editFolder, setEditFolder] = useState("inbox");
 
   useEffect(() => {
-    // Mobile detection
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -61,631 +46,517 @@ export default function NotesPage() {
   }, []);
 
   useEffect(() => {
-    fetchNotionTree();
-  }, []);
+    fetchNotes();
+  }, [selectedFolder]);
 
-  const fetchNotionTree = async () => {
-    setLoading(true);
-    setError(null);
+  const fetchNotes = async () => {
     try {
-      const res = await fetch('/api/notion/tree');
-      if (!res.ok) {
-        throw new Error('Failed to fetch Notion tree');
-      }
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedFolder !== 'all') params.set('folder', selectedFolder);
+      if (searchQuery) params.set('q', searchQuery);
 
-      const tree = await res.json();
-      setRootTree(tree);
-      // Auto-expand root
-      setExpandedNodes(new Set([tree.id]));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load Notion data');
+      const res = await fetch(`/api/notes?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNotes(data.notes || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notes:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchChildren = async (nodeId: string) => {
-    setLoadingChildren(prev => new Set(prev).add(nodeId));
-    try {
-      const res = await fetch(`/api/notion/tree?pageId=${nodeId}`);
-      if (!res.ok) throw new Error('Failed to fetch children');
-
-      const node = await res.json();
-
-      // Update the tree with children
-      const updateNode = (n: TreeNode): TreeNode => {
-        if (n.id === nodeId) {
-          return { ...n, children: node.children };
-        }
-        if (n.children) {
-          return { ...n, children: n.children.map(updateNode) };
-        }
-        return n;
-      };
-
-      if (rootTree) {
-        setRootTree(updateNode(rootTree));
-      }
-    } catch (err) {
-      console.error('Error fetching children:', err);
-    } finally {
-      setLoadingChildren(prev => {
-        const next = new Set(prev);
-        next.delete(nodeId);
-        return next;
-      });
-    }
+  const handleSearch = () => {
+    fetchNotes();
   };
 
-  const toggleNode = async (nodeId: string, hasChildren: boolean) => {
-    const isExpanded = expandedNodes.has(nodeId);
-
-    if (isExpanded) {
-      // Collapse
-      setExpandedNodes(prev => {
-        const next = new Set(prev);
-        next.delete(nodeId);
-        return next;
-      });
-    } else {
-      // Expand
-      setExpandedNodes(prev => new Set(prev).add(nodeId));
-
-      // Fetch children if not already loaded
-      if (hasChildren) {
-        const node = findNode(rootTree, nodeId);
-        if (node && !node.children) {
-          await fetchChildren(nodeId);
-        }
-      }
-    }
+  const handleNewNote = () => {
+    setEditTitle("");
+    setEditContent("");
+    setEditTags("");
+    setEditFolder("inbox");
+    setShowNewNote(true);
+    setIsEditing(false);
+    setSelectedNote(null);
   };
 
-  const findNode = (node: TreeNode | null, nodeId: string): TreeNode | null => {
-    if (!node) return null;
-    if (node.id === nodeId) return node;
-    if (node.children) {
-      for (const child of node.children) {
-        const found = findNode(child, nodeId);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  const fetchPageContent = async (pageId: string) => {
-    setLoadingContent(true);
-    try {
-      const res = await fetch(`/api/notion/pages/${pageId}`);
-      if (!res.ok) throw new Error('Failed to fetch page content');
-
-      const data = await res.json();
-      setPageContent(data.blocks || []);
-      setSelectedItem(data.page);
-      setEditedTitle(getPageTitle(data.page));
-    } catch (err) {
-      console.error('Error fetching page content:', err);
-      setPageContent([]);
-    } finally {
-      setLoadingContent(false);
-    }
-  };
-
-  const handleSaveTitle = async () => {
-    if (!selectedItem || !editedTitle) return;
+  const handleSaveNew = async () => {
+    if (!editTitle.trim()) return;
 
     try {
-      const res = await fetch(`/api/notion/pages/${selectedItem.id}`, {
-        method: 'PATCH',
+      const res = await fetch('/api/notes', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          properties: {
-            title: {
-              title: [
-                {
-                  text: {
-                    content: editedTitle,
-                  },
-                },
-              ],
-            },
-          },
+          title: editTitle,
+          content: editContent,
+          tags: editTags.split(',').map(t => t.trim()).filter(t => t),
+          folder: editFolder,
         }),
       });
 
       if (res.ok) {
-        setEditing(false);
-        fetchNotionTree();
-        fetchPageContent(selectedItem.id);
+        setShowNewNote(false);
+        fetchNotes();
       }
-    } catch (err) {
-      console.error('Error updating title:', err);
+    } catch (error) {
+      console.error('Failed to create note:', error);
     }
   };
 
-  const getPageTitle = (page: NotionPage): string => {
-    if (page.properties) {
-      const titleProp = Object.values(page.properties).find((prop: any) => prop.type === 'title') as any;
-      if (titleProp && titleProp.title && titleProp.title[0]) {
-        return titleProp.title[0].plain_text;
+  const handleEditNote = (note: Note) => {
+    setSelectedNote(note);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+    setEditTags(note.tags.join(', '));
+    setEditFolder(note.folder);
+    setIsEditing(true);
+    setShowNewNote(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedNote || !editTitle.trim()) return;
+
+    try {
+      const res = await fetch('/api/notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedNote.id,
+          title: editTitle,
+          content: editContent,
+          tags: editTags.split(',').map(t => t.trim()).filter(t => t),
+          folder: editFolder,
+        }),
+      });
+
+      if (res.ok) {
+        setIsEditing(false);
+        fetchNotes();
       }
-    }
-    return 'Untitled';
-  };
-
-  const getPageIcon = (page: NotionPage | TreeNode): string => {
-    if (page.icon) {
-      if (page.icon.type === 'emoji') return page.icon.emoji;
-      if (page.icon.type === 'external') return '🔗';
-      if (page.icon.type === 'file') return '📄';
-    }
-    if ('type' in page) {
-      return page.type === 'database' ? '🗂️' : '📝';
-    }
-    return (page as NotionPage).object === 'database' ? '🗂️' : '📝';
-  };
-
-  const renderTreeNode = (node: TreeNode, depth: number = 0): React.ReactNode => {
-    const isExpanded = expandedNodes.has(node.id);
-    const isLoading = loadingChildren.has(node.id);
-    const isSelected = selectedItem?.id === node.id;
-
-    return (
-      <div key={node.id}>
-        <button
-          onClick={() => {
-            fetchPageContent(node.id);
-            if (node.hasChildren) {
-              toggleNode(node.id, node.hasChildren);
-            }
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 12px",
-            paddingLeft: `${12 + depth * 20}px`,
-            width: "100%",
-            background: isSelected ? "rgba(167, 139, 250, 0.15)" : "transparent",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            color: "var(--foreground)",
-            fontSize: "13px",
-            textAlign: "left",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            if (!isSelected) {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isSelected) {
-              e.currentTarget.style.background = "transparent";
-            }
-          }}
-        >
-          {node.hasChildren && (
-            <span style={{ width: "14px", height: "14px", flexShrink: 0 }}>
-              {isLoading ? (
-                <RefreshCw style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} />
-              ) : isExpanded ? (
-                <ChevronDown style={{ width: "14px", height: "14px" }} />
-              ) : (
-                <ChevronRight style={{ width: "14px", height: "14px" }} />
-              )}
-            </span>
-          )}
-          {!node.hasChildren && <span style={{ width: "14px" }} />}
-          <span>{getPageIcon(node)}</span>
-          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {node.title}
-          </span>
-        </button>
-        {isExpanded && node.children && (
-          <div>
-            {node.children.map(child => renderTreeNode(child, depth + 1))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderBlockContent = (block: NotionBlock): React.ReactNode => {
-    const type = block.type;
-    const content = block[type];
-
-    if (!content) return null;
-
-    switch (type) {
-      case 'paragraph':
-        return content.rich_text?.map((text: any, i: number) => (
-          <span key={i}>{text.plain_text}</span>
-        ));
-      case 'heading_1':
-        return (
-          <h1 style={{ fontSize: "24px", fontWeight: 700, marginTop: "16px", marginBottom: "8px" }}>
-            {content.rich_text?.map((text: any, i: number) => (
-              <span key={i}>{text.plain_text}</span>
-            ))}
-          </h1>
-        );
-      case 'heading_2':
-        return (
-          <h2 style={{ fontSize: "20px", fontWeight: 600, marginTop: "12px", marginBottom: "6px" }}>
-            {content.rich_text?.map((text: any, i: number) => (
-              <span key={i}>{text.plain_text}</span>
-            ))}
-          </h2>
-        );
-      case 'heading_3':
-        return (
-          <h3 style={{ fontSize: "16px", fontWeight: 600, marginTop: "10px", marginBottom: "4px" }}>
-            {content.rich_text?.map((text: any, i: number) => (
-              <span key={i}>{text.plain_text}</span>
-            ))}
-          </h3>
-        );
-      case 'bulleted_list_item':
-        return (
-          <li style={{ marginLeft: "20px" }}>
-            {content.rich_text?.map((text: any, i: number) => (
-              <span key={i}>{text.plain_text}</span>
-            ))}
-          </li>
-        );
-      case 'numbered_list_item':
-        return (
-          <li style={{ marginLeft: "20px" }}>
-            {content.rich_text?.map((text: any, i: number) => (
-              <span key={i}>{text.plain_text}</span>
-            ))}
-          </li>
-        );
-      case 'to_do':
-        return (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
-            <input type="checkbox" checked={content.checked} readOnly />
-            {content.rich_text?.map((text: any, i: number) => (
-              <span key={i}>{text.plain_text}</span>
-            ))}
-          </div>
-        );
-      case 'code':
-        return (
-          <pre style={{
-            background: "rgba(255, 255, 255, 0.05)",
-            padding: "12px",
-            borderRadius: "6px",
-            overflow: "auto",
-            fontSize: "13px",
-            fontFamily: "monospace",
-            marginTop: "8px",
-          }}>
-            <code>
-              {content.rich_text?.map((text: any, i: number) => (
-                <span key={i}>{text.plain_text}</span>
-              ))}
-            </code>
-          </pre>
-        );
-      default:
-        return null;
+    } catch (error) {
+      console.error('Failed to update note:', error);
     }
   };
 
-  const filterTree = (node: TreeNode | null, query: string): TreeNode | null => {
-    if (!node) return null;
-    if (!query) return node;
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('Delete this note?')) return;
 
-    const matches = node.title.toLowerCase().includes(query.toLowerCase());
-    const filteredChildren = node.children
-      ?.map(child => filterTree(child, query))
-      .filter((child): child is TreeNode => child !== null) || [];
+    try {
+      const res = await fetch(`/api/notes?id=${noteId}`, {
+        method: 'DELETE',
+      });
 
-    if (matches || filteredChildren.length > 0) {
-      return {
-        ...node,
-        children: filteredChildren,
-      };
+      if (res.ok) {
+        if (selectedNote?.id === noteId) {
+          setSelectedNote(null);
+          setIsEditing(false);
+        }
+        fetchNotes();
+      }
+    } catch (error) {
+      console.error('Failed to delete note:', error);
     }
-
-    return null;
   };
 
-  const displayTree = filterTree(rootTree, searchQuery);
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const folders = ['all', 'inbox', 'projects', 'ideas', 'daily', 'archive'];
 
   return (
-    <>
+    <ProtectedRoute>
       <TopNav />
       <BottomNav />
       <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "80px" : "88px",
+        paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "88px" : "32px",
-        minHeight: `calc(100vh - ${isMobile ? "160px" : "120px"})`,
-        display: "flex",
-        gap: "0",
+        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
+        paddingRight: isMobile ? "12px" : "24px",
+        minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
+        maxWidth: "1400px",
+        margin: "0 auto"
       }}>
-        {/* Sidebar */}
-        <aside style={{
-          width: "300px",
-          flexShrink: 0,
-          borderRight: "1px solid rgba(255, 255, 255, 0.1)",
-          background: "rgba(255, 255, 255, 0.02)",
-          paddingTop: "48px",
-          height: "calc(100vh - 88px)",
-          position: "sticky",
-          top: "88px",
-          overflowY: "auto",
-        }}>
-          <div style={{ padding: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-              <h2 style={{ fontSize: "14px", fontWeight: 600, color: "var(--foreground)" }}>{toolCustom.name}</h2>
-              <div style={{ display: "flex", gap: "4px" }}>
-                <button
-                  onClick={fetchNotionTree}
-                  disabled={loading}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "4px",
-                    borderRadius: "4px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: loading ? "not-allowed" : "pointer",
-                    color: "var(--foreground-muted)",
-                    opacity: loading ? 0.5 : 1,
-                  }}
-                >
-                  <RefreshCw style={{ width: "14px", height: "14px", animation: loading ? "spin 1s linear infinite" : "none" }} />
-                </button>
-                <a
-                  href="https://notion.so"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "4px",
-                    borderRadius: "4px",
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--foreground-muted)",
-                    textDecoration: "none",
-                  }}
-                >
-                  <ExternalLink style={{ width: "14px", height: "14px" }} />
-                </a>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div style={{ position: "relative", marginBottom: "16px" }}>
-              <Search style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", width: "14px", height: "14px", color: "var(--foreground-muted)" }} />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 10px 8px 32px",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  background: "rgba(255, 255, 255, 0.03)",
-                  color: "var(--foreground)",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
-              />
-            </div>
-
-            {/* Tree Structure */}
-            <div>
-              {displayTree && renderTreeNode(displayTree)}
-            </div>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <FileText style={{ width: "24px", height: "24px", color: toolCustom.color }} />
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
+              Notes
+            </h1>
           </div>
-        </aside>
+          
+          <button
+            onClick={handleNewNote}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "10px 16px",
+              borderRadius: "8px",
+              background: `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)`,
+              border: "none",
+              color: "white",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            <Plus size={16} />
+            New Note
+          </button>
+        </div>
 
-        {/* Content Area */}
-        <div style={{ flex: 1, padding: "48px 48px 32px 48px", maxWidth: "900px", margin: "0 auto" }}>
-          {loading ? (
-            <div style={{ textAlign: "center", paddingTop: "120px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: "#a78bfa", margin: "0 auto 16px", animation: "spin 1s linear infinite" }} />
-              <p style={{ color: "var(--foreground-muted)" }}>Loading Notion workspace...</p>
-            </div>
-          ) : error ? (
-            <div style={{ textAlign: "center", paddingTop: "120px" }}>
-              <FileText style={{ width: "48px", height: "48px", color: "#f87171", margin: "0 auto 16px" }} />
-              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                {error}
-              </h2>
+        {/* Search + Folder Filter */}
+        <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 300px", position: "relative" }}>
+            <Search size={18} style={{
+              position: "absolute",
+              left: "14px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#64748b",
+            }} />
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              style={{
+                width: "100%",
+                padding: "10px 14px 10px 44px",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                borderRadius: "8px",
+                color: "white",
+                fontSize: "14px",
+                outline: "none",
+              }}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {folders.map(folder => (
               <button
-                onClick={fetchNotionTree}
+                key={folder}
+                onClick={() => setSelectedFolder(folder)}
                 style={{
-                  marginTop: "16px",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  color: "var(--foreground)",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
                   border: "none",
+                  background: selectedFolder === folder 
+                    ? `rgba(16, 185, 129, 0.15)` 
+                    : "rgba(255, 255, 255, 0.05)",
+                  color: selectedFolder === folder ? toolCustom.color : "var(--foreground-muted)",
+                  fontSize: "14px",
+                  fontWeight: 500,
                   cursor: "pointer",
+                  textTransform: "capitalize",
                 }}
               >
-                Try Again
+                {folder}
               </button>
-            </div>
-          ) : !selectedItem ? (
-            <div style={{ textAlign: "center", paddingTop: "120px" }}>
-              <FileText style={{ width: "48px", height: "48px", color: "#a78bfa", margin: "0 auto 16px" }} />
-              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-                Select a page or database
-              </h2>
-              <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                Choose an item from the sidebar to view its content
-              </p>
-            </div>
-          ) : (
-            <div>
-              {/* Page Header */}
-              <div style={{ marginBottom: "32px" }}>
-                <div style={{ fontSize: "48px", marginBottom: "16px" }}>{getPageIcon(selectedItem)}</div>
-                {editing ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "350px 1fr",
+          gap: "16px",
+          minHeight: "400px",
+        }}>
+          {/* Notes List */}
+          <div style={{
+            background: "rgba(255, 255, 255, 0.03)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "12px",
+            padding: "16px",
+            maxHeight: "calc(100vh - 280px)",
+            overflowY: "auto",
+          }}>
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                Loading...
+              </div>
+            ) : notes.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
+                No notes found
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {notes.map(note => (
+                  <div
+                    key={note.id}
+                    onClick={() => handleEditNote(note)}
+                    style={{
+                      padding: "12px",
+                      borderRadius: "8px",
+                      background: selectedNote?.id === note.id 
+                        ? "rgba(16, 185, 129, 0.1)" 
+                        : "rgba(255, 255, 255, 0.03)",
+                      border: `1px solid ${selectedNote?.id === note.id 
+                        ? 'rgba(16, 185, 129, 0.3)' 
+                        : 'rgba(255, 255, 255, 0.1)'}`,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedNote?.id !== note.id) {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedNote?.id !== note.id) {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                      }
+                    }}
+                  >
+                    <div style={{
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      color: "var(--foreground)",
+                      marginBottom: "4px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}>
+                      {note.title}
+                    </div>
+                    <div style={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <Clock size={10} />
+                        {formatDate(note.updatedAt)}
+                      </span>
+                      {note.tags.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <Tag size={10} />
+                            {note.tags.length}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Note Editor/Viewer */}
+          <div style={{
+            background: "rgba(255, 255, 255, 0.03)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "12px",
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}>
+            {(showNewNote || isEditing) ? (
+              <>
+                {/* Title Input */}
+                <input
+                  type="text"
+                  placeholder="Note title..."
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "18px",
+                    fontWeight: 600,
+                    outline: "none",
+                  }}
+                />
+
+                {/* Content Textarea */}
+                <textarea
+                  placeholder="Note content (markdown supported)..."
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  style={{
+                    width: "100%",
+                    minHeight: "300px",
+                    padding: "12px 16px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    borderRadius: "8px",
+                    color: "white",
+                    fontSize: "14px",
+                    lineHeight: 1.6,
+                    outline: "none",
+                    resize: "vertical",
+                    fontFamily: "monospace",
+                  }}
+                />
+
+                {/* Metadata */}
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                  <div style={{ flex: "1 1 200px" }}>
+                    <label style={{ display: "block", fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
+                      Tags (comma-separated)
+                    </label>
                     <input
                       type="text"
-                      value={editedTitle}
-                      onChange={(e) => setEditedTitle(e.target.value)}
+                      placeholder="tag1, tag2, tag3"
+                      value={editTags}
+                      onChange={(e) => setEditTags(e.target.value)}
                       style={{
-                        flex: 1,
-                        fontSize: "32px",
-                        fontWeight: 700,
-                        color: "var(--foreground)",
+                        width: "100%",
+                        padding: "8px 12px",
                         background: "rgba(255, 255, 255, 0.05)",
                         border: "1px solid rgba(255, 255, 255, 0.1)",
-                        borderRadius: "8px",
-                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        color: "white",
+                        fontSize: "13px",
                         outline: "none",
                       }}
                     />
-                    <button
-                      onClick={handleSaveTitle}
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
+                      Folder
+                    </label>
+                    <select
+                      value={editFolder}
+                      onChange={(e) => setEditFolder(e.target.value)}
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        padding: "8px 12px",
-                        background: "rgba(167, 139, 250, 0.15)",
-                        border: "1px solid rgba(167, 139, 250, 0.3)",
-                        borderRadius: "6px",
-                        color: "#a78bfa",
-                        cursor: "pointer",
-                        fontSize: "13px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      <Save style={{ width: "14px", height: "14px" }} />
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditing(false);
-                        setEditedTitle(getPageTitle(selectedItem));
-                      }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
                         padding: "8px 12px",
                         background: "rgba(255, 255, 255, 0.05)",
                         border: "1px solid rgba(255, 255, 255, 0.1)",
                         borderRadius: "6px",
-                        color: "var(--foreground-muted)",
-                        cursor: "pointer",
+                        color: "white",
                         fontSize: "13px",
-                      }}
-                    >
-                      <X style={{ width: "14px", height: "14px" }} />
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <h1 style={{ fontSize: "32px", fontWeight: 700, color: "var(--foreground)" }}>
-                      {getPageTitle(selectedItem)}
-                    </h1>
-                    <button
-                      onClick={() => setEditing(true)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        padding: "6px",
-                        background: "transparent",
-                        border: "none",
-                        borderRadius: "4px",
-                        color: "var(--foreground-muted)",
                         cursor: "pointer",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                        e.currentTarget.style.color = "#a78bfa";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "var(--foreground-muted)";
+                        outline: "none",
                       }}
                     >
-                      <Edit style={{ width: "16px", height: "16px" }} />
-                    </button>
+                      {folders.filter(f => f !== 'all').map(folder => (
+                        <option key={folder} value={folder}>
+                          {folder.charAt(0).toUpperCase() + folder.slice(1)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                )}
-                {selectedItem.url && (
-                  <a
-                    href={selectedItem.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: "flex", gap: "12px", marginTop: "auto" }}>
+                  <button
+                    onClick={showNewNote ? handleSaveNew : handleSaveEdit}
+                    disabled={!editTitle.trim()}
                     style={{
-                      display: "inline-flex",
+                      flex: 1,
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      background: editTitle.trim() 
+                        ? `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)` 
+                        : "rgba(255, 255, 255, 0.1)",
+                      border: "none",
+                      color: "white",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: editTitle.trim() ? "pointer" : "not-allowed",
+                      display: "flex",
                       alignItems: "center",
-                      gap: "4px",
-                      marginTop: "8px",
-                      fontSize: "13px",
-                      color: "var(--foreground-muted)",
-                      textDecoration: "none",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = "#a78bfa";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = "var(--foreground-muted)";
+                      justifyContent: "center",
+                      gap: "6px",
                     }}
                   >
-                    <ExternalLink style={{ width: "12px", height: "12px" }} />
-                    Open in Notion
-                  </a>
-                )}
-              </div>
+                    <Save size={16} />
+                    Save
+                  </button>
 
-              {/* Page Content */}
-              {loadingContent ? (
-                <div style={{ textAlign: "center", paddingTop: "60px" }}>
-                  <RefreshCw style={{ width: "24px", height: "24px", color: "#a78bfa", margin: "0 auto 16px", animation: "spin 1s linear infinite" }} />
-                  <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>Loading content...</p>
+                  {isEditing && (
+                    <button
+                      onClick={() => handleDeleteNote(selectedNote!.id)}
+                      style={{
+                        padding: "10px 16px",
+                        borderRadius: "8px",
+                        background: "rgba(239, 68, 68, 0.1)",
+                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                        color: "#ef4444",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setShowNewNote(false);
+                      setIsEditing(false);
+                      setSelectedNote(null);
+                    }}
+                    style={{
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "var(--foreground-muted)",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <X size={16} />
+                    Cancel
+                  </button>
                 </div>
-              ) : pageContent.length === 0 ? (
-                <div style={{ textAlign: "center", paddingTop: "60px" }}>
-                  <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                    This page has no content
-                  </p>
-                </div>
-              ) : (
-                <div style={{ fontSize: "15px", lineHeight: "1.7", color: "var(--foreground)" }}>
-                  {pageContent.map((block) => (
-                    <div key={block.id} style={{ marginBottom: "8px" }}>
-                      {renderBlockContent(block)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+              </>
+            ) : (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                color: "#64748b",
+                fontSize: "14px",
+              }}>
+                Select a note to view or create a new one
+              </div>
+            )}
+          </div>
         </div>
       </main>
-
-      <style jsx global>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </>
+    </ProtectedRoute>
   );
 }
