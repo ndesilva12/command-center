@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, Plus, Search, Trash2, Edit2, Save, X, Tag, Folder, Calendar, Clock } from "lucide-react";
+import { FileText, Plus, Search, Trash2, Edit2, Save, X, Tag, Folder, Calendar, Clock, Download } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -161,6 +161,30 @@ export default function NotesPage() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const res = await fetch('/api/notes/export');
+      if (!res.ok) {
+        alert('Failed to export notes');
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const timestamp = new Date().toISOString().split('T')[0];
+      a.download = `command-center-notes-${timestamp}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export notes:', error);
+      alert('Failed to export notes');
+    }
+  };
+
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -199,25 +223,49 @@ export default function NotesPage() {
             </h1>
           </div>
           
-          <button
-            onClick={handleNewNote}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "10px 16px",
-              borderRadius: "8px",
-              background: `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)`,
-              border: "none",
-              color: "white",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <Plus size={16} />
-            New Note
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              onClick={handleExport}
+              disabled={notes.length === 0}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                background: notes.length > 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.02)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: notes.length > 0 ? "var(--foreground-muted)" : "#64748b",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: notes.length > 0 ? "pointer" : "not-allowed",
+                opacity: notes.length > 0 ? 1 : 0.5,
+              }}
+            >
+              <Download size={16} />
+              Export
+            </button>
+            
+            <button
+              onClick={handleNewNote}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                background: `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)`,
+                border: "none",
+                color: "white",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Plus size={16} />
+              New Note
+            </button>
+          </div>
         </div>
 
         {/* Search + Folder Filter */}
