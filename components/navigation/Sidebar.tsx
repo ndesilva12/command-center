@@ -174,10 +174,10 @@ export function Sidebar() {
   return (
     <aside
       style={{
-        position: "fixed",
+        position: "sticky",
         left: 0,
         top: 0,
-        bottom: 0,
+        height: "100vh",
         width: collapsed ? "60px" : "260px",
         background: "rgba(10, 10, 14, 0.95)",
         backdropFilter: "blur(16px)",
@@ -185,7 +185,7 @@ export function Sidebar() {
         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
         overflowY: "auto",
         overflowX: "hidden",
-        zIndex: 1001,
+        flexShrink: 0,
         padding: collapsed ? "76px 8px 16px 8px" : "76px 12px 16px 12px",
         transition: "width 0.3s ease, padding 0.3s ease",
       }}

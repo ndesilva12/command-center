@@ -232,17 +232,18 @@ export default function Home() {
     <ProtectedRoute>
       <TopNav />
       <BottomNav />
-      <Sidebar />
-      <main
-        style={{
-          minHeight: "100vh",
-          paddingTop: isMobile ? "72px" : "76px",
-          paddingBottom: isMobile ? "88px" : "24px",
-          paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-          paddingRight: isMobile ? "12px" : "20px",
-          transition: "padding-left 0.3s ease",
-        }}
-      >
+      <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
+        {!isMobile && <Sidebar />}
+        <main
+          style={{
+            flex: 1,
+            minHeight: "100vh",
+            paddingTop: isMobile ? "72px" : "76px",
+            paddingBottom: isMobile ? "88px" : "24px",
+            paddingLeft: isMobile ? "12px" : "24px",
+            paddingRight: isMobile ? "12px" : "20px",
+          }}
+        >
         {authLoading ? (
           <div style={{ textAlign: "center", padding: "100px 20px", color: "var(--muted)" }}>
             Loading...
@@ -502,7 +503,8 @@ export default function Home() {
           `}</style>
         </div>
         )}
-      </main>
+        </main>
+      </div>
     </ProtectedRoute>
   );
 }
