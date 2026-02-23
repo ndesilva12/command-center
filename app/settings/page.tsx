@@ -61,7 +61,7 @@ export default function SettingsPage() {
           minHeight: "100vh",
           paddingTop: "80px",
           paddingBottom: isMobile ? "96px" : "32px",
-          padding: isMobile ? "80px 16px 96px 16px" : "80px 264px 32px 264px",
+          padding: isMobile ? "80px 16px 96px 16px" : "80px calc(var(--sidebar-width, 240px) + 24px) 32px calc(var(--sidebar-width, 240px) + 24px)",
         }}
       >
         <div className="container" style={{ maxWidth: "1200px", margin: "0 auto" }}>

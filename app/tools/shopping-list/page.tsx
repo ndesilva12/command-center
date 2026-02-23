@@ -297,7 +297,7 @@ export default function ShoppingListPage() {
       <main style={{
         paddingTop: isMobile ? "72px" : "76px",
         paddingBottom: isMobile ? "calc(80px + env(safe-area-inset-bottom))" : "96px",
-        paddingLeft: isMobile ? "12px" : "264px",
+        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
         paddingRight: isMobile ? "8px" : "0",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>

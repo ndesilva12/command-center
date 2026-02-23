@@ -18,6 +18,7 @@ html,
 html {
   background: #0a0a0e;
   --tool-nav-height: 56px;
+  --sidebar-width: 240px;
 }
 
 body {

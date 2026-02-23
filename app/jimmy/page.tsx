@@ -108,7 +108,7 @@ export default function JimmyPage() {
         style={{
           maxWidth: "1400px",
           margin: "0 auto",
-          padding: "80px 20px 100px 264px",
+          padding: "80px 20px 100px calc(var(--sidebar-width, 240px) + 24px)",
         }}
       >
         {/* Header */}

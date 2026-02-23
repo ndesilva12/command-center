@@ -132,6 +132,16 @@ export function Sidebar() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Update CSS variable for sidebar width so content can adjust
+  useEffect(() => {
+    if (!isMobile) {
+      document.documentElement.style.setProperty('--sidebar-width', collapsed ? '60px' : '240px');
+    }
+    return () => {
+      document.documentElement.style.removeProperty('--sidebar-width');
+    };
+  }, [collapsed, isMobile]);
+
   // Don't render sidebar on mobile
   if (isMobile) return null;
 
@@ -342,36 +352,37 @@ function SidebarItem({
         width: "100%",
         display: "flex",
         alignItems: "center",
-        gap: "10px",
-        padding: collapsed ? "10px" : "10px 12px",
-        borderRadius: "8px",
+        gap: "12px",
+        padding: collapsed ? "12px" : "12px 14px",
+        borderRadius: "10px",
         background: active ? "rgba(0, 170, 255, 0.12)" : "transparent",
         border: "1px solid transparent",
-        color: active ? "#00aaff" : "rgba(255, 255, 255, 0.6)",
-        fontSize: "14px",
-        fontWeight: active ? 600 : 400,
+        color: active ? "#00aaff" : "rgba(255, 255, 255, 0.75)",
+        fontSize: "15px",
+        fontWeight: active ? 600 : 500,
         cursor: "pointer",
         transition: "all 0.2s ease",
         textAlign: "left",
         justifyContent: collapsed ? "center" : "flex-start",
+        marginBottom: "2px",
       }}
       onMouseEnter={(e) => {
         if (!active) {
-          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-          e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+          e.currentTarget.style.color = "rgba(255, 255, 255, 1)";
         }
       }}
       onMouseLeave={(e) => {
         if (!active) {
           e.currentTarget.style.background = "transparent";
-          e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
+          e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)";
         }
       }}
     >
       <Icon
         style={{
-          width: "18px",
-          height: "18px",
+          width: "20px",
+          height: "20px",
           flexShrink: 0,
           color: color,
         }}
