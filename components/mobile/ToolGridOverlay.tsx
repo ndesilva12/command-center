@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Sparkles, Zap } from "lucide-react";
+import { X, Sparkles, Home as HomeIcon, Settings as SettingsIcon, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { PRODUCTIVITY_TOOLS, INTELLIGENCE_TOOLS } from "@/lib/tool-categories";
+import { ALL_TOOLS } from "@/lib/tool-categories";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -13,7 +13,7 @@ interface ToolGridOverlayProps {
   onClose: () => void;
 }
 
-// Icon mapping (same as homepage)
+// Icon mapping
 import {
   Mail,
   Calendar,
@@ -37,9 +37,15 @@ import {
   TrendingDown,
   Building2,
   Briefcase,
+  FileText,
+  ShoppingBag,
+  Globe,
+  Send,
+  BookOpen,
+  LucideIcon,
 } from "lucide-react";
 
-const TOOL_ICONS: Record<string, any> = {
+const TOOL_ICONS: Record<string, LucideIcon> = {
   emails: Mail,
   calendar: Calendar,
   contacts: Users,
@@ -56,15 +62,27 @@ const TOOL_ICONS: Record<string, any> = {
   meals: ChefHat,
   curate: Sparkles,
   l3d: TrendingUp,
-  "deep-search": Search,
-  "dark-search": Lock,
-  "image-lookup": Image,
-  "contact-finder": UserSearch,
+  'deep-search': Search,
+  'dark-search': Lock,
+  'image-lookup': Image,
+  'contact-finder': UserSearch,
   relationships: Network,
   mission: Target,
   investors: TrendingDown,
-  "business-info": Building2,
+  'business-info': Building2,
   corporate: Briefcase,
+  analyze: BarChart3,
+  insights: Sparkles,
+  cinderella: TrendingUp,
+  shopping: ShoppingBag,
+  summarizer: FileText,
+  legal: BookOpen,
+  'one-pager': FileText,
+  'white-papers': BookOpen,
+  politicorp: Globe,
+  'war-room': Target,
+  business: Building2,
+  emailer: Send,
 };
 
 const TOOL_COLORS: Record<string, string> = {
@@ -84,57 +102,56 @@ const TOOL_COLORS: Record<string, string> = {
   meals: "#10b981",
   curate: "#8b5cf6",
   l3d: "#10b981",
-  "deep-search": "#6366f1",
-  "dark-search": "#dc2626",
-  "image-lookup": "#a78bfa",
-  "contact-finder": "#6366f1",
+  'deep-search': "#6366f1",
+  'dark-search': "#dc2626",
+  'image-lookup': "#a78bfa",
+  'contact-finder': "#6366f1",
   relationships: "#14b8a6",
   mission: "#6366f1",
   investors: "#3b82f6",
-  "business-info": "#8b5cf6",
+  'business-info': "#8b5cf6",
   corporate: "#10b981",
+  cinderella: "#3b82f6",
+  analyze: "#6366f1",
+  insights: "#a78bfa",
+  shopping: "#10b981",
+  summarizer: "#8b5cf6",
+  legal: "#f59e0b",
+  'one-pager': "#6366f1",
+  'white-papers': "#8b5cf6",
+  politicorp: "#ef4444",
+  'war-room': "#dc2626",
+  business: "#6366f1",
+  emailer: "#3b82f6",
 };
 
 export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
   const router = useRouter();
-  const { customizations, getCustomization } = useToolCustomizations();
+  const { getCustomization } = useToolCustomizations();
   const { hasPermission, isAdmin } = useAuth();
-  const [isMobile, setIsMobile] = useState(false);
+  const [showAllTools, setShowAllTools] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  // Build all tools with customizations
+  const allTools = ALL_TOOLS
+    .map((tool) => {
+      const custom = getCustomization(tool.id, tool.name, TOOL_COLORS[tool.id] || "#6366f1");
+      const Icon = TOOL_ICONS[tool.id] || Sparkles;
+      return {
+        id: tool.id,
+        name: custom.name,
+        href: tool.href,
+        icon: Icon,
+        color: custom.color,
+        visible: custom.visible,
+        mobileVisible: custom.mobileVisible !== false,
+        order: custom.order,
+      };
+    })
+    .filter((tool) => isAdmin || hasPermission(tool.id))
+    .sort((a, b) => a.order - b.order);
 
-  // Filter tools by mobile visibility and permissions
-  const getMobileTools = () => {
-    const allTools = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];
-    return allTools
-      .map((tool) => {
-        const custom = getCustomization(tool.id, tool.name, TOOL_COLORS[tool.id] || "#6366f1");
-        const Icon = TOOL_ICONS[tool.id] || Sparkles;
-        return {
-          ...tool,
-          name: custom.name,
-          color: custom.color,
-          visible: custom.visible,
-          mobileVisible: custom.mobileVisible !== false, // Default to true if not set
-          order: custom.order,
-          icon: Icon,
-        };
-      })
-      .filter((tool) => {
-        // On mobile, check mobileVisible; otherwise check visible
-        const visibilityCheck = isMobile ? tool.mobileVisible : tool.visible;
-        const permissionCheck = isAdmin || hasPermission(tool.id);
-        return visibilityCheck && permissionCheck;
-      })
-      .sort((a, b) => a.order - b.order);
-  };
-
-  const tools = getMobileTools();
+  const visibleTools = allTools.filter((tool) => tool.mobileVisible);
+  const hiddenTools = allTools.filter((tool) => !tool.mobileVisible);
 
   const handleToolClick = (href: string) => {
     router.push(href);
@@ -142,8 +159,6 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
   };
 
   if (!isOpen) return null;
-
-  // Use portal to render at document body level (not as child of nav)
   if (typeof document === "undefined") return null;
 
   return createPortal(
@@ -155,9 +170,9 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
         right: 0,
         bottom: 0,
         zIndex: 10000,
-        backgroundColor: "rgba(0, 0, 0, 0.95)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        backgroundColor: "rgba(10, 10, 14, 0.98)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
         overflowY: "auto",
         WebkitOverflowScrolling: "touch",
         display: "flex",
@@ -165,13 +180,14 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
       }}
       onClick={onClose}
     >
-      {/* Content */}
       <div
         style={{
           width: "100%",
+          maxWidth: "400px",
+          margin: "0 auto",
           padding: "20px",
           paddingTop: "calc(env(safe-area-inset-top) + 20px)",
-          paddingBottom: "92px",
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 92px)",
           flex: "0 0 auto",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -195,7 +211,7 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
               gap: "8px",
             }}
           >
-            <Zap style={{ width: "24px", height: "24px", color: "#00aaff" }} />
+            <Sparkles style={{ width: "24px", height: "24px", color: "#00aaff" }} />
             Tools
           </h2>
           <button
@@ -218,96 +234,149 @@ export function ToolGridOverlay({ isOpen, onClose }: ToolGridOverlayProps) {
           </button>
         </div>
 
-        {/* Tool Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "12px",
-            maxWidth: "100%",
-          }}
-        >
-          {tools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <button
-                key={tool.id}
-                onClick={() => handleToolClick(tool.href)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "12px 8px",
-                  borderRadius: "16px",
-                  border: "none",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  minHeight: "110px",
-                  maxHeight: "110px",
-                  width: "100%",
-                }}
-                onTouchStart={(e) => {
-                  e.currentTarget.style.transform = "scale(0.95)";
-                }}
-                onTouchEnd={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              >
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "12px",
-                    background: `${tool.color}20`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon style={{ width: "24px", height: "24px", color: tool.color }} />
-                </div>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    color: "var(--foreground)",
-                    textAlign: "center",
-                    lineHeight: 1.3,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    width: "100%",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {tool.name}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+        {/* Home */}
+        <MobileToolItem
+          label="Home"
+          icon={HomeIcon}
+          color="#00aaff"
+          onClick={() => handleToolClick("/")}
+        />
 
-      <style jsx>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+        {/* Jimmy */}
+        <MobileToolItem
+          label="Jimmy"
+          icon={Sparkles}
+          color="#8b5cf6"
+          onClick={() => handleToolClick("/jimmy")}
+        />
+
+        {/* Divider */}
+        <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "16px 0" }} />
+
+        {/* Visible Tools */}
+        {visibleTools.map((tool) => (
+          <MobileToolItem
+            key={tool.id}
+            label={tool.name}
+            icon={tool.icon}
+            color={tool.color}
+            onClick={() => handleToolClick(tool.href)}
+          />
+        ))}
+
+        {/* Hidden Tools (when showAllTools is true) */}
+        {showAllTools && hiddenTools.map((tool) => (
+          <MobileToolItem
+            key={tool.id}
+            label={tool.name}
+            icon={tool.icon}
+            color={tool.color}
+            onClick={() => handleToolClick(tool.href)}
+          />
+        ))}
+
+        {/* Show All / Hide Button */}
+        {hiddenTools.length > 0 && (
+          <button
+            onClick={() => setShowAllTools(!showAllTools)}
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              marginTop: "12px",
+              borderRadius: "8px",
+              background: "transparent",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              color: "rgba(255, 255, 255, 0.6)",
+              fontSize: "14px",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+            }}
+          >
+            {showAllTools ? (
+              <>
+                <EyeOff style={{ width: "16px", height: "16px" }} />
+                Hide {hiddenTools.length}
+              </>
+            ) : (
+              <>
+                <Eye style={{ width: "16px", height: "16px" }} />
+                Show All ({hiddenTools.length})
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Divider */}
+        <div style={{ height: "1px", background: "rgba(255, 255, 255, 0.08)", margin: "16px 0" }} />
+
+        {/* Settings */}
+        <MobileToolItem
+          label="Settings"
+          icon={SettingsIcon}
+          color="#6366f1"
+          onClick={() => handleToolClick("/settings")}
+        />
+      </div>
     </div>,
     document.body
+  );
+}
+
+function MobileToolItem({
+  label,
+  icon: Icon,
+  color,
+  onClick,
+}: {
+  label: string;
+  icon: LucideIcon;
+  color: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
+        padding: "12px 16px",
+        borderRadius: "10px",
+        background: "transparent",
+        border: "none",
+        color: "rgba(255, 255, 255, 0.8)",
+        fontSize: "16px",
+        fontWeight: 500,
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        textAlign: "left",
+        marginBottom: "4px",
+      }}
+      onTouchStart={(e) => {
+        e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+      }}
+      onTouchEnd={(e) => {
+        e.currentTarget.style.background = "transparent";
+      }}
+    >
+      <Icon
+        style={{
+          width: "22px",
+          height: "22px",
+          flexShrink: 0,
+          color: color,
+        }}
+      />
+      <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {label}
+      </span>
+    </button>
   );
 }
