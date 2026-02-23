@@ -135,7 +135,7 @@ export function Sidebar() {
   // Update CSS variable for sidebar width so content can adjust
   useEffect(() => {
     if (!isMobile) {
-      document.documentElement.style.setProperty('--sidebar-width', collapsed ? '60px' : '240px');
+      document.documentElement.style.setProperty('--sidebar-width', collapsed ? '60px' : '260px');
     }
     return () => {
       document.documentElement.style.removeProperty('--sidebar-width');
@@ -178,7 +178,7 @@ export function Sidebar() {
         left: 0,
         top: 0,
         bottom: 0,
-        width: collapsed ? "60px" : "240px",
+        width: collapsed ? "60px" : "260px",
         background: "rgba(10, 10, 14, 0.95)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
@@ -352,13 +352,13 @@ function SidebarItem({
         width: "100%",
         display: "flex",
         alignItems: "center",
-        gap: "12px",
-        padding: collapsed ? "12px" : "12px 14px",
-        borderRadius: "10px",
+        gap: "10px",
+        padding: collapsed ? "11px" : "11px 12px",
+        borderRadius: "9px",
         background: active ? "rgba(0, 170, 255, 0.12)" : "transparent",
         border: "1px solid transparent",
         color: active ? "#00aaff" : "rgba(255, 255, 255, 0.75)",
-        fontSize: "15px",
+        fontSize: "14px",
         fontWeight: active ? 600 : 500,
         cursor: "pointer",
         transition: "all 0.2s ease",
@@ -381,8 +381,8 @@ function SidebarItem({
     >
       <Icon
         style={{
-          width: "20px",
-          height: "20px",
+          width: "18px",
+          height: "18px",
           flexShrink: 0,
           color: color,
         }}
