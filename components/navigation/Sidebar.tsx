@@ -173,6 +173,7 @@ export function Sidebar() {
 
   return (
     <aside
+      className="sidebar-scroll"
       style={{
         position: "sticky",
         left: 0,
