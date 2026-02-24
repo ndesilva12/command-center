@@ -36,6 +36,28 @@ const DEFAULT_TOP_FEEDS = [
   13,   // BBC News
 ];
 
+type SourceType = "all" | "youtube" | "twitter" | "reddit" | "substack" | "podcast";
+
+const SOURCE_TYPE_FILTERS: { type: SourceType; label: string; patterns: string[] }[] = [
+  { type: "all", label: "All", patterns: [] },
+  { type: "youtube", label: "YouTube", patterns: ["youtube.com", "youtu.be"] },
+  { type: "twitter", label: "X/Twitter", patterns: ["twitter.com", "x.com", "nitter"] },
+  { type: "reddit", label: "Reddit", patterns: ["reddit.com"] },
+  { type: "substack", label: "Substack", patterns: ["substack.com"] },
+  { type: "podcast", label: "Podcasts", patterns: ["podcast", "anchor.fm", "transistor.fm", "spotify.com/show"] },
+];
+
+const getSourceType = (feed: MinifeedFeed): SourceType => {
+  const url = (feed.site_url + " " + feed.feed_url + " " + feed.title).toLowerCase();
+  for (const filter of SOURCE_TYPE_FILTERS) {
+    if (filter.type === "all") continue;
+    if (filter.patterns.some(p => url.includes(p))) {
+      return filter.type;
+    }
+  }
+  return "all";
+};
+
 export default function ReadPage() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('read', 'Read', '#6366f1');
@@ -49,6 +71,7 @@ export default function ReadPage() {
   const [settingsSearch, setSettingsSearch] = useState("");
   const [tempTopFeeds, setTempTopFeeds] = useState<number[]>(DEFAULT_TOP_FEEDS);
   const [sourceSearch, setSourceSearch] = useState("");
+  const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>("all");
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -171,11 +194,29 @@ export default function ReadPage() {
     feed.category.toLowerCase().includes(settingsSearch.toLowerCase())
   );
 
-  const filteredOtherFeeds = otherFeeds.filter(feed =>
-    sourceSearch === "" ||
-    feed.title.toLowerCase().includes(sourceSearch.toLowerCase()) ||
-    feed.category.toLowerCase().includes(sourceSearch.toLowerCase())
-  );
+  const filteredOtherFeeds = otherFeeds.filter(feed => {
+    // Source type filter
+    if (sourceTypeFilter !== "all" && getSourceType(feed) !== sourceTypeFilter) {
+      return false;
+    }
+    // Text search filter
+    if (sourceSearch !== "" && 
+        !feed.title.toLowerCase().includes(sourceSearch.toLowerCase()) &&
+        !feed.category.toLowerCase().includes(sourceSearch.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+  
+  // Count feeds per source type (for filter badges)
+  const sourceTypeCounts = SOURCE_TYPE_FILTERS.reduce((acc, filter) => {
+    if (filter.type === "all") {
+      acc[filter.type] = otherFeeds.length;
+    } else {
+      acc[filter.type] = otherFeeds.filter(f => getSourceType(f) === filter.type).length;
+    }
+    return acc;
+  }, {} as Record<SourceType, number>);
 
   // Group other feeds by category
   const categorizedOtherFeeds = filteredOtherFeeds.reduce((acc, feed) => {
@@ -295,13 +336,56 @@ export default function ReadPage() {
                 display: "flex", 
                 alignItems: "center", 
                 gap: "10px", 
-                marginBottom: "12px",
+                marginBottom: "10px",
               }}>
                 <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.1)" }} />
                 <span style={{ fontSize: "10px", fontWeight: 600, color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Other ({otherFeeds.length})
+                  Other ({filteredOtherFeeds.length})
                 </span>
                 <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.1)" }} />
+              </div>
+
+              {/* Source Type Filters */}
+              <div style={{ 
+                display: "flex", 
+                flexWrap: "wrap", 
+                gap: "6px", 
+                marginBottom: "10px",
+              }}>
+                {SOURCE_TYPE_FILTERS.filter(f => f.type === "all" || sourceTypeCounts[f.type] > 0).map(filter => (
+                  <button
+                    key={filter.type}
+                    onClick={() => setSourceTypeFilter(filter.type)}
+                    style={{
+                      padding: "5px 10px",
+                      borderRadius: "12px",
+                      border: sourceTypeFilter === filter.type 
+                        ? `1px solid ${toolCustom.color}` 
+                        : "1px solid rgba(255,255,255,0.1)",
+                      background: sourceTypeFilter === filter.type 
+                        ? `${toolCustom.color}20` 
+                        : "rgba(255,255,255,0.03)",
+                      color: sourceTypeFilter === filter.type 
+                        ? toolCustom.color 
+                        : "var(--foreground-muted)",
+                      fontSize: "11px",
+                      fontWeight: sourceTypeFilter === filter.type ? 600 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {filter.label}
+                    {filter.type !== "all" && (
+                      <span style={{ 
+                        marginLeft: "4px", 
+                        opacity: 0.7,
+                        fontSize: "10px",
+                      }}>
+                        {sourceTypeCounts[filter.type]}
+                      </span>
+                    )}
+                  </button>
+                ))}
               </div>
 
               {/* Search */}
