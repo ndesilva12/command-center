@@ -100,15 +100,20 @@ async function scrapeTeamRoster(teamId: string): Promise<Team | null> {
       const cells = $row.find('td');
       
       if (cells.length >= 2) {
-        // Try to extract player data
-        const nameCell = cells.eq(1).text().trim();
+        // Extract player name - look for the anchor link text, stripping jersey numbers
+        const nameAnchor = cells.eq(1).find('a').first();
+        let nameCell = nameAnchor.length ? nameAnchor.text().trim() : cells.eq(1).text().trim();
+        
+        // Remove leading jersey numbers (e.g., "0John Smith" -> "John Smith")
+        nameCell = nameCell.replace(/^\d+\s*/, '');
+        
         const posCell = cells.eq(2).text().trim();
         const heightCell = cells.eq(3).text().trim();
         const weightCell = cells.eq(4).text().trim();
         const yearCell = cells.eq(5).text().trim();
         const hometownCell = cells.eq(6).text().trim();
         
-        if (nameCell && nameCell !== "Name") {
+        if (nameCell && nameCell !== "Name" && nameCell.length > 1) {
           players.push({
             name: nameCell,
             position: posCell || "--",

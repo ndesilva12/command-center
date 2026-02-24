@@ -18,8 +18,8 @@ const TileLayer = dynamic(
   () => import("react-leaflet").then((mod) => mod.TileLayer),
   { ssr: false }
 );
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
+const CircleMarker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.CircleMarker),
   { ssr: false }
 );
 const Popup = dynamic(
@@ -377,9 +377,16 @@ export default function RosterMapPage() {
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     {mappedPlayers.map((player, idx) => (
-                      <Marker
+                      <CircleMarker
                         key={`${player.name}-${idx}`}
-                        position={[player.lat!, player.lng!]}
+                        center={[player.lat!, player.lng!]}
+                        radius={8}
+                        pathOptions={{
+                          color: toolCustom.color,
+                          fillColor: toolCustom.color,
+                          fillOpacity: 0.8,
+                          weight: 2,
+                        }}
                       >
                         <Popup>
                           <div style={{ minWidth: "150px" }}>
@@ -395,7 +402,7 @@ export default function RosterMapPage() {
                             </div>
                           </div>
                         </Popup>
-                      </Marker>
+                      </CircleMarker>
                     ))}
                   </MapContainer>
                 )}
