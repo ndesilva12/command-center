@@ -191,12 +191,12 @@ export default function PoliticorpPage() {
       <BottomNav />
       <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
         {!isMobile && <Sidebar />}
-        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "80px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)", paddingRight: isMobile ? "12px" : "16px" }}>
+        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "64px" : "68px", paddingBottom: isMobile ? "80px" : "16px", paddingLeft: isMobile ? "8px" : "calc(var(--sidebar-width, 240px) + 8px)", paddingRight: isMobile ? "8px" : "8px" }}>
         <ToolBackground color={toolCustom.color} />
 
-        <div style={{ height: isMobile ? "auto" : "calc(100vh - 104px)", display: "flex", flexDirection: "column" }}>
+        <div style={{ height: isMobile ? "auto" : "calc(100vh - 84px)", display: "flex", flexDirection: "column" }}>
           {/* Input Form */}
-          <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
+          <div className="glass card" style={{ padding: "16px", marginBottom: "24px" }}>
             <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
               🏛️ {toolCustom.name}
             </h2>
@@ -271,7 +271,7 @@ export default function PoliticorpPage() {
           {activeTab === "result" && result && (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Compass + Overview */}
-              <div className="glass card" style={{ padding: "24px" }}>
+              <div className="glass card" style={{ padding: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "4px" }}>
                   <h3 style={{ fontSize: "22px", fontWeight: 700, margin: 0 }}>{result.companyName}</h3>
                   <ExportPDFButton title={`Politicorp: ${result.companyName}`} />
@@ -292,7 +292,7 @@ export default function PoliticorpPage() {
 
               {/* Positions */}
               {result.positions?.length > 0 && (
-                <div className="glass card" style={{ padding: "24px" }}>
+                <div className="glass card" style={{ padding: "16px" }}>
                   <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>📋 Policy Positions</h4>
                   {result.positions.map((p: any, i: number) => (
                     <div key={i} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: i < result.positions.length - 1 ? "1px solid var(--glass-border)" : "none" }}>
@@ -305,7 +305,7 @@ export default function PoliticorpPage() {
 
               {/* Donations */}
               {result.donations?.length > 0 && (
-                <div className="glass card" style={{ padding: "24px" }}>
+                <div className="glass card" style={{ padding: "16px" }}>
                   <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>💰 Political Donations</h4>
                   <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
@@ -344,7 +344,7 @@ export default function PoliticorpPage() {
 
               {/* Public Statements */}
               {result.publicStatements?.length > 0 && (
-                <div className="glass card" style={{ padding: "24px" }}>
+                <div className="glass card" style={{ padding: "16px" }}>
                   <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>🎙️ Public Statements</h4>
                   {result.publicStatements.map((s: any, i: number) => (
                     <div key={i} style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: i < result.publicStatements.length - 1 ? "1px solid var(--glass-border)" : "none" }}>
@@ -360,7 +360,7 @@ export default function PoliticorpPage() {
 
               {/* Lobbying */}
               {result.lobbyingActivities?.length > 0 && (
-                <div className="glass card" style={{ padding: "24px" }}>
+                <div className="glass card" style={{ padding: "16px" }}>
                   <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>🏛️ Lobbying Activities</h4>
                   {result.lobbyingActivities.map((l: any, i: number) => (
                     <div key={i} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: i < result.lobbyingActivities.length - 1 ? "1px solid var(--glass-border)" : "none" }}>
@@ -376,7 +376,7 @@ export default function PoliticorpPage() {
 
               {/* News */}
               {result.newsItems?.length > 0 && (
-                <div className="glass card" style={{ padding: "24px" }}>
+                <div className="glass card" style={{ padding: "16px" }}>
                   <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>📰 News</h4>
                   {result.newsItems.map((n: any, i: number) => (
                     <div key={i} style={{ marginBottom: "12px", paddingBottom: "12px", borderBottom: i < result.newsItems.length - 1 ? "1px solid var(--glass-border)" : "none" }}>
@@ -397,7 +397,7 @@ export default function PoliticorpPage() {
 
               {/* Subsidiaries & Affiliates */}
               {(result.subsidiaries?.length > 0 || result.affiliates?.length > 0) && (
-                <div className="glass card" style={{ padding: "24px" }}>
+                <div className="glass card" style={{ padding: "16px" }}>
                   <h4 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px" }}>🏢 Subsidiaries & Affiliates</h4>
                   {result.subsidiaries?.map((s: any, i: number) => (
                     <div key={`sub-${i}`} style={{ marginBottom: "8px" }}>
@@ -426,7 +426,7 @@ export default function PoliticorpPage() {
 
           {/* History Tab */}
           {activeTab === "history" && (
-            <div className="glass card" style={{ padding: "24px" }}>
+            <div className="glass card" style={{ padding: "16px" }}>
               <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>History</h3>
 
               <input

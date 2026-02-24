@@ -120,7 +120,7 @@ export default function BusinessPage() {
   };
 
   const renderResult = (data: any) => (
-    <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
+    <div className="glass card" style={{ padding: "16px", marginBottom: "24px" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "8px" }}>
         <div style={{ flex: 1 }}>
@@ -327,10 +327,10 @@ export default function BusinessPage() {
       <BottomNav />
       <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
         {!isMobile && <Sidebar />}
-        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "80px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)", paddingRight: isMobile ? "12px" : "16px" }}>
+        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "64px" : "68px", paddingBottom: isMobile ? "80px" : "16px", paddingLeft: isMobile ? "8px" : "calc(var(--sidebar-width, 240px) + 8px)", paddingRight: isMobile ? "8px" : "8px" }}>
         <ToolBackground color={toolCustom.color} />
 
-        <div style={{ height: isMobile ? "auto" : "calc(100vh - 104px)", display: "flex", flexDirection: "column" }}>
+        <div style={{ height: isMobile ? "auto" : "calc(100vh - 84px)", display: "flex", flexDirection: "column" }}>
           {/* Tabs */}
           <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
             {(['search', 'history'] as const).map(tab => (
@@ -357,10 +357,10 @@ export default function BusinessPage() {
           {/* Main content area */}
           <div style={{ flex: 1, overflow: "auto" }}>
           {activeTab === 'search' && (
-            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "20px", height: "100%" }}>
+            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "12px", height: "100%" }}>
               {/* Left: Input Form */}
-              <div style={{ width: isMobile ? "100%" : "380px", minWidth: isMobile ? "100%" : "380px" }}>
-              <div className="glass card" style={{ padding: "20px" }}>
+              <div style={{ width: isMobile ? "100%" : "300px", minWidth: isMobile ? "100%" : "300px" }}>
+              <div className="glass card" style={{ padding: "14px" }}>
                 <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
                   🕵️ {toolCustom.name}
                 </h2>
@@ -447,7 +447,7 @@ export default function BusinessPage() {
           )}
 
           {activeTab === 'history' && (
-            <div className="glass card" style={{ padding: "24px" }}>
+            <div className="glass card" style={{ padding: "16px" }}>
               <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>History</h3>
 
               <input

@@ -163,10 +163,10 @@ export default function CuratePage() {
           style={{
             flex: 1,
             minHeight: "100vh",
-            paddingTop: isMobile ? "72px" : "80px",
-            paddingBottom: isMobile ? "88px" : "24px",
-            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)",
-            paddingRight: isMobile ? "12px" : "16px",
+            paddingTop: isMobile ? "64px" : "68px",
+            paddingBottom: isMobile ? "80px" : "16px",
+            paddingLeft: isMobile ? "8px" : "calc(var(--sidebar-width, 240px) + 8px)",
+            paddingRight: isMobile ? "8px" : "8px",
           }}
         >
           <ToolBackground color={toolCustom.color} />
@@ -174,13 +174,13 @@ export default function CuratePage() {
           <div style={{ 
             display: "flex", 
             flexDirection: isMobile ? "column" : "row",
-            gap: "20px",
-            height: isMobile ? "auto" : "calc(100vh - 104px)",
+            gap: "12px",
+            height: isMobile ? "auto" : "calc(100vh - 84px)",
           }}>
             {/* Left Panel: Input + History */}
             <div style={{ 
-              width: isMobile ? "100%" : "360px",
-              minWidth: isMobile ? "100%" : "360px",
+              width: isMobile ? "100%" : "300px",
+              minWidth: isMobile ? "100%" : "300px",
               display: "flex",
               flexDirection: "column",
               gap: "16px",
@@ -188,7 +188,7 @@ export default function CuratePage() {
               overflow: isMobile ? "visible" : "auto",
             }}>
               {/* Input Form */}
-              <div className="glass card" style={{ padding: "20px" }}>
+              <div className="glass card" style={{ padding: "14px" }}>
                 <h2 style={{ marginBottom: "12px", fontSize: "18px", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
                   <span style={{ color: toolCustom.color }}>✨</span> {toolCustom.name}
                 </h2>
@@ -374,7 +374,7 @@ export default function CuratePage() {
               flexDirection: "column",
             }}>
               {result && result.items ? (
-                <div className="glass card" style={{ padding: "24px", flex: 1, overflow: "auto" }}>
+                <div className="glass card" style={{ padding: "16px", flex: 1, overflow: "auto" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
                     <h3 style={{ fontSize: "20px", fontWeight: 700, margin: 0 }}>
                       {result.topic}
@@ -403,14 +403,14 @@ export default function CuratePage() {
                   )}
 
                   {/* Categories as Grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "24px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "16px" }}>
                     {["popular", "technology", "politics", "culture"].map(category => {
                       const categoryItems = result.items.filter((item: any) => item.category === category);
                       if (categoryItems.length === 0) return null;
 
                       return (
                         <div key={category} style={{ 
-                          padding: "20px",
+                          padding: "14px",
                           background: "rgba(255,255,255,0.02)",
                           borderRadius: "12px",
                           border: "1px solid rgba(255,255,255,0.06)"

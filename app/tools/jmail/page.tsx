@@ -191,7 +191,7 @@ export default function JMailPage() {
             flex: 1,
             minHeight: "100vh",
             paddingTop: isMobile ? "72px" : "76px",
-            paddingBottom: isMobile ? "88px" : "24px",
+            paddingBottom: isMobile ? "80px" : "16px",
             paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
             paddingRight: isMobile ? "12px" : "20px",
           }}
@@ -201,13 +201,13 @@ export default function JMailPage() {
         <div style={{ 
           display: "flex", 
           flexDirection: isMobile ? "column" : "row",
-          gap: "20px",
-          height: isMobile ? "auto" : "calc(100vh - 100px)",
+          gap: "12px",
+          height: isMobile ? "auto" : "calc(100vh - 84px)",
         }}>
           {/* Left Panel: Search + History */}
           <div style={{ 
-            width: isMobile ? "100%" : "380px",
-            minWidth: isMobile ? "100%" : "380px",
+            width: isMobile ? "100%" : "300px",
+            minWidth: isMobile ? "100%" : "300px",
             display: "flex",
             flexDirection: "column",
             gap: "16px",
@@ -388,7 +388,7 @@ export default function JMailPage() {
           }}>
             {/* Jimmy Response */}
             {jimmyResponse && (
-              <div className="glass card" style={{ padding: "20px", marginBottom: "16px", background: "rgba(59, 130, 246, 0.05)" }}>
+              <div className="glass card" style={{ padding: "14px", marginBottom: "16px", background: "rgba(59, 130, 246, 0.05)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                   <MessageSquare size={18} style={{ color: "#3b82f6" }} />
                   <h4 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#3b82f6" }}>Jimmy's Analysis</h4>
@@ -401,7 +401,7 @@ export default function JMailPage() {
 
             {/* Results */}
             {results.length > 0 ? (
-              <div className="glass card" style={{ padding: "20px", flex: 1, overflow: "auto" }}>
+              <div className="glass card" style={{ padding: "14px", flex: 1, overflow: "auto" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                   <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
                     Results ({results.length})

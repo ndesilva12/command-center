@@ -265,10 +265,10 @@ export default function NotesPage() {
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "80px",
-        paddingBottom: isMobile ? "88px" : "24px",
-        paddingLeft: isMobile ? "0" : "calc(var(--sidebar-width, 240px) + 16px)",
-        paddingRight: isMobile ? "0" : "16px",
+        paddingTop: isMobile ? "64px" : "68px",
+        paddingBottom: isMobile ? "80px" : "16px",
+        paddingLeft: isMobile ? "0" : "calc(var(--sidebar-width, 240px) + 8px)",
+        paddingRight: isMobile ? "0" : "8px",
         minHeight: "100vh",
       }}>
         {/* Messages */}
@@ -292,7 +292,7 @@ export default function NotesPage() {
 
         <div style={{ 
           display: "flex", 
-          height: isMobile ? "calc(100vh - 160px)" : "calc(100vh - 104px)",
+          height: isMobile ? "calc(100vh - 144px)" : "calc(100vh - 84px)",
           gap: "0",
         }}>
           {/* Left Sidebar: Notes List */}
@@ -533,7 +533,7 @@ export default function NotesPage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: "16px",
+                  gap: "10px",
                 }}>
                   {isMobile && (
                     <button
@@ -780,7 +780,7 @@ Write freely. Your notes are saved when you click Save or press Cmd/Ctrl+S."
                     fontSize: "12px",
                     color: "var(--foreground-muted)",
                     display: "flex",
-                    gap: "16px",
+                    gap: "10px",
                   }}>
                     <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
                     <span>Updated: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
@@ -796,7 +796,7 @@ Write freely. Your notes are saved when you click Save or press Cmd/Ctrl+S."
                 height: "100%",
                 color: "var(--foreground-muted)",
                 flexDirection: "column",
-                gap: "16px",
+                gap: "10px",
               }}>
                 <FileText size={64} style={{ opacity: 0.2 }} />
                 <p style={{ margin: 0, fontSize: "16px" }}>Select a note or create a new one</p>

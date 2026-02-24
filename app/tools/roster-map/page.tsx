@@ -119,17 +119,17 @@ export default function RosterMapPage() {
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "80px",
-        paddingBottom: isMobile ? "88px" : "24px",
-        paddingLeft: isMobile ? "0" : "calc(var(--sidebar-width, 240px) + 16px)",
-        paddingRight: isMobile ? "0" : "16px",
+        paddingTop: isMobile ? "64px" : "68px",
+        paddingBottom: isMobile ? "80px" : "16px",
+        paddingLeft: isMobile ? "0" : "calc(var(--sidebar-width, 240px) + 8px)",
+        paddingRight: isMobile ? "0" : "8px",
         minHeight: "100vh",
       }}>
         {/* Full-width layout */}
         <div style={{ 
           display: "flex", 
           flexDirection: "column", 
-          height: isMobile ? "calc(100vh - 160px)" : "calc(100vh - 104px)",
+          height: isMobile ? "calc(100vh - 144px)" : "calc(100vh - 84px)",
           padding: isMobile ? "0" : "0",
         }}>
           {/* Header */}
@@ -175,7 +175,7 @@ export default function RosterMapPage() {
           <div style={{ 
             display: "flex", 
             flex: 1, 
-            gap: "16px",
+            gap: "10px",
             overflow: "hidden",
           }}>
             {/* Left Panel: Team Selector */}
@@ -289,7 +289,7 @@ export default function RosterMapPage() {
               flex: 1, 
               display: "flex", 
               flexDirection: "column", 
-              gap: "16px",
+              gap: "10px",
               minWidth: 0,
             }}>
               {/* Large Map */}
