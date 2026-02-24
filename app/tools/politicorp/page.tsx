@@ -191,10 +191,10 @@ export default function PoliticorpPage() {
       <BottomNav />
       <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
         {!isMobile && <Sidebar />}
-        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "76px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)", paddingRight: isMobile ? "12px" : "20px" }}>
+        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "80px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)", paddingRight: isMobile ? "12px" : "16px" }}>
         <ToolBackground color={toolCustom.color} />
 
-        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
+        <div style={{ height: isMobile ? "auto" : "calc(100vh - 104px)", display: "flex", flexDirection: "column" }}>
           {/* Input Form */}
           <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
             <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
@@ -265,6 +265,8 @@ export default function PoliticorpPage() {
             ))}
           </div>
 
+          {/* Main content */}
+          <div style={{ flex: 1, overflow: "auto" }}>
           {/* Result Tab */}
           {activeTab === "result" && result && (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -502,6 +504,7 @@ export default function PoliticorpPage() {
               )}
             </div>
           )}
+          </div>
         </div>
         </main>
       </div>

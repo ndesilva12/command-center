@@ -327,10 +327,10 @@ export default function BusinessPage() {
       <BottomNav />
       <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
         {!isMobile && <Sidebar />}
-        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "76px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)", paddingRight: isMobile ? "12px" : "20px" }}>
+        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "80px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)", paddingRight: isMobile ? "12px" : "16px" }}>
         <ToolBackground color={toolCustom.color} />
 
-        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
+        <div style={{ height: isMobile ? "auto" : "calc(100vh - 104px)", display: "flex", flexDirection: "column" }}>
           {/* Tabs */}
           <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
             {(['search', 'history'] as const).map(tab => (
@@ -354,10 +354,13 @@ export default function BusinessPage() {
             ))}
           </div>
 
+          {/* Main content area */}
+          <div style={{ flex: 1, overflow: "auto" }}>
           {activeTab === 'search' && (
-            <>
-              {/* Input Form */}
-              <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
+            <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: "20px", height: "100%" }}>
+              {/* Left: Input Form */}
+              <div style={{ width: isMobile ? "100%" : "380px", minWidth: isMobile ? "100%" : "380px" }}>
+              <div className="glass card" style={{ padding: "20px" }}>
                 <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
                   🕵️ {toolCustom.name}
                 </h2>
@@ -420,10 +423,27 @@ export default function BusinessPage() {
                   </button>
                 </form>
               </div>
+              </div>
 
-              {/* Result */}
-              {result && renderResult(result)}
-            </>
+              {/* Right: Result */}
+              <div style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
+                {result ? renderResult(result) : (
+                  <div className="glass card" style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px", color: "var(--muted)" }}>
+                    {loading ? (
+                      <>
+                        <div style={{ width: "40px", height: "40px", border: "3px solid rgba(148, 163, 184, 0.2)", borderTop: `3px solid ${toolCustom.color}`, borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                        <p style={{ fontSize: "14px", margin: 0 }}>Investigating...</p>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: "48px", opacity: 0.3 }}>🕵️</span>
+                        <p style={{ fontSize: "15px", margin: 0 }}>Enter a business name and location to investigate</p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {activeTab === 'history' && (
@@ -504,6 +524,7 @@ export default function BusinessPage() {
               )}
             </div>
           )}
+          </div>
         </div>
         </main>
       </div>

@@ -198,43 +198,56 @@ export default function JMailPage() {
         >
         <ToolBackground color={toolCustom.color} />
         
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-            <Mail size={32} style={{ color: toolCustom.color }} />
-            <div>
-              <h1 style={{ fontSize: "28px", fontWeight: 700, margin: 0 }}>
-                {toolCustom.name}
-              </h1>
-              <p style={{ fontSize: "14px", color: "var(--muted)", margin: 0 }}>
-                Search Jeffrey Epstein's emails (2002-2011)
-              </p>
+        <div style={{ 
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row",
+          gap: "20px",
+          height: isMobile ? "auto" : "calc(100vh - 100px)",
+        }}>
+          {/* Left Panel: Search + History */}
+          <div style={{ 
+            width: isMobile ? "100%" : "380px",
+            minWidth: isMobile ? "100%" : "380px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            height: isMobile ? "auto" : "100%",
+            overflow: isMobile ? "visible" : "auto",
+          }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <Mail size={28} style={{ color: toolCustom.color }} />
+              <div>
+                <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0 }}>
+                  {toolCustom.name}
+                </h1>
+                <p style={{ fontSize: "12px", color: "var(--muted)", margin: 0 }}>
+                  193K Epstein emails (2002-2011)
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Search Modes */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
             {/* Keyword Search */}
-            <div className="glass card" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-                <Search size={20} style={{ color: toolCustom.color }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>Keyword Search</h3>
+            <div className="glass card" style={{ padding: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <Search size={16} style={{ color: toolCustom.color }} />
+                <h3 style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>Keyword Search</h3>
               </div>
               <form onSubmit={handleKeywordSearch}>
                 <input
                   type="text"
                   value={keywordQuery}
                   onChange={(e) => setKeywordQuery(e.target.value)}
-                  placeholder="Search emails (e.g., Bill Clinton, Virgin Islands, flight logs)"
+                  placeholder="Bill Clinton, Virgin Islands, flight..."
                   style={{
                     width: "100%",
-                    padding: "12px 16px",
+                    padding: "10px 14px",
                     borderRadius: "8px",
                     border: "1px solid var(--glass-border)",
                     background: "var(--glass-bg)",
                     color: "var(--foreground)",
-                    fontSize: "14px",
-                    marginBottom: "12px"
+                    fontSize: "13px",
+                    marginBottom: "10px"
                   }}
                   disabled={loading}
                 />
@@ -243,12 +256,12 @@ export default function JMailPage() {
                   disabled={loading || !keywordQuery.trim()}
                   style={{
                     width: "100%",
-                    padding: "12px 24px",
+                    padding: "10px 20px",
                     borderRadius: "8px",
                     border: "none",
-                    background: loading ? "var(--muted)" : `linear-gradient(135deg, ${toolCustom.color}, #b91c1c)`,
+                    background: loading && activeMode === "keyword" ? "var(--muted)" : `linear-gradient(135deg, ${toolCustom.color}, #b91c1c)`,
                     color: "#fff",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: 600,
                     cursor: loading || !keywordQuery.trim() ? "not-allowed" : "pointer"
                   }}
@@ -259,26 +272,26 @@ export default function JMailPage() {
             </div>
 
             {/* Ask Jimmy */}
-            <div className="glass card" style={{ padding: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-                <MessageSquare size={20} style={{ color: "#3b82f6" }} />
-                <h3 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>Ask Jimmy</h3>
+            <div className="glass card" style={{ padding: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <MessageSquare size={16} style={{ color: "#3b82f6" }} />
+                <h3 style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>Ask Jimmy</h3>
               </div>
               <form onSubmit={handleJimmySearch}>
                 <input
                   type="text"
                   value={jimmyQuery}
                   onChange={(e) => setJimmyQuery(e.target.value)}
-                  placeholder="Natural language query (e.g., Who did he email most about politics?)"
+                  placeholder="Who did he email most about politics?"
                   style={{
                     width: "100%",
-                    padding: "12px 16px",
+                    padding: "10px 14px",
                     borderRadius: "8px",
                     border: "1px solid var(--glass-border)",
                     background: "var(--glass-bg)",
                     color: "var(--foreground)",
-                    fontSize: "14px",
-                    marginBottom: "12px"
+                    fontSize: "13px",
+                    marginBottom: "10px"
                   }}
                   disabled={loading}
                 />
@@ -287,12 +300,12 @@ export default function JMailPage() {
                   disabled={loading || !jimmyQuery.trim()}
                   style={{
                     width: "100%",
-                    padding: "12px 24px",
+                    padding: "10px 20px",
                     borderRadius: "8px",
                     border: "none",
-                    background: loading ? "var(--muted)" : "linear-gradient(135deg, #3b82f6, #2563eb)",
+                    background: loading && activeMode === "jimmy" ? "var(--muted)" : "linear-gradient(135deg, #3b82f6, #2563eb)",
                     color: "#fff",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: 600,
                     cursor: loading || !jimmyQuery.trim() ? "not-allowed" : "pointer"
                   }}
@@ -301,199 +314,195 @@ export default function JMailPage() {
                 </button>
               </form>
             </div>
+
+            {/* History */}
+            {!loading && (
+              <div className="glass card" style={{ padding: "16px", flex: 1, overflow: "auto", minHeight: isMobile ? "auto" : "0" }}>
+                <h3 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700 }}>
+                  History
+                </h3>
+
+                <input
+                  type="text"
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  placeholder="Search..."
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid var(--glass-border)",
+                    background: "var(--glass-bg)",
+                    color: "var(--foreground)",
+                    fontSize: "13px",
+                    marginBottom: "12px"
+                  }}
+                />
+
+                {filteredHistory.length === 0 ? (
+                  <p style={{ color: "var(--muted)", fontSize: "13px" }}>
+                    {historySearch.trim() ? "No results" : "No searches yet"}
+                  </p>
+                ) : (
+                  <>
+                    {filteredHistory.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => loadFromHistory(item)}
+                        style={{
+                          padding: "10px",
+                          marginBottom: "6px",
+                          borderRadius: "6px",
+                          background: "var(--glass-bg)",
+                          cursor: "pointer",
+                          border: "1px solid transparent"
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+                          {item.mode === "keyword" ? (
+                            <Search size={12} style={{ color: toolCustom.color }} />
+                          ) : (
+                            <MessageSquare size={12} style={{ color: "#3b82f6" }} />
+                          )}
+                          <div style={{ fontWeight: 600, fontSize: "13px" }}>{item.query}</div>
+                        </div>
+                        <div style={{ fontSize: "11px", color: "var(--muted)", marginLeft: "18px" }}>
+                          {item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "?"} • {item.results?.length || 0} results
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Jimmy Response */}
-          {jimmyResponse && (
-            <div className="glass card" style={{ padding: "24px", marginBottom: "24px", background: "rgba(59, 130, 246, 0.05)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <MessageSquare size={18} style={{ color: "#3b82f6" }} />
-                <h4 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#3b82f6" }}>Jimmy's Analysis</h4>
+          {/* Right Panel: Results */}
+          <div style={{ 
+            flex: 1,
+            minWidth: 0,
+            height: isMobile ? "auto" : "100%",
+            overflow: isMobile ? "visible" : "auto",
+            display: "flex",
+            flexDirection: "column",
+          }}>
+            {/* Jimmy Response */}
+            {jimmyResponse && (
+              <div className="glass card" style={{ padding: "20px", marginBottom: "16px", background: "rgba(59, 130, 246, 0.05)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <MessageSquare size={18} style={{ color: "#3b82f6" }} />
+                  <h4 style={{ fontSize: "15px", fontWeight: 600, margin: 0, color: "#3b82f6" }}>Jimmy's Analysis</h4>
+                </div>
+                <div style={{ fontSize: "14px", lineHeight: 1.7, whiteSpace: "pre-wrap", color: "var(--foreground)" }}>
+                  {jimmyResponse}
+                </div>
               </div>
-              <div style={{ fontSize: "14px", lineHeight: 1.6, whiteSpace: "pre-wrap", color: "var(--foreground)" }}>
-                {jimmyResponse}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Results */}
-          {results.length > 0 && (
-            <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-                  Results ({results.length})
-                </h3>
-                <ExportPDFButton title={`JMail: ${activeMode === "keyword" ? keywordQuery : jimmyQuery}`} />
-              </div>
+            {/* Results */}
+            {results.length > 0 ? (
+              <div className="glass card" style={{ padding: "20px", flex: 1, overflow: "auto" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                  <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
+                    Results ({results.length})
+                  </h3>
+                  <ExportPDFButton title={`JMail: ${activeMode === "keyword" ? keywordQuery : jimmyQuery}`} />
+                </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {results.map((email) => (
-                  <div
-                    key={email.id}
-                    onClick={() => setSelectedEmail(selectedEmail?.id === email.id ? null : email)}
-                    style={{
-                      padding: "16px",
-                      borderRadius: "8px",
-                      background: selectedEmail?.id === email.id ? "var(--glass-bg)" : "rgba(255, 255, 255, 0.02)",
-                      border: `1px solid ${selectedEmail?.id === email.id ? toolCustom.color : "var(--glass-border)"}`,
-                      cursor: "pointer",
-                      transition: "all 0.2s"
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "8px" }}>
-                      <User size={16} style={{ color: toolCustom.color, marginTop: "2px" }} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px" }}>
-                          {email.sender_name || email.sender_email}
-                        </div>
-                        <div style={{ fontSize: "13px", color: "var(--muted)" }}>
-                          {email.sender_email}
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--muted)" }}>
-                        <Calendar size={12} />
-                        {new Date(email.sent_at).toLocaleDateString()}
-                      </div>
-                    </div>
-
-                    <div style={{ marginLeft: "28px" }}>
-                      <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "6px" }}>
-                        {email.subject || "(No Subject)"}
-                      </div>
-                      
-                      {email.to_recipients && (
-                        <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "4px" }}>
-                          <strong>To:</strong> {email.to_recipients}
-                        </div>
-                      )}
-                      
-                      {email.cc_recipients && (
-                        <div style={{ fontSize: "12px", color: "var(--muted)", marginBottom: "8px" }}>
-                          <strong>CC:</strong> {email.cc_recipients}
-                        </div>
-                      )}
-
-                      {selectedEmail?.id === email.id && (
-                        <div style={{
-                          marginTop: "12px",
-                          paddingTop: "12px",
-                          borderTop: "1px solid var(--glass-border)",
-                          fontSize: "13px",
-                          lineHeight: 1.6,
-                          whiteSpace: "pre-wrap",
-                          maxHeight: "400px",
-                          overflowY: "auto"
-                        }}>
-                          {email.content_markdown || "(No content)"}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Loading state */}
-          {loading && (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--muted)" }}>
-              <div style={{
-                width: "40px",
-                height: "40px",
-                border: "3px solid rgba(148, 163, 184, 0.2)",
-                borderTop: `3px solid ${toolCustom.color}`,
-                borderRadius: "50%",
-                margin: "0 auto 16px",
-                animation: "spin 1s linear infinite"
-              }} />
-              <p style={{ fontSize: "14px", margin: 0 }}>
-                {activeMode === "keyword" ? "Searching emails..." : "Asking Jimmy..."}
-              </p>
-            </div>
-          )}
-
-          {/* History */}
-          {!loading && (
-            <div className="glass card" style={{ padding: "24px" }}>
-              <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>
-                Search History
-              </h3>
-
-              <input
-                type="text"
-                value={historySearch}
-                onChange={(e) => setHistorySearch(e.target.value)}
-                placeholder="Search history..."
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--glass-border)",
-                  background: "var(--glass-bg)",
-                  color: "var(--foreground)",
-                  fontSize: "14px",
-                  marginBottom: "16px"
-                }}
-              />
-
-              {filteredHistory.length === 0 ? (
-                <p style={{ color: "var(--muted)", fontSize: "14px" }}>
-                  {historySearch.trim() ? "No results found" : "No searches yet"}
-                </p>
-              ) : (
-                <>
-                  {filteredHistory.map((item) => (
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(400px, 1fr))", gap: "12px" }}>
+                  {results.map((email) => (
                     <div
-                      key={item.id}
-                      onClick={() => loadFromHistory(item)}
+                      key={email.id}
+                      onClick={() => setSelectedEmail(selectedEmail?.id === email.id ? null : email)}
                       style={{
-                        padding: "12px",
-                        marginBottom: "8px",
-                        borderRadius: "6px",
-                        background: "var(--glass-bg)",
+                        padding: "16px",
+                        borderRadius: "10px",
+                        background: selectedEmail?.id === email.id ? "var(--glass-bg)" : "rgba(255, 255, 255, 0.02)",
+                        border: `1px solid ${selectedEmail?.id === email.id ? toolCustom.color : "rgba(255,255,255,0.06)"}`,
                         cursor: "pointer",
-                        border: "1px solid transparent"
+                        transition: "all 0.2s"
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
-                      onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                        {item.mode === "keyword" ? (
-                          <Search size={14} style={{ color: toolCustom.color }} />
-                        ) : (
-                          <MessageSquare size={14} style={{ color: "#3b82f6" }} />
-                        )}
-                        <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.query}</div>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "8px" }}>
+                        <User size={16} style={{ color: toolCustom.color, marginTop: "2px" }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "2px" }}>
+                            {email.sender_name || email.sender_email}
+                          </div>
+                          <div style={{ fontSize: "12px", color: "var(--muted)" }}>
+                            {email.sender_email}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "var(--muted)" }}>
+                          <Calendar size={11} />
+                          {new Date(email.sent_at).toLocaleDateString()}
+                        </div>
                       </div>
-                      <div style={{ fontSize: "12px", color: "var(--muted)", marginLeft: "22px" }}>
-                        {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"} • {item.results?.length || 0} results
+
+                      <div style={{ marginLeft: "28px" }}>
+                        <div style={{ fontWeight: 600, fontSize: "13px", marginBottom: "6px", color: "var(--foreground)" }}>
+                          {email.subject || "(No Subject)"}
+                        </div>
+                        
+                        {email.to_recipients && (
+                          <div style={{ fontSize: "11px", color: "var(--muted)", marginBottom: "4px" }}>
+                            <strong>To:</strong> {email.to_recipients.substring(0, 60)}...
+                          </div>
+                        )}
+
+                        {selectedEmail?.id === email.id && (
+                          <div style={{
+                            marginTop: "12px",
+                            paddingTop: "12px",
+                            borderTop: "1px solid var(--glass-border)",
+                            fontSize: "13px",
+                            lineHeight: 1.6,
+                            whiteSpace: "pre-wrap",
+                            maxHeight: "300px",
+                            overflowY: "auto"
+                          }}>
+                            {email.content_markdown || "(No content)"}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
-
-                  {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
-                    <button
-                      onClick={() => setHistoryLimit(historyLimit + 25)}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        marginTop: "8px",
-                        borderRadius: "6px",
-                        border: "1px solid var(--glass-border)",
-                        background: "transparent",
-                        color: toolCustom.color,
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: "pointer"
-                      }}
-                    >
-                      Show More (currently showing {historyLimit})
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                </div>
+              </div>
+            ) : (
+              <div className="glass card" style={{ 
+                flex: 1, 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                flexDirection: "column",
+                gap: "16px",
+                color: "var(--muted)"
+              }}>
+                {loading ? (
+                  <>
+                    <div style={{
+                      width: "40px",
+                      height: "40px",
+                      border: "3px solid rgba(148, 163, 184, 0.2)",
+                      borderTop: `3px solid ${toolCustom.color}`,
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite"
+                    }} />
+                    <p style={{ fontSize: "14px", margin: 0 }}>
+                      {activeMode === "keyword" ? "Searching emails..." : "Asking Jimmy..."}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Mail size={48} style={{ opacity: 0.3 }} />
+                    <p style={{ fontSize: "15px", margin: 0 }}>Search 193K Epstein emails</p>
+                    <p style={{ fontSize: "12px", margin: 0, opacity: 0.7 }}>Keyword search or ask Jimmy a question</p>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         </main>
       </div>

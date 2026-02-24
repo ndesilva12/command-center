@@ -163,298 +163,358 @@ export default function CuratePage() {
           style={{
             flex: 1,
             minHeight: "100vh",
-            paddingTop: isMobile ? "72px" : "76px",
+            paddingTop: isMobile ? "72px" : "80px",
             paddingBottom: isMobile ? "88px" : "24px",
-            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-            paddingRight: isMobile ? "12px" : "20px",
+            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)",
+            paddingRight: isMobile ? "12px" : "16px",
           }}
         >
           <ToolBackground color={toolCustom.color} />
           
-          <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-            {/* Input Form */}
-            <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
-                ✨ {toolCustom.name}
-              </h2>
-              <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
-                Intelligent content curation with Ron Paul lens and diversity enforcement
-              </p>
-              
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Enter topic (e.g., Bitcoin, Federal Reserve, Austrian Economics)"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--glass-border)",
-                    background: "var(--glass-bg)",
-                    color: "var(--foreground)",
-                    fontSize: "15px",
-                    marginBottom: "16px"
-                  }}
-                  disabled={loading}
-                />
-
-                {/* Source Filters */}
-                <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 600 }}>
-                    Source Types (optional - leave empty for diverse mix)
-                  </label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                    {sourceOptions.map(option => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => toggleSource(option.value)}
-                        style={{
-                          padding: "8px 16px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--glass-border)",
-                          background: sources.includes(option.value) ? toolCustom.color : "transparent",
-                          color: sources.includes(option.value) ? "#fff" : "var(--foreground)",
-                          fontSize: "14px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Count Selector */}
-                <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 600 }}>
-                    Number of Items (must be multiple of 4)
-                  </label>
-                  <select
-                    value={count}
-                    onChange={(e) => setCount(Number(e.target.value))}
+          <div style={{ 
+            display: "flex", 
+            flexDirection: isMobile ? "column" : "row",
+            gap: "20px",
+            height: isMobile ? "auto" : "calc(100vh - 104px)",
+          }}>
+            {/* Left Panel: Input + History */}
+            <div style={{ 
+              width: isMobile ? "100%" : "360px",
+              minWidth: isMobile ? "100%" : "360px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              height: isMobile ? "auto" : "100%",
+              overflow: isMobile ? "visible" : "auto",
+            }}>
+              {/* Input Form */}
+              <div className="glass card" style={{ padding: "20px" }}>
+                <h2 style={{ marginBottom: "12px", fontSize: "18px", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ color: toolCustom.color }}>✨</span> {toolCustom.name}
+                </h2>
+                <p style={{ marginBottom: "16px", color: "var(--muted)", fontSize: "13px" }}>
+                  Intelligent curation with Ron Paul lens
+                </p>
+                
+                <form onSubmit={handleSubmit}>
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="Topic (e.g., Bitcoin, Federal Reserve)"
                     style={{
-                      padding: "10px 14px",
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--glass-border)",
+                      background: "var(--glass-bg)",
+                      color: "var(--foreground)",
+                      fontSize: "14px",
+                      marginBottom: "12px"
+                    }}
+                    disabled={loading}
+                  />
+
+                  {/* Source Filters */}
+                  <div style={{ marginBottom: "12px" }}>
+                    <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>
+                      Sources (optional)
+                    </label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {sourceOptions.map(option => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => toggleSource(option.value)}
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            border: "1px solid var(--glass-border)",
+                            background: sources.includes(option.value) ? toolCustom.color : "transparent",
+                            color: sources.includes(option.value) ? "#fff" : "var(--foreground)",
+                            fontSize: "12px",
+                            cursor: "pointer"
+                          }}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Count Selector */}
+                  <div style={{ marginBottom: "12px" }}>
+                    <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", fontWeight: 600, color: "var(--muted)" }}>
+                      Items
+                    </label>
+                    <select
+                      value={count}
+                      onChange={(e) => setCount(Number(e.target.value))}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--glass-border)",
+                        background: "var(--glass-bg)",
+                        color: "var(--foreground)",
+                        fontSize: "13px"
+                      }}
+                      disabled={loading}
+                    >
+                      <option value={4}>4 items</option>
+                      <option value={8}>8 items</option>
+                      <option value={12}>12 items</option>
+                      <option value={16}>16 items</option>
+                      <option value={20}>20 items</option>
+                    </select>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={loading || !topic.trim()}
+                    style={{
+                      width: "100%",
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: loading ? "var(--muted)" : `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)`,
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: loading ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    {loading ? "Processing..." : "Curate"}
+                  </button>
+                </form>
+              </div>
+
+              {/* History */}
+              {!loading && (
+                <div className="glass card" style={{ padding: "16px", flex: 1, overflow: "auto", minHeight: isMobile ? "auto" : "0" }}>
+                  <h3 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700 }}>
+                    History
+                  </h3>
+
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Search..."
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
                       borderRadius: "6px",
                       border: "1px solid var(--glass-border)",
                       background: "var(--glass-bg)",
                       color: "var(--foreground)",
-                      fontSize: "14px"
+                      fontSize: "13px",
+                      marginBottom: "12px"
                     }}
-                    disabled={loading}
-                  >
-                    <option value={4}>4 items</option>
-                    <option value={8}>8 items</option>
-                    <option value={12}>12 items</option>
-                    <option value={16}>16 items</option>
-                    <option value={20}>20 items</option>
-                  </select>
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={loading || !topic.trim()}
-                  style={{
-                    padding: "12px 24px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: loading ? "var(--muted)" : "linear-gradient(135deg, #00aaff, #0088cc)",
-                    color: "#fff",
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    cursor: loading ? "not-allowed" : "pointer"
-                  }}
-                >
-                  {loading ? "Processing... (check history)" : "Curate Content"}
-                </button>
-              </form>
-            </div>
+                  />
 
-            {/* Result */}
-            {result && result.items && (
-              <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
-                  <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-                    {result.topic}
-                  </h3>
-                  <ExportPDFButton title={`Curate: ${result.topic}`} />
-                </div>
-                
-                {/* Diversity Stats */}
-                {result.diversity && (
-                  <div style={{ 
-                    marginBottom: "24px", 
-                    padding: "12px", 
-                    background: "var(--glass-bg)", 
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    color: "var(--muted)"
-                  }}>
-                    Mix: {result.diversity.x_posts || 0} X posts • {result.diversity.videos || 0} videos • {result.diversity.reddit || 0} Reddit • {result.diversity.articles || 0} articles
-                  </div>
-                )}
-
-                {/* Categories */}
-                {["popular", "technology", "politics", "culture"].map(category => {
-                  const categoryItems = result.items.filter((item: any) => item.category === category);
-                  if (categoryItems.length === 0) return null;
-
-                  return (
-                    <div key={category} style={{ marginBottom: "32px" }}>
-                      <h4 style={{ 
-                        marginBottom: "16px", 
-                        fontSize: "16px", 
-                        fontWeight: 600,
-                        color: categoryColors[category] || toolCustom.color,
-                        textTransform: "capitalize"
-                      }}>
-                        {category}
-                      </h4>
-                      
-                      {categoryItems.map((item: any, i: number) => (
+                  {filteredHistory.length === 0 ? (
+                    <p style={{ color: "var(--muted)", fontSize: "13px" }}>
+                      {historySearch.trim() ? "No results" : "No curations yet"}
+                    </p>
+                  ) : (
+                    <>
+                      {filteredHistory.map((item) => (
                         <div 
-                          key={i}
+                          key={item.id}
+                          onClick={() => setResult(item)}
                           style={{
-                            marginBottom: "16px",
-                            paddingBottom: "16px",
-                            borderBottom: i < categoryItems.length - 1 ? "1px solid var(--glass-border)" : "none"
+                            padding: "10px",
+                            marginBottom: "6px",
+                            borderRadius: "6px",
+                            background: result?.id === item.id ? `${toolCustom.color}15` : "var(--glass-bg)",
+                            cursor: "pointer",
+                            border: result?.id === item.id ? `1px solid ${toolCustom.color}40` : "1px solid transparent"
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "8px" }}>
-                            <span style={{ fontSize: "18px" }}>
-                              {sourceTypeEmojis[item.source_type] || "📄"}
-                            </span>
-                            <div style={{ flex: 1 }}>
-                              <a 
-                                href={item.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                style={{ 
-                                  color: toolCustom.color, 
-                                  textDecoration: "none",
-                                  fontWeight: 600,
-                                  fontSize: "15px",
-                                  display: "block",
-                                  marginBottom: "6px"
-                                }}
-                              >
-                                {item.title}
-                              </a>
-                              {item.excerpt && (
-                                <p style={{ 
-                                  fontSize: "13px", 
-                                  color: "var(--muted)", 
-                                  lineHeight: 1.5,
-                                  marginBottom: "6px"
-                                }}>
-                                  {item.excerpt}
-                                </p>
-                              )}
-                              {item.why && (
-                                <p style={{ 
-                                  fontSize: "12px", 
-                                  color: "var(--muted)", 
-                                  fontStyle: "italic"
-                                }}>
-                                  💡 {item.why}
-                                </p>
-                              )}
-                              {item.score && (
-                                <div style={{ 
-                                  fontSize: "12px", 
-                                  color: categoryColors[category] || toolCustom.color,
-                                  marginTop: "4px"
-                                }}>
-                                  Score: {item.score}/10
-                                </div>
-                              )}
-                            </div>
+                          <div style={{ fontWeight: 600, fontSize: "13px" }}>{item.topic || "Untitled"}</div>
+                          <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
+                            {item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "?"} • {item.total || item.items?.length || 0} items
                           </div>
                         </div>
                       ))}
+
+                      {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
+                        <button
+                          onClick={() => setHistoryLimit(historyLimit + 25)}
+                          style={{
+                            width: "100%",
+                            padding: "8px",
+                            marginTop: "4px",
+                            borderRadius: "6px",
+                            border: "1px solid var(--glass-border)",
+                            background: "transparent",
+                            color: toolCustom.color,
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Load more
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Right Panel: Results */}
+            <div style={{ 
+              flex: 1,
+              minWidth: 0,
+              height: isMobile ? "auto" : "100%",
+              overflow: isMobile ? "visible" : "auto",
+              display: "flex",
+              flexDirection: "column",
+            }}>
+              {result && result.items ? (
+                <div className="glass card" style={{ padding: "24px", flex: 1, overflow: "auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+                    <h3 style={{ fontSize: "20px", fontWeight: 700, margin: 0 }}>
+                      {result.topic}
+                    </h3>
+                    <ExportPDFButton title={`Curate: ${result.topic}`} />
+                  </div>
+                  
+                  {/* Diversity Stats */}
+                  {result.diversity && (
+                    <div style={{ 
+                      marginBottom: "24px", 
+                      padding: "12px 16px", 
+                      background: "var(--glass-bg)", 
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                      color: "var(--muted)",
+                      display: "flex",
+                      gap: "16px",
+                      flexWrap: "wrap"
+                    }}>
+                      <span>🐦 {result.diversity.x_posts || 0} X</span>
+                      <span>📹 {result.diversity.videos || 0} Videos</span>
+                      <span>👽 {result.diversity.reddit || 0} Reddit</span>
+                      <span>📰 {result.diversity.articles || 0} Articles</span>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  )}
 
-            {/* History */}
-            {!loading && (
-              <div className="glass card" style={{ padding: "24px" }}>
-                <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>
-                  History
-                </h3>
+                  {/* Categories as Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "24px" }}>
+                    {["popular", "technology", "politics", "culture"].map(category => {
+                      const categoryItems = result.items.filter((item: any) => item.category === category);
+                      if (categoryItems.length === 0) return null;
 
-                <input
-                  type="text"
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  placeholder="Search history..."
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--glass-border)",
-                    background: "var(--glass-bg)",
-                    color: "var(--foreground)",
-                    fontSize: "14px",
-                    marginBottom: "16px"
-                  }}
-                />
-
-                {filteredHistory.length === 0 ? (
-                  <p style={{ color: "var(--muted)", fontSize: "14px" }}>
-                    {historySearch.trim() ? "No results found" : "No curations yet"}
-                  </p>
-                ) : (
-                  <>
-                    {filteredHistory.map((item) => (
-                      <div 
-                        key={item.id}
-                        onClick={() => setResult(item)}
-                        style={{
-                          padding: "12px",
-                          marginBottom: "8px",
-                          borderRadius: "6px",
-                          background: "var(--glass-bg)",
-                          cursor: "pointer",
-                          border: "1px solid transparent"
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
-                        onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
-                      >
-                        <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic || "Untitled Curation"}</div>
-                        <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                          {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"} • {item.total || item.items?.length || 0} items
+                      return (
+                        <div key={category} style={{ 
+                          padding: "20px",
+                          background: "rgba(255,255,255,0.02)",
+                          borderRadius: "12px",
+                          border: "1px solid rgba(255,255,255,0.06)"
+                        }}>
+                          <h4 style={{ 
+                            marginBottom: "16px", 
+                            fontSize: "15px", 
+                            fontWeight: 700,
+                            color: categoryColors[category] || toolCustom.color,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px"
+                          }}>
+                            {category}
+                          </h4>
+                          
+                          {categoryItems.map((item: any, i: number) => (
+                            <div 
+                              key={i}
+                              style={{
+                                marginBottom: i < categoryItems.length - 1 ? "16px" : "0",
+                                paddingBottom: i < categoryItems.length - 1 ? "16px" : "0",
+                                borderBottom: i < categoryItems.length - 1 ? "1px solid var(--glass-border)" : "none"
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                                <span style={{ fontSize: "16px", marginTop: "2px" }}>
+                                  {sourceTypeEmojis[item.source_type] || "📄"}
+                                </span>
+                                <div style={{ flex: 1 }}>
+                                  <a 
+                                    href={item.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    style={{ 
+                                      color: "var(--foreground)", 
+                                      textDecoration: "none",
+                                      fontWeight: 600,
+                                      fontSize: "14px",
+                                      display: "block",
+                                      marginBottom: "6px",
+                                      lineHeight: 1.4
+                                    }}
+                                  >
+                                    {item.title}
+                                  </a>
+                                  {item.excerpt && (
+                                    <p style={{ 
+                                      fontSize: "12px", 
+                                      color: "var(--muted)", 
+                                      lineHeight: 1.5,
+                                      marginBottom: "6px"
+                                    }}>
+                                      {item.excerpt}
+                                    </p>
+                                  )}
+                                  {item.why && (
+                                    <p style={{ 
+                                      fontSize: "11px", 
+                                      color: categoryColors[category] || toolCustom.color,
+                                      fontStyle: "italic"
+                                    }}>
+                                      💡 {item.why}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
-
-                    {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
-                      <button
-                        onClick={() => setHistoryLimit(historyLimit + 25)}
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          marginTop: "8px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--glass-border)",
-                          background: "transparent",
-                          color: toolCustom.color,
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Show More (currently showing {historyLimit})
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="glass card" style={{ 
+                  flex: 1, 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  gap: "16px",
+                  color: "var(--muted)"
+                }}>
+                  {loading ? (
+                    <>
+                      <div style={{
+                        width: "40px",
+                        height: "40px",
+                        border: "3px solid rgba(148, 163, 184, 0.2)",
+                        borderTop: `3px solid ${toolCustom.color}`,
+                        borderRadius: "50%",
+                        animation: "spin 1s linear infinite"
+                      }} />
+                      <p style={{ fontSize: "14px", margin: 0 }}>Curating content...</p>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: "48px", opacity: 0.3 }}>✨</span>
+                      <p style={{ fontSize: "15px", margin: 0 }}>Enter a topic to curate content</p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>

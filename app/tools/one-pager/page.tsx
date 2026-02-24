@@ -126,235 +126,293 @@ export default function OnePagerPage() {
           style={{
             flex: 1,
             minHeight: "100vh",
-            paddingTop: isMobile ? "72px" : "76px",
+            paddingTop: isMobile ? "72px" : "80px",
             paddingBottom: isMobile ? "88px" : "24px",
-            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-            paddingRight: isMobile ? "12px" : "20px",
+            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 16px)",
+            paddingRight: isMobile ? "12px" : "16px",
           }}
         >
           <ToolBackground color={toolCustom.color} />
           
-          <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-            {/* Input Form */}
-            <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-              <h2 style={{ marginBottom: "16px", fontSize: "20px", fontWeight: 700 }}>
-                📑 One-Pager
-              </h2>
-              <p style={{ marginBottom: "20px", color: "var(--muted)", fontSize: "14px" }}>
-                Generate comprehensive summaries with data, analysis, and Ron Paul lens
-              </p>
-              
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Enter topic (e.g., Federal Reserve monetary policy, Iran-Contra affair)"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--glass-border)",
-                    background: "var(--glass-bg)",
-                    color: "var(--foreground)",
-                    fontSize: "15px",
-                    marginBottom: "12px"
-                  }}
-                  disabled={loading}
-                />
+          <div style={{ 
+            display: "flex", 
+            flexDirection: isMobile ? "column" : "row",
+            gap: "20px",
+            height: isMobile ? "auto" : "calc(100vh - 104px)",
+          }}>
+            {/* Left Panel: Input + History */}
+            <div style={{ 
+              width: isMobile ? "100%" : "340px",
+              minWidth: isMobile ? "100%" : "340px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              height: isMobile ? "auto" : "100%",
+              overflow: isMobile ? "visible" : "auto",
+            }}>
+              {/* Input Form */}
+              <div className="glass card" style={{ padding: "20px" }}>
+                <h2 style={{ marginBottom: "12px", fontSize: "18px", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span>📑</span> One-Pager
+                </h2>
+                <p style={{ marginBottom: "16px", color: "var(--muted)", fontSize: "13px" }}>
+                  Comprehensive summaries with Ron Paul lens
+                </p>
                 
-                <button
-                  type="submit"
-                  disabled={loading || !topic.trim()}
-                  style={{
-                    padding: "12px 24px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: loading ? "var(--muted)" : "linear-gradient(135deg, #00aaff, #0088cc)",
-                    color: "#fff",
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    cursor: loading ? "not-allowed" : "pointer"
-                  }}
-                >
-                  {loading ? "Processing... (check history)" : "Generate"}
-                </button>
-              </form>
+                <form onSubmit={handleSubmit}>
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="Federal Reserve, Iran-Contra..."
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--glass-border)",
+                      background: "var(--glass-bg)",
+                      color: "var(--foreground)",
+                      fontSize: "14px",
+                      marginBottom: "12px"
+                    }}
+                    disabled={loading}
+                  />
+                  
+                  <button
+                    type="submit"
+                    disabled={loading || !topic.trim()}
+                    style={{
+                      width: "100%",
+                      padding: "12px 20px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: loading ? "var(--muted)" : `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)`,
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: loading ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    {loading ? "Processing..." : "Generate"}
+                  </button>
+                </form>
+              </div>
+
+              {/* History */}
+              {!loading && (
+                <div className="glass card" style={{ padding: "16px", flex: 1, overflow: "auto", minHeight: isMobile ? "auto" : "0" }}>
+                  <h3 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700 }}>
+                    History
+                  </h3>
+
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Search..."
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--glass-border)",
+                      background: "var(--glass-bg)",
+                      color: "var(--foreground)",
+                      fontSize: "13px",
+                      marginBottom: "12px"
+                    }}
+                  />
+
+                  {filteredHistory.length === 0 ? (
+                    <p style={{ color: "var(--muted)", fontSize: "13px" }}>
+                      {historySearch.trim() ? "No results" : "No one-pagers yet"}
+                    </p>
+                  ) : (
+                    <>
+                      {filteredHistory.map((item) => (
+                        <div 
+                          key={item.id}
+                          onClick={() => setResult(item)}
+                          style={{
+                            padding: "10px",
+                            marginBottom: "6px",
+                            borderRadius: "6px",
+                            background: result?.id === item.id ? `${toolCustom.color}15` : "var(--glass-bg)",
+                            cursor: "pointer",
+                            border: result?.id === item.id ? `1px solid ${toolCustom.color}40` : "1px solid transparent"
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, fontSize: "13px" }}>{item.topic || "Untitled"}</div>
+                          <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
+                            {item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "?"}
+                          </div>
+                        </div>
+                      ))}
+
+                      {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
+                        <button
+                          onClick={() => setHistoryLimit(historyLimit + 25)}
+                          style={{
+                            width: "100%",
+                            padding: "8px",
+                            marginTop: "4px",
+                            borderRadius: "6px",
+                            border: "1px solid var(--glass-border)",
+                            background: "transparent",
+                            color: toolCustom.color,
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer"
+                          }}
+                        >
+                          Load more
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
             </div>
 
-            {/* Result */}
-            {result && (
-              <div className="glass card" style={{ padding: "24px", marginBottom: "24px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
-                  <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-                    {result.topic}
-                  </h3>
-                  <ExportPDFButton title={`One-Pager: ${result.topic}`} />
-                </div>
-                
-                {/* Executive Summary */}
-                <div style={{ marginBottom: "24px", padding: "16px", background: "var(--glass-bg)", borderRadius: "8px" }}>
-                  <h4 style={{ marginBottom: "8px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
-                    📋 EXECUTIVE SUMMARY
-                  </h4>
-                  <p style={{ fontSize: "15px", lineHeight: 1.7 }}>{result.executive_summary}</p>
-                </div>
-
-                {/* Key Data */}
-                {result.key_data && result.key_data.length > 0 && (
-                  <div style={{ marginBottom: "24px" }}>
-                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
-                      📊 KEY DATA
-                    </h4>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                      <tbody>
-                        {result.key_data.map((item: any, i: number) => (
-                          <tr key={i} style={{ borderBottom: "1px solid var(--glass-border)" }}>
-                            <td style={{ padding: "10px", fontWeight: 600, fontSize: "14px" }}>{item.metric}</td>
-                            <td style={{ padding: "10px", fontSize: "14px" }}>{item.value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+            {/* Right Panel: Result */}
+            <div style={{ 
+              flex: 1,
+              minWidth: 0,
+              height: isMobile ? "auto" : "100%",
+              overflow: isMobile ? "visible" : "auto",
+              display: "flex",
+              flexDirection: "column",
+            }}>
+              {result ? (
+                <div className="glass card" style={{ padding: "24px", flex: 1, overflow: "auto" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "24px" }}>
+                    <h3 style={{ fontSize: "22px", fontWeight: 700, margin: 0 }}>
+                      {result.topic}
+                    </h3>
+                    <ExportPDFButton title={`One-Pager: ${result.topic}`} />
                   </div>
-                )}
+                  
+                  {/* Two column layout for larger screens */}
+                  <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "24px" }}>
+                    {/* Left column */}
+                    <div>
+                      {/* Executive Summary */}
+                      <div style={{ marginBottom: "24px", padding: "20px", background: "var(--glass-bg)", borderRadius: "10px" }}>
+                        <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700, color: toolCustom.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                          📋 Executive Summary
+                        </h4>
+                        <p style={{ fontSize: "15px", lineHeight: 1.8 }}>{result.executive_summary}</p>
+                      </div>
 
-                {/* Visual Concept */}
-                {result.visual_concept && (
-                  <div style={{ marginBottom: "24px", padding: "16px", background: "var(--glass-bg)", borderRadius: "8px" }}>
-                    <h4 style={{ marginBottom: "8px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
-                      📈 VISUAL CONCEPT
-                    </h4>
-                    <p style={{ fontSize: "13px", fontStyle: "italic", color: "var(--muted)" }}>{result.visual_concept}</p>
-                  </div>
-                )}
-
-                {/* Key Points */}
-                {result.key_points && result.key_points.length > 0 && (
-                  <div style={{ marginBottom: "24px" }}>
-                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
-                      🎯 KEY POINTS
-                    </h4>
-                    <ul style={{ paddingLeft: "20px" }}>
-                      {result.key_points.map((point: string, i: number) => (
-                        <li key={i} style={{ marginBottom: "8px", fontSize: "14px", lineHeight: 1.6 }}>{point}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Context */}
-                {result.context && (
-                  <div style={{ marginBottom: "24px" }}>
-                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
-                      🔍 CONTEXT & IMPLICATIONS
-                    </h4>
-                    <p style={{ fontSize: "14px", lineHeight: 1.7 }}>{result.context}</p>
-                  </div>
-                )}
-
-                {/* Further Reading */}
-                {result.further_reading && result.further_reading.length > 0 && (
-                  <div>
-                    <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 600, color: toolCustom.color }}>
-                      📚 FURTHER READING
-                    </h4>
-                    {result.further_reading.map((link: any, i: number) => (
-                      <div key={i} style={{ marginBottom: "12px", paddingLeft: "12px", borderLeft: "2px solid var(--glass-border)" }}>
-                        <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "4px" }}>
-                          {link.title}
+                      {/* Key Points */}
+                      {result.key_points && result.key_points.length > 0 && (
+                        <div style={{ marginBottom: "24px" }}>
+                          <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700, color: toolCustom.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            🎯 Key Points
+                          </h4>
+                          <ul style={{ paddingLeft: "20px", margin: 0 }}>
+                            {result.key_points.map((point: string, i: number) => (
+                              <li key={i} style={{ marginBottom: "10px", fontSize: "14px", lineHeight: 1.7 }}>{point}</li>
+                            ))}
+                          </ul>
                         </div>
-                        <a href={link.url} target="_blank" rel="noopener noreferrer" 
-                           style={{ color: toolCustom.color, fontSize: "12px", wordBreak: "break-all" }}>
-                          {link.url}
-                        </a>
-                        {link.source && (
-                          <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                            Source: {link.source}
+                      )}
+
+                      {/* Context */}
+                      {result.context && (
+                        <div>
+                          <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700, color: toolCustom.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            🔍 Context & Implications
+                          </h4>
+                          <p style={{ fontSize: "14px", lineHeight: 1.8 }}>{result.context}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right column */}
+                    <div>
+                      {/* Key Data */}
+                      {result.key_data && result.key_data.length > 0 && (
+                        <div style={{ marginBottom: "24px", padding: "20px", background: "var(--glass-bg)", borderRadius: "10px" }}>
+                          <h4 style={{ marginBottom: "16px", fontSize: "14px", fontWeight: 700, color: toolCustom.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            📊 Key Data
+                          </h4>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            {result.key_data.map((item: any, i: number) => (
+                              <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < result.key_data.length - 1 ? "1px solid var(--glass-border)" : "none" }}>
+                                <span style={{ fontSize: "13px", color: "var(--muted)" }}>{item.metric}</span>
+                                <span style={{ fontSize: "14px", fontWeight: 600 }}>{item.value}</span>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* History */}
-            {!loading && (
-              <div className="glass card" style={{ padding: "24px" }}>
-                <h3 style={{ marginBottom: "16px", fontSize: "18px", fontWeight: 700 }}>
-                  History
-                </h3>
-
-                <input
-                  type="text"
-                  value={historySearch}
-                  onChange={(e) => setHistorySearch(e.target.value)}
-                  placeholder="Search history..."
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--glass-border)",
-                    background: "var(--glass-bg)",
-                    color: "var(--foreground)",
-                    fontSize: "14px",
-                    marginBottom: "16px"
-                  }}
-                />
-
-                {filteredHistory.length === 0 ? (
-                  <p style={{ color: "var(--muted)", fontSize: "14px" }}>
-                    {historySearch.trim() ? "No results found" : "No one-pagers yet"}
-                  </p>
-                ) : (
-                  <>
-                    {filteredHistory.map((item) => (
-                      <div 
-                        key={item.id}
-                        onClick={() => setResult(item)}
-                        style={{
-                          padding: "12px",
-                          marginBottom: "8px",
-                          borderRadius: "6px",
-                          background: "var(--glass-bg)",
-                          cursor: "pointer",
-                          border: "1px solid transparent"
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.borderColor = toolCustom.color}
-                        onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
-                      >
-                        <div style={{ fontWeight: 600, fontSize: "14px" }}>{item.topic || "Untitled One-Pager"}</div>
-                        <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
-                          {item.timestamp ? new Date(item.timestamp).toLocaleString() : "Unknown date"}
                         </div>
-                      </div>
-                    ))}
+                      )}
 
-                    {!historySearch.trim() && historyLimit < 50 && history.length >= historyLimit && (
-                      <button
-                        onClick={() => setHistoryLimit(historyLimit + 25)}
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          marginTop: "8px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--glass-border)",
-                          background: "transparent",
-                          color: toolCustom.color,
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          cursor: "pointer"
-                        }}
-                      >
-                        Show More (currently showing {historyLimit})
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+                      {/* Visual Concept */}
+                      {result.visual_concept && (
+                        <div style={{ marginBottom: "24px", padding: "16px", background: `${toolCustom.color}10`, borderRadius: "10px", borderLeft: `3px solid ${toolCustom.color}` }}>
+                          <h4 style={{ marginBottom: "8px", fontSize: "13px", fontWeight: 700, color: toolCustom.color }}>
+                            📈 Visual Concept
+                          </h4>
+                          <p style={{ fontSize: "13px", fontStyle: "italic", color: "var(--muted)", lineHeight: 1.6 }}>{result.visual_concept}</p>
+                        </div>
+                      )}
+
+                      {/* Further Reading */}
+                      {result.further_reading && result.further_reading.length > 0 && (
+                        <div>
+                          <h4 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700, color: toolCustom.color, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                            📚 Further Reading
+                          </h4>
+                          {result.further_reading.map((link: any, i: number) => (
+                            <div key={i} style={{ marginBottom: "12px", padding: "12px", background: "rgba(255,255,255,0.02)", borderRadius: "8px" }}>
+                              <a href={link.url} target="_blank" rel="noopener noreferrer" 
+                                 style={{ color: "var(--foreground)", textDecoration: "none", fontWeight: 600, fontSize: "13px", display: "block", marginBottom: "4px" }}>
+                                {link.title}
+                              </a>
+                              {link.source && (
+                                <span style={{ fontSize: "11px", color: "var(--muted)" }}>
+                                  {link.source}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="glass card" style={{ 
+                  flex: 1, 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  gap: "16px",
+                  color: "var(--muted)"
+                }}>
+                  {loading ? (
+                    <>
+                      <div style={{
+                        width: "40px",
+                        height: "40px",
+                        border: "3px solid rgba(148, 163, 184, 0.2)",
+                        borderTop: `3px solid ${toolCustom.color}`,
+                        borderRadius: "50%",
+                        animation: "spin 1s linear infinite"
+                      }} />
+                      <p style={{ fontSize: "14px", margin: 0 }}>Generating one-pager...</p>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: "48px", opacity: 0.3 }}>📑</span>
+                      <p style={{ fontSize: "15px", margin: 0 }}>Enter a topic to generate a one-pager</p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
