@@ -295,7 +295,7 @@ export default function ShoppingListPage() {
       <ToolBackground color="#10b981" />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "24px",
+        paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "calc(80px + env(safe-area-inset-bottom))" : "96px",
         paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
         paddingRight: isMobile ? "8px" : "0",

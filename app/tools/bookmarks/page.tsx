@@ -206,7 +206,7 @@ export default function BookmarksPage() {
       <ToolBackground color={toolCustom.color} />
 
         <main style={{
-          paddingTop: isMobile ? "72px" : "24px",
+          paddingTop: isMobile ? "72px" : "80px",
           paddingBottom: isMobile ? "88px" : "32px",
           paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
           paddingRight: isMobile ? "12px" : "24px",
@@ -257,7 +257,7 @@ export default function BookmarksPage() {
       <Sidebar />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "24px",
+        paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "88px" : "32px",
         paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
         paddingRight: isMobile ? "12px" : "24px",

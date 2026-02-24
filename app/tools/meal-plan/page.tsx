@@ -446,7 +446,7 @@ function MealPlanContent() {
       <ToolBackground color="#10b981" />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "24px",
+        paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "96px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>
