@@ -191,7 +191,17 @@ Select the BEST ${requestedCount} items. Score each 1-10 on:
 - Source quality
 - Worldview alignment (but include strong opposing views)
 
-Categorize each as: popular, technology, politics, or culture
+CATEGORIZE using 2x2 matrix:
+- **short_popular**: <10 min, mainstream/common views
+- **short_unpopular**: <10 min, contrarian/unique/non-mainstream views
+- **long_popular**: >10 min, mainstream/common views  
+- **long_unpopular**: >10 min, contrarian/unique/non-mainstream views
+
+"Unpopular" = intellectually stimulating perspectives that challenge mainstream narratives, unique angles, contrarian takes.
+"Popular" = widely-held mainstream positions, conventional wisdom.
+"Short" = articles, tweets, short videos (<10 min)
+"Long" = long-form videos, podcasts, deep dives (>10 min)
+
 Aim for ${Math.ceil(requestedCount / 4)} per category.
 
 Return ONLY valid JSON (no markdown, no explanation):
@@ -202,7 +212,7 @@ Return ONLY valid JSON (no markdown, no explanation):
       "url": "...",
       "excerpt": "Brief description",
       "source_type": "x|video|reddit|article|substack|podcast|pdf",
-      "category": "popular|technology|politics|culture",
+      "category": "short_popular|short_unpopular|long_popular|long_unpopular",
       "score": 8.5,
       "why": "One sentence on why this is valuable"
     }
@@ -255,7 +265,13 @@ Return ONLY valid JSON (no markdown, no explanation):
       timestamp: new Date().toISOString(),
       items: curatedItems,
       total: curatedItems.length,
-      diversity: {
+      categories: {
+        short_popular: curatedItems.filter(i => i.category === 'short_popular').length,
+        short_unpopular: curatedItems.filter(i => i.category === 'short_unpopular').length,
+        long_popular: curatedItems.filter(i => i.category === 'long_popular').length,
+        long_unpopular: curatedItems.filter(i => i.category === 'long_unpopular').length,
+      },
+      source_types: {
         x_posts: curatedItems.filter(i => i.source_type === 'x').length,
         videos: curatedItems.filter(i => i.source_type === 'video').length,
         reddit: curatedItems.filter(i => i.source_type === 'reddit').length,
