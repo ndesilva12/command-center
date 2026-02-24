@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
+const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-interface BraveResult {
+interface SearchResult {
   title: string;
   url: string;
   description: string;
@@ -20,7 +21,48 @@ interface CuratedItem {
   why: string;
 }
 
-async function braveSearch(query: string, count: number = 10): Promise<BraveResult[]> {
+// Try SearXNG first (local/self-hosted), fall back to Brave (cloud)
+async function webSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  // Try SearXNG first
+  try {
+    const searxngResults = await searxngSearch(query, count);
+    if (searxngResults.length > 0) {
+      return searxngResults;
+    }
+  } catch (e) {
+    console.log('SearXNG unavailable, falling back to Brave');
+  }
+  
+  // Fall back to Brave
+  return braveSearch(query, count);
+}
+
+async function searxngSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout
+  
+  try {
+    const response = await fetch(
+      `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json&categories=general`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return (data.results || []).slice(0, count).map((r: any) => ({
+      title: r.title,
+      url: r.url,
+      description: r.content || '',
+    }));
+  } catch (error) {
+    clearTimeout(timeout);
+    throw error;
+  }
+}
+
+async function braveSearch(query: string, count: number = 10): Promise<SearchResult[]> {
   try {
     const response = await fetch(
       `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
@@ -97,11 +139,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Execute searches in parallel
-    const searchPromises = searches.map(s => braveSearch(s.query, 8));
+    const searchPromises = searches.map(s => webSearch(s.query, 8));
     const searchResults = await Promise.all(searchPromises);
     
     // Flatten and dedupe by URL
-    const allResults: BraveResult[] = [];
+    const allResults: SearchResult[] = [];
     const seenUrls = new Set<string>();
     
     for (const results of searchResults) {
