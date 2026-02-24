@@ -1,8 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase-admin';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = process.env.OPENCLAW_TOKEN || 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+interface BraveResult {
+  title: string;
+  url: string;
+  description: string;
+}
+
+interface CuratedItem {
+  title: string;
+  url: string;
+  excerpt: string;
+  source_type: string;
+  category: string;
+  score: number;
+  why: string;
+}
+
+async function braveSearch(query: string, count: number = 10): Promise<BraveResult[]> {
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Brave search failed:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    return (data.web?.results || []).map((r: any) => ({
+      title: r.title,
+      url: r.url,
+      description: r.description || '',
+    }));
+  } catch (error) {
+    console.error('Brave search error:', error);
+    return [];
+  }
+}
+
+function detectSourceType(url: string): string {
+  const u = url.toLowerCase();
+  if (u.includes('youtube.com') || u.includes('youtu.be') || u.includes('vimeo.com')) return 'video';
+  if (u.includes('twitter.com') || u.includes('x.com')) return 'x';
+  if (u.includes('reddit.com')) return 'reddit';
+  if (u.includes('substack.com')) return 'substack';
+  if (u.includes('podcasts.apple.com') || u.includes('spotify.com/episode') || u.includes('anchor.fm')) return 'podcast';
+  if (u.endsWith('.pdf')) return 'pdf';
+  return 'article';
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,171 +66,163 @@ export async function POST(request: NextRequest) {
     const { topic, sources, count } = body;
 
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
-      return NextResponse.json(
-        { error: 'Topic is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
+    }
+
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
     }
 
     const requestedCount = count || 12;
     const sourcesFilter = sources && Array.isArray(sources) && sources.length > 0 ? sources : null;
 
-    // Build intelligent curation prompt
-    const prompt = `Curate ${requestedCount} high-quality content items on: "${topic}"
+    // Build search queries based on topic and source filters
+    const searches: { query: string; type: string }[] = [];
+    
+    if (!sourcesFilter || sourcesFilter.includes('x')) {
+      searches.push({ query: `${topic} site:x.com OR site:twitter.com`, type: 'x' });
+    }
+    if (!sourcesFilter || sourcesFilter.includes('video')) {
+      searches.push({ query: `${topic} site:youtube.com`, type: 'video' });
+    }
+    if (!sourcesFilter || sourcesFilter.includes('reddit')) {
+      searches.push({ query: `${topic} site:reddit.com`, type: 'reddit' });
+    }
+    if (!sourcesFilter || sourcesFilter.includes('article')) {
+      searches.push({ query: `${topic} analysis OR perspective OR opinion`, type: 'article' });
+      searches.push({ query: `${topic} site:mises.org OR site:cato.org OR site:reason.com OR site:zerohedge.com`, type: 'article' });
+    }
+    if (!sourcesFilter || sourcesFilter.includes('substack')) {
+      searches.push({ query: `${topic} site:substack.com`, type: 'substack' });
+    }
 
-CRITICAL CONTEXT UNDERSTANDING:
-- "Austrian Economics" = Mises/Hayek school (NOT Austria country)
-- "Iran-Contra" = Reagan scandal (NOT Iranian economics)  
-- Understand topic meaning before searching
+    // Execute searches in parallel
+    const searchPromises = searches.map(s => braveSearch(s.query, 8));
+    const searchResults = await Promise.all(searchPromises);
+    
+    // Flatten and dedupe by URL
+    const allResults: BraveResult[] = [];
+    const seenUrls = new Set<string>();
+    
+    for (const results of searchResults) {
+      for (const r of results) {
+        if (!seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          allResults.push(r);
+        }
+      }
+    }
 
-WORLDVIEW CONSIDERATIONS:
+    if (allResults.length === 0) {
+      return NextResponse.json({
+        success: true,
+        topic: topic.trim(),
+        items: [],
+        total: 0,
+        message: 'No results found for this topic'
+      });
+    }
+
+    // Use Claude to analyze and curate
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    
+    const curatePrompt = `You are a content curator for someone with these values:
 - Individualism and personal liberty
-- Free markets and sound money
-- Limited government
-- Austrian economics perspective
+- Free markets and Austrian economics
+- Limited government, skepticism of centralized power
 - First-principles thinking
-- Skepticism of centralized power
+- "Strength through competition, not atrophy by protectionism"
+- Include well-argued opposing views (intellectual rigor > echo chamber)
 
-DIVERSITY REQUIREMENTS:
-${sourcesFilter ? `
-EXCLUSIVE FILTER MODE: User requested ONLY these sources: ${sourcesFilter.join(', ')}
-- Deliver 100% content from requested source types
-- Example: If sources=['x'], return ONLY X posts (no videos, articles, Reddit)
-` : `
-MIX OF SOURCES (no filter - get diverse mix):
-- 3-4 X posts minimum (site:x.com OR site:twitter.com)
-- 3-4 videos minimum (site:youtube.com OR site:tiktok.com)
-- 2-3 Reddit threads max (site:reddit.com)
-- Rest: Articles, podcasts, PDFs, Substack, blogs
-- Each tweet/video is UNIQUE - don't dedupe by account/channel
-`}
+TOPIC: "${topic}"
 
-SEARCH STRATEGY:
-- Use web_search tool with site-specific queries
-- X posts: "site:x.com ${topic}" OR "site:twitter.com ${topic}"
-- Videos: "site:youtube.com ${topic}"
-- Reddit: "site:reddit.com ${topic}"
-- Articles: general search + "site:mises.org OR site:cato.org OR site:reason.com"
-- MAX 4-5 searches total
-- Collect ~${requestedCount * 2} results, filter down to best ${requestedCount}
+Here are ${allResults.length} search results to evaluate:
 
-SCORING CRITERIA (prioritize):
-1. **Intellectual Rigor**: Evidence-based, first-principles thinking
-2. **Worldview Alignment**: Ron Paul lens (but include well-argued opposing views)
-3. **Depth**: Substantive analysis > hot takes
-4. **Source Quality**: Think tanks, academics, investigative journalism
-5. **Diversity**: Mix of known sources + discovery
+${allResults.map((r, i) => `[${i + 1}] ${r.title}
+URL: ${r.url}
+${r.description}`).join('\n\n')}
 
-IMPORTANT: "Strength through competition and struggle, not atrophy by protectionism"
-- DON'T filter out opposing views
-- DO prefer rigorous critiques over lazy agreement
-- Challenging ideas score HIGHER than echo chamber content
+Select the BEST ${requestedCount} items. Score each 1-10 on:
+- Intellectual rigor and depth
+- Relevance to topic
+- Source quality
+- Worldview alignment (but include strong opposing views)
 
-CATEGORIZATION (split into 4 categories):
-- **Popular**: Trending, viral, high engagement
-- **Technology**: Tech, innovation, digital topics
-- **Politics**: Government, policy, economics, liberty
-- **Culture**: Society, philosophy, values, lifestyle
+Categorize each as: popular, technology, politics, or culture
+Aim for ${Math.ceil(requestedCount / 4)} per category.
 
-OUTPUT FORMAT (JSON):
+Return ONLY valid JSON (no markdown, no explanation):
 {
-  "topic": "${topic}",
-  "timestamp": "ISO-8601",
   "items": [
     {
       "title": "...",
       "url": "...",
-      "excerpt": "...",
-      "source_type": "x|video|reddit|article|podcast|pdf",
+      "excerpt": "Brief description",
+      "source_type": "x|video|reddit|article|substack|podcast|pdf",
       "category": "popular|technology|politics|culture",
       "score": 8.5,
-      "why": "Brief explanation of quality/relevance"
+      "why": "One sentence on why this is valuable"
     }
-  ],
-  "total": ${requestedCount},
-  "diversity": {
-    "x_posts": 4,
-    "videos": 3,
-    "reddit": 2,
-    "articles": 3
-  }
-}
+  ]
+}`;
 
-CRITICAL CONSTRAINTS:
-- Total items MUST be multiple of 4: ${requestedCount}
-- Categories MUST have equal distribution (${requestedCount / 4} each)
-- Apply diversity requirements strictly
-- MAX 3-4 searches (not 4-5)
-- OUTPUT JSON IMMEDIATELY after curating
-
-CRITICAL - FIRESTORE SAVE:
-After outputting the JSON above, IMMEDIATELY save to Firestore:
-
-1. Output your complete JSON result
-2. Use exec to run: node /home/ubuntu/command-center/scripts/save-to-firestore.js curate_history '{"topic":"${topic}","items":[...],"total":${requestedCount},...}'
-
-Replace the JSON string with your actual result. Make sure to escape quotes properly.
-
-Example:
-exec: node /home/ubuntu/command-center/scripts/save-to-firestore.js curate_history '{"topic":"Bitcoin","timestamp":"2024-01-01T00:00:00Z","items":[...],"total":12}'
-
-This ensures results persist even if the API route times out.
-
-Think step by step:
-1. What does "${topic}" mean?
-2. What are 4-5 site-specific search queries?
-3. Search and collect ~${requestedCount * 2} results
-4. Score with Ron Paul lens + intellectual rigor
-5. Filter to best ${requestedCount}
-6. Split into 4 categories (${requestedCount / 4} each)
-7. OUTPUT JSON
-8. SAVE TO FIRESTORE using exec command above`;
-
-    // Spawn intelligent sub-agent
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_spawn',
-        args: {
-          task: prompt,
-          label: `curate-${topic.slice(0, 30)}`,
-          cleanup: 'keep',
-          runTimeoutSeconds: 90  // 90s for multi-source curation
-        }
-      })
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: curatePrompt }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    // Extract text content
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    const data = await response.json();
-    const spawnResult = data?.result?.details || data?.result;
-    
-    if (spawnResult?.status === 'accepted') {
-      const runId = spawnResult.runId;
-      
-      // Fire-and-forget: Return immediately with runId
-      // Sub-agent will save results to Firestore when complete
-      return NextResponse.json({
-        success: true,
-        runId,
-        message: 'Curation started - results will appear in history when complete',
-        topic: topic.trim()
-      });
+    // Parse JSON response
+    let curatedItems: CuratedItem[] = [];
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        curatedItems = parsed.items || [];
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Claude response:', textContent.text);
+      // Fallback: return raw search results
+      curatedItems = allResults.slice(0, requestedCount).map((r, i) => ({
+        title: r.title,
+        url: r.url,
+        excerpt: r.description,
+        source_type: detectSourceType(r.url),
+        category: ['popular', 'technology', 'politics', 'culture'][i % 4],
+        score: 7,
+        why: 'Relevant to topic'
+      }));
     }
-    
-    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
-    return NextResponse.json(
-      { error: 'Failed to start curation', details: data },
-      { status: 500 }
-    );
-    
+
+    // Ensure source_type is set correctly
+    curatedItems = curatedItems.map(item => ({
+      ...item,
+      source_type: item.source_type || detectSourceType(item.url)
+    }));
+
+    const result = {
+      success: true,
+      topic: topic.trim(),
+      timestamp: new Date().toISOString(),
+      items: curatedItems,
+      total: curatedItems.length,
+      diversity: {
+        x_posts: curatedItems.filter(i => i.source_type === 'x').length,
+        videos: curatedItems.filter(i => i.source_type === 'video').length,
+        reddit: curatedItems.filter(i => i.source_type === 'reddit').length,
+        articles: curatedItems.filter(i => i.source_type === 'article').length,
+        substack: curatedItems.filter(i => i.source_type === 'substack').length,
+      }
+    };
+
+    return NextResponse.json(result);
+
   } catch (error) {
     console.error('Curate API error:', error);
     return NextResponse.json(
