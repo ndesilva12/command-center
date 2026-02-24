@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FolderOpen, ExternalLink, RefreshCw, File, FileText, FileImage, FileVideo, FileAudio, FileArchive, FileCode, AlertCircle, Clock } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { FolderOpen, ExternalLink, RefreshCw, File, FileText, FileImage, FileVideo, FileAudio, FileArchive, FileCode, AlertCircle, Clock, Sheet, Presentation, FileSpreadsheet, Files, Search } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
-
 
 interface DriveFile {
   id: string;
@@ -22,22 +21,45 @@ interface DriveFile {
   accountName?: string;
 }
 
+type FileTypeFilter = 'all' | 'docs' | 'sheets' | 'slides' | 'pdfs' | 'images' | 'videos' | 'folders' | 'other';
+
+const FILE_TYPE_CONFIG: Record<FileTypeFilter, { label: string; icon: any; color: string; mimePatterns: string[] }> = {
+  all: { label: 'All Files', icon: Files, color: '#6366f1', mimePatterns: [] },
+  docs: { label: 'Documents', icon: FileText, color: '#4285f4', mimePatterns: ['document', 'word', 'text/plain'] },
+  sheets: { label: 'Spreadsheets', icon: FileSpreadsheet, color: '#0f9d58', mimePatterns: ['spreadsheet', 'excel', 'csv'] },
+  slides: { label: 'Presentations', icon: Presentation, color: '#f4b400', mimePatterns: ['presentation', 'powerpoint'] },
+  pdfs: { label: 'PDFs', icon: FileText, color: '#ea4335', mimePatterns: ['pdf'] },
+  images: { label: 'Images', icon: FileImage, color: '#ff6d01', mimePatterns: ['image'] },
+  videos: { label: 'Videos', icon: FileVideo, color: '#9c27b0', mimePatterns: ['video'] },
+  folders: { label: 'Folders', icon: FolderOpen, color: '#607d8b', mimePatterns: ['folder'] },
+  other: { label: 'Other', icon: File, color: '#78909c', mimePatterns: [] },
+};
+
+const getFileType = (mimeType: string): FileTypeFilter => {
+  if (mimeType.includes('folder')) return 'folders';
+  if (mimeType.includes('document') || mimeType.includes('word') || mimeType === 'text/plain') return 'docs';
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('csv')) return 'sheets';
+  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'slides';
+  if (mimeType.includes('pdf')) return 'pdfs';
+  if (mimeType.includes('image')) return 'images';
+  if (mimeType.includes('video')) return 'videos';
+  return 'other';
+};
+
 const getFileIcon = (mimeType: string) => {
-  if (mimeType.includes('folder')) return FolderOpen;
-  if (mimeType.includes('image')) return FileImage;
-  if (mimeType.includes('video')) return FileVideo;
-  if (mimeType.includes('audio')) return FileAudio;
-  if (mimeType.includes('pdf') || mimeType.includes('document') || mimeType.includes('text')) return FileText;
-  if (mimeType.includes('zip') || mimeType.includes('compressed')) return FileArchive;
-  if (mimeType.includes('code') || mimeType.includes('javascript') || mimeType.includes('python')) return FileCode;
-  return File;
+  const type = getFileType(mimeType);
+  return FILE_TYPE_CONFIG[type].icon;
+};
+
+const getFileColor = (mimeType: string) => {
+  const type = getFileType(mimeType);
+  return FILE_TYPE_CONFIG[type].color;
 };
 
 const formatFileSize = (bytes?: string): string => {
-  if (!bytes) return 'N/A';
+  if (!bytes) return '';
   const size = parseInt(bytes);
-  if (isNaN(size)) return 'N/A';
-
+  if (isNaN(size)) return '';
   if (size < 1024) return size + ' B';
   if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
   if (size < 1024 * 1024 * 1024) return (size / (1024 * 1024)).toFixed(1) + ' MB';
@@ -54,15 +76,13 @@ const formatDate = (dateString: string): string => {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     if (diffHours === 0) {
       const diffMins = Math.floor(diffMs / (1000 * 60));
-      return diffMins <= 1 ? 'Just now' : `${diffMins} minutes ago`;
+      return diffMins <= 1 ? 'Just now' : `${diffMins}m ago`;
     }
-    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+    return `${diffHours}h ago`;
   }
   if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return date.toLocaleDateString();
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 export default function FilesPage() {
@@ -73,9 +93,10 @@ export default function FilesPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedType, setSelectedType] = useState<FileTypeFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Mobile detection
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -123,6 +144,37 @@ export default function FilesPage() {
     }
   };
 
+  // Count files by type
+  const typeCounts = useMemo(() => {
+    const counts: Record<FileTypeFilter, number> = {
+      all: files.length,
+      docs: 0, sheets: 0, slides: 0, pdfs: 0, images: 0, videos: 0, folders: 0, other: 0
+    };
+    files.forEach(file => {
+      const type = getFileType(file.mimeType);
+      counts[type]++;
+    });
+    return counts;
+  }, [files]);
+
+  // Filter files
+  const filteredFiles = useMemo(() => {
+    let result = files;
+    
+    // Filter by type
+    if (selectedType !== 'all') {
+      result = result.filter(file => getFileType(file.mimeType) === selectedType);
+    }
+    
+    // Filter by search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(file => file.name.toLowerCase().includes(q));
+    }
+    
+    return result;
+  }, [files, selectedType, searchQuery]);
+
   return (
     <>
       <TopNav />
@@ -131,209 +183,268 @@ export default function FilesPage() {
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "80px",
-        paddingBottom: isMobile ? "88px" : "32px",
-        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-        paddingRight: isMobile ? "12px" : "24px",
-        minHeight: `calc(100vh - ${isMobile ? "144px" : "168px"})`,
-        maxWidth: "1400px",
-        margin: "0 auto"
+        paddingTop: isMobile ? "64px" : "68px",
+        paddingBottom: isMobile ? "80px" : "16px",
+        paddingLeft: isMobile ? "8px" : "calc(var(--sidebar-width, 240px) + 8px)",
+        paddingRight: isMobile ? "8px" : "8px",
+        minHeight: "100vh",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FolderOpen style={{ width: "24px", height: "24px", color: toolCustom.color }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
-            {!loading && !error && (
-              <span style={{ fontSize: "14px", color: "var(--foreground-muted)", marginLeft: "4px" }}>
-                ({files.length})
-              </span>
-            )}
-          </div>
+        <div style={{ 
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row",
+          gap: "12px",
+          height: isMobile ? "auto" : "calc(100vh - 84px)",
+        }}>
+          {/* Left Panel: Filters */}
+          <div style={{ 
+            width: isMobile ? "100%" : "240px",
+            minWidth: isMobile ? "100%" : "240px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            height: isMobile ? "auto" : "100%",
+            overflow: isMobile ? "visible" : "auto",
+          }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FolderOpen style={{ width: "20px", height: "20px", color: toolCustom.color }} />
+                <h1 style={{ fontSize: "18px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>Files</h1>
+              </div>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button
+                  onClick={() => window.open('https://drive.google.com', '_blank')}
+                  style={{
+                    padding: "6px",
+                    borderRadius: "6px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground-muted)",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                  title="Open Drive"
+                >
+                  <ExternalLink style={{ width: "14px", height: "14px" }} />
+                </button>
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading || refreshing}
+                  style={{
+                    padding: "6px",
+                    borderRadius: "6px",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    color: "var(--foreground-muted)",
+                    border: "none",
+                    cursor: loading || refreshing ? "not-allowed" : "pointer",
+                    opacity: loading || refreshing ? 0.6 : 1,
+                  }}
+                  title="Refresh"
+                >
+                  <RefreshCw style={{ width: "14px", height: "14px", animation: refreshing ? "spin 1s linear infinite" : "none" }} />
+                </button>
+              </div>
+            </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button
-              onClick={() => window.open('https://drive.google.com', '_blank')}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
+            {/* Search */}
+            <div style={{ position: "relative" }}>
+              <Search size={14} style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
                 color: "var(--foreground-muted)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                cursor: "pointer",
-                fontSize: "13px",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                e.currentTarget.style.color = toolCustom.color;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                e.currentTarget.style.color = "var(--foreground-muted)";
-              }}
-            >
-              <ExternalLink style={{ width: "14px", height: "14px" }} />
-              Open Drive
-            </button>
-            <button
-              onClick={handleRefresh}
-              disabled={loading || refreshing}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "var(--foreground-muted)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                cursor: loading || refreshing ? "not-allowed" : "pointer",
-                fontSize: "13px",
-                transition: "all 0.15s ease",
-                opacity: loading || refreshing ? 0.5 : 1
-              }}
-              onMouseEnter={(e) => {
-                if (!loading && !refreshing) {
-                  e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.08)";
-                  e.currentTarget.style.color = toolCustom.color;
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                e.currentTarget.style.color = "var(--foreground-muted)";
-              }}
-            >
-              <RefreshCw
+              }} />
+              <input
+                type="text"
+                placeholder="Search files..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  width: "14px",
-                  height: "14px",
-                  animation: refreshing ? "spin 1s linear infinite" : "none"
+                  width: "100%",
+                  padding: "10px 10px 10px 32px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "var(--foreground)",
+                  fontSize: "13px",
+                  outline: "none",
                 }}
               />
-              Refresh
-            </button>
+            </div>
+
+            {/* File Type Filters */}
+            <div className="glass card" style={{ padding: "12px", flex: 1 }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                File Types
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {(Object.entries(FILE_TYPE_CONFIG) as [FileTypeFilter, typeof FILE_TYPE_CONFIG['all']][]).map(([type, config]) => {
+                  const count = typeCounts[type];
+                  const Icon = config.icon;
+                  const isSelected = selectedType === type;
+                  
+                  // Skip types with no files (except 'all')
+                  if (type !== 'all' && count === 0) return null;
+                  
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setSelectedType(type)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderRadius: "6px",
+                        border: isSelected ? `2px solid ${config.color}` : '1px solid transparent',
+                        background: isSelected ? `${config.color}15` : 'rgba(255, 255, 255, 0.03)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <Icon size={16} style={{ color: isSelected ? config.color : 'var(--foreground-muted)' }} />
+                        <span style={{ 
+                          fontSize: '13px', 
+                          fontWeight: isSelected ? 600 : 500,
+                          color: isSelected ? config.color : 'var(--foreground)',
+                        }}>
+                          {config.label}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: isSelected ? config.color : 'var(--foreground-muted)',
+                        background: isSelected ? `${config.color}20` : 'rgba(255,255,255,0.08)',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                      }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Files */}
+          <div style={{ 
+            flex: 1,
+            minWidth: 0,
+            height: isMobile ? "auto" : "100%",
+            overflow: isMobile ? "visible" : "auto",
+            display: "flex",
+            flexDirection: "column",
+          }}>
+            {/* Results Header */}
+            <div style={{
+              padding: "10px 16px",
+              background: `${FILE_TYPE_CONFIG[selectedType].color}10`,
+              borderRadius: "10px",
+              border: `1px solid ${FILE_TYPE_CONFIG[selectedType].color}20`,
+              marginBottom: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                {(() => {
+                  const Icon = FILE_TYPE_CONFIG[selectedType].icon;
+                  return <Icon size={18} style={{ color: FILE_TYPE_CONFIG[selectedType].color }} />;
+                })()}
+                <span style={{ fontSize: "15px", fontWeight: 600, color: FILE_TYPE_CONFIG[selectedType].color }}>
+                  {FILE_TYPE_CONFIG[selectedType].label}
+                </span>
+              </div>
+              <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                {filteredFiles.length} file{filteredFiles.length !== 1 ? 's' : ''}
+                {searchQuery && ` matching "${searchQuery}"`}
+              </span>
+            </div>
+
+            {/* Files List */}
+            <div className="glass card" style={{ flex: 1, padding: "8px", overflow: "auto" }}>
+              {loading ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--foreground-muted)" }}>
+                  <RefreshCw style={{ width: "24px", height: "24px", marginRight: "12px", animation: "spin 1s linear infinite", color: toolCustom.color }} />
+                  Loading files...
+                </div>
+              ) : error ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--foreground-muted)", gap: "12px" }}>
+                  <AlertCircle style={{ width: "40px", height: "40px", color: "#ff4444" }} />
+                  <p style={{ margin: 0 }}>{error}</p>
+                </div>
+              ) : filteredFiles.length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--foreground-muted)", gap: "12px" }}>
+                  <FolderOpen style={{ width: "40px", height: "40px", opacity: 0.4 }} />
+                  <p style={{ margin: 0 }}>
+                    {searchQuery ? `No files matching "${searchQuery}"` : 'No files found'}
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))", gap: "8px" }}>
+                  {filteredFiles.map((file) => {
+                    const FileIcon = getFileIcon(file.mimeType);
+                    const fileColor = getFileColor(file.mimeType);
+                    return (
+                      <div
+                        key={file.id}
+                        onClick={() => handleFileClick(file)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "12px 14px",
+                          background: "rgba(255, 255, 255, 0.02)",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                          e.currentTarget.style.borderColor = `${fileColor}40`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.02)";
+                          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
+                        }}
+                      >
+                        <div style={{ marginRight: "12px", flexShrink: 0 }}>
+                          <FileIcon style={{ width: "18px", height: "18px", color: fileColor }} />
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0, marginRight: "12px" }}>
+                          <h3 style={{
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            color: "var(--foreground)",
+                            marginBottom: "2px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                          }}>
+                            {file.name}
+                          </h3>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "11px", color: "var(--foreground-muted)" }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+                              <Clock style={{ width: "10px", height: "10px" }} />
+                              {formatDate(file.modifiedTime)}
+                            </span>
+                            {file.size && <span>{formatFileSize(file.size)}</span>}
+                          </div>
+                        </div>
+
+                        <ExternalLink style={{ width: "14px", height: "14px", color: "var(--foreground-muted)", flexShrink: 0, opacity: 0.5 }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {loading ? (
-          <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "60px 20px",
-            textAlign: "center"
-          }}>
-            <RefreshCw
-              style={{
-                width: "32px",
-                height: "32px",
-                color: toolCustom.color,
-                margin: "0 auto 16px",
-                animation: "spin 1s linear infinite"
-              }}
-            />
-            <p style={{ color: "var(--foreground-muted)" }}>Loading files...</p>
-          </div>
-        ) : error ? (
-          <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "60px 20px",
-            textAlign: "center"
-          }}>
-            <AlertCircle style={{ width: "48px", height: "48px", color: "#ff4444", margin: "0 auto 16px" }} />
-            <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-              {error}
-            </h2>
-            <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-              {error.includes('connect') ? 'Go to Settings to connect your Google account' : 'Please try again later'}
-            </p>
-          </div>
-        ) : files.length === 0 ? (
-          <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "60px 20px",
-            textAlign: "center"
-          }}>
-            <FolderOpen style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
-            <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
-              No files found
-            </h2>
-            <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-              Your Google Drive files will appear here
-            </p>
-          </div>
-        ) : (
-          <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            overflow: "hidden"
-          }}>
-            {files.map((file, index) => {
-              const FileIcon = getFileIcon(file.mimeType);
-              return (
-                <div
-                  key={file.id}
-                  onClick={() => handleFileClick(file)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "16px 20px",
-                    borderBottom: index < files.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  <div style={{ marginRight: "16px", flexShrink: 0 }}>
-                    <FileIcon style={{ width: "20px", height: "20px", color: toolCustom.color }} />
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0, marginRight: "16px" }}>
-                    <h3 style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "var(--foreground)",
-                      marginBottom: "4px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    }}>
-                      {file.name}
-                    </h3>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "12px", color: "var(--foreground-muted)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        <Clock style={{ width: "12px", height: "12px" }} />
-                        {formatDate(file.modifiedTime)}
-                      </div>
-                      {file.size && (
-                        <span>{formatFileSize(file.size)}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <ExternalLink style={{ width: "16px", height: "16px", color: "var(--foreground-muted)", flexShrink: 0 }} />
-                </div>
-              );
-            })}
-          </div>
-        )}
       </main>
 
       <style jsx global>{`
