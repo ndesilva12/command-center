@@ -172,6 +172,8 @@ export default function MarketPage() {
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "96px",
+        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
+        paddingRight: isMobile ? "12px" : "24px",
         minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
       }}>
         <div style={{

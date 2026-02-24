@@ -56,13 +56,15 @@ export default function LegalPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--background)" }}>
       <TopNav />
+      <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
       <div
         style={{
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: isMobile ? "80px 12px 80px" : "136px 24px 32px",
+          padding: isMobile ? "80px 12px 80px" : "96px 24px 32px",
+          paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
           minHeight: isMobile ? "calc(100vh - 144px)" : "calc(100vh - 168px)",
         }}
       >

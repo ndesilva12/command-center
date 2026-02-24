@@ -147,6 +147,8 @@ export default function SummarizerPage() {
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "96px",
+        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
+        paddingRight: isMobile ? "12px" : "24px",
         minHeight: "100vh",
       }}>
         <div style={{ maxWidth: "1200px", margin: "0 auto", padding: isMobile ? "0 12px" : "0 24px" }}>
