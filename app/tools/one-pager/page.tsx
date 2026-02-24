@@ -118,9 +118,10 @@ export default function OnePagerPage() {
 
   return (
     <>
-      <div style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 24px)", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
-        <TopNav />
+      <TopNav />
       <ToolBackground color={toolCustom.color} />
+      
+      <div style={{ paddingTop: "80px", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
         
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
           {/* Input Form */}
