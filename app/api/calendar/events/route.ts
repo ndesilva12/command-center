@@ -1,27 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { adminDb } from '@/lib/firebase-admin';
-
-async function getValidAccessToken(tokens: any): Promise<string> {
-  if (!tokens.expires_at || Date.now() < tokens.expires_at) {
-    return tokens.access_token;
-  }
-
-  // Refresh the token
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      refresh_token: tokens.refresh_token,
-      grant_type: 'refresh_token',
-    }),
-  });
-
-  const data = await response.json();
-  return data.access_token;
-}
+import { getValidAccessToken } from '@/lib/google-auth';
 
 async function fetchCalendarEvents(
   accessToken: string,
