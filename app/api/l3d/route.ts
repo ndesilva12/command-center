@@ -84,8 +84,15 @@ export async function POST(request: NextRequest) {
       `${topic} site:reddit.com OR site:x.com discussion`,
     ];
 
-    const searchPromises = searches.map(q => webSearch(q, 8));
-    const searchResults = await Promise.all(searchPromises);
+    // Execute searches sequentially with delay to avoid rate limits
+    const searchResults: SearchResult[][] = [];
+    for (let i = 0; i < searches.length; i++) {
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      const results = await webSearch(searches[i], 8);
+      searchResults.push(results);
+    }
     
     // Flatten and dedupe
     const allResults: SearchResult[] = [];

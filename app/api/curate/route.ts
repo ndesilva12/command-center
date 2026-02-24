@@ -63,41 +63,51 @@ async function searxngSearch(query: string, count: number = 10): Promise<SearchR
   }
 }
 
-async function braveSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+async function braveSearch(query: string, count: number = 10, retries: number = 3): Promise<SearchResult[]> {
   if (!BRAVE_API_KEY || BRAVE_API_KEY === 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g') {
-    // Check if env var is set in Vercel
     console.log('Using default/fallback Brave API key');
   }
   
-  try {
-    const response = await fetch(
-      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
-      {
-        headers: {
-          'Accept': 'application/json',
-          'X-Subscription-Token': BRAVE_API_KEY,
-        },
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const response = await fetch(
+        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'X-Subscription-Token': BRAVE_API_KEY,
+          },
+        }
+      );
+
+      if (response.status === 429) {
+        // Rate limited - exponential backoff
+        const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+        console.log(`Brave rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Brave search failed:', response.status, errorText);
-      return [];
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Brave search failed:', response.status, errorText);
+        return [];
+      }
+
+      const data = await response.json();
+      const results = (data.web?.results || []).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.description || '',
+      }));
+      console.log(`Brave search returned ${results.length} results for: ${query}`);
+      return results;
+    } catch (error) {
+      console.error('Brave search error:', error);
+      if (attempt === retries - 1) return [];
     }
-
-    const data = await response.json();
-    const results = (data.web?.results || []).map((r: any) => ({
-      title: r.title,
-      url: r.url,
-      description: r.description || '',
-    }));
-    console.log(`Brave search returned ${results.length} results for: ${query}`);
-    return results;
-  } catch (error) {
-    console.error('Brave search error:', error);
-    return [];
   }
+  return []; // All retries exhausted
 }
 
 function detectSourceType(url: string): string {
@@ -147,9 +157,15 @@ export async function POST(request: NextRequest) {
       searches.push({ query: `${topic} site:substack.com`, type: 'substack' });
     }
 
-    // Execute searches in parallel
-    const searchPromises = searches.map(s => webSearch(s.query, 8));
-    const searchResults = await Promise.all(searchPromises);
+    // Execute searches sequentially with delay to avoid rate limits
+    const searchResults: SearchResult[][] = [];
+    for (let i = 0; i < searches.length; i++) {
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 300)); // 300ms delay between searches
+      }
+      const results = await webSearch(searches[i].query, 8);
+      searchResults.push(results);
+    }
     
     // Flatten and dedupe by URL
     const allResults: SearchResult[] = [];
