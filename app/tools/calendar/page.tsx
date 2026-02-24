@@ -85,7 +85,7 @@ export default function CalendarPage() {
       }
 
       const response = await fetch(
-        `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax.toISOString()}`,
+        `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax.toISOString()}&_t=${Date.now()}`,
         { cache: 'no-store' }
       );
 

@@ -167,6 +167,7 @@ export default function EmailsPage() {
         params.set("q", folderQuery);
       }
 
+      params.set("_t", Date.now().toString()); // Cache buster for mobile
       const response = await fetch(`/api/gmail?${params.toString()}`, { cache: 'no-store' });
       if (!response.ok) throw new Error("Failed to fetch emails");
       
