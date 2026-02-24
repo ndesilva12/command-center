@@ -65,7 +65,10 @@ export default function CalendarPage() {
     setError(null);
     try {
       const now = new Date();
-      const timeMin = now.toISOString();
+      // Start from beginning of today, not current moment
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+      const timeMin = startOfToday.toISOString();
       let timeMax: Date;
 
       switch (timeRange) {
@@ -444,7 +447,7 @@ export default function CalendarPage() {
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "76px",
+        paddingTop: isMobile ? "72px" : "24px",
         paddingBottom: isMobile ? "80px" : "32px",
         paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
         paddingRight: isMobile ? "12px" : "24px",

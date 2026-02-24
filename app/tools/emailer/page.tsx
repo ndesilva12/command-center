@@ -293,7 +293,7 @@ export default function EmailerPage() {
 
       <main
         style={{
-          paddingTop: isMobile ? "72px" : "76px",
+          paddingTop: isMobile ? "72px" : "24px",
           paddingBottom: isMobile ? "80px" : "96px",
           minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`,
         }}

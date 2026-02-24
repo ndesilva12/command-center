@@ -145,7 +145,7 @@ export default function SummarizerPage() {
       <ToolBackground color={toolCustom.color} />
 
       <main style={{
-        paddingTop: isMobile ? "72px" : "76px",
+        paddingTop: isMobile ? "72px" : "24px",
         paddingBottom: isMobile ? "80px" : "96px",
         minHeight: "100vh",
       }}>

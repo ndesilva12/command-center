@@ -38,7 +38,7 @@ function WarRoomContent() {
       <ToolBackground color={toolCustom.color} />
       <main
         style={{
-          paddingTop: isMobile ? "72px" : "76px",
+          paddingTop: isMobile ? "72px" : "24px",
           paddingBottom: isMobile ? "88px" : "32px",
           paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
           paddingRight: isMobile ? "12px" : "24px",
