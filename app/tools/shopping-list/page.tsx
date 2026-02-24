@@ -102,116 +102,6 @@ export default function ShoppingListPage() {
         marginBottom: "12px" 
       }}>
         <h2 style={{ 
-      <main style={{
-        paddingTop: isMobile ? "72px" : "80px",
-        paddingBottom: isMobile ? "calc(80px + env(safe-area-inset-bottom))" : "96px",
-        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-        paddingRight: isMobile ? "8px" : "0",
-        minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
-      }}>
-        <div style={{
-          maxWidth: "900px",
-          margin: "0 auto",
-          padding: isMobile ? "0 4px" : "0 24px"
-        }}>
-          {/* Header */}
-          <div style={{ 
-            marginBottom: isMobile ? "12px" : "16px"
-          }}>
-            <h1 style={{ 
-              fontSize: isMobile ? "20px" : "28px", 
-              fontWeight: 700, 
-              color: "var(--foreground)", 
-              marginBottom: "4px", 
-              display: "flex", 
-              alignItems: "center", 
-              gap: isMobile ? "8px" : "12px" 
-            }}>
-              <ShoppingCart style={{ 
-                width: isMobile ? "20px" : "28px", 
-                height: isMobile ? "20px" : "28px", 
-                color: "#00aaff",
-                flexShrink: 0 
-              }} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                Shopping & Inventory
-              </span>
-            </h1>
-            {!isMobile && (
-              <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
-                Grocery list and pantry tracking
-              </p>
-            )}
-          </div>
-
-          {/* Tabs */}
-          <div style={{ 
-            display: "flex", 
-            gap: isMobile ? "4px" : "8px", 
-            marginBottom: isMobile ? "16px" : "24px", 
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)", 
-            paddingBottom: "0", 
-            overflowX: "auto",
-            WebkitOverflowScrolling: "touch"
-          }}>
-            {[
-              { id: 'shopping', label: isMobile ? "Shopping" : "Shopping List", icon: ShoppingCart },
-              { id: 'inventory', label: "Inventory", icon: Package },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                style={{
-                  padding: isMobile ? "10px 16px" : "12px 20px",
-                  minHeight: "44px", // Thumb-friendly
-                  borderRadius: "8px 8px 0 0",
-                  border: "none",
-                  background: activeTab === tab.id ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                  color: activeTab === tab.id ? "#00aaff" : "var(--foreground-muted)",
-                  fontSize: isMobile ? "13px" : "14px",
-                  fontWeight: activeTab === tab.id ? 600 : 400,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  borderBottom: activeTab === tab.id ? "2px solid #00aaff" : "2px solid transparent",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.currentTarget.style.background = "transparent";
-                  }
-                }}
-              >
-                <tab.icon style={{ width: "16px", height: "16px", flexShrink: 0 }} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab Content */}
-          {loading ? (
-            <div className="glass" style={{ 
-              textAlign: "center", 
-              padding: isMobile ? "40px 16px" : "60px 20px", 
-              borderRadius: "12px" 
-            }}>
-              <p style={{ color: "var(--foreground-muted)" }}>Loading...</p>
-            </div>
-          ) : activeTab === 'shopping' ? (
-            <ShoppingListContent />
-          ) : (
-            <InventoryContent />
-          )}
-        </div>
-      </main>
           fontSize: isMobile ? "16px" : "18px", 
           fontWeight: 600, 
           color: "var(--foreground)", 
@@ -404,6 +294,116 @@ export default function ShoppingListPage() {
       <Sidebar />
       <ToolBackground color="#10b981" />
 
+      <main style={{
+        paddingTop: isMobile ? "72px" : "80px",
+        paddingBottom: isMobile ? "calc(80px + env(safe-area-inset-bottom))" : "96px",
+        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
+        paddingRight: isMobile ? "8px" : "0",
+        minHeight: `calc(100vh - ${isMobile ? "160px" : "232px"})`
+      }}>
+        <div style={{
+          maxWidth: "900px",
+          margin: "0 auto",
+          padding: isMobile ? "0 4px" : "0 24px"
+        }}>
+          {/* Header */}
+          <div style={{ 
+            marginBottom: isMobile ? "12px" : "16px"
+          }}>
+            <h1 style={{ 
+              fontSize: isMobile ? "20px" : "28px", 
+              fontWeight: 700, 
+              color: "var(--foreground)", 
+              marginBottom: "4px", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: isMobile ? "8px" : "12px" 
+            }}>
+              <ShoppingCart style={{ 
+                width: isMobile ? "20px" : "28px", 
+                height: isMobile ? "20px" : "28px", 
+                color: "#00aaff",
+                flexShrink: 0 
+              }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                Shopping & Inventory
+              </span>
+            </h1>
+            {!isMobile && (
+              <p style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                Grocery list and pantry tracking
+              </p>
+            )}
+          </div>
+
+          {/* Tabs */}
+          <div style={{ 
+            display: "flex", 
+            gap: isMobile ? "4px" : "8px", 
+            marginBottom: isMobile ? "16px" : "24px", 
+            borderBottom: "1px solid rgba(255, 255, 255, 0.1)", 
+            paddingBottom: "0", 
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch"
+          }}>
+            {[
+              { id: 'shopping', label: isMobile ? "Shopping" : "Shopping List", icon: ShoppingCart },
+              { id: 'inventory', label: "Inventory", icon: Package },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                style={{
+                  padding: isMobile ? "10px 16px" : "12px 20px",
+                  minHeight: "44px", // Thumb-friendly
+                  borderRadius: "8px 8px 0 0",
+                  border: "none",
+                  background: activeTab === tab.id ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                  color: activeTab === tab.id ? "#00aaff" : "var(--foreground-muted)",
+                  fontSize: isMobile ? "13px" : "14px",
+                  fontWeight: activeTab === tab.id ? 600 : 400,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  borderBottom: activeTab === tab.id ? "2px solid #00aaff" : "2px solid transparent",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.currentTarget.style.background = "transparent";
+                  }
+                }}
+              >
+                <tab.icon style={{ width: "16px", height: "16px", flexShrink: 0 }} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          {loading ? (
+            <div className="glass" style={{ 
+              textAlign: "center", 
+              padding: isMobile ? "40px 16px" : "60px 20px", 
+              borderRadius: "12px" 
+            }}>
+              <p style={{ color: "var(--foreground-muted)" }}>Loading...</p>
+            </div>
+          ) : activeTab === 'shopping' ? (
+            <ShoppingListContent />
+          ) : (
+            <InventoryContent />
+          )}
+        </div>
+      </main>
     </ProtectedRoute>
   );
 }

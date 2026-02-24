@@ -97,6 +97,8 @@ function TradingViewWatchlistWidget() {
       style={{
         width: "100%",
         height: "100%",
+      }}
+    >
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "96px",
