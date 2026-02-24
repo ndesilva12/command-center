@@ -1,119 +1,167 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+interface SearchResult {
+  title: string;
+  url: string;
+  description: string;
+}
+
+async function webSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(
+      `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json&categories=general`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const results = (data.results || []).slice(0, count).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.content || '',
+      }));
+      if (results.length > 0) return results;
+    }
+  } catch (e) {
+    console.log('SearXNG unavailable, using Brave');
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.web?.results || []).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.description || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Brave search error:', error);
+  }
+  
+  return [];
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { question, context } = await request.json();
+    const body = await request.json();
+    const { question, topic, jurisdiction } = body;
+    const query = question || topic;
 
-    if (!question || typeof question !== 'string') {
-      return NextResponse.json(
-        { error: 'Question is required' },
-        { status: 400 }
-      );
+    if (!query || !query.trim()) {
+      return NextResponse.json({ error: 'Question or topic is required' }, { status: 400 });
     }
 
-    // Build legal analysis prompt using Legal skill guidance
-    const prompt = `LEGAL SKILL ACTIVATED
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
+    }
 
-**CRITICAL DISCLAIMER:** This is general legal information, not advice for a specific situation. User must consult a licensed attorney in their jurisdiction before making legal decisions.
+    // Research legal information
+    const searches = [
+      `${query} law legal ${jurisdiction || 'US'}`,
+      `${query} statute regulation`,
+      `${query} case law precedent`,
+      `${query} legal rights`,
+    ];
 
-USER QUESTION:
-"${question}"
+    const searchPromises = searches.map(q => webSearch(q, 6));
+    const searchResults = await Promise.all(searchPromises);
+    
+    const allResults: SearchResult[] = [];
+    const seenUrls = new Set<string>();
+    
+    for (const results of searchResults) {
+      for (const r of results) {
+        if (!seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          allResults.push(r);
+        }
+      }
+    }
 
-${context ? `\nADDITIONAL CONTEXT:\n${context}` : ''}
+    // Use Claude to analyze
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    
+    const prompt = `Provide legal research on: "${query}"
+${jurisdiction ? `Jurisdiction: ${jurisdiction}` : ''}
 
-RESPONSE FRAMEWORK:
+SEARCH RESULTS:
+${allResults.map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.description}`).join('\n\n')}
 
-1. **Understand User Level:**
-   - Is this a layperson, law student, or attorney?
-   - Adapt complexity accordingly
+IMPORTANT: This is for informational purposes only, not legal advice.
 
-2. **Clarify Jurisdiction:**
-   - If question is location-specific, ask for jurisdiction
-   - Laws vary by state/country
+Return ONLY valid JSON:
+{
+  "question": "${query}",
+  "jurisdiction": "${jurisdiction || 'General/US'}",
+  "summary": "Plain-language summary of the legal landscape",
+  "applicable_laws": [
+    {"name": "...", "citation": "...", "summary": "...", "relevance": "..."}
+  ],
+  "key_cases": [
+    {"name": "...", "citation": "...", "holding": "...", "relevance": "..."}
+  ],
+  "rights_and_obligations": ["Plain-language explanation of rights"],
+  "common_issues": ["Typical problems or misconceptions"],
+  "practical_steps": ["What someone might do"],
+  "when_to_get_lawyer": "When professional help is needed",
+  "resources": [
+    {"name": "...", "url": "...", "type": "government|nonprofit|legal_aid"}
+  ],
+  "disclaimer": "This is general information, not legal advice. Consult an attorney for your specific situation."
+}`;
 
-3. **Provide Information (Not Advice):**
-   - Explain general legal principles
-   - Translate jargon into plain language
-   - Distinguish between having rights and enforcing them
-   - Provide "get a lawyer" triggers if applicable:
-     * Amounts over $10,000
-     * Criminal matters
-     * Child custody/family court
-     * Signing away significant rights
-     * Opposing party has counsel
-
-4. **Structure Response:**
-   - Start with disclaimer (already provided above)
-   - Explain relevant legal concepts
-   - Provide practical first steps if applicable
-   - Identify red flags if reviewing terms/documents
-   - Recommend attorney consultation for specific action
-
-5. **Use IRAC for Complex Questions:**
-   - Issue: What legal question?
-   - Rule: What law applies?
-   - Application: How does rule apply to facts?
-   - Conclusion: General outcome
-
-6. **Common Sense Guidance:**
-   - Document everything in writing
-   - Read all documents before signing
-   - Check consumer protection agencies
-   - Small claims court for disputes under threshold
-
-CRITICAL BOUNDARIES:
-- Never say "you should do X" - say "people in this situation often..."
-- Never predict specific outcomes - explain possibilities
-- Always recommend licensed attorney for actual decisions
-- High-stakes matters require professional counsel
-
-OUTPUT FORMAT:
-Clear, structured response with:
-- Disclaimer reminder
-- Relevant legal concepts explained
-- Practical information
-- When to consult attorney
-- Resources if applicable
-
-Generate response now:`;
-
-    // Call OpenClaw gateway for legal analysis
-    const response = await fetch(`${OPENCLAW_GATEWAY}/api/sessions/send`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: prompt,
-        agentId: 'main',
-      })
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    const data = await response.json();
-    
-    if (data?.reply) {
-      return NextResponse.json({
-        success: true,
-        response: data.reply,
-        question
-      });
+    let result: any = {};
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      console.error('Failed to parse Claude response');
     }
-    
-    throw new Error('No response from legal analysis');
-    
-  } catch (error: any) {
+
+    return NextResponse.json({
+      success: true,
+      query: query.trim(),
+      timestamp: new Date().toISOString(),
+      ...result
+    });
+
+  } catch (error) {
     console.error('Legal API error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to process legal question' },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

@@ -1,112 +1,166 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+interface SearchResult {
+  title: string;
+  url: string;
+  description: string;
+}
+
+async function webSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(
+      `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json&categories=general`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const results = (data.results || []).slice(0, count).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.content || '',
+      }));
+      if (results.length > 0) return results;
+    }
+  } catch (e) {
+    console.log('SearXNG unavailable, using Brave');
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.web?.results || []).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.description || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Brave search error:', error);
+  }
+  
+  return [];
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { company } = body;
+    const { entity, query } = body;
+    const topic = entity || query;
 
-    if (!company || typeof company !== 'string' || !company.trim()) {
-      return NextResponse.json(
-        { error: 'Company name is required' },
-        { status: 400 }
-      );
+    if (!topic || !topic.trim()) {
+      return NextResponse.json({ error: 'Entity or query is required' }, { status: 400 });
     }
 
-    const companyName = company.trim();
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
+    }
 
-    const prompt = `Research the political leanings of "${companyName}" and produce a comprehensive political analysis.
+    // Research political/corporate connections
+    const searches = [
+      `${topic} political donations lobbying`,
+      `${topic} government contracts connections`,
+      `${topic} opensecrets OR followthemoney`,
+      `${topic} corporate board directors connections`,
+      `${topic} controversy scandal investigation`,
+    ];
 
-RESEARCH STEPS:
-1. Search for "${companyName} political donations FEC"
-2. Search for "${companyName} lobbying OpenSecrets"
-3. Search for "${companyName} CEO political statements"
-4. Search for "${companyName} PAC contributions"
-5. Search for "${companyName} policy positions ESG DEI"
-6. Search for "${companyName} government contracts"
-7. Search for "${companyName} controversy political"
-
-Use web_search for each query. Then use web_fetch on the 8-12 most informative URLs.
-
-POLITICAL COMPASS SCORING:
-- economicScore: -100 (left/regulated) to +100 (right/free market)
-- governmentScore: -100 (libertarian) to +100 (authoritarian)
-- overallLeaning: Far Left|Left|Center-Left|Center|Center-Right|Right|Far Right
-- confidenceScore: 0-100 based on evidence quality
-
-OUTPUT: Build a complete JSON object with ALL of these fields:
-{
-  "companyName": "${companyName}",
-  "ticker": "string or null",
-  "industry": "string",
-  "description": "Brief company description",
-  "overallLeaning": "one of the 7 options",
-  "confidenceScore": number 0-100,
-  "economicScore": number -100 to 100,
-  "governmentScore": number -100 to 100,
-  "positions": [{"topic":"","stance":"","description":""}],
-  "subsidiaries": [{"name":"","industry":"","description":""}],
-  "affiliates": [{"name":"","relationship":"","description":""}],
-  "newsItems": [{"headline":"","source":"","date":"","summary":"","sentiment":"positive|negative|neutral"}],
-  "donations": [{"recipient":"","amount":"","date":"","party":"Democrat|Republican|Other|PAC"}],
-  "publicStatements": [{"speaker":"","role":"","statement":"","date":"","topic":""}],
-  "revenueAllocation": [{"category":"","percentage":0,"description":""}],
-  "lobbyingActivities": [{"issue":"","amount":"","year":"","description":""}],
-  "timestamp": "${new Date().toISOString()}",
-  "status": "completed"
-}
-
-CRITICAL - SAVE TO FIRESTORE:
-After building the JSON, save it using exec:
-
-exec: cd /home/ubuntu/command-center && node scripts/save-to-firestore.js politicorp_history 'YOUR_JSON_HERE'
-
-Then also save a jimmy deliverable:
-exec: cd /home/ubuntu/command-center && node scripts/save-to-firestore.js jimmy_deliverables '{"title":"Politicorp: ${companyName}","date":"${new Date().toISOString()}","status":"completed","preview":"Political analysis of ${companyName}","content":"YOUR_MARKDOWN_SUMMARY","createdBy":"cc_jimmy_command","commandText":"politicorp ${companyName}"}'
-
-Make sure to properly escape all JSON strings. Both saves are REQUIRED.`;
-
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_spawn',
-        args: {
-          task: prompt,
-          label: `politicorp-${companyName.slice(0, 30)}`,
-          cleanup: 'keep',
-          runTimeoutSeconds: 120
+    const searchPromises = searches.map(q => webSearch(q, 6));
+    const searchResults = await Promise.all(searchPromises);
+    
+    const allResults: SearchResult[] = [];
+    const seenUrls = new Set<string>();
+    
+    for (const results of searchResults) {
+      for (const r of results) {
+        if (!seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          allResults.push(r);
         }
-      })
+      }
+    }
+
+    // Use Claude to analyze
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    
+    const prompt = `Investigate political/corporate connections for: "${topic}"
+
+WORLDVIEW: Ron Paul libertarian lens - skeptical of government-corporate collusion, crony capitalism, regulatory capture.
+
+SEARCH RESULTS:
+${allResults.map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.description}`).join('\n\n')}
+
+Return ONLY valid JSON:
+{
+  "entity": "${topic}",
+  "type": "corporation|politician|organization|individual",
+  "political_donations": [
+    {"recipient": "...", "amount": "...", "date": "...", "party": "...", "source": "..."}
+  ],
+  "lobbying": [
+    {"issue": "...", "amount": "...", "year": "...", "details": "..."}
+  ],
+  "government_connections": [
+    {"type": "contract|revolving_door|regulatory", "details": "...", "concern_level": "low|medium|high"}
+  ],
+  "board_connections": [
+    {"name": "...", "other_positions": ["..."], "potential_conflicts": "..."}
+  ],
+  "controversies": [
+    {"issue": "...", "date": "...", "summary": "...", "resolution": "..."}
+  ],
+  "crony_capitalism_score": 7.5,
+  "analysis": "Ron Paul perspective on this entity's relationship with government power",
+  "red_flags": ["Specific concerns from a liberty perspective"],
+  "sources": ["List of source URLs"]
+}`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    const data = await response.json();
-    const spawnResult = data?.result?.details || data?.result;
-
-    if (spawnResult?.status === 'accepted') {
-      return NextResponse.json({
-        success: true,
-        runId: spawnResult.runId,
-        message: 'Analysis started - results will appear when complete',
-        company: companyName
-      });
+    let result: any = {};
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      console.error('Failed to parse Claude response');
     }
 
-    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
-    return NextResponse.json(
-      { error: 'Failed to start analysis', details: data },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: true,
+      query: topic.trim(),
+      timestamp: new Date().toISOString(),
+      ...result
+    });
 
   } catch (error) {
     console.error('Politicorp API error:', error);

@@ -1,135 +1,167 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase-admin';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+interface SearchResult {
+  title: string;
+  url: string;
+  description: string;
+}
+
+async function webSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(
+      `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json&categories=general`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const results = (data.results || []).slice(0, count).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.content || '',
+      }));
+      if (results.length > 0) return results;
+    }
+  } catch (e) {
+    console.log('SearXNG unavailable, using Brave');
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.web?.results || []).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.description || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Brave search error:', error);
+  }
+  
+  return [];
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, save = true } = await request.json();
+    const body = await request.json();
+    const { topic, depth = 'standard' } = body;
 
-    if (!topic || typeof topic !== 'string') {
-      return NextResponse.json(
-        { error: 'Topic is required' },
-        { status: 400 }
-      );
+    if (!topic || !topic.trim()) {
+      return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
     }
 
-    // Spawn intelligent sub-agent for research
-    const prompt = `Find 6 white papers on: "${topic}"
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
+    }
 
-CRITICAL CONTEXT:
-- "Austrian Economics" = Mises/Hayek school, NOT Austria country
-- "Iran-Contra" = Reagan scandal, NOT Iranian economics
-- Understand topic meaning before searching
+    // Research academic/white paper sources
+    const searches = [
+      `${topic} white paper pdf`,
+      `${topic} research paper academic`,
+      `${topic} site:arxiv.org OR site:papers.ssrn.com OR site:nber.org`,
+      `${topic} policy analysis think tank`,
+    ];
 
-SPLIT (3 + 3):
-
-1. WORLDVIEW-ALIGNED (3):
-   - Libertarian/individualist perspective
-   - Austrian economics (Mises, Hayek, Cato, Reason)
-   
-2. GENERAL (3):
-   - Mainstream/academic
-   - Most cited/influential
-
-STRICT RESEARCH LIMITS:
-- **MAXIMUM 2 searches total**
-- Pick ONE search for worldview sources, ONE for general
-- Use ONLY web_search (no web_fetch)
-- Each search returns ~10 results - pick best 3 from each
-- **OUTPUT JSON IMMEDIATELY after 2 searches**
-
-EXAMPLE:
-Search 1: "${topic} site:mises.org OR site:cato.org OR site:reason.com" → pick 3
-Search 2: "${topic} academic paper OR research" → pick 3
-OUTPUT JSON NOW
-
-OUTPUT FORMAT:
-{
-  "topic": "${topic}",
-  "timestamp": "ISO-8601",
-  "papers": {
-    "worldview_aligned": [{"title":"","url":"","description":"","source":""}],
-    "general_popular": [{"title":"","url":"","description":"","source":""}]
-  },
-  "total": 6
-}
-
-CRITICAL - FIRESTORE SAVE:
-After outputting the JSON above, IMMEDIATELY save to Firestore:
-
-1. Output your complete JSON result
-2. Use exec to run: node /home/ubuntu/command-center/scripts/save-to-firestore.js white_papers_history '{"topic":"${topic}","papers":...}'
-
-Replace the JSON string with your actual result. Make sure to escape quotes properly.
-
-Example:
-exec: node /home/ubuntu/command-center/scripts/save-to-firestore.js white_papers_history '{"topic":"Bitcoin","timestamp":"2024-01-01T00:00:00Z","papers":{"worldview_aligned":[...],"general_popular":[...]},"total":6}'
-
-This ensures results persist even if the API route times out.
-
-DO:
-1. Understand what "${topic}" means
-2. Search ONCE for worldview (Mises/Cato/Reason)
-3. Search ONCE for general/academic
-4. Pick 3 from each
-5. OUTPUT JSON
-6. SAVE TO FIRESTORE using exec command above`;
-
-    // Call OpenClaw gateway to spawn sub-agent
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_spawn',
-        args: {
-          task: prompt,
-          label: `white-papers-${topic.slice(0, 30)}`,
-          cleanup: 'keep',
-          runTimeoutSeconds: 90  // 90s for 2 searches + output
+    const searchPromises = searches.map(q => webSearch(q, 6));
+    const searchResults = await Promise.all(searchPromises);
+    
+    const allResults: SearchResult[] = [];
+    const seenUrls = new Set<string>();
+    
+    for (const results of searchResults) {
+      for (const r of results) {
+        if (!seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          allResults.push(r);
         }
-      })
+      }
+    }
+
+    // Use Claude to analyze and summarize
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    
+    const prompt = `Find and summarize white papers/research on: "${topic}"
+
+SEARCH RESULTS:
+${allResults.map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.description}`).join('\n\n')}
+
+WORLDVIEW: Ron Paul libertarian lens - free markets, sound money, limited government.
+
+Return ONLY valid JSON:
+{
+  "papers": [
+    {
+      "title": "...",
+      "url": "...",
+      "authors": "...",
+      "date": "...",
+      "type": "white_paper|research|policy|report",
+      "summary": "Key findings in 2-3 sentences",
+      "methodology": "How they reached conclusions",
+      "key_findings": ["..."],
+      "worldview_analysis": "Ron Paul perspective on findings",
+      "quality_score": 8.5
+    }
+  ],
+  "synthesis": "Overall synthesis of the research landscape",
+  "gaps": ["Research gaps or unanswered questions"],
+  "recommendations": ["Further reading recommendations"]
+}`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    const data = await response.json();
-    
-    // sessions_spawn returns immediately with status: "accepted"
-    // Result is in data.result.details when called via /tools/invoke
-    const spawnResult = data?.result?.details || data?.result;
-    
-    if (spawnResult?.status === 'accepted') {
-      const runId = spawnResult.runId;
-      
-      // Fire-and-forget: Return immediately with runId
-      // Sub-agent will save results to Firestore when complete
-      return NextResponse.json({
-        success: true,
-        runId,
-        message: 'Research started - results will appear in history when complete',
-        topic
-      });
+    let result: any = { papers: [], synthesis: '', gaps: [], recommendations: [] };
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      console.error('Failed to parse Claude response');
     }
-    
-    // Unexpected response - log for debugging
-    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
+
+    return NextResponse.json({
+      success: true,
+      topic: topic.trim(),
+      depth,
+      timestamp: new Date().toISOString(),
+      ...result,
+      total_papers: result.papers?.length || 0
+    });
+
+  } catch (error) {
+    console.error('White papers API error:', error);
     return NextResponse.json(
-      { error: 'Failed to start research', details: data },
-      { status: 500 }
-    );
-    
-  } catch (error: any) {
-    console.error('White papers error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to find white papers' },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

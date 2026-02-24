@@ -1,205 +1,136 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+async function fetchContent(url: string): Promise<string> {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Summarizer/1.0)',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
+    }
+    
+    const html = await response.text();
+    
+    // Basic HTML to text conversion
+    const text = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    return text.substring(0, 50000); // Limit to ~50k chars
+  } catch (error) {
+    throw new Error(`Failed to fetch content: ${error}`);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { url, targetPages } = await request.json();
     
-    if (!url || !targetPages) {
-      return NextResponse.json(
-        { error: 'URL and target pages are required' },
-        { status: 400 }
-      );
+    if (!url) {
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    }
+
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
     }
 
     // Validate URL
     try {
       new URL(url);
     } catch {
+      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+    }
+
+    const pages = targetPages || 2;
+    const targetWords = pages * 500;
+
+    // Fetch the content
+    let content: string;
+    try {
+      content = await fetchContent(url);
+    } catch (error) {
       return NextResponse.json(
-        { error: 'Invalid URL format' },
+        { error: error instanceof Error ? error.message : 'Failed to fetch content' },
         { status: 400 }
       );
     }
 
-    // Validate target pages
-    if (targetPages < 1 || targetPages > 100) {
-      return NextResponse.json(
-        { error: 'Target pages must be between 1 and 100' },
-        { status: 400 }
-      );
+    if (content.length < 100) {
+      return NextResponse.json({ error: 'Not enough content to summarize' }, { status: 400 });
     }
+
+    // Use Claude to summarize
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
     
-    // Create summary document
-    const summaryRef = await adminDb.collection('summaries').add({
+    const prompt = `Summarize this content in approximately ${targetWords} words (~${pages} pages).
+
+CONTENT:
+${content.substring(0, 30000)}
+
+Create a comprehensive summary that:
+1. Captures all key points and arguments
+2. Maintains the logical flow
+3. Preserves important details, quotes, and data
+4. Is well-structured with clear sections
+
+Return ONLY valid JSON:
+{
+  "title": "Document title",
+  "summary": "The full summary text with markdown formatting",
+  "key_points": ["Main takeaways"],
+  "word_count": 1000,
+  "original_length": "Approximate original word count",
+  "compression_ratio": "10:1"
+}`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
+    }
+
+    let result: any = {};
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      // If JSON parsing fails, use the raw text as summary
+      result = {
+        title: new URL(url).hostname,
+        summary: textContent.text,
+        key_points: [],
+        word_count: textContent.text.split(/\s+/).length
+      };
+    }
+
+    return NextResponse.json({
+      success: true,
       url,
-      targetPages,
-      status: 'queued',
-      title: new URL(url).hostname,
-      createdAt: new Date().toISOString(),
+      targetPages: pages,
+      timestamp: new Date().toISOString(),
+      ...result
     });
 
-    const summaryId = summaryRef.id;
-    
-    // Build intelligent summarization prompt
-    const prompt = `Summarize content from: "${url}"
-Target: ${targetPages} pages (~${targetPages * 500} words)
-
-CONTENT EXTRACTION STRATEGY:
-
-1. DETECT SOURCE TYPE:
-   - YouTube: youtube.com, youtu.be, youtube.com/shorts
-   - Podcast: spotify.com/episode, apple.com/podcast, .rss, podcast platforms
-   - PDF: .pdf extension, application/pdf
-   - Web page: HTML content
-   - Plain text: text/plain
-
-2. EXTRACT CONTENT:
-   
-   **YouTube Videos:**
-   - Use web_fetch to get the page
-   - Look for transcript/captions in page HTML or use yt-dlp if available
-   - Extract video title
-   - ERROR if no transcript: "YouTube transcript not available"
-   
-   **Podcasts:**
-   - Try RSS feed parsing first (if .rss or feed URL)
-   - Fallback: web_fetch and scrape for .transcript, #transcript, .show-notes
-   - Extract episode title and description
-   - ERROR if no content: "Podcast transcript not available"
-   
-   **PDFs:**
-   - Use web_fetch to download
-   - Extract text (you may need to use exec with pdftotext or similar)
-   - Get document title from metadata if available
-   
-   **Web Pages:**
-   - Use web_fetch to get HTML
-   - Extract main content (article, main, .content selectors)
-   - Remove scripts, styles, navigation
-   - Get page title
-   
-   **Plain Text:**
-   - Use web_fetch to get content directly
-
-3. ESTIMATE PAGES:
-   - ~500 words per page
-   - ~5 chars per word
-   - ~2500 chars per page
-   
-4. SUMMARIZE (if needed):
-   - If original content ≤ ${targetPages} pages: return as-is (no summarization needed)
-   - If original > ${targetPages} pages: use AI to condense
-   
-   **AI Summarization Prompt:**
-   "You are a professional content summarizer. Condense the following content into approximately ${targetPages} pages (${targetPages * 500} words).
-   
-   ORIGINAL CONTENT:
-   Title: {extracted_title}
-   
-   {extracted_content}
-   
-   INSTRUCTIONS:
-   - Create a ${targetPages}-page summary (target: ${targetPages * 500} words)
-   - Preserve key insights, arguments, data, and conclusions
-   - Maintain logical flow and structure
-   - Use clear, concise language
-   - Include section headings if helpful
-   - Prioritize accuracy over brevity
-   
-   OUTPUT FORMAT:
-   - Well-structured prose
-   - Paragraph breaks for readability
-   - No meta-commentary
-   - Just deliver the condensed content
-   
-   Begin summary:"
-
-5. SAVE TO FIRESTORE:
-   
-   After generating summary, IMMEDIATELY save to Firestore using exec:
-   
-   node /home/ubuntu/command-center/scripts/update-firestore-doc.js summaries ${summaryId} '{
-     "status": "completed",
-     "title": "{extracted_title}",
-     "sourceType": "{youtube|podcast|pdf|webpage|text}",
-     "content": "{summary_text}",
-     "originalPages": {original_page_count},
-     "summaryPages": ${targetPages},
-     "compressionRatio": {ratio},
-     "completedAt": "{ISO-8601 timestamp}"
-   }'
-   
-   If extraction/summarization FAILS, save error:
-   
-   node /home/ubuntu/command-center/scripts/update-firestore-doc.js summaries ${summaryId} '{
-     "status": "failed",
-     "error": "{error_message}",
-     "failedAt": "{ISO-8601 timestamp}"
-   }'
-
-CRITICAL STEPS:
-1. Detect source type from URL
-2. Extract content (use web_fetch, exec tools as needed)
-3. Estimate original page count
-4. Summarize if needed (or return as-is if short enough)
-5. Calculate compression ratio
-6. Save to Firestore using exec command above
-
-OUTPUT: Just confirm completion. The summary is saved to Firestore.`;
-
-    // Spawn intelligent sub-agent for summarization
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_spawn',
-        args: {
-          task: prompt,
-          label: `summarizer-${url.slice(0, 40)}`,
-          cleanup: 'keep',
-          runTimeoutSeconds: 300  // 5 minutes for long content
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    const spawnResult = data?.result?.details || data?.result;
-    
-    if (spawnResult?.status === 'accepted') {
-      const runId = spawnResult.runId;
-      
-      // Fire-and-forget: Return immediately with summary ID
-      // Sub-agent will save results to Firestore when complete
-      return NextResponse.json({
-        success: true,
-        id: summaryId,
-        runId,
-        message: 'Summarization started - results will appear when complete'
-      });
-    }
-    
-    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
-    return NextResponse.json(
-      { error: 'Failed to start summarization', details: data },
-      { status: 500 }
-    );
-    
   } catch (error) {
-    console.error('Error creating summary:', error);
+    console.error('Summarizer API error:', error);
     return NextResponse.json(
-      { error: 'Failed to create summary request' },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

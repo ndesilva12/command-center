@@ -1,8 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase-admin';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+interface SearchResult {
+  title: string;
+  url: string;
+  description: string;
+}
+
+async function webSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  // Try SearXNG first
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(
+      `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json&categories=general`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const results = (data.results || []).slice(0, count).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.content || '',
+      }));
+      if (results.length > 0) return results;
+    }
+  } catch (e) {
+    console.log('SearXNG unavailable, using Brave');
+  }
+  
+  // Fall back to Brave
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}&freshness=pm`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.web?.results || []).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.description || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Brave search error:', error);
+  }
+  
+  return [];
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,150 +69,100 @@ export async function POST(request: NextRequest) {
     const { topic, days = 30 } = body;
 
     if (!topic || !topic.trim()) {
-      return NextResponse.json(
-        { error: 'Topic is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
     }
 
-    // Build intelligent L3D prompt
-    const prompt = `Research the last ${days} days of developments on: "${topic}"
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
+    }
 
-CRITICAL CONTEXT UNDERSTANDING:
-- "Austrian Economics" = Mises/Hayek school (NOT Austria country)
-- "Iran-Contra" = Reagan scandal (NOT Iranian economics)
-- Understand topic meaning before searching
+    // Execute searches
+    const searches = [
+      `${topic} recent news ${days} days`,
+      `${topic} analysis commentary`,
+      `${topic} site:reddit.com OR site:x.com discussion`,
+    ];
 
-WORLDVIEW CONSIDERATIONS:
-- Individualism and personal liberty
-- Free markets and sound money
-- Limited government
-- Austrian economics perspective
-- First-principles thinking
-
-RESEARCH STRATEGY:
-- Use web_search with freshness parameter
-- Focus on last ${days} days (use freshness: "p${days}d")
-- Find: news, analysis, discussions, developments
-- MAX 3-4 searches total
-- Mix of worldview-aligned + mainstream sources
-
-SEARCH QUERIES (examples):
-1. "${topic}" with freshness filter
-2. "${topic} site:mises.org OR site:cato.org OR site:reason.com" (worldview)
-3. "${topic} analysis OR commentary" (depth)
-4. "${topic} site:reddit.com OR site:x.com" (discussion)
-
-CATEGORIZATION:
-- **Major Developments**: Big news, policy changes, significant events
-- **Analysis & Commentary**: Think pieces, expert analysis
-- **Discussions**: Reddit, X, community reactions
-- **Data & Research**: Studies, reports, statistics
-
-SCORING:
-- Recency (newer = better)
-- Intellectual rigor
-- Ron Paul worldview alignment
-- Source quality
-
-OUTPUT FORMAT (JSON):
-{
-  "topic": "${topic}",
-  "days": ${days},
-  "timestamp": "ISO-8601",
-  "categories": {
-    "major_developments": [
-      {
-        "title": "...",
-        "url": "...",
-        "date": "...",
-        "source": "...",
-        "summary": "...",
-        "worldview_note": "Ron Paul lens perspective"
+    const searchPromises = searches.map(q => webSearch(q, 8));
+    const searchResults = await Promise.all(searchPromises);
+    
+    // Flatten and dedupe
+    const allResults: SearchResult[] = [];
+    const seenUrls = new Set<string>();
+    
+    for (const results of searchResults) {
+      for (const r of results) {
+        if (!seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          allResults.push(r);
+        }
       }
-    ],
+    }
+
+    if (allResults.length === 0) {
+      return NextResponse.json({
+        success: true,
+        topic: topic.trim(),
+        days,
+        categories: {},
+        key_takeaways: ['No recent results found for this topic'],
+        total_items: 0
+      });
+    }
+
+    // Use Claude to analyze
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    
+    const prompt = `Analyze these search results about "${topic}" from the last ${days} days.
+
+WORLDVIEW: Ron Paul libertarian lens - individualism, free markets, limited government, Austrian economics, skepticism of centralized power.
+
+RESULTS:
+${allResults.map((r, i) => `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.description}`).join('\n\n')}
+
+Categorize into 4 buckets and extract key takeaways.
+
+Return ONLY valid JSON:
+{
+  "categories": {
+    "major_developments": [{"title": "...", "url": "...", "summary": "...", "worldview_note": "Ron Paul perspective"}],
     "analysis_commentary": [...],
     "discussions": [...],
     "data_research": [...]
   },
-  "key_takeaways": [
-    "3-5 key insights from last ${days} days with worldview analysis"
-  ],
-  "total_items": 12
-}
+  "key_takeaways": ["3-5 insights with libertarian analysis"]
+}`;
 
-CRITICAL:
-- MAX 3 searches (not 3-4)
-- OUTPUT JSON IMMEDIATELY after research
-
-CRITICAL - FIRESTORE SAVE:
-After outputting the JSON above, IMMEDIATELY save to Firestore:
-
-1. Output your complete JSON result
-2. Use exec to run: node /home/ubuntu/command-center/scripts/save-to-firestore.js l3d_history '{"query":"${topic.trim()}","days":${days},"topic":"${topic}","categories":{...},"key_takeaways":[...],...}'
-
-Replace the JSON string with your actual result. Make sure to escape quotes properly.
-
-Example:
-exec: node /home/ubuntu/command-center/scripts/save-to-firestore.js l3d_history '{"query":"Bitcoin","days":30,"topic":"Bitcoin","timestamp":"2024-01-01T00:00:00Z","categories":{...},"key_takeaways":[...],"total_items":12,"status":"completed"}'
-
-This ensures results persist even if the API route times out.
-
-Think step by step:
-1. What does "${topic}" mean?
-2. What are 3-4 search queries with freshness filters?
-3. Search and collect ~15-20 recent items
-4. Categorize into 4 buckets
-5. Extract 3-5 key takeaways with Ron Paul analysis
-6. OUTPUT JSON
-7. SAVE TO FIRESTORE using exec command above`;
-
-    // Spawn intelligent sub-agent
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_spawn',
-        args: {
-          task: prompt,
-          label: `l3d-${topic.slice(0, 30)}`,
-          cleanup: 'keep',
-          runTimeoutSeconds: 50  // 50s for research (must finish before Vercel timeout)
-        }
-      })
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    const data = await response.json();
-    const spawnResult = data?.result?.details || data?.result;
-    
-    if (spawnResult?.status === 'accepted') {
-      const runId = spawnResult.runId;
-      
-      // Fire-and-forget: Return immediately with runId
-      // Sub-agent will save results to Firestore when complete
-      return NextResponse.json({
-        success: true,
-        runId,
-        message: 'Research started - results will appear in history when complete',
-        topic: topic.trim(),
-        days
-      });
+    let result: any = { categories: {}, key_takeaways: [] };
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      console.error('Failed to parse Claude response');
     }
-    
-    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
-    return NextResponse.json(
-      { error: 'Failed to start research', details: data },
-      { status: 500 }
-    );
-    
+
+    return NextResponse.json({
+      success: true,
+      topic: topic.trim(),
+      days,
+      timestamp: new Date().toISOString(),
+      ...result,
+      total_items: allResults.length
+    });
+
   } catch (error) {
     console.error('L3D API error:', error);
     return NextResponse.json(

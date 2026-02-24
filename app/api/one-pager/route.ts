@@ -1,160 +1,165 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase-admin';
+import Anthropic from '@anthropic-ai/sdk';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
+const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+interface SearchResult {
+  title: string;
+  url: string;
+  description: string;
+}
+
+async function webSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(
+      `${SEARXNG_URL}/search?q=${encodeURIComponent(query)}&format=json&categories=general`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const results = (data.results || []).slice(0, count).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.content || '',
+      }));
+      if (results.length > 0) return results;
+    }
+  } catch (e) {
+    console.log('SearXNG unavailable, using Brave');
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_API_KEY,
+        },
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      return (data.web?.results || []).map((r: any) => ({
+        title: r.title,
+        url: r.url,
+        description: r.description || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Brave search error:', error);
+  }
+  
+  return [];
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, save = true } = await request.json();
+    const body = await request.json();
+    const { topic } = body;
 
-    if (!topic || typeof topic !== 'string') {
-      return NextResponse.json(
-        { error: 'Topic is required' },
-        { status: 400 }
-      );
+    if (!topic || !topic.trim()) {
+      return NextResponse.json({ error: 'Topic is required' }, { status: 400 });
     }
 
-    // Spawn intelligent sub-agent for research and synthesis
-    const prompt = `Create a comprehensive one-pager on: "${topic}"
+    if (!ANTHROPIC_API_KEY) {
+      return NextResponse.json({ error: 'Anthropic API key not configured' }, { status: 500 });
+    }
 
-CRITICAL CONTEXT UNDERSTANDING:
-- "Austrian Economics" = Mises/Hayek/Rothbard school (NOT Austria country)
-- "Iran-Contra" = 1980s Reagan scandal (NOT Iranian economics)
-- Understand the topic's actual meaning before researching
-- Apply intelligence and context, not keyword matching
+    // Research the topic
+    const searches = [
+      `${topic} overview facts`,
+      `${topic} statistics data`,
+      `${topic} analysis implications`,
+    ];
 
-ONE-PAGER STRUCTURE:
-
-📋 **EXECUTIVE SUMMARY** (2-3 sentences)
-- What is this? Core definition
-- Why does it matter?
-- Key takeaway
-
-📊 **KEY DATA** (Table format)
-- 4-6 critical metrics/facts
-- Numbers, dates, key figures
-- Quantifiable insights
-
-📈 **VISUAL CONCEPT** (Description for chart/diagram)
-- Describe what visualization would best show the data
-- E.g., "Timeline showing...", "Flow diagram of...", "Bar chart comparing..."
-
-🎯 **KEY POINTS** (6-8 bullets)
-- Most important insights
-- First-principles thinking
-- Evidence-based analysis
-- Consider libertarian/individualist perspective where relevant
-
-🔍 **CONTEXT & IMPLICATIONS**
-- Historical background
-- Current state
-- Future implications
-- Critical analysis from freedom-oriented viewpoint
-
-📚 **FURTHER READING** (3-5 links)
-- Mix of worldview-aligned and mainstream sources
-- Academic papers, think tank analyses, primary sources
-
-RESEARCH STRATEGY:
-- Use web_search for research (STRICT MAX 2 searches)
-- Search 1: Overview + key facts
-- Search 2: Ron Paul/libertarian analysis OR mainstream academic
-- Output JSON IMMEDIATELY after 2 searches
-
-OUTPUT FORMAT (JSON):
-{
-  "topic": "${topic}",
-  "timestamp": "ISO-8601",
-  "executive_summary": "...",
-  "key_data": [
-    {"metric": "...", "value": "..."},
-    ...
-  ],
-  "visual_concept": "...",
-  "key_points": ["...", ...],
-  "context": "...",
-  "further_reading": [
-    {"title": "...", "url": "...", "source": "..."}
-  ]
-}
-
-CRITICAL - FIRESTORE SAVE:
-After outputting the JSON above, IMMEDIATELY save to Firestore:
-
-1. Output your complete JSON result
-2. Use exec to run: node /home/ubuntu/command-center/scripts/save-to-firestore.js one_pagers_history '{"topic":"${topic}","executive_summary":"...","key_data":[...],...}'
-
-Replace the JSON string with your actual result. Make sure to escape quotes properly.
-
-Example:
-exec: node /home/ubuntu/command-center/scripts/save-to-firestore.js one_pagers_history '{"topic":"Federal Reserve","timestamp":"2024-01-01T00:00:00Z","executive_summary":"...","key_data":[...]}'
-
-This ensures results persist even if the API route times out.
-
-Think step by step:
-1. What does "${topic}" actually mean?
-2. What are 2-3 intelligent search queries?
-3. Search and collect key information
-4. Synthesize with Ron Paul lens
-5. OUTPUT THE JSON
-6. SAVE TO FIRESTORE using exec command above
-
-CRITICAL: Limit to 3 searches max. Output results promptly.`;
-
-    // Call OpenClaw gateway to spawn sub-agent
-    const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tool: 'sessions_spawn',
-        args: {
-          task: prompt,
-          label: `one-pager-${topic.slice(0, 30)}`,
-          cleanup: 'keep',
-          runTimeoutSeconds: 60  // 60s for 2 searches + synthesis
+    const searchPromises = searches.map(q => webSearch(q, 6));
+    const searchResults = await Promise.all(searchPromises);
+    
+    const allResults: SearchResult[] = [];
+    const seenUrls = new Set<string>();
+    
+    for (const results of searchResults) {
+      for (const r of results) {
+        if (!seenUrls.has(r.url)) {
+          seenUrls.add(r.url);
+          allResults.push(r);
         }
-      })
+      }
+    }
+
+    // Use Claude to create one-pager
+    const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+    
+    const prompt = `Create a professional one-pager briefing on: "${topic}"
+
+CONTEXT (search results):
+${allResults.map((r, i) => `[${i + 1}] ${r.title}: ${r.description}`).join('\n')}
+
+WORLDVIEW: Ron Paul libertarian lens - free markets, individual liberty, limited government, Austrian economics.
+
+Return ONLY valid JSON:
+{
+  "executive_summary": "2-3 sentence overview",
+  "key_data": [
+    {"label": "...", "value": "...", "source": "..."}
+  ],
+  "key_points": [
+    {"heading": "...", "content": "...", "worldview_note": "libertarian perspective"}
+  ],
+  "context": "Why this matters - historical/political context",
+  "visual_concept": "Suggested chart or visualization",
+  "further_reading": [
+    {"title": "...", "url": "...", "why": "..."}
+  ]
+}`;
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenClaw gateway error: ${response.status} - ${errorText}`);
+    const textContent = message.content.find(c => c.type === 'text');
+    if (!textContent || textContent.type !== 'text') {
+      throw new Error('No text response from Claude');
     }
 
-    const data = await response.json();
-    
-    // sessions_spawn returns immediately with status: "accepted"
-    // Result is in data.result.details when called via /tools/invoke
-    const spawnResult = data?.result?.details || data?.result;
-    
-    if (spawnResult?.status === 'accepted') {
-      const runId = spawnResult.runId;
-      
-      // Fire-and-forget: Return immediately with runId
-      // Sub-agent will save results to Firestore when complete
-      return NextResponse.json({
-        success: true,
-        runId,
-        message: 'Research started - results will appear in history when complete',
-        topic
-      });
+    let result: any = {};
+    try {
+      const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      console.error('Failed to parse Claude response');
+      result = {
+        executive_summary: textContent.text.substring(0, 500),
+        key_points: [],
+        key_data: [],
+        further_reading: []
+      };
     }
-    
-    // Unexpected response - log for debugging
-    console.error('Unexpected spawn response:', JSON.stringify(data, null, 2));
+
+    return NextResponse.json({
+      success: true,
+      topic: topic.trim(),
+      timestamp: new Date().toISOString(),
+      ...result
+    });
+
+  } catch (error) {
+    console.error('One-pager API error:', error);
     return NextResponse.json(
-      { error: 'Failed to start research', details: data },
-      { status: 500 }
-    );
-    
-  } catch (error: any) {
-    console.error('One-pager error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate one-pager' },
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
