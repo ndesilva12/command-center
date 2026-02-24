@@ -316,8 +316,7 @@ function TradingViewWatchlistWidget() {
           }
         `}</style>
       </main>
-      }}
-    />
+    </div>
   );
 }
 
