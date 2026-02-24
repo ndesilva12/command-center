@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
@@ -149,12 +150,23 @@ Return ONLY valid JSON:
       };
     }
 
-    return NextResponse.json({
+    const response = {
       success: true,
       topic: topic.trim(),
       timestamp: new Date().toISOString(),
+      status: 'completed',
       ...result
-    });
+    };
+
+    // Save to Firestore
+    try {
+      const adminDb = getAdminDb();
+      await adminDb.collection('one_pagers_history').add(response);
+    } catch (dbError) {
+      console.error('Failed to save to Firestore:', dbError);
+    }
+
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('One-pager API error:', error);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
@@ -262,6 +263,22 @@ Return ONLY valid JSON (no markdown, no explanation):
         substack: curatedItems.filter(i => i.source_type === 'substack').length,
       }
     };
+
+    // Save to Firestore for history
+    try {
+      const adminDb = getAdminDb();
+      await adminDb.collection('curate_history').add({
+        topic: topic.trim(),
+        timestamp: result.timestamp,
+        items: curatedItems,
+        total: curatedItems.length,
+        diversity: result.diversity,
+        status: 'completed'
+      });
+    } catch (dbError) {
+      console.error('Failed to save to Firestore:', dbError);
+      // Don't fail the request if DB save fails
+    }
 
     return NextResponse.json(result);
 

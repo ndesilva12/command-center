@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
@@ -149,14 +150,25 @@ Return ONLY valid JSON:
       console.error('Failed to parse Claude response');
     }
 
-    return NextResponse.json({
+    const response = {
       success: true,
       topic: topic.trim(),
       depth,
       timestamp: new Date().toISOString(),
+      status: 'completed',
       ...result,
       total_papers: result.papers?.length || 0
-    });
+    };
+
+    // Save to Firestore
+    try {
+      const adminDb = getAdminDb();
+      await adminDb.collection('white_papers_history').add(response);
+    } catch (dbError) {
+      console.error('Failed to save to Firestore:', dbError);
+    }
+
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('White papers API error:', error);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
