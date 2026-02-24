@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -48,7 +48,6 @@ export default function ReadPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsSearch, setSettingsSearch] = useState("");
   const [tempTopFeeds, setTempTopFeeds] = useState<number[]>(DEFAULT_TOP_FEEDS);
-  const [otherSourcesExpanded, setOtherSourcesExpanded] = useState(false);
   const [sourceSearch, setSourceSearch] = useState("");
 
   useEffect(() => {
@@ -258,12 +257,13 @@ export default function ReadPage() {
               </div>
             </div>
 
-            {/* Quick Access Sources */}
-            <div className="glass card" style={{ padding: "12px" }}>
+            {/* All Sources - Single Scrollable Section */}
+            <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto", minHeight: isMobile ? "300px" : "0" }}>
+              {/* Quick Access */}
               <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 Quick Access
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px" }}>
                 {topFeedObjs.map(feed => (
                   <button
                     key={feed.id}
@@ -289,97 +289,84 @@ export default function ReadPage() {
                   </button>
                 ))}
               </div>
-            </div>
 
-            {/* Other Sources */}
-            <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto", minHeight: isMobile ? "200px" : "0" }}>
-              <button
-                onClick={() => setOtherSourcesExpanded(!otherSourcesExpanded)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                  padding: "0",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  marginBottom: otherSourcesExpanded ? "10px" : "0",
-                }}
-              >
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                  Other Sources ({otherFeeds.length})
+              {/* Separator */}
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "10px", 
+                marginBottom: "12px",
+              }}>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.1)" }} />
+                <span style={{ fontSize: "10px", fontWeight: 600, color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Other ({otherFeeds.length})
                 </span>
-                {otherSourcesExpanded ? <ChevronUp size={14} color="var(--foreground-muted)" /> : <ChevronDown size={14} color="var(--foreground-muted)" />}
-              </button>
-              
-              {otherSourcesExpanded && (
-                <>
-                  {/* Search */}
-                  <div style={{ position: "relative", marginBottom: "10px" }}>
-                    <Search size={12} style={{
-                      position: "absolute",
-                      left: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "var(--foreground-muted)",
-                    }} />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={sourceSearch}
-                      onChange={(e) => setSourceSearch(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 10px 8px 28px",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        background: "rgba(255,255,255,0.05)",
-                        color: "var(--foreground)",
-                        fontSize: "12px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.1)" }} />
+              </div>
 
-                  {/* Categorized feeds */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    {Object.entries(categorizedOtherFeeds).sort(([a], [b]) => a.localeCompare(b)).map(([category, feeds]) => (
-                      <div key={category}>
-                        <div style={{ fontSize: "10px", fontWeight: 600, color: "var(--foreground-muted)", marginBottom: "6px", textTransform: "uppercase" }}>
-                          {category}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                          {feeds.map(feed => (
-                            <button
-                              key={feed.id}
-                              onClick={() => setSelectedFeedId(feed.id)}
-                              style={{
-                                padding: "8px 10px",
-                                borderRadius: "6px",
-                                border: selectedFeedId === feed.id 
-                                  ? `1px solid ${toolCustom.color}40` 
-                                  : '1px solid transparent',
-                                background: selectedFeedId === feed.id 
-                                  ? `${toolCustom.color}10` 
-                                  : 'transparent',
-                                color: selectedFeedId === feed.id ? toolCustom.color : 'var(--foreground-muted)',
-                                fontSize: '12px',
-                                fontWeight: selectedFeedId === feed.id ? 600 : 400,
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                                transition: 'all 0.15s',
-                              }}
-                            >
-                              {feed.title}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+              {/* Search */}
+              <div style={{ position: "relative", marginBottom: "12px" }}>
+                <Search size={12} style={{
+                  position: "absolute",
+                  left: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--foreground-muted)",
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search sources..."
+                  value={sourceSearch}
+                  onChange={(e) => setSourceSearch(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px 8px 28px",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.05)",
+                    color: "var(--foreground)",
+                    fontSize: "12px",
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              {/* Categorized feeds */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {Object.entries(categorizedOtherFeeds).sort(([a], [b]) => a.localeCompare(b)).map(([category, feeds]) => (
+                  <div key={category}>
+                    <div style={{ fontSize: "10px", fontWeight: 600, color: "var(--foreground-muted)", marginBottom: "6px", textTransform: "uppercase" }}>
+                      {category}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      {feeds.map(feed => (
+                        <button
+                          key={feed.id}
+                          onClick={() => setSelectedFeedId(feed.id)}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "6px",
+                            border: selectedFeedId === feed.id 
+                              ? `1px solid ${toolCustom.color}40` 
+                              : '1px solid transparent',
+                            background: selectedFeedId === feed.id 
+                              ? `${toolCustom.color}10` 
+                              : 'transparent',
+                            color: selectedFeedId === feed.id ? toolCustom.color : 'var(--foreground-muted)',
+                            fontSize: '12px',
+                            fontWeight: selectedFeedId === feed.id ? 600 : 400,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {feed.title}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </>
-              )}
+                ))}
+              </div>
             </div>
           </div>
 
