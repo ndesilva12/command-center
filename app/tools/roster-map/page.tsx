@@ -7,25 +7,13 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
-import { MapPin, Users, Search, Filter, ChevronDown, Globe, Building2 } from "lucide-react";
+import { MapPin, Users, Search, Filter, Globe, Building2, RefreshCw, ChevronRight } from "lucide-react";
 
 // Dynamic import for Leaflet (no SSR)
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const CircleMarker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.CircleMarker),
-  { ssr: false }
-);
-const Popup = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Popup),
-  { ssr: false }
-);
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
+const CircleMarker = dynamic(() => import("react-leaflet").then((mod) => mod.CircleMarker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false });
 
 interface Player {
   name: string;
@@ -63,8 +51,16 @@ export default function RosterMapPage() {
   const [teamSearch, setTeamSearch] = useState("");
   const [conferenceFilter, setConferenceFilter] = useState<string>("all");
   const [mapReady, setMapReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showTeamPanel, setShowTeamPanel] = useState(true);
 
-  // Load team list on mount
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   useEffect(() => {
     fetch("/api/roster-map?action=teams")
       .then((res) => res.json())
@@ -74,28 +70,20 @@ export default function RosterMapPage() {
       })
       .catch(console.error);
 
-    // Give Leaflet CSS time to load
     setTimeout(() => setMapReady(true), 100);
   }, []);
 
-  // Filter teams by search and conference
   const filteredTeams = useMemo(() => {
     return teams.filter((team) => {
-      const matchesSearch = team.name
-        .toLowerCase()
-        .includes(teamSearch.toLowerCase());
-      const matchesConference =
-        conferenceFilter === "all" || team.conference === conferenceFilter;
+      const matchesSearch = team.name.toLowerCase().includes(teamSearch.toLowerCase());
+      const matchesConference = conferenceFilter === "all" || team.conference === conferenceFilter;
       return matchesSearch && matchesConference;
     });
   }, [teams, teamSearch, conferenceFilter]);
 
-  // Players with valid coordinates
   const mappedPlayers = useMemo(() => {
     if (!selectedTeam) return [];
-    return selectedTeam.players.filter(
-      (p) => p.lat !== undefined && p.lng !== undefined
-    );
+    return selectedTeam.players.filter((p) => p.lat !== undefined && p.lng !== undefined);
   }, [selectedTeam]);
 
   const handleSelectTeam = async (teamId: string) => {
@@ -107,252 +95,230 @@ export default function RosterMapPage() {
         alert(data.error);
       } else {
         setSelectedTeam(data);
+        if (isMobile) setShowTeamPanel(false);
       }
     } catch (error) {
       console.error("Error fetching roster:", error);
-      alert("Failed to fetch team roster");
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate map center based on players
   const mapCenter = useMemo(() => {
-    if (mappedPlayers.length === 0) return { lat: 39.8283, lng: -98.5795 }; // US center
-    const avgLat =
-      mappedPlayers.reduce((sum, p) => sum + (p.lat || 0), 0) /
-      mappedPlayers.length;
-    const avgLng =
-      mappedPlayers.reduce((sum, p) => sum + (p.lng || 0), 0) /
-      mappedPlayers.length;
+    if (mappedPlayers.length === 0) return { lat: 39.8283, lng: -98.5795 };
+    const avgLat = mappedPlayers.reduce((sum, p) => sum + (p.lat || 0), 0) / mappedPlayers.length;
+    const avgLng = mappedPlayers.reduce((sum, p) => sum + (p.lng || 0), 0) / mappedPlayers.length;
     return { lat: avgLat, lng: avgLng };
   }, [mappedPlayers]);
-
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   return (
     <>
       <TopNav />
       <BottomNav />
-      <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
-        {!isMobile && <Sidebar />}
-        <main
-          style={{
-            flex: 1,
-            minHeight: "100vh",
-            paddingTop: isMobile ? "72px" : "76px",
-            paddingBottom: isMobile ? "88px" : "24px",
-            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-            paddingRight: isMobile ? "12px" : "20px",
-          }}
-        >
-        <ToolBackground color={toolCustom.color} />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
 
-        <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+      <main style={{
+        paddingTop: isMobile ? "72px" : "80px",
+        paddingBottom: isMobile ? "88px" : "24px",
+        paddingLeft: isMobile ? "0" : "calc(var(--sidebar-width, 240px) + 16px)",
+        paddingRight: isMobile ? "0" : "16px",
+        minHeight: "100vh",
+      }}>
+        {/* Full-width layout */}
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          height: isMobile ? "calc(100vh - 160px)" : "calc(100vh - 104px)",
+          padding: isMobile ? "0" : "0",
+        }}>
           {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "24px",
-            }}
-          >
-            <MapPin size={32} style={{ color: toolCustom.color }} />
-            <div>
-              <h1 style={{ fontSize: "28px", fontWeight: 700, margin: 0 }}>
-                {toolCustom.name}
-              </h1>
-              <p style={{ fontSize: "14px", color: "var(--muted)", margin: 0 }}>
-                Visualize where college basketball players come from
-              </p>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: isMobile ? "12px 16px" : "0 0 16px 0",
+            borderBottom: isMobile ? "1px solid rgba(255,255,255,0.1)" : "none",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <MapPin size={28} style={{ color: toolCustom.color }} />
+              <div>
+                <h1 style={{ fontSize: "24px", fontWeight: 700, margin: 0, color: "var(--foreground)" }}>
+                  {toolCustom.name}
+                </h1>
+                {selectedTeam && (
+                  <p style={{ fontSize: "14px", color: "var(--foreground-muted)", margin: 0 }}>
+                    {selectedTeam.name} • {mappedPlayers.length} of {selectedTeam.players.length} mapped
+                  </p>
+                )}
+              </div>
             </div>
+            {selectedTeam && (
+              <button
+                onClick={() => setSelectedTeam(null)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "var(--foreground-muted)",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                Clear Selection
+              </button>
+            )}
           </div>
 
-          {/* Main Layout: Sidebar + Map */}
-          <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "20px" }}>
-            {/* Left: Team Selector */}
-            <div className="glass card" style={{ padding: "20px", height: "fit-content" }}>
-              {/* Search */}
-              <div style={{ marginBottom: "16px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <Search size={16} style={{ color: "var(--muted)" }} />
-                  <span style={{ fontSize: "14px", fontWeight: 600 }}>
-                    Find Team
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  value={teamSearch}
-                  onChange={(e) => setTeamSearch(e.target.value)}
-                  placeholder="Search teams..."
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--glass-border)",
-                    background: "var(--glass-bg)",
-                    color: "var(--foreground)",
-                    fontSize: "14px",
-                  }}
-                />
-              </div>
-
-              {/* Conference Filter */}
-              <div style={{ marginBottom: "16px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <Filter size={16} style={{ color: "var(--muted)" }} />
-                  <span style={{ fontSize: "14px", fontWeight: 600 }}>
-                    Conference
-                  </span>
+          {/* Main Content */}
+          <div style={{ 
+            display: "flex", 
+            flex: 1, 
+            gap: "16px",
+            overflow: "hidden",
+          }}>
+            {/* Left Panel: Team Selector */}
+            <div style={{
+              width: isMobile ? (showTeamPanel ? "100%" : "0") : "300px",
+              minWidth: isMobile ? "0" : "300px",
+              transition: "width 0.3s",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              background: "rgba(255,255,255,0.02)",
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}>
+              {/* Search & Filter */}
+              <div style={{ padding: "16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                  <div style={{ flex: 1, position: "relative" }}>
+                    <Search size={16} style={{
+                      position: "absolute",
+                      left: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "var(--foreground-muted)",
+                    }} />
+                    <input
+                      type="text"
+                      value={teamSearch}
+                      onChange={(e) => setTeamSearch(e.target.value)}
+                      placeholder="Search teams..."
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px 10px 36px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        background: "rgba(255,255,255,0.05)",
+                        color: "var(--foreground)",
+                        fontSize: "14px",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
                 </div>
                 <select
                   value={conferenceFilter}
                   onChange={(e) => setConferenceFilter(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "10px 14px",
+                    padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1px solid var(--glass-border)",
-                    background: "var(--glass-bg)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.05)",
                     color: "var(--foreground)",
                     fontSize: "14px",
+                    outline: "none",
                   }}
                 >
                   <option value="all">All Conferences</option>
                   {conferences.map((conf) => (
-                    <option key={conf} value={conf}>
-                      {conf}
-                    </option>
+                    <option key={conf} value={conf}>{conf}</option>
                   ))}
                 </select>
               </div>
 
               {/* Team List */}
-              <div
-                style={{
-                  maxHeight: "400px",
-                  overflowY: "auto",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "4px",
-                }}
-              >
+              <div style={{ flex: 1, overflow: "auto", padding: "8px" }}>
                 {filteredTeams.map((team) => (
                   <button
                     key={`${team.id}-${team.name}`}
                     onClick={() => handleSelectTeam(team.id)}
                     disabled={loading}
                     style={{
-                      padding: "12px 14px",
+                      width: "100%",
+                      padding: "14px 16px",
+                      marginBottom: "4px",
                       borderRadius: "8px",
-                      border:
-                        selectedTeam?.name === team.name
-                          ? `2px solid ${toolCustom.color}`
-                          : "1px solid var(--glass-border)",
-                      background:
-                        selectedTeam?.name === team.name
-                          ? `${toolCustom.color}15`
-                          : "var(--glass-bg)",
+                      border: selectedTeam?.name === team.name
+                        ? `2px solid ${toolCustom.color}`
+                        : "1px solid transparent",
+                      background: selectedTeam?.name === team.name
+                        ? `${toolCustom.color}15`
+                        : "rgba(255,255,255,0.03)",
                       color: "var(--foreground)",
                       fontSize: "14px",
                       fontWeight: selectedTeam?.name === team.name ? 600 : 400,
-                      cursor: loading ? "not-allowed" : "pointer",
+                      cursor: loading ? "wait" : "pointer",
                       textAlign: "left",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      transition: "all 0.15s",
                     }}
                   >
                     <span>{team.name}</span>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--muted)",
-                        background: "var(--glass-bg)",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                      }}
-                    >
+                    <span style={{
+                      fontSize: "11px",
+                      color: "var(--foreground-muted)",
+                      background: "rgba(255,255,255,0.08)",
+                      padding: "3px 8px",
+                      borderRadius: "4px",
+                    }}>
                       {team.conference}
                     </span>
                   </button>
                 ))}
               </div>
-
-              {filteredTeams.length === 0 && (
-                <p
-                  style={{
-                    color: "var(--muted)",
-                    fontSize: "14px",
-                    textAlign: "center",
-                    padding: "20px",
-                  }}
-                >
-                  No teams found
-                </p>
-              )}
             </div>
 
-            {/* Right: Map + Roster */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {/* Map */}
-              <div
-                className="glass card"
-                style={{
-                  padding: "0",
-                  height: "500px",
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  position: "relative",
-                }}
-              >
+            {/* Right: Map & Roster */}
+            <div style={{ 
+              flex: 1, 
+              display: "flex", 
+              flexDirection: "column", 
+              gap: "16px",
+              minWidth: 0,
+            }}>
+              {/* Large Map */}
+              <div style={{
+                flex: selectedTeam ? "0 0 55%" : "1",
+                minHeight: "400px",
+                borderRadius: "12px",
+                overflow: "hidden",
+                position: "relative",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}>
                 {loading && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background: "rgba(0,0,0,0.7)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      zIndex: 1000,
-                    }}
-                  >
-                    <div style={{ textAlign: "center", color: "#fff" }}>
-                      <div
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          border: "3px solid rgba(255,255,255,0.2)",
-                          borderTop: `3px solid ${toolCustom.color}`,
-                          borderRadius: "50%",
-                          margin: "0 auto 12px",
-                          animation: "spin 1s linear infinite",
-                        }}
-                      />
-                      <p style={{ margin: 0 }}>Loading roster...</p>
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.8)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1000,
+                  }}>
+                    <div style={{ textAlign: "center" }}>
+                      <RefreshCw size={32} style={{ 
+                        color: toolCustom.color, 
+                        animation: "spin 1s linear infinite" 
+                      }} />
+                      <p style={{ margin: "12px 0 0", color: "var(--foreground-muted)" }}>
+                        Loading roster & geocoding hometowns...
+                      </p>
                     </div>
                   </div>
                 )}
@@ -368,37 +334,35 @@ export default function RosterMapPage() {
                 {mapReady && typeof window !== "undefined" && (
                   <MapContainer
                     center={[mapCenter.lat, mapCenter.lng]}
-                    zoom={4}
+                    zoom={mappedPlayers.length > 0 ? 4 : 4}
                     style={{ height: "100%", width: "100%" }}
-                    key={`${mapCenter.lat}-${mapCenter.lng}`}
+                    key={`${mapCenter.lat}-${mapCenter.lng}-${selectedTeam?.id || 'none'}`}
                   >
                     <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; OpenStreetMap'
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     />
                     {mappedPlayers.map((player, idx) => (
                       <CircleMarker
                         key={`${player.name}-${idx}`}
                         center={[player.lat!, player.lng!]}
-                        radius={8}
+                        radius={10}
                         pathOptions={{
-                          color: toolCustom.color,
+                          color: "#fff",
                           fillColor: toolCustom.color,
-                          fillOpacity: 0.8,
+                          fillOpacity: 0.9,
                           weight: 2,
                         }}
                       >
                         <Popup>
-                          <div style={{ minWidth: "150px" }}>
-                            <strong style={{ fontSize: "14px" }}>{player.name}</strong>
-                            <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
-                              {player.position} • {player.year}
-                            </div>
-                            <div style={{ fontSize: "12px", color: "#666" }}>
-                              {player.hometown}
-                            </div>
-                            <div style={{ fontSize: "12px", color: "#666" }}>
-                              {player.height} • {player.weight} lbs
+                          <div style={{ minWidth: "180px", padding: "4px" }}>
+                            <strong style={{ fontSize: "15px", display: "block", marginBottom: "6px" }}>
+                              {player.name}
+                            </strong>
+                            <div style={{ fontSize: "13px", color: "#666", lineHeight: 1.5 }}>
+                              <div>{player.position} • {player.year}</div>
+                              <div>{player.height} • {player.weight} lbs</div>
+                              <div style={{ marginTop: "4px", fontWeight: 500 }}>📍 {player.hometown}</div>
                             </div>
                           </div>
                         </Popup>
@@ -408,152 +372,78 @@ export default function RosterMapPage() {
                 )}
 
                 {!selectedTeam && !loading && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: "var(--glass-bg)",
-                    }}
-                  >
-                    <div style={{ textAlign: "center", color: "var(--muted)" }}>
-                      <Globe size={48} style={{ marginBottom: "12px", opacity: 0.5 }} />
-                      <p style={{ margin: 0 }}>Select a team to view player hometowns</p>
+                  <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(0,0,0,0.6)",
+                    backdropFilter: "blur(4px)",
+                  }}>
+                    <div style={{ textAlign: "center", color: "var(--foreground-muted)" }}>
+                      <Globe size={64} style={{ marginBottom: "16px", opacity: 0.4 }} />
+                      <p style={{ margin: 0, fontSize: "16px" }}>Select a team to map player hometowns</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Roster Table */}
+              {/* Roster Table - Only shown when team selected */}
               {selectedTeam && (
-                <div className="glass card" style={{ padding: "20px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "16px",
-                    }}
-                  >
+                <div style={{
+                  flex: 1,
+                  minHeight: "200px",
+                  background: "rgba(255,255,255,0.02)",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                }}>
+                  <div style={{
+                    padding: "16px 20px",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       <Building2 size={20} style={{ color: toolCustom.color }} />
                       <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
                         {selectedTeam.name} Roster
                       </h3>
                     </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        fontSize: "13px",
-                        color: "var(--muted)",
-                      }}
-                    >
-                      <Users size={14} />
-                      {selectedTeam.players.length} players •{" "}
-                      {mappedPlayers.length} mapped
-                    </div>
+                    <span style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                      {selectedTeam.players.length} players
+                    </span>
                   </div>
 
-                  <div style={{ overflowX: "auto" }}>
-                    <table
-                      style={{
-                        width: "100%",
-                        borderCollapse: "collapse",
-                        fontSize: "13px",
-                      }}
-                    >
+                  <div style={{ flex: 1, overflow: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
-                        <tr
-                          style={{
-                            borderBottom: "1px solid var(--glass-border)",
-                          }}
-                        >
-                          <th
-                            style={{
-                              textAlign: "left",
-                              padding: "10px 12px",
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            Name
-                          </th>
-                          <th
-                            style={{
-                              textAlign: "left",
-                              padding: "10px 12px",
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            Pos
-                          </th>
-                          <th
-                            style={{
-                              textAlign: "left",
-                              padding: "10px 12px",
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            Year
-                          </th>
-                          <th
-                            style={{
-                              textAlign: "left",
-                              padding: "10px 12px",
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            Height
-                          </th>
-                          <th
-                            style={{
-                              textAlign: "left",
-                              padding: "10px 12px",
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            Hometown
-                          </th>
-                          <th
-                            style={{
-                              textAlign: "center",
-                              padding: "10px 12px",
-                              fontWeight: 600,
-                              color: "var(--muted)",
-                            }}
-                          >
-                            📍
-                          </th>
+                        <tr style={{ background: "rgba(255,255,255,0.03)" }}>
+                          <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--foreground-muted)" }}>Player</th>
+                          <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--foreground-muted)" }}>Pos</th>
+                          <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--foreground-muted)" }}>Year</th>
+                          <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--foreground-muted)" }}>Height</th>
+                          <th style={{ textAlign: "left", padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--foreground-muted)" }}>Hometown</th>
+                          <th style={{ textAlign: "center", padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--foreground-muted)" }}>Map</th>
                         </tr>
                       </thead>
                       <tbody>
                         {selectedTeam.players.map((player, idx) => (
-                          <tr
-                            key={`${player.name}-${idx}`}
-                            style={{
-                              borderBottom: "1px solid var(--glass-border)",
-                            }}
-                          >
-                            <td style={{ padding: "10px 12px", fontWeight: 500 }}>
-                              {player.name}
-                            </td>
-                            <td style={{ padding: "10px 12px" }}>{player.position}</td>
-                            <td style={{ padding: "10px 12px" }}>{player.year}</td>
-                            <td style={{ padding: "10px 12px" }}>{player.height}</td>
-                            <td style={{ padding: "10px 12px" }}>{player.hometown}</td>
-                            <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                          <tr key={`${player.name}-${idx}`} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                            <td style={{ padding: "12px 16px", fontWeight: 500, fontSize: "14px" }}>{player.name}</td>
+                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "var(--foreground-muted)" }}>{player.position}</td>
+                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "var(--foreground-muted)" }}>{player.year}</td>
+                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "var(--foreground-muted)" }}>{player.height}</td>
+                            <td style={{ padding: "12px 16px", fontSize: "14px", color: "var(--foreground-muted)" }}>{player.hometown}</td>
+                            <td style={{ padding: "12px 16px", textAlign: "center" }}>
                               {player.lat && player.lng ? (
-                                <span style={{ color: "#22c55e" }}>✓</span>
+                                <span style={{ color: "#22c55e", fontSize: "16px" }}>●</span>
                               ) : (
-                                <span style={{ color: "var(--muted)" }}>—</span>
+                                <span style={{ color: "var(--foreground-muted)", opacity: 0.4 }}>—</span>
                               )}
                             </td>
                           </tr>
@@ -566,14 +456,11 @@ export default function RosterMapPage() {
             </div>
           </div>
         </div>
-        </main>
-      </div>
+      </main>
 
       <style jsx global>{`
         @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
+          to { transform: rotate(360deg); }
         }
         .leaflet-container {
           background: #1a1a2e;

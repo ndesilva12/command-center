@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FileText, Plus, Search, Trash2, Edit2, Save, X, Tag, Folder, Calendar, Clock, Download } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { FileText, Plus, Search, Trash2, Save, X, Tag, Folder, Clock, Download, ChevronRight, MoreHorizontal, Star, Archive, PenLine, Eye } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 
 interface Note {
@@ -17,7 +16,10 @@ interface Note {
   folder: string;
   createdAt: number;
   updatedAt: number;
+  starred?: boolean;
 }
+
+const FOLDERS = ['inbox', 'projects', 'ideas', 'daily', 'archive'];
 
 export default function NotesPage() {
   const { getCustomization } = useToolCustomizations();
@@ -26,17 +28,23 @@ export default function NotesPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFolder, setSelectedFolder] = useState("all");
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showNewNote, setShowNewNote] = useState(false);
+  const [viewMode, setViewMode] = useState<"edit" | "preview">("edit");
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   
   // Edit state
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editTags, setEditTags] = useState("");
   const [editFolder, setEditFolder] = useState("inbox");
+  
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const autoSaveTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -49,115 +57,144 @@ export default function NotesPage() {
     fetchNotes();
   }, [selectedFolder]);
 
+  // Clear messages after 3s
+  useEffect(() => {
+    if (successMsg) {
+      const timer = setTimeout(() => setSuccessMsg(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMsg]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const fetchNotes = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams();
       if (selectedFolder !== 'all') params.set('folder', selectedFolder);
       if (searchQuery) params.set('q', searchQuery);
 
-      const res = await fetch(`/api/notes?${params.toString()}`);
+      const res = await fetch(`/api/notes?${params.toString()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setNotes(data.notes || []);
+      } else if (res.status === 401) {
+        setError("Please sign in to access notes");
+        setNotes([]);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to load notes");
       }
-    } catch (error) {
-      console.error('Failed to fetch notes:', error);
+    } catch (err) {
+      console.error('Failed to fetch notes:', err);
+      setError("Network error - check connection");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    fetchNotes();
-  };
-
   const handleNewNote = () => {
-    setEditTitle("");
+    setEditTitle("Untitled");
     setEditContent("");
     setEditTags("");
     setEditFolder("inbox");
-    setShowNewNote(true);
-    setIsEditing(false);
     setSelectedNote(null);
+    setIsEditing(true);
+    setViewMode("edit");
+    // Focus title after render
+    setTimeout(() => {
+      const titleInput = document.querySelector('input[placeholder="Note title..."]') as HTMLInputElement;
+      if (titleInput) {
+        titleInput.focus();
+        titleInput.select();
+      }
+    }, 100);
   };
 
-  const handleSaveNew = async () => {
-    if (!editTitle.trim()) return;
+  const handleSave = async () => {
+    if (!editTitle.trim()) {
+      setError("Title is required");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
 
     try {
+      const isNew = !selectedNote;
+      const method = isNew ? 'POST' : 'PUT';
+      const body = {
+        ...(selectedNote ? { id: selectedNote.id } : {}),
+        title: editTitle.trim(),
+        content: editContent,
+        tags: editTags.split(',').map(t => t.trim()).filter(t => t),
+        folder: editFolder,
+      };
+
       const res = await fetch('/api/notes', {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: editTitle,
-          content: editContent,
-          tags: editTags.split(',').map(t => t.trim()).filter(t => t),
-          folder: editFolder,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
-        setShowNewNote(false);
-        fetchNotes();
+        const data = await res.json();
+        setSuccessMsg(isNew ? "Note created" : "Note saved");
+        await fetchNotes();
+        
+        // Update selected note with new data
+        if (isNew && data.id) {
+          setSelectedNote({ ...body, id: data.id, createdAt: data.createdAt || Date.now(), updatedAt: data.updatedAt || Date.now() } as Note);
+        }
+      } else if (res.status === 401) {
+        setError("Please sign in to save notes");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to save note");
       }
-    } catch (error) {
-      console.error('Failed to create note:', error);
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      setError("Network error - check connection");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleEditNote = (note: Note) => {
+  const handleSelectNote = (note: Note) => {
     setSelectedNote(note);
     setEditTitle(note.title);
     setEditContent(note.content);
     setEditTags(note.tags.join(', '));
     setEditFolder(note.folder);
     setIsEditing(true);
-    setShowNewNote(false);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!selectedNote || !editTitle.trim()) return;
-
-    try {
-      const res = await fetch('/api/notes', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedNote.id,
-          title: editTitle,
-          content: editContent,
-          tags: editTags.split(',').map(t => t.trim()).filter(t => t),
-          folder: editFolder,
-        }),
-      });
-
-      if (res.ok) {
-        setIsEditing(false);
-        fetchNotes();
-      }
-    } catch (error) {
-      console.error('Failed to update note:', error);
-    }
+    setViewMode("edit");
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('Delete this note?')) return;
+    if (!confirm('Delete this note permanently?')) return;
 
     try {
-      const res = await fetch(`/api/notes?id=${noteId}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`/api/notes?id=${noteId}`, { method: 'DELETE' });
       if (res.ok) {
+        setSuccessMsg("Note deleted");
         if (selectedNote?.id === noteId) {
           setSelectedNote(null);
           setIsEditing(false);
         }
         fetchNotes();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to delete");
       }
-    } catch (error) {
-      console.error('Failed to delete note:', error);
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+      setError("Network error");
     }
   };
 
@@ -165,7 +202,7 @@ export default function NotesPage() {
     try {
       const res = await fetch('/api/notes/export');
       if (!res.ok) {
-        alert('Failed to export notes');
+        setError("Failed to export notes");
         return;
       }
 
@@ -179,27 +216,49 @@ export default function NotesPage() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to export notes:', error);
-      alert('Failed to export notes');
+      setSuccessMsg("Notes exported");
+    } catch (err) {
+      console.error('Failed to export notes:', err);
+      setError("Export failed");
     }
   };
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
+    const diff = now.getTime() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
     
-    if (isToday) {
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    }
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const folders = ['all', 'inbox', 'projects', 'ideas', 'daily', 'archive'];
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + S to save
+      if ((e.metaKey || e.ctrlKey) && e.key === 's' && isEditing) {
+        e.preventDefault();
+        handleSave();
+      }
+      // Cmd/Ctrl + N for new note
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        handleNewNote();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditing, editTitle, editContent]);
 
   return (
-    <ProtectedRoute>
+    <>
       <TopNav />
       <BottomNav />
       <Sidebar />
@@ -207,179 +266,207 @@ export default function NotesPage() {
 
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
-        paddingBottom: isMobile ? "88px" : "32px",
-        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-        paddingRight: isMobile ? "12px" : "24px",
+        paddingBottom: isMobile ? "88px" : "24px",
+        paddingLeft: isMobile ? "0" : "calc(var(--sidebar-width, 240px) + 16px)",
+        paddingRight: isMobile ? "0" : "16px",
         minHeight: "100vh",
-        maxWidth: "1400px",
-        margin: "0 auto"
       }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FileText style={{ width: "24px", height: "24px", color: toolCustom.color }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
-              Notes
-            </h1>
-          </div>
-          
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <button
-              onClick={handleExport}
-              disabled={notes.length === 0}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "10px 16px",
-                borderRadius: "8px",
-                background: notes.length > 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.02)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: notes.length > 0 ? "var(--foreground-muted)" : "#64748b",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: notes.length > 0 ? "pointer" : "not-allowed",
-                opacity: notes.length > 0 ? 1 : 0.5,
-              }}
-            >
-              <Download size={16} />
-              Export
-            </button>
-            
-            <button
-              onClick={handleNewNote}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "10px 16px",
-                borderRadius: "8px",
-                background: `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)`,
-                border: "none",
-                color: "white",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              <Plus size={16} />
-              New Note
-            </button>
-          </div>
-        </div>
-
-        {/* Search + Folder Filter */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 300px", position: "relative" }}>
-            <Search size={18} style={{
-              position: "absolute",
-              left: "14px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#64748b",
-            }} />
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              style={{
-                width: "100%",
-                padding: "10px 14px 10px 44px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "8px",
-                color: "white",
-                fontSize: "14px",
-                outline: "none",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {folders.map(folder => (
-              <button
-                key={folder}
-                onClick={() => setSelectedFolder(folder)}
-                style={{
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: selectedFolder === folder 
-                    ? `rgba(16, 185, 129, 0.15)` 
-                    : "rgba(255, 255, 255, 0.05)",
-                  color: selectedFolder === folder ? toolCustom.color : "var(--foreground-muted)",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  textTransform: "capitalize",
-                }}
-              >
-                {folder}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Content Area */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "350px 1fr",
-          gap: "16px",
-          minHeight: "400px",
-        }}>
-          {/* Notes List */}
+        {/* Messages */}
+        {(error || successMsg) && (
           <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "16px",
-            maxHeight: "calc(100vh - 280px)",
-            overflowY: "auto",
+            position: "fixed",
+            top: "90px",
+            right: "24px",
+            zIndex: 1000,
+            padding: "12px 20px",
+            borderRadius: "8px",
+            background: error ? "rgba(239, 68, 68, 0.15)" : "rgba(34, 197, 94, 0.15)",
+            border: `1px solid ${error ? "rgba(239, 68, 68, 0.3)" : "rgba(34, 197, 94, 0.3)"}`,
+            color: error ? "#ef4444" : "#22c55e",
+            fontSize: "14px",
+            fontWeight: 500,
           }}>
-            {loading ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-                Loading...
+            {error || successMsg}
+          </div>
+        )}
+
+        <div style={{ 
+          display: "flex", 
+          height: isMobile ? "calc(100vh - 160px)" : "calc(100vh - 104px)",
+          gap: "0",
+        }}>
+          {/* Left Sidebar: Notes List */}
+          <div style={{
+            width: isMobile ? "100%" : "320px",
+            minWidth: isMobile ? "100%" : "320px",
+            display: isEditing && isMobile ? "none" : "flex",
+            flexDirection: "column",
+            background: "rgba(255,255,255,0.02)",
+            borderRight: "1px solid rgba(255,255,255,0.08)",
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: "20px",
+              borderBottom: "1px solid rgba(255,255,255,0.08)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <FileText size={24} style={{ color: toolCustom.color }} />
+                  <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0 }}>Notes</h1>
+                </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={handleExport}
+                    disabled={notes.length === 0}
+                    title="Export all notes"
+                    style={{
+                      padding: "8px",
+                      borderRadius: "6px",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.05)",
+                      color: "var(--foreground-muted)",
+                      cursor: notes.length > 0 ? "pointer" : "not-allowed",
+                      opacity: notes.length > 0 ? 1 : 0.5,
+                    }}
+                  >
+                    <Download size={16} />
+                  </button>
+                  <button
+                    onClick={handleNewNote}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: toolCustom.color,
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Plus size={16} />
+                    New
+                  </button>
+                </div>
               </div>
-            ) : notes.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-                No notes found
+
+              {/* Search */}
+              <div style={{ position: "relative", marginBottom: "12px" }}>
+                <Search size={16} style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "var(--foreground-muted)",
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && fetchNotes()}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px 10px 38px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.05)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                    outline: "none",
+                  }}
+                />
               </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {notes.map(note => (
+
+              {/* Folder Tabs */}
+              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => setSelectedFolder("all")}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: selectedFolder === "all" ? `${toolCustom.color}20` : "transparent",
+                    color: selectedFolder === "all" ? toolCustom.color : "var(--foreground-muted)",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  All
+                </button>
+                {FOLDERS.map(folder => (
+                  <button
+                    key={folder}
+                    onClick={() => setSelectedFolder(folder)}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: selectedFolder === folder ? `${toolCustom.color}20` : "transparent",
+                      color: selectedFolder === folder ? toolCustom.color : "var(--foreground-muted)",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {folder}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Notes List */}
+            <div style={{ flex: 1, overflow: "auto", padding: "8px" }}>
+              {loading ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "var(--foreground-muted)" }}>
+                  Loading...
+                </div>
+              ) : notes.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "var(--foreground-muted)" }}>
+                  <FileText size={48} style={{ opacity: 0.3, marginBottom: "12px" }} />
+                  <p style={{ margin: 0 }}>No notes yet</p>
+                  <button
+                    onClick={handleNewNote}
+                    style={{
+                      marginTop: "16px",
+                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: toolCustom.color,
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Create your first note
+                  </button>
+                </div>
+              ) : (
+                notes.map(note => (
                   <div
                     key={note.id}
-                    onClick={() => handleEditNote(note)}
+                    onClick={() => handleSelectNote(note)}
                     style={{
-                      padding: "12px",
+                      padding: "14px 16px",
+                      marginBottom: "4px",
                       borderRadius: "8px",
-                      background: selectedNote?.id === note.id 
-                        ? "rgba(16, 185, 129, 0.1)" 
-                        : "rgba(255, 255, 255, 0.03)",
-                      border: `1px solid ${selectedNote?.id === note.id 
-                        ? 'rgba(16, 185, 129, 0.3)' 
-                        : 'rgba(255, 255, 255, 0.1)'}`,
+                      background: selectedNote?.id === note.id ? `${toolCustom.color}15` : "transparent",
+                      border: selectedNote?.id === note.id ? `1px solid ${toolCustom.color}40` : "1px solid transparent",
                       cursor: "pointer",
                       transition: "all 0.15s",
                     }}
-                    onMouseEnter={(e) => {
-                      if (selectedNote?.id !== note.id) {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedNote?.id !== note.id) {
-                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                      }
-                    }}
                   >
                     <div style={{
-                      fontSize: "14px",
+                      fontSize: "15px",
                       fontWeight: 600,
                       color: "var(--foreground)",
-                      marginBottom: "4px",
+                      marginBottom: "6px",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -387,208 +474,319 @@ export default function NotesPage() {
                       {note.title}
                     </div>
                     <div style={{
-                      fontSize: "12px",
-                      color: "#64748b",
+                      fontSize: "13px",
+                      color: "var(--foreground-muted)",
+                      marginBottom: "6px",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      opacity: 0.7,
+                    }}>
+                      {note.content.substring(0, 80) || "No content"}
+                    </div>
+                    <div style={{
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
+                      fontSize: "12px",
+                      color: "var(--foreground-muted)",
                     }}>
-                      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        <Clock size={10} />
-                        {formatDate(note.updatedAt)}
-                      </span>
+                      <Clock size={12} />
+                      <span>{formatDate(note.updatedAt)}</span>
                       {note.tags.length > 0 && (
                         <>
-                          <span>•</span>
-                          <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                            <Tag size={10} />
-                            {note.tags.length}
-                          </span>
+                          <span style={{ opacity: 0.5 }}>•</span>
+                          <Tag size={12} />
+                          <span>{note.tags.length}</span>
                         </>
                       )}
+                      <span style={{ 
+                        marginLeft: "auto",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        background: "rgba(255,255,255,0.08)",
+                        textTransform: "capitalize",
+                      }}>
+                        {note.folder}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
 
-          {/* Note Editor/Viewer */}
+          {/* Right: Editor */}
           <div style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "24px",
-            display: "flex",
+            flex: 1,
+            display: isEditing || !isMobile ? "flex" : "none",
             flexDirection: "column",
-            gap: "16px",
+            background: "rgba(0,0,0,0.2)",
+            minWidth: 0,
           }}>
-            {(showNewNote || isEditing) ? (
+            {isEditing ? (
               <>
-                {/* Title Input */}
-                <input
-                  type="text"
-                  placeholder="Note title..."
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "8px",
-                    color: "white",
-                    fontSize: "18px",
-                    fontWeight: 600,
-                    outline: "none",
-                  }}
-                />
-
-                {/* Content Textarea */}
-                <textarea
-                  placeholder="Note content (markdown supported)..."
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  style={{
-                    width: "100%",
-                    minHeight: "300px",
-                    padding: "12px 16px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "8px",
-                    color: "white",
-                    fontSize: "14px",
-                    lineHeight: 1.6,
-                    outline: "none",
-                    resize: "vertical",
-                    fontFamily: "monospace",
-                  }}
-                />
-
-                {/* Metadata */}
-                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                  <div style={{ flex: "1 1 200px" }}>
-                    <label style={{ display: "block", fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
-                      Tags (comma-separated)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="tag1, tag2, tag3"
-                      value={editTags}
-                      onChange={(e) => setEditTags(e.target.value)}
+                {/* Editor Header */}
+                <div style={{
+                  padding: "16px 24px",
+                  borderBottom: "1px solid rgba(255,255,255,0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                }}>
+                  {isMobile && (
+                    <button
+                      onClick={() => setIsEditing(false)}
                       style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        padding: "8px",
                         borderRadius: "6px",
-                        color: "white",
-                        fontSize: "13px",
-                        outline: "none",
+                        border: "none",
+                        background: "transparent",
+                        color: "var(--foreground-muted)",
+                        cursor: "pointer",
                       }}
-                    />
-                  </div>
+                    >
+                      <ChevronRight size={20} style={{ transform: "rotate(180deg)" }} />
+                    </button>
+                  )}
 
-                  <div>
-                    <label style={{ display: "block", fontSize: "12px", color: "#64748b", marginBottom: "6px" }}>
-                      Folder
-                    </label>
+                  <div style={{ flex: 1, display: "flex", gap: "12px", alignItems: "center" }}>
+                    {/* Folder selector */}
                     <select
                       value={editFolder}
                       onChange={(e) => setEditFolder(e.target.value)}
                       style={{
                         padding: "8px 12px",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
                         borderRadius: "6px",
-                        color: "white",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        background: "rgba(255,255,255,0.05)",
+                        color: "var(--foreground)",
                         fontSize: "13px",
-                        cursor: "pointer",
                         outline: "none",
                       }}
                     >
-                      {folders.filter(f => f !== 'all').map(folder => (
+                      {FOLDERS.map(folder => (
                         <option key={folder} value={folder}>
                           {folder.charAt(0).toUpperCase() + folder.slice(1)}
                         </option>
                       ))}
                     </select>
+
+                    {/* Tags input */}
+                    <div style={{ flex: 1, position: "relative" }}>
+                      <Tag size={14} style={{
+                        position: "absolute",
+                        left: "12px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "var(--foreground-muted)",
+                      }} />
+                      <input
+                        type="text"
+                        placeholder="Tags (comma-separated)"
+                        value={editTags}
+                        onChange={(e) => setEditTags(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px 8px 34px",
+                          borderRadius: "6px",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          background: "rgba(255,255,255,0.05)",
+                          color: "var(--foreground)",
+                          fontSize: "13px",
+                          outline: "none",
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* Action Buttons */}
-                <div style={{ display: "flex", gap: "12px", marginTop: "auto" }}>
-                  <button
-                    onClick={showNewNote ? handleSaveNew : handleSaveEdit}
-                    disabled={!editTitle.trim()}
-                    style={{
-                      flex: 1,
-                      padding: "10px 16px",
-                      borderRadius: "8px",
-                      background: editTitle.trim() 
-                        ? `linear-gradient(135deg, ${toolCustom.color}, ${toolCustom.color}dd)` 
-                        : "rgba(255, 255, 255, 0.1)",
-                      border: "none",
-                      color: "white",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: editTitle.trim() ? "pointer" : "not-allowed",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <Save size={16} />
-                    Save
-                  </button>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {/* View mode toggle */}
+                    <div style={{ display: "flex", borderRadius: "6px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <button
+                        onClick={() => setViewMode("edit")}
+                        style={{
+                          padding: "8px 12px",
+                          border: "none",
+                          background: viewMode === "edit" ? "rgba(255,255,255,0.1)" : "transparent",
+                          color: viewMode === "edit" ? "var(--foreground)" : "var(--foreground-muted)",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <PenLine size={14} />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setViewMode("preview")}
+                        style={{
+                          padding: "8px 12px",
+                          border: "none",
+                          background: viewMode === "preview" ? "rgba(255,255,255,0.1)" : "transparent",
+                          color: viewMode === "preview" ? "var(--foreground)" : "var(--foreground-muted)",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <Eye size={14} />
+                        Preview
+                      </button>
+                    </div>
 
-                  {isEditing && (
+                    {selectedNote && (
+                      <button
+                        onClick={() => handleDeleteNote(selectedNote.id)}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          background: "rgba(239, 68, 68, 0.1)",
+                          color: "#ef4444",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+
                     <button
-                      onClick={() => handleDeleteNote(selectedNote!.id)}
+                      onClick={handleSave}
+                      disabled={saving || !editTitle.trim()}
                       style={{
-                        padding: "10px 16px",
-                        borderRadius: "8px",
-                        background: "rgba(239, 68, 68, 0.1)",
-                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                        color: "#ef4444",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: "pointer",
+                        padding: "8px 20px",
+                        borderRadius: "6px",
+                        border: "none",
+                        background: editTitle.trim() ? toolCustom.color : "rgba(255,255,255,0.1)",
+                        color: "#fff",
+                        cursor: editTitle.trim() ? "pointer" : "not-allowed",
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        opacity: saving ? 0.7 : 1,
                       }}
                     >
-                      <Trash2 size={16} />
-                      Delete
+                      <Save size={16} />
+                      {saving ? "Saving..." : "Save"}
                     </button>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setShowNewNote(false);
-                      setIsEditing(false);
-                      setSelectedNote(null);
-                    }}
-                    style={{
-                      padding: "10px 16px",
-                      borderRadius: "8px",
-                      background: "rgba(255, 255, 255, 0.05)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      color: "var(--foreground-muted)",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <X size={16} />
-                    Cancel
-                  </button>
+                  </div>
                 </div>
+
+                {/* Title Input */}
+                <div style={{ padding: "24px 48px 0" }}>
+                  <input
+                    type="text"
+                    placeholder="Note title..."
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "0",
+                      border: "none",
+                      background: "transparent",
+                      color: "var(--foreground)",
+                      fontSize: "32px",
+                      fontWeight: 700,
+                      outline: "none",
+                      lineHeight: 1.3,
+                    }}
+                  />
+                </div>
+
+                {/* Content Area */}
+                <div style={{ flex: 1, padding: "24px 48px 48px", overflow: "auto" }}>
+                  {viewMode === "edit" ? (
+                    <textarea
+                      ref={contentRef}
+                      placeholder="Start writing... (Markdown supported)
+
+# Heading 1
+## Heading 2
+
+**Bold** or *italic*
+
+- Bullet list
+- Another item
+
+1. Numbered list
+2. Second item
+
+> Blockquote
+
+`inline code`
+
+---
+
+Write freely. Your notes are saved when you click Save or press Cmd/Ctrl+S."
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        minHeight: "400px",
+                        padding: "0",
+                        border: "none",
+                        background: "transparent",
+                        color: "var(--foreground)",
+                        fontSize: "16px",
+                        lineHeight: 1.8,
+                        outline: "none",
+                        resize: "none",
+                        fontFamily: "'SF Mono', Monaco, 'Cascadia Code', monospace",
+                      }}
+                    />
+                  ) : (
+                    <div 
+                      style={{
+                        fontSize: "16px",
+                        lineHeight: 1.8,
+                        color: "var(--foreground)",
+                        whiteSpace: "pre-wrap",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: editContent
+                          .replace(/^### (.*$)/gm, '<h3 style="font-size: 18px; font-weight: 600; margin: 24px 0 8px;">$1</h3>')
+                          .replace(/^## (.*$)/gm, '<h2 style="font-size: 22px; font-weight: 600; margin: 32px 0 12px;">$1</h2>')
+                          .replace(/^# (.*$)/gm, '<h1 style="font-size: 28px; font-weight: 700; margin: 32px 0 16px;">$1</h1>')
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                          .replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">$1</code>')
+                          .replace(/^> (.*$)/gm, '<blockquote style="border-left: 3px solid #888; padding-left: 16px; margin: 16px 0; opacity: 0.8;">$1</blockquote>')
+                          .replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 24px 0;">')
+                          .replace(/^- (.*$)/gm, '<li style="margin-left: 20px;">$1</li>')
+                          .replace(/\n/g, '<br>')
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Footer info */}
+                {selectedNote && (
+                  <div style={{
+                    padding: "12px 48px",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    fontSize: "12px",
+                    color: "var(--foreground-muted)",
+                    display: "flex",
+                    gap: "16px",
+                  }}>
+                    <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
+                    <span>Updated: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
+                    <span style={{ marginLeft: "auto" }}>⌘S to save</span>
+                  </div>
+                )}
               </>
             ) : (
               <div style={{
@@ -596,15 +794,36 @@ export default function NotesPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 height: "100%",
-                color: "#64748b",
-                fontSize: "14px",
+                color: "var(--foreground-muted)",
+                flexDirection: "column",
+                gap: "16px",
               }}>
-                Select a note to view or create a new one
+                <FileText size={64} style={{ opacity: 0.2 }} />
+                <p style={{ margin: 0, fontSize: "16px" }}>Select a note or create a new one</p>
+                <button
+                  onClick={handleNewNote}
+                  style={{
+                    padding: "12px 24px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: toolCustom.color,
+                    color: "#fff",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <Plus size={18} />
+                  New Note
+                </button>
               </div>
             )}
           </div>
         </div>
       </main>
-    </ProtectedRoute>
+    </>
   );
 }
