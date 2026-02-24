@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { getAdminDb } from '@/lib/firebase-admin';
 
+// Extend timeout for AI-powered search
+export const maxDuration = 60;
+
 const SEARXNG_URL = process.env.SEARXNG_URL || 'http://localhost:8888';
 const BRAVE_API_KEY = process.env.BRAVE_API_KEY || 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g';
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
@@ -84,14 +87,15 @@ export async function POST(request: NextRequest) {
       `${topic} site:reddit.com OR site:x.com discussion`,
     ];
 
-    // Execute searches sequentially with delay to avoid rate limits
+    // Execute searches in batches with small delay to balance speed vs rate limits
     const searchResults: SearchResult[][] = [];
-    for (let i = 0; i < searches.length; i++) {
+    for (let i = 0; i < searches.length; i += 2) {
       if (i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 150));
       }
-      const results = await webSearch(searches[i], 8);
-      searchResults.push(results);
+      const batch = searches.slice(i, i + 2);
+      const batchResults = await Promise.all(batch.map(q => webSearch(q, 8)));
+      searchResults.push(...batchResults);
     }
     
     // Flatten and dedupe
