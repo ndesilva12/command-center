@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search } from "lucide-react";
+import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search, Plus, Trash2 } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -72,6 +72,12 @@ export default function ReadPage() {
   const [tempTopFeeds, setTempTopFeeds] = useState<number[]>(DEFAULT_TOP_FEEDS);
   const [sourceSearch, setSourceSearch] = useState("");
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>("all");
+  const [showAddFeed, setShowAddFeed] = useState(false);
+  const [newFeedUrl, setNewFeedUrl] = useState("");
+  const [addingFeed, setAddingFeed] = useState(false);
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [deletingFeedId, setDeletingFeedId] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -182,6 +188,78 @@ export default function ReadPage() {
       const newFeeds = [...tempTopFeeds];
       [newFeeds[index], newFeeds[index + 1]] = [newFeeds[index + 1], newFeeds[index]];
       setTempTopFeeds(newFeeds);
+    }
+  };
+
+  const handleAddFeed = async () => {
+    if (!newFeedUrl.trim()) return;
+    
+    setAddingFeed(true);
+    setFeedError(null);
+    
+    try {
+      const res = await fetch('/api/miniflux', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feed_url: newFeedUrl.trim() }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setFeedError(data.error || 'Failed to add feed');
+        return;
+      }
+      
+      // Refresh feeds list
+      await loadFeeds();
+      setNewFeedUrl("");
+      setShowAddFeed(false);
+    } catch (err) {
+      setFeedError(err instanceof Error ? err.message : 'Failed to add feed');
+    } finally {
+      setAddingFeed(false);
+    }
+  };
+
+  const handleDeleteFeed = async (feedId: number) => {
+    setDeletingFeedId(feedId);
+    
+    try {
+      const res = await fetch(`/api/miniflux?feedId=${feedId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete feed');
+        return;
+      }
+      
+      // Remove from top feeds if present
+      if (topFeeds.includes(feedId)) {
+        const newTopFeeds = topFeeds.filter(id => id !== feedId);
+        setTopFeeds(newTopFeeds);
+        setTempTopFeeds(newTopFeeds);
+        localStorage.setItem('read_top_feeds', JSON.stringify(newTopFeeds));
+      }
+      
+      // Refresh feeds list
+      await loadFeeds();
+      
+      // If we deleted the selected feed, select another
+      if (selectedFeedId === feedId) {
+        const remaining = allFeeds.filter(f => f.id !== feedId);
+        if (remaining.length > 0) {
+          setSelectedFeedId(remaining[0].id);
+        }
+      }
+      
+      setConfirmDelete(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete feed');
+    } finally {
+      setDeletingFeedId(null);
     }
   };
 
@@ -642,9 +720,9 @@ export default function ReadPage() {
               justifyContent: "space-between",
             }}>
               <div>
-                <h2 style={{ fontSize: "20px", fontWeight: 700, color: "white", margin: 0 }}>Quick Access Feeds</h2>
+                <h2 style={{ fontSize: "20px", fontWeight: 700, color: "white", margin: 0 }}>Manage Feeds</h2>
                 <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0, marginTop: "4px" }}>
-                  Select feeds to show in Quick Access
+                  Add, remove, or select Quick Access feeds
                 </p>
               </div>
               <button
@@ -664,6 +742,89 @@ export default function ReadPage() {
               >
                 <X size={18} />
               </button>
+            </div>
+
+            {/* Add New Feed */}
+            <div style={{ padding: "12px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              {showAddFeed ? (
+                <div>
+                  <div style={{ display: "flex", gap: "8px", marginBottom: feedError ? "8px" : "0" }}>
+                    <input
+                      type="text"
+                      placeholder="Paste RSS feed URL..."
+                      value={newFeedUrl}
+                      onChange={(e) => setNewFeedUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddFeed()}
+                      style={{
+                        flex: 1,
+                        padding: "10px 12px",
+                        background: "rgba(255, 255, 255, 0.05)",
+                        border: feedError ? "1px solid #ef4444" : "1px solid rgba(255, 255, 255, 0.1)",
+                        borderRadius: "8px",
+                        color: "white",
+                        fontSize: "14px",
+                        outline: "none",
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleAddFeed}
+                      disabled={addingFeed || !newFeedUrl.trim()}
+                      style={{
+                        padding: "10px 16px",
+                        borderRadius: "8px",
+                        background: addingFeed ? "rgba(255,255,255,0.1)" : toolCustom.color,
+                        border: "none",
+                        color: "white",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        cursor: addingFeed ? "not-allowed" : "pointer",
+                        opacity: !newFeedUrl.trim() ? 0.5 : 1,
+                      }}
+                    >
+                      {addingFeed ? "Adding..." : "Add"}
+                    </button>
+                    <button
+                      onClick={() => { setShowAddFeed(false); setNewFeedUrl(""); setFeedError(null); }}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        background: "rgba(255, 255, 255, 0.1)",
+                        border: "none",
+                        color: "white",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  {feedError && (
+                    <div style={{ color: "#ef4444", fontSize: "12px" }}>{feedError}</div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAddFeed(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    background: `${toolCustom.color}15`,
+                    border: `1px solid ${toolCustom.color}30`,
+                    color: toolCustom.color,
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    width: "100%",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Plus size={16} />
+                  Add New Feed
+                </button>
+              )}
             </div>
 
             {/* Search */}
@@ -748,29 +909,63 @@ export default function ReadPage() {
               <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "10px", textTransform: "uppercase" }}>
                 All Feeds ({filteredFeeds.length})
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "6px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "6px" }}>
                 {filteredFeeds.map(feed => {
                   const isSelected = tempTopFeeds.includes(feed.id);
+                  const isDeleting = deletingFeedId === feed.id;
                   return (
-                    <button
+                    <div
                       key={feed.id}
-                      onClick={() => toggleTopFeed(feed.id)}
                       style={{
                         padding: "10px 12px",
                         background: isSelected ? `${toolCustom.color}10` : "rgba(255, 255, 255, 0.03)",
                         border: isSelected ? `1px solid ${toolCustom.color}30` : "1px solid rgba(255, 255, 255, 0.08)",
                         borderRadius: "6px",
-                        textAlign: "left",
-                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: "8px",
                       }}
                     >
-                      <div style={{ fontSize: "12px", fontWeight: 600, color: isSelected ? toolCustom.color : "white", marginBottom: "2px" }}>
-                        {isSelected && "✓ "}{feed.title}
-                      </div>
-                      <div style={{ fontSize: "10px", color: "#64748b" }}>
-                        {feed.category}
-                      </div>
-                    </button>
+                      <button
+                        onClick={() => toggleTopFeed(feed.id)}
+                        style={{
+                          flex: 1,
+                          textAlign: "left",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div style={{ fontSize: "12px", fontWeight: 600, color: isSelected ? toolCustom.color : "white", marginBottom: "2px" }}>
+                          {isSelected && "✓ "}{feed.title}
+                        </div>
+                        <div style={{ fontSize: "10px", color: "#64748b" }}>
+                          {feed.category}
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDelete({ id: feed.id, title: feed.title });
+                        }}
+                        disabled={isDeleting}
+                        style={{
+                          padding: "4px",
+                          borderRadius: "4px",
+                          background: "rgba(239, 68, 68, 0.1)",
+                          border: "none",
+                          color: "#ef4444",
+                          cursor: isDeleting ? "not-allowed" : "pointer",
+                          opacity: isDeleting ? 0.5 : 0.7,
+                          flexShrink: 0,
+                        }}
+                        title="Delete feed"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   );
                 })}
               </div>
@@ -813,6 +1008,79 @@ export default function ReadPage() {
                 }}
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.9)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10001,
+            padding: "20px",
+          }}
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            style={{
+              background: "rgba(30, 41, 59, 0.98)",
+              borderRadius: "12px",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              maxWidth: "400px",
+              width: "100%",
+              padding: "24px",
+              backdropFilter: "blur(20px)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: "18px", fontWeight: 700, color: "white", marginBottom: "12px" }}>
+              Delete Feed?
+            </div>
+            <div style={{ fontSize: "14px", color: "#94a3b8", marginBottom: "20px" }}>
+              Are you sure you want to delete <strong style={{ color: "white" }}>{confirmDelete.title}</strong>? This will unsubscribe from this feed.
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setConfirmDelete(null)}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "none",
+                  color: "white",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteFeed(confirmDelete.id)}
+                disabled={deletingFeedId === confirmDelete.id}
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  background: deletingFeedId === confirmDelete.id ? "rgba(239, 68, 68, 0.3)" : "#ef4444",
+                  border: "none",
+                  color: "white",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: deletingFeedId === confirmDelete.id ? "not-allowed" : "pointer",
+                }}
+              >
+                {deletingFeedId === confirmDelete.id ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

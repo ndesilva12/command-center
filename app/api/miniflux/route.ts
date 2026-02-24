@@ -89,10 +89,124 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ entries });
     }
 
+    // Fetch categories
+    if (action === 'categories') {
+      const response = await fetch(`${MINIFLUX_BASE_URL}/v1/categories`, {
+        headers: {
+          'X-Auth-Token': MINIFLUX_API_KEY,
+        },
+      });
+
+      if (!response.ok) {
+        return NextResponse.json(
+          { error: 'Failed to fetch categories from Miniflux' },
+          { status: response.status }
+        );
+      }
+
+      const categories = await response.json();
+      return NextResponse.json({ categories });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
   } catch (error) {
     console.error('Miniflux API error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// Add a new feed
+export async function POST(request: NextRequest) {
+  try {
+    if (!MINIFLUX_API_KEY) {
+      return NextResponse.json({ error: 'Miniflux API key not configured' }, { status: 500 });
+    }
+
+    const body = await request.json();
+    const { feed_url, category_id } = body;
+
+    if (!feed_url) {
+      return NextResponse.json({ error: 'feed_url is required' }, { status: 400 });
+    }
+
+    const response = await fetch(`${MINIFLUX_BASE_URL}/v1/feeds`, {
+      method: 'POST',
+      headers: {
+        'X-Auth-Token': MINIFLUX_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        feed_url,
+        category_id: category_id || 1, // Default to first category
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return NextResponse.json(
+        { error: `Failed to add feed: ${errorText}` },
+        { status: response.status }
+      );
+    }
+
+    const feed = await response.json();
+    return NextResponse.json({ 
+      success: true, 
+      feed: {
+        id: feed.id,
+        title: feed.title,
+        site_url: feed.site_url,
+        feed_url: feed.feed_url,
+        category: feed.category?.title || 'Uncategorized',
+      }
+    });
+
+  } catch (error) {
+    console.error('Miniflux add feed error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// Delete a feed
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!MINIFLUX_API_KEY) {
+      return NextResponse.json({ error: 'Miniflux API key not configured' }, { status: 500 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const feedId = searchParams.get('feedId');
+
+    if (!feedId) {
+      return NextResponse.json({ error: 'feedId is required' }, { status: 400 });
+    }
+
+    const response = await fetch(`${MINIFLUX_BASE_URL}/v1/feeds/${feedId}`, {
+      method: 'DELETE',
+      headers: {
+        'X-Auth-Token': MINIFLUX_API_KEY,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return NextResponse.json(
+        { error: `Failed to delete feed: ${errorText}` },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('Miniflux delete feed error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
