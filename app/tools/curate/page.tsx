@@ -144,6 +144,11 @@ export default function CuratePage() {
   };
 
   const categoryColors: Record<string, string> = {
+    short_popular: "#ff6b6b",
+    short_unpopular: "#ffd93d",
+    long_popular: "#4ecdc4",
+    long_unpopular: "#a855f7",
+    // Legacy
     popular: "#ff6b6b",
     technology: "#4ecdc4",
     politics: toolCustom.color,
@@ -410,9 +415,16 @@ export default function CuratePage() {
 
                   {/* Categories as Grid */}
                   <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "16px" }}>
-                    {["popular", "technology", "politics", "culture"].map(category => {
+                    {["short_popular", "short_unpopular", "long_popular", "long_unpopular"].map(category => {
                       const categoryItems = result.items.filter((item: any) => item.category === category);
                       if (categoryItems.length === 0) return null;
+
+                      const categoryLabels: Record<string, string> = {
+                        short_popular: "🔥 Short • Popular",
+                        short_unpopular: "💡 Short • Contrarian",
+                        long_popular: "📺 Long • Popular",
+                        long_unpopular: "🧠 Long • Contrarian"
+                      };
 
                       return (
                         <div key={category} style={{ 
@@ -426,10 +438,10 @@ export default function CuratePage() {
                             fontSize: "15px", 
                             fontWeight: 700,
                             color: categoryColors[category] || toolCustom.color,
-                            textTransform: "uppercase",
+                            textTransform: "none",
                             letterSpacing: "0.5px"
                           }}>
-                            {category}
+                            {categoryLabels[category] || category}
                           </h4>
                           
                           {categoryItems.map((item: any, i: number) => (
