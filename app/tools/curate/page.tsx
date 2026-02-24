@@ -22,6 +22,7 @@ export default function CuratePage() {
   const [historySearch, setHistorySearch] = useState("");
   const [historyLimit, setHistoryLimit] = useState(10);
   const [isMobile, setIsMobile] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -331,24 +332,41 @@ export default function CuratePage() {
                     <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0 }}>
                       History
                     </h3>
-                    {history.length > 0 && (
-                      <button
-                        onClick={clearAllHistory}
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          border: "none",
-                          background: "transparent",
-                          color: "var(--muted)",
-                          cursor: "pointer",
-                          fontSize: "11px"
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.color = "#ef4444"}
-                        onMouseOut={(e) => e.currentTarget.style.color = "var(--muted)"}
-                      >
-                        Clear All
-                      </button>
-                    )}
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      {editMode && history.length > 0 && (
+                        <button
+                          onClick={clearAllHistory}
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            border: "none",
+                            background: "transparent",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            fontSize: "11px"
+                          }}
+                        >
+                          Clear All
+                        </button>
+                      )}
+                      {history.length > 0 && (
+                        <button
+                          onClick={() => setEditMode(!editMode)}
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            border: "none",
+                            background: editMode ? toolCustom.color : "transparent",
+                            color: editMode ? "#fff" : "var(--muted)",
+                            cursor: "pointer",
+                            fontSize: "11px",
+                            fontWeight: 500
+                          }}
+                        >
+                          {editMode ? "Done" : "Edit"}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <input
@@ -400,24 +418,23 @@ export default function CuratePage() {
                               {item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "?"} • {item.total || item.items?.length || 0} items
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteHistoryItem(item.id); }}
-                            title="Delete"
-                            style={{
-                              padding: "6px 8px",
-                              borderRadius: "4px",
-                              border: "none",
-                              background: "transparent",
-                              color: "var(--muted)",
-                              cursor: "pointer",
-                              fontSize: "14px",
-                              opacity: 0.6
-                            }}
-                            onMouseOver={(e) => (e.currentTarget.style.opacity = "1", e.currentTarget.style.color = "#ef4444")}
-                            onMouseOut={(e) => (e.currentTarget.style.opacity = "0.6", e.currentTarget.style.color = "var(--muted)")}
-                          >
-                            🗑️
-                          </button>
+                          {editMode && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteHistoryItem(item.id); }}
+                              title="Delete"
+                              style={{
+                                padding: "6px 8px",
+                                borderRadius: "4px",
+                                border: "none",
+                                background: "transparent",
+                                color: "#ef4444",
+                                cursor: "pointer",
+                                fontSize: "14px"
+                              }}
+                            >
+                              🗑️
+                            </button>
+                          )}
                         </div>
                       ))}
 
