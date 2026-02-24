@@ -64,6 +64,11 @@ async function searxngSearch(query: string, count: number = 10): Promise<SearchR
 }
 
 async function braveSearch(query: string, count: number = 10): Promise<SearchResult[]> {
+  if (!BRAVE_API_KEY || BRAVE_API_KEY === 'BSAN41sbCIBbhckWBTYmYAk_44Kug7g') {
+    // Check if env var is set in Vercel
+    console.log('Using default/fallback Brave API key');
+  }
+  
   try {
     const response = await fetch(
       `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}`,
@@ -76,16 +81,19 @@ async function braveSearch(query: string, count: number = 10): Promise<SearchRes
     );
 
     if (!response.ok) {
-      console.error('Brave search failed:', response.status);
+      const errorText = await response.text();
+      console.error('Brave search failed:', response.status, errorText);
       return [];
     }
 
     const data = await response.json();
-    return (data.web?.results || []).map((r: any) => ({
+    const results = (data.web?.results || []).map((r: any) => ({
       title: r.title,
       url: r.url,
       description: r.description || '',
     }));
+    console.log(`Brave search returned ${results.length} results for: ${query}`);
+    return results;
   } catch (error) {
     console.error('Brave search error:', error);
     return [];
@@ -157,12 +165,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (allResults.length === 0) {
+      console.error('No search results found for topic:', topic);
       return NextResponse.json({
-        success: true,
+        success: false,
         topic: topic.trim(),
         items: [],
         total: 0,
-        message: 'No results found for this topic'
+        error: 'No search results found. Check if BRAVE_API_KEY is set in environment variables.',
+        debug: {
+          searchQueries: searches.map(s => s.query),
+          searxngUrl: SEARXNG_URL,
+          braveKeySet: !!BRAVE_API_KEY && BRAVE_API_KEY.length > 10
+        }
       });
     }
 
