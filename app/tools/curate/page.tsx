@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -61,6 +61,30 @@ export default function CuratePage() {
         item.topic?.toLowerCase().includes(historySearch.toLowerCase())
       )
     : history;
+
+  const deleteHistoryItem = async (id: string) => {
+    if (!confirm("Delete this entry?")) return;
+    try {
+      await deleteDoc(doc(db, "curate_history", id));
+      setHistory(prev => prev.filter(item => item.id !== id));
+      if (result?.id === id) setResult(null);
+    } catch (error) {
+      console.error("Error deleting:", error);
+      alert("Failed to delete");
+    }
+  };
+
+  const clearAllHistory = async () => {
+    if (!confirm(`Delete all ${history.length} entries?`)) return;
+    try {
+      await Promise.all(history.map(item => deleteDoc(doc(db, "curate_history", item.id))));
+      setHistory([]);
+      setResult(null);
+    } catch (error) {
+      console.error("Error clearing history:", error);
+      alert("Failed to clear history");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,9 +327,29 @@ export default function CuratePage() {
               {/* History */}
               {!loading && (
                 <div className="glass card" style={{ padding: "16px", flex: 1, overflow: "auto", minHeight: isMobile ? "auto" : "0" }}>
-                  <h3 style={{ marginBottom: "12px", fontSize: "14px", fontWeight: 700 }}>
-                    History
-                  </h3>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <h3 style={{ fontSize: "14px", fontWeight: 700, margin: 0 }}>
+                      History
+                    </h3>
+                    {history.length > 0 && (
+                      <button
+                        onClick={clearAllHistory}
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          border: "none",
+                          background: "transparent",
+                          color: "var(--muted)",
+                          cursor: "pointer",
+                          fontSize: "11px"
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.color = "#ef4444"}
+                        onMouseOut={(e) => e.currentTarget.style.color = "var(--muted)"}
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
 
                   <input
                     type="text"
@@ -333,20 +377,47 @@ export default function CuratePage() {
                       {filteredHistory.map((item) => (
                         <div 
                           key={item.id}
-                          onClick={() => setResult(item)}
                           style={{
-                            padding: "10px",
-                            marginBottom: "6px",
-                            borderRadius: "6px",
-                            background: result?.id === item.id ? `${toolCustom.color}15` : "var(--glass-bg)",
-                            cursor: "pointer",
-                            border: result?.id === item.id ? `1px solid ${toolCustom.color}40` : "1px solid transparent"
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            marginBottom: "6px"
                           }}
                         >
-                          <div style={{ fontWeight: 600, fontSize: "13px" }}>{item.topic || "Untitled"}</div>
-                          <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
-                            {item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "?"} • {item.total || item.items?.length || 0} items
+                          <div 
+                            onClick={() => setResult(item)}
+                            style={{
+                              flex: 1,
+                              padding: "10px",
+                              borderRadius: "6px",
+                              background: result?.id === item.id ? `${toolCustom.color}15` : "var(--glass-bg)",
+                              cursor: "pointer",
+                              border: result?.id === item.id ? `1px solid ${toolCustom.color}40` : "1px solid transparent"
+                            }}
+                          >
+                            <div style={{ fontWeight: 600, fontSize: "13px" }}>{item.topic || "Untitled"}</div>
+                            <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>
+                              {item.timestamp ? new Date(item.timestamp).toLocaleDateString() : "?"} • {item.total || item.items?.length || 0} items
+                            </div>
                           </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteHistoryItem(item.id); }}
+                            title="Delete"
+                            style={{
+                              padding: "6px 8px",
+                              borderRadius: "4px",
+                              border: "none",
+                              background: "transparent",
+                              color: "var(--muted)",
+                              cursor: "pointer",
+                              fontSize: "14px",
+                              opacity: 0.6
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.opacity = "1", e.currentTarget.style.color = "#ef4444")}
+                            onMouseOut={(e) => (e.currentTarget.style.opacity = "0.6", e.currentTarget.style.color = "var(--muted)")}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       ))}
 
