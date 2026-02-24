@@ -14,6 +14,17 @@ export interface UserData {
   lastLogin: number;
 }
 
+// Helper to set a cookie
+const setCookie = (name: string, value: string, days: number = 30) => {
+  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+// Helper to delete a cookie
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+};
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -24,6 +35,9 @@ export function useAuth() {
       setUser(firebaseUser);
       
       if (firebaseUser) {
+        // Set userId cookie for API routes
+        setCookie('userId', firebaseUser.uid);
+        
         // Fetch user data from Firestore
         const userRef = doc(db, "users", firebaseUser.uid);
         const userSnap = await getDoc(userRef);
@@ -38,6 +52,8 @@ export function useAuth() {
           });
         }
       } else {
+        // Clear userId cookie on logout
+        deleteCookie('userId');
         setUserData(null);
       }
       
