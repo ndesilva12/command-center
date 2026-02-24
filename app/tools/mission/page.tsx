@@ -28,192 +28,6 @@ export default function MissionPage() {
   );
 }
 
-function MissionContent() {
-  const [missions, setMissions] = useState<Mission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingMission, setEditingMission] = useState<Mission | null>(null);
-  const [newMission, setNewMission] = useState({ title: '', description: '', links: [''] });
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    fetchMissions();
-  }, []);
-
-  const fetchMissions = async () => {
-    try {
-      const response = await fetch('/api/mission');
-      const data = await response.json();
-      setMissions(data.items || []);
-    } catch (error) {
-      console.error('Error fetching missions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createMission = async () => {
-    if (!newMission.title.trim()) return;
-
-    try {
-      const response = await fetch('/api/mission', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newMission.title,
-          description: newMission.description,
-          links: newMission.links.filter(link => link.trim()),
-        }),
-      });
-
-      if (response.ok) {
-        const created = await response.json();
-        setMissions([...missions, created]);
-        setNewMission({ title: '', description: '', links: [''] });
-        setShowAddForm(false);
-      }
-    } catch (error) {
-      console.error('Error creating mission:', error);
-    }
-  };
-
-  const updateMission = async (id: string, updates: Partial<Mission>) => {
-    try {
-      const response = await fetch(`/api/mission/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        setMissions(missions.map(m => 
-          m.id === id ? { ...m, ...updates } : m
-        ));
-      }
-    } catch (error) {
-      console.error('Error updating mission:', error);
-    }
-  };
-
-  const deleteMission = async (id: string) => {
-    if (!confirm('Delete this mission?')) return;
-
-    try {
-      const response = await fetch(`/api/mission/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setMissions(missions.filter(m => m.id !== id));
-      }
-    } catch (error) {
-      console.error('Error deleting mission:', error);
-    }
-  };
-
-  const onDragEnd = async (result: DropResult) => {
-    const { source, destination, draggableId } = result;
-
-    // Dropped outside
-    if (!destination) return;
-
-    // Same position
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-      return;
-    }
-
-    const mission = missions.find(m => m.id === draggableId);
-    if (!mission) return;
-
-    // Get missions in source and destination columns
-    const sourceStatus = source.droppableId as Mission['status'];
-    const destStatus = destination.droppableId as Mission['status'];
-
-    // Create new missions array
-    const newMissions = Array.from(missions);
-    const sourceMissions = newMissions.filter(m => m.status === sourceStatus);
-    const destMissions = sourceStatus === destStatus 
-      ? sourceMissions 
-      : newMissions.filter(m => m.status === destStatus);
-
-    // Remove from source
-    const [removed] = sourceMissions.splice(source.index, 1);
-    
-    // Update status if changed
-    if (sourceStatus !== destStatus) {
-      removed.status = destStatus;
-    }
-
-    // Insert at destination
-    if (sourceStatus === destStatus) {
-      sourceMissions.splice(destination.index, 0, removed);
-    } else {
-      destMissions.splice(destination.index, 0, removed);
-    }
-
-    // Update orders
-    const updateOrders = (items: Mission[]) => {
-      return items.map((m, idx) => ({ ...m, order: idx }));
-    };
-
-    const updatedSource = updateOrders(sourceMissions);
-    const updatedDest = sourceStatus === destStatus ? updatedSource : updateOrders(destMissions);
-
-    // Merge back
-    const finalMissions = newMissions.map(m => {
-      const updated = [...updatedSource, ...updatedDest].find(um => um.id === m.id);
-      return updated || m;
-    });
-
-    setMissions(finalMissions);
-
-    // Save to backend
-    try {
-      await updateMission(removed.id, { 
-        status: destStatus, 
-        order: destination.index 
-      });
-
-      // Update other items' orders in the affected columns
-      const itemsToUpdate = sourceStatus === destStatus
-        ? updatedSource.filter(m => m.id !== removed.id)
-        : [...updatedSource, ...updatedDest].filter(m => m.id !== removed.id);
-
-      await Promise.all(
-        itemsToUpdate.map(m => updateMission(m.id, { order: m.order }))
-      );
-    } catch (error) {
-      console.error('Error updating order:', error);
-      fetchMissions(); // Revert on error
-    }
-  };
-
-  const getMissionsByStatus = (status: Mission['status']) => {
-    return missions
-      .filter(m => m.status === status)
-      .sort((a, b) => a.order - b.order);
-  };
-
-  const columns: { id: Mission['status']; title: string; color: string }[] = [
-    { id: 'created', title: 'Created', color: '#3b82f6' },
-    { id: 'in_progress', title: 'In Progress', color: '#6366f1' },
-    { id: 'completed', title: 'Completed', color: '#10b981' },
-  ];
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color="#6366f1" />
-      
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "88px" : "32px",
@@ -696,6 +510,192 @@ function MissionContent() {
           </DragDropContext>
         )}
       </main>
+function MissionContent() {
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingMission, setEditingMission] = useState<Mission | null>(null);
+  const [newMission, setNewMission] = useState({ title: '', description: '', links: [''] });
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    fetchMissions();
+  }, []);
+
+  const fetchMissions = async () => {
+    try {
+      const response = await fetch('/api/mission');
+      const data = await response.json();
+      setMissions(data.items || []);
+    } catch (error) {
+      console.error('Error fetching missions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createMission = async () => {
+    if (!newMission.title.trim()) return;
+
+    try {
+      const response = await fetch('/api/mission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newMission.title,
+          description: newMission.description,
+          links: newMission.links.filter(link => link.trim()),
+        }),
+      });
+
+      if (response.ok) {
+        const created = await response.json();
+        setMissions([...missions, created]);
+        setNewMission({ title: '', description: '', links: [''] });
+        setShowAddForm(false);
+      }
+    } catch (error) {
+      console.error('Error creating mission:', error);
+    }
+  };
+
+  const updateMission = async (id: string, updates: Partial<Mission>) => {
+    try {
+      const response = await fetch(`/api/mission/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (response.ok) {
+        setMissions(missions.map(m => 
+          m.id === id ? { ...m, ...updates } : m
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating mission:', error);
+    }
+  };
+
+  const deleteMission = async (id: string) => {
+    if (!confirm('Delete this mission?')) return;
+
+    try {
+      const response = await fetch(`/api/mission/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setMissions(missions.filter(m => m.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting mission:', error);
+    }
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+
+    // Dropped outside
+    if (!destination) return;
+
+    // Same position
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    const mission = missions.find(m => m.id === draggableId);
+    if (!mission) return;
+
+    // Get missions in source and destination columns
+    const sourceStatus = source.droppableId as Mission['status'];
+    const destStatus = destination.droppableId as Mission['status'];
+
+    // Create new missions array
+    const newMissions = Array.from(missions);
+    const sourceMissions = newMissions.filter(m => m.status === sourceStatus);
+    const destMissions = sourceStatus === destStatus 
+      ? sourceMissions 
+      : newMissions.filter(m => m.status === destStatus);
+
+    // Remove from source
+    const [removed] = sourceMissions.splice(source.index, 1);
+    
+    // Update status if changed
+    if (sourceStatus !== destStatus) {
+      removed.status = destStatus;
+    }
+
+    // Insert at destination
+    if (sourceStatus === destStatus) {
+      sourceMissions.splice(destination.index, 0, removed);
+    } else {
+      destMissions.splice(destination.index, 0, removed);
+    }
+
+    // Update orders
+    const updateOrders = (items: Mission[]) => {
+      return items.map((m, idx) => ({ ...m, order: idx }));
+    };
+
+    const updatedSource = updateOrders(sourceMissions);
+    const updatedDest = sourceStatus === destStatus ? updatedSource : updateOrders(destMissions);
+
+    // Merge back
+    const finalMissions = newMissions.map(m => {
+      const updated = [...updatedSource, ...updatedDest].find(um => um.id === m.id);
+      return updated || m;
+    });
+
+    setMissions(finalMissions);
+
+    // Save to backend
+    try {
+      await updateMission(removed.id, { 
+        status: destStatus, 
+        order: destination.index 
+      });
+
+      // Update other items' orders in the affected columns
+      const itemsToUpdate = sourceStatus === destStatus
+        ? updatedSource.filter(m => m.id !== removed.id)
+        : [...updatedSource, ...updatedDest].filter(m => m.id !== removed.id);
+
+      await Promise.all(
+        itemsToUpdate.map(m => updateMission(m.id, { order: m.order }))
+      );
+    } catch (error) {
+      console.error('Error updating order:', error);
+      fetchMissions(); // Revert on error
+    }
+  };
+
+  const getMissionsByStatus = (status: Mission['status']) => {
+    return missions
+      .filter(m => m.status === status)
+      .sort((a, b) => a.order - b.order);
+  };
+
+  const columns: { id: Mission['status']; title: string; color: string }[] = [
+    { id: 'created', title: 'Created', color: '#3b82f6' },
+    { id: 'in_progress', title: 'In Progress', color: '#6366f1' },
+    { id: 'completed', title: 'Completed', color: '#10b981' },
+  ];
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color="#6366f1" />
+      
 
       <style jsx global>{`
         @keyframes spin {

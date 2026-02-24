@@ -97,78 +97,6 @@ function TradingViewWatchlistWidget() {
       style={{
         width: "100%",
         height: "100%",
-      }}
-    />
-  );
-}
-
-const MemoizedWatchlistWidget = memo(TradingViewWatchlistWidget);
-
-function TradingViewTickerTape() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    containerRef.current.innerHTML = "";
-
-    const widgetContainer = document.createElement("div");
-    widgetContainer.className = "tradingview-widget-container__widget";
-    containerRef.current.appendChild(widgetContainer);
-
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      symbols: WATCHLIST_SYMBOLS.map(s => ({ proName: s.s, title: s.d })),
-      showSymbolLogo: true,
-      isTransparent: true,
-      displayMode: "adaptive",
-      colorTheme: "dark",
-      locale: "en",
-    });
-
-    containerRef.current.appendChild(script);
-
-    return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
-    };
-  }, []);
-
-  return (
-    <div
-      ref={containerRef}
-      className="tradingview-widget-container"
-      style={{ width: "100%" }}
-    />
-  );
-}
-
-const MemoizedTickerTape = memo(TradingViewTickerTape);
-
-export default function MarketPage() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('market', 'Market', '#6366f1');
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    // Mobile detection
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
-
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "96px",
@@ -386,6 +314,78 @@ export default function MarketPage() {
           }
         `}</style>
       </main>
+      }}
+    />
+  );
+}
+
+const MemoizedWatchlistWidget = memo(TradingViewWatchlistWidget);
+
+function TradingViewTickerTape() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    containerRef.current.innerHTML = "";
+
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    containerRef.current.appendChild(widgetContainer);
+
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      symbols: WATCHLIST_SYMBOLS.map(s => ({ proName: s.s, title: s.d })),
+      showSymbolLogo: true,
+      isTransparent: true,
+      displayMode: "adaptive",
+      colorTheme: "dark",
+      locale: "en",
+    });
+
+    containerRef.current.appendChild(script);
+
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="tradingview-widget-container"
+      style={{ width: "100%" }}
+    />
+  );
+}
+
+const MemoizedTickerTape = memo(TradingViewTickerTape);
+
+export default function MarketPage() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('market', 'Market', '#6366f1');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Mobile detection
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
+
     </>
   );
 }

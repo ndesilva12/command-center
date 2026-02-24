@@ -27,131 +27,6 @@ export default function ImageLookupPage() {
   );
 }
 
-function ImageLookupContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('image-lookup', 'Image Lookup', '#6366f1');
-  const [imageUrl, setImageUrl] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<ImageAnalysis | null>(null);
-  const [webContext, setWebContext] = useState<string | null>(null);
-  const [searchUrls, setSearchUrls] = useState<{ google: string | null; bing: string | null } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const handleFileSelect = useCallback((file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setError("Please select an image file");
-      return;
-    }
-
-    setUploadedFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setUploadedImage(e.target?.result as string);
-      setImageUrl("");
-      setAnalysis(null);
-      setWebContext(null);
-      setError(null);
-    };
-    reader.readAsDataURL(file);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        handleFileSelect(file);
-      }
-    },
-    [handleFileSelect]
-  );
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
-    }
-  };
-
-  const clearImage = () => {
-    setUploadedImage(null);
-    setUploadedFile(null);
-    setImageUrl("");
-    setAnalysis(null);
-    setWebContext(null);
-    setSearchUrls(null);
-    setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
-  const handleAnalyze = async () => {
-    if (!imageUrl && !uploadedImage) return;
-
-    setIsAnalyzing(true);
-    setError(null);
-    setAnalysis(null);
-    setWebContext(null);
-
-    try {
-      const response = await fetch("/api/image-lookup/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageUrl: imageUrl || undefined,
-          imageBase64: uploadedImage || undefined,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.details || data.error || "Analysis failed");
-      }
-
-      setAnalysis(data.analysis);
-      setWebContext(data.webContext);
-      setSearchUrls(data.searchUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const canAnalyze = (imageUrl.trim() !== "") || (uploadedImage !== null);
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "72px" : "80px",
@@ -551,6 +426,131 @@ function ImageLookupContent() {
           </div>
         )}
       </main>
+function ImageLookupContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('image-lookup', 'Image Lookup', '#6366f1');
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<ImageAnalysis | null>(null);
+  const [webContext, setWebContext] = useState<string | null>(null);
+  const [searchUrls, setSearchUrls] = useState<{ google: string | null; bing: string | null } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleFileSelect = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
+      return;
+    }
+
+    setUploadedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setUploadedImage(e.target?.result as string);
+      setImageUrl("");
+      setAnalysis(null);
+      setWebContext(null);
+      setError(null);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        handleFileSelect(file);
+      }
+    },
+    [handleFileSelect]
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const clearImage = () => {
+    setUploadedImage(null);
+    setUploadedFile(null);
+    setImageUrl("");
+    setAnalysis(null);
+    setWebContext(null);
+    setSearchUrls(null);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (!imageUrl && !uploadedImage) return;
+
+    setIsAnalyzing(true);
+    setError(null);
+    setAnalysis(null);
+    setWebContext(null);
+
+    try {
+      const response = await fetch("/api/image-lookup/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: imageUrl || undefined,
+          imageBase64: uploadedImage || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Analysis failed");
+      }
+
+      setAnalysis(data.analysis);
+      setWebContext(data.webContext);
+      setSearchUrls(data.searchUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const canAnalyze = (imageUrl.trim() !== "") || (uploadedImage !== null);
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
 
       <style jsx global>{`
         @keyframes spin {

@@ -31,158 +31,6 @@ export default function RecommendationsPage() {
   );
 }
 
-function RecommendationsContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('recommendations', 'Recommendations', '#6366f1');
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [newRec, setNewRec] = useState({
-    recommender: '',
-    item: '',
-    category: 'book',
-    url: '',
-    notes: '',
-  });
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    fetchRecommendations();
-  }, []);
-
-  const fetchRecommendations = async () => {
-    try {
-      const response = await fetch('/api/recommendations');
-      const data = await response.json();
-      setRecommendations(data.items || []);
-    } catch (error) {
-      console.error('Error fetching recommendations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createRecommendation = async () => {
-    if (!newRec.item.trim()) return;
-
-    try {
-      const response = await fetch('/api/recommendations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newRec),
-      });
-
-      if (response.ok) {
-        const created = await response.json();
-        setRecommendations([created, ...recommendations]);
-        setNewRec({ recommender: '', item: '', category: 'book', url: '', notes: '' });
-        setShowAddForm(false);
-      }
-    } catch (error) {
-      console.error('Error creating recommendation:', error);
-    }
-  };
-
-  const updateStatus = async (id: string, newStatus: Recommendation['status']) => {
-    try {
-      const response = await fetch(`/api/recommendations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (response.ok) {
-        setRecommendations(recommendations.map(rec => 
-          rec.id === id ? { ...rec, status: newStatus } : rec
-        ));
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
-
-  const deleteRecommendation = async (id: string) => {
-    if (!confirm('Delete this recommendation?')) return;
-
-    try {
-      const response = await fetch(`/api/recommendations/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setRecommendations(recommendations.filter(rec => rec.id !== id));
-      }
-    } catch (error) {
-      console.error('Error deleting recommendation:', error);
-    }
-  };
-
-  const filteredRecommendations = recommendations.filter(rec => {
-    const matchesSearch = !searchQuery || 
-      rec.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rec.recommender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      rec.notes.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = statusFilter === 'all' || rec.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || rec.category === categoryFilter;
-
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
-
-  const categories = ['book', 'movie', 'article', 'product', 'service', 'person', 'podcast', 'tool', 'other'];
-  const allCategories = ['all', ...categories];
-  const statuses: Recommendation['status'][] = ['new', 'in_progress', 'completed', 'not_interested'];
-
-  const getStatusIcon = (status: Recommendation['status']) => {
-    switch (status) {
-      case 'new': return <Clock size={14} style={{ color: '#3b82f6' }} />;
-      case 'in_progress': return <Play size={14} style={{ color: '#6366f1' }} />;
-      case 'completed': return <CheckCircle size={14} style={{ color: '#10b981' }} />;
-      case 'not_interested': return <XCircle size={14} style={{ color: '#64748b' }} />;
-    }
-  };
-
-  const getStatusColor = (status: Recommendation['status']) => {
-    switch (status) {
-      case 'new': return '#3b82f6';
-      case 'in_progress': return '#6366f1';
-      case 'completed': return '#10b981';
-      case 'not_interested': return '#64748b';
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      book: '#8b5cf6',
-      movie: '#ec4899',
-      article: '#3b82f6',
-      product: '#10b981',
-      service: '#14b8a6',
-      person: '#a78bfa',
-      podcast: '#ef4444',
-      tool: '#6366f1',
-      other: '#64748b',
-    };
-    return colors[category] || colors.other;
-  };
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
-      
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "88px" : "32px",
@@ -794,6 +642,158 @@ function RecommendationsContent() {
           </div>
         )}
       </main>
+function RecommendationsContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('recommendations', 'Recommendations', '#6366f1');
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [newRec, setNewRec] = useState({
+    recommender: '',
+    item: '',
+    category: 'book',
+    url: '',
+    notes: '',
+  });
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
+
+  const fetchRecommendations = async () => {
+    try {
+      const response = await fetch('/api/recommendations');
+      const data = await response.json();
+      setRecommendations(data.items || []);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createRecommendation = async () => {
+    if (!newRec.item.trim()) return;
+
+    try {
+      const response = await fetch('/api/recommendations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRec),
+      });
+
+      if (response.ok) {
+        const created = await response.json();
+        setRecommendations([created, ...recommendations]);
+        setNewRec({ recommender: '', item: '', category: 'book', url: '', notes: '' });
+        setShowAddForm(false);
+      }
+    } catch (error) {
+      console.error('Error creating recommendation:', error);
+    }
+  };
+
+  const updateStatus = async (id: string, newStatus: Recommendation['status']) => {
+    try {
+      const response = await fetch(`/api/recommendations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        setRecommendations(recommendations.map(rec => 
+          rec.id === id ? { ...rec, status: newStatus } : rec
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  const deleteRecommendation = async (id: string) => {
+    if (!confirm('Delete this recommendation?')) return;
+
+    try {
+      const response = await fetch(`/api/recommendations/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setRecommendations(recommendations.filter(rec => rec.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting recommendation:', error);
+    }
+  };
+
+  const filteredRecommendations = recommendations.filter(rec => {
+    const matchesSearch = !searchQuery || 
+      rec.item.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rec.recommender.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      rec.notes.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || rec.status === statusFilter;
+    const matchesCategory = categoryFilter === 'all' || rec.category === categoryFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
+
+  const categories = ['book', 'movie', 'article', 'product', 'service', 'person', 'podcast', 'tool', 'other'];
+  const allCategories = ['all', ...categories];
+  const statuses: Recommendation['status'][] = ['new', 'in_progress', 'completed', 'not_interested'];
+
+  const getStatusIcon = (status: Recommendation['status']) => {
+    switch (status) {
+      case 'new': return <Clock size={14} style={{ color: '#3b82f6' }} />;
+      case 'in_progress': return <Play size={14} style={{ color: '#6366f1' }} />;
+      case 'completed': return <CheckCircle size={14} style={{ color: '#10b981' }} />;
+      case 'not_interested': return <XCircle size={14} style={{ color: '#64748b' }} />;
+    }
+  };
+
+  const getStatusColor = (status: Recommendation['status']) => {
+    switch (status) {
+      case 'new': return '#3b82f6';
+      case 'in_progress': return '#6366f1';
+      case 'completed': return '#10b981';
+      case 'not_interested': return '#64748b';
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      book: '#8b5cf6',
+      movie: '#ec4899',
+      article: '#3b82f6',
+      product: '#10b981',
+      service: '#14b8a6',
+      person: '#a78bfa',
+      podcast: '#ef4444',
+      tool: '#6366f1',
+      other: '#64748b',
+    };
+    return colors[category] || colors.other;
+  };
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
+      
 
       <style jsx global>{`
         @keyframes spin {

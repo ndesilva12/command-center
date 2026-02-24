@@ -40,103 +40,6 @@ export default function BusinessInfoPage() {
   );
 }
 
-function BusinessInfoContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('business-info', 'Business Info', '#6366f1');
-  const [query, setQuery] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [searchResults, setSearchResults] = useState<BusinessSearchResult[] | null>(null);
-  const [selectedBusiness, setSelectedBusiness] = useState<BusinessSearchResult | null>(null);
-  const [businessDetails, setBusinessDetails] = useState<BusinessAnalysis | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [cached, setCached] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim() || !city.trim() || !state) return;
-
-    setIsSearching(true);
-    setError(null);
-    setSearchResults(null);
-    setSelectedBusiness(null);
-    setBusinessDetails(null);
-
-    try {
-      const params = new URLSearchParams({
-        q: query.trim(),
-        city: city.trim(),
-        state,
-      });
-
-      const response = await fetch(`/api/business-info/search?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.details || data.error || "Search failed");
-      }
-
-      setSearchResults(data.results);
-      setCached(data.cached);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSelectBusiness = async (business: BusinessSearchResult) => {
-    setSelectedBusiness(business);
-    setIsLoadingDetails(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams({
-        name: business.name,
-        address: business.address,
-        city: business.city,
-        state: business.state,
-      });
-
-      const response = await fetch(`/api/business-info/analyze?${params}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.details || data.error || "Failed to get details");
-      }
-
-      setBusinessDetails(data.data);
-      setCached(data.cached);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  };
-
-  const handleReset = () => {
-    setSearchResults(null);
-    setSelectedBusiness(null);
-    setBusinessDetails(null);
-    setError(null);
-  };
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "72px" : "80px",
@@ -658,6 +561,103 @@ function BusinessInfoContent() {
           </div>
         )}
       </main>
+function BusinessInfoContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('business-info', 'Business Info', '#6366f1');
+  const [query, setQuery] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [searchResults, setSearchResults] = useState<BusinessSearchResult[] | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<BusinessSearchResult | null>(null);
+  const [businessDetails, setBusinessDetails] = useState<BusinessAnalysis | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cached, setCached] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim() || !city.trim() || !state) return;
+
+    setIsSearching(true);
+    setError(null);
+    setSearchResults(null);
+    setSelectedBusiness(null);
+    setBusinessDetails(null);
+
+    try {
+      const params = new URLSearchParams({
+        q: query.trim(),
+        city: city.trim(),
+        state,
+      });
+
+      const response = await fetch(`/api/business-info/search?${params}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Search failed");
+      }
+
+      setSearchResults(data.results);
+      setCached(data.cached);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectBusiness = async (business: BusinessSearchResult) => {
+    setSelectedBusiness(business);
+    setIsLoadingDetails(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({
+        name: business.name,
+        address: business.address,
+        city: business.city,
+        state: business.state,
+      });
+
+      const response = await fetch(`/api/business-info/analyze?${params}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Failed to get details");
+      }
+
+      setBusinessDetails(data.data);
+      setCached(data.cached);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSearchResults(null);
+    setSelectedBusiness(null);
+    setBusinessDetails(null);
+    setError(null);
+  };
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
 
       <style jsx global>{`
         @keyframes spin {

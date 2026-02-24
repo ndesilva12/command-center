@@ -40,127 +40,6 @@ export default function DeepSearchPage() {
   );
 }
 
-function DeepSearchContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
-  const [query_text, setQuery] = useState("");
-  const [pageTarget, setPageTarget] = useState(2);
-  const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<DeepSearchReport | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
-  
-  // History state
-  const [history, setHistory] = useState<any[]>([]);
-  const [historySearch, setHistorySearch] = useState("");
-  const [historyLimit, setHistoryLimit] = useState(10);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    loadHistory(historyLimit);
-  }, [historyLimit]);
-
-  const loadHistory = async (limitCount: number = 10) => {
-    try {
-      const q = query(
-        collection(db, "deep_search_history"),
-        orderBy("timestamp", "desc"),
-        limit(limitCount)
-      );
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setHistory(items);
-    } catch (error) {
-      console.error("Error loading history:", error);
-    }
-  };
-
-  const filteredHistory = historySearch.trim()
-    ? history.filter(item =>
-        (item.topic || item.query || "").toLowerCase().includes(historySearch.toLowerCase())
-      )
-    : history;
-
-  const loadFromHistory = (item: any) => {
-    // History items may have results nested or flat
-    const r = item.results || item;
-    setReport({
-      topic: r.topic || item.topic || item.query || "",
-      briefOverview: r.briefOverview || "",
-      sections: r.sections || [],
-      hiddenMechanics: r.hiddenMechanics || [],
-      counterintuitiveInsights: r.counterintuitiveInsights || [],
-      expertDebates: r.expertDebates || [],
-      underreportedAngles: r.underreportedAngles || [],
-      keyTakeaways: r.keyTakeaways || [],
-      socialMediaHighlights: r.socialMediaHighlights || [],
-      podcastReferences: r.podcastReferences || [],
-      links: r.links || [],
-      sources: r.sources || [],
-      timestamp: r.timestamp || (item.timestamp?.seconds ? item.timestamp.seconds * 1000 : Date.now()),
-    });
-    setExpandedSections(new Set((r.sections || []).map((_: any, i: number) => i)));
-  };
-
-  const handleSearch = async () => {
-    if (!query_text.trim()) return;
-
-    setLoading(true);
-    setReport(null);
-    
-    try {
-      const response = await fetch('/api/deep-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: query_text, pageTarget }),
-      });
-
-      const data = await response.json();
-      
-      if (data.report) {
-        setReport(data.report);
-        setExpandedSections(new Set(data.report.sections?.map((_: any, i: number) => i) || []));
-        loadHistory(historyLimit);
-      } else if (data.error) {
-        alert(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      alert('Failed to complete search');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleSection = (index: number) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(index)) {
-      newExpanded.delete(index);
-    } else {
-      newExpanded.add(index);
-    }
-    setExpandedSections(newExpanded);
-  };
-
-  const sectionColors = [
-    "#8b5cf6", "#10b981", "#06b6d4", toolCustom.color, "#ec4899", toolCustom.color,
-  ];
-
-  const allLinks = report?.links || report?.sources || [];
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
-      
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "88px" : "32px",
@@ -760,6 +639,127 @@ function DeepSearchContent() {
           </div>
         )}
       </main>
+function DeepSearchContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('deep-search', 'Deep Search', '#6366f1');
+  const [query_text, setQuery] = useState("");
+  const [pageTarget, setPageTarget] = useState(2);
+  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState<DeepSearchReport | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  
+  // History state
+  const [history, setHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(10);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    loadHistory(historyLimit);
+  }, [historyLimit]);
+
+  const loadHistory = async (limitCount: number = 10) => {
+    try {
+      const q = query(
+        collection(db, "deep_search_history"),
+        orderBy("timestamp", "desc"),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistory(items);
+    } catch (error) {
+      console.error("Error loading history:", error);
+    }
+  };
+
+  const filteredHistory = historySearch.trim()
+    ? history.filter(item =>
+        (item.topic || item.query || "").toLowerCase().includes(historySearch.toLowerCase())
+      )
+    : history;
+
+  const loadFromHistory = (item: any) => {
+    // History items may have results nested or flat
+    const r = item.results || item;
+    setReport({
+      topic: r.topic || item.topic || item.query || "",
+      briefOverview: r.briefOverview || "",
+      sections: r.sections || [],
+      hiddenMechanics: r.hiddenMechanics || [],
+      counterintuitiveInsights: r.counterintuitiveInsights || [],
+      expertDebates: r.expertDebates || [],
+      underreportedAngles: r.underreportedAngles || [],
+      keyTakeaways: r.keyTakeaways || [],
+      socialMediaHighlights: r.socialMediaHighlights || [],
+      podcastReferences: r.podcastReferences || [],
+      links: r.links || [],
+      sources: r.sources || [],
+      timestamp: r.timestamp || (item.timestamp?.seconds ? item.timestamp.seconds * 1000 : Date.now()),
+    });
+    setExpandedSections(new Set((r.sections || []).map((_: any, i: number) => i)));
+  };
+
+  const handleSearch = async () => {
+    if (!query_text.trim()) return;
+
+    setLoading(true);
+    setReport(null);
+    
+    try {
+      const response = await fetch('/api/deep-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query_text, pageTarget }),
+      });
+
+      const data = await response.json();
+      
+      if (data.report) {
+        setReport(data.report);
+        setExpandedSections(new Set(data.report.sections?.map((_: any, i: number) => i) || []));
+        loadHistory(historyLimit);
+      } else if (data.error) {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      alert('Failed to complete search');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSection = (index: number) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const sectionColors = [
+    "#8b5cf6", "#10b981", "#06b6d4", toolCustom.color, "#ec4899", toolCustom.color,
+  ];
+
+  const allLinks = report?.links || report?.sources || [];
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
+      
 
       <style jsx global>{`
         @keyframes spin {

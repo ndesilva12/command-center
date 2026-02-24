@@ -190,6 +190,255 @@ export default function CalendarPage() {
     });
   };
 
+      <main style={{
+        paddingTop: isMobile ? "72px" : "80px",
+        paddingBottom: isMobile ? "80px" : "32px",
+        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
+        paddingRight: isMobile ? "12px" : "24px",
+        minHeight: isMobile ? "100vh" : "calc(100vh - 136px)",
+        maxWidth: "1400px",
+        margin: "0 auto"
+      }}>
+        {/* Page Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <CalendarIcon style={{ width: "24px", height: "24px", color: toolCustom.color }} />
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
+              Calendar {events.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({events.length})</span>}
+            </h1>
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <a
+              href="https://calendar.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "var(--foreground-muted)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                textDecoration: "none",
+                fontSize: "13px",
+                transition: "all 0.15s",
+              }}
+            >
+              <ExternalLink style={{ width: "14px", height: "14px" }} />
+              Open in Google Calendar
+            </a>
+            
+            <button
+              onClick={fetchEvents}
+              disabled={loading}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                color: "var(--foreground-muted)",
+                border: "none",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontSize: "13px",
+                opacity: loading ? 0.5 : 1,
+              }}
+            >
+              <RefreshCw style={{ width: "14px", height: "14px", animation: loading ? "spin 1s linear infinite" : "none" }} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Time Range Tabs and View Toggle */}
+        <div style={{ display: "flex", gap: "8px", marginBottom: "16px", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "4px" }}>
+            {(["today", "week", "month"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  backgroundColor: timeRange === range ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                  color: timeRange === range ? toolCustom.color : "var(--foreground-muted)",
+                  border: timeRange === range ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: timeRange === range ? 500 : 400,
+                  textTransform: "capitalize",
+                  transition: "all 0.15s",
+                }}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+
+          {/* View Mode Toggle */}
+          <div style={{ display: "flex", gap: "4px", padding: "4px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+            <button
+              onClick={() => setViewMode("event")}
+              title="Event View"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                backgroundColor: viewMode === "event" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === "event" ? toolCustom.color : "var(--foreground-muted)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                fontSize: "12px",
+                gap: "4px",
+              }}
+            >
+              <List style={{ width: "14px", height: "14px" }} />
+              Events
+            </button>
+            <button
+              onClick={() => setViewMode("full")}
+              title="Full View"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                backgroundColor: viewMode === "full" ? "rgba(0, 170, 255, 0.15)" : "transparent",
+                color: viewMode === "full" ? toolCustom.color : "var(--foreground-muted)",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+                fontSize: "12px",
+                gap: "4px",
+              }}
+            >
+              <Grid3x3 style={{ width: "14px", height: "14px" }} />
+              Full
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
+              <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
+            </div>
+          ) : error ? (
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
+              <p>{error}</p>
+              <button
+                onClick={fetchEvents}
+                style={{
+                  marginTop: "16px",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  color: "var(--foreground)",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          ) : viewMode === "full" ? (
+            <div>
+              {timeRange === "today" && renderFullDayView()}
+              {timeRange === "week" && renderFullWeekView()}
+              {timeRange === "month" && renderFullMonthView()}
+            </div>
+          ) : events.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <CalendarIcon style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
+              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
+              <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
+                No events scheduled for the selected time range
+              </p>
+            </div>
+          ) : (
+            <div>
+              {events.map((event, index) => {
+                const status = getTimeStatus(event);
+                return (
+                  <div
+                    key={event.id}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      padding: "16px 20px",
+                      borderBottom: index < events.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
+                      transition: "background 0.15s",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
+                          {event.summary}
+                        </h3>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
+                          <Clock style={{ width: "13px", height: "13px" }} />
+                          <span>{formatEventTime(event)}</span>
+                        </div>
+                      </div>
+
+                      {status && (
+                        <span
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            color: status.color,
+                            backgroundColor: `${status.color}22`,
+                            border: `1px solid ${status.color}44`,
+                          }}
+                        >
+                          {status.label}
+                        </span>
+                      )}
+                    </div>
+
+                    {event.location && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
+                        <MapPin style={{ width: "13px", height: "13px" }} />
+                        <span>{event.location}</span>
+                      </div>
+                    )}
+
+                    {event.description && (
+                      <p style={{ fontSize: "13px", color: "var(--foreground-muted)", lineHeight: 1.5 }}>
+                        {event.description.substring(0, 150)}
+                        {event.description.length > 150 && "..."}
+                      </p>
+                    )}
+
+                    {event.attendees && event.attendees.length > 0 && (
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--foreground-muted)" }}>
+                        <Users style={{ width: "12px", height: "12px" }} />
+                        <span>{event.attendees.length} attendees</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
   const renderFullDayView = () => {
     const today = new Date();
     const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -446,255 +695,6 @@ export default function CalendarPage() {
       <Sidebar />
       <ToolBackground color={toolCustom.color} />
 
-      <main style={{
-        paddingTop: isMobile ? "72px" : "80px",
-        paddingBottom: isMobile ? "80px" : "32px",
-        paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
-        paddingRight: isMobile ? "12px" : "24px",
-        minHeight: isMobile ? "100vh" : "calc(100vh - 136px)",
-        maxWidth: "1400px",
-        margin: "0 auto"
-      }}>
-        {/* Page Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <CalendarIcon style={{ width: "24px", height: "24px", color: toolCustom.color }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
-              Calendar {events.length > 0 && <span style={{ color: "var(--foreground-muted)", fontWeight: 400 }}>({events.length})</span>}
-            </h1>
-          </div>
-          
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <a
-              href="https://calendar.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "var(--foreground-muted)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                textDecoration: "none",
-                fontSize: "13px",
-                transition: "all 0.15s",
-              }}
-            >
-              <ExternalLink style={{ width: "14px", height: "14px" }} />
-              Open in Google Calendar
-            </a>
-            
-            <button
-              onClick={fetchEvents}
-              disabled={loading}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "var(--foreground-muted)",
-                border: "none",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontSize: "13px",
-                opacity: loading ? 0.5 : 1,
-              }}
-            >
-              <RefreshCw style={{ width: "14px", height: "14px", animation: loading ? "spin 1s linear infinite" : "none" }} />
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        {/* Time Range Tabs and View Toggle */}
-        <div style={{ display: "flex", gap: "8px", marginBottom: "16px", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", gap: "4px" }}>
-            {(["today", "week", "month"] as const).map((range) => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  backgroundColor: timeRange === range ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                  color: timeRange === range ? toolCustom.color : "var(--foreground-muted)",
-                  border: timeRange === range ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  fontWeight: timeRange === range ? 500 : 400,
-                  textTransform: "capitalize",
-                  transition: "all 0.15s",
-                }}
-              >
-                {range}
-              </button>
-            ))}
-          </div>
-
-          {/* View Mode Toggle */}
-          <div style={{ display: "flex", gap: "4px", padding: "4px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
-            <button
-              onClick={() => setViewMode("event")}
-              title="Event View"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                backgroundColor: viewMode === "event" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === "event" ? toolCustom.color : "var(--foreground-muted)",
-                border: "none",
-                cursor: "pointer",
-                transition: "all 0.15s",
-                fontSize: "12px",
-                gap: "4px",
-              }}
-            >
-              <List style={{ width: "14px", height: "14px" }} />
-              Events
-            </button>
-            <button
-              onClick={() => setViewMode("full")}
-              title="Full View"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                backgroundColor: viewMode === "full" ? "rgba(0, 170, 255, 0.15)" : "transparent",
-                color: viewMode === "full" ? toolCustom.color : "var(--foreground-muted)",
-                border: "none",
-                cursor: "pointer",
-                transition: "all 0.15s",
-                fontSize: "12px",
-                gap: "4px",
-              }}
-            >
-              <Grid3x3 style={{ width: "14px", height: "14px" }} />
-              Full
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
-          {loading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px" }}>
-              <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
-            </div>
-          ) : error ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
-              <p>{error}</p>
-              <button
-                onClick={fetchEvents}
-                style={{
-                  marginTop: "16px",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  color: "var(--foreground)",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                Try Again
-              </button>
-            </div>
-          ) : viewMode === "full" ? (
-            <div>
-              {timeRange === "today" && renderFullDayView()}
-              {timeRange === "week" && renderFullWeekView()}
-              {timeRange === "month" && renderFullMonthView()}
-            </div>
-          ) : events.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <CalendarIcon style={{ width: "48px", height: "48px", color: toolCustom.color, margin: "0 auto 16px" }} />
-              <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>{toolCustom.name}</h2>
-              <p style={{ color: "var(--foreground-muted)", fontSize: "14px" }}>
-                No events scheduled for the selected time range
-              </p>
-            </div>
-          ) : (
-            <div>
-              {events.map((event, index) => {
-                const status = getTimeStatus(event);
-                return (
-                  <div
-                    key={event.id}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                      padding: "16px 20px",
-                      borderBottom: index < events.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-                      transition: "background 0.15s",
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                    onClick={() => event.htmlLink && window.open(event.htmlLink, "_blank")}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "4px" }}>
-                          {event.summary}
-                        </h3>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
-                          <Clock style={{ width: "13px", height: "13px" }} />
-                          <span>{formatEventTime(event)}</span>
-                        </div>
-                      </div>
-
-                      {status && (
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "6px",
-                            fontSize: "11px",
-                            fontWeight: 600,
-                            color: status.color,
-                            backgroundColor: `${status.color}22`,
-                            border: `1px solid ${status.color}44`,
-                          }}
-                        >
-                          {status.label}
-                        </span>
-                      )}
-                    </div>
-
-                    {event.location && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "var(--foreground-muted)" }}>
-                        <MapPin style={{ width: "13px", height: "13px" }} />
-                        <span>{event.location}</span>
-                      </div>
-                    )}
-
-                    {event.description && (
-                      <p style={{ fontSize: "13px", color: "var(--foreground-muted)", lineHeight: 1.5 }}>
-                        {event.description.substring(0, 150)}
-                        {event.description.length > 150 && "..."}
-                      </p>
-                    )}
-
-                    {event.attendees && event.attendees.length > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "var(--foreground-muted)" }}>
-                        <Users style={{ width: "12px", height: "12px" }} />
-                        <span>{event.attendees.length} attendees</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
 
       {/* Event Detail Modal */}
       {selectedEvent && (

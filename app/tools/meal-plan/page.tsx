@@ -382,69 +382,6 @@ function MealPlanContent() {
         </h2>
         
         {items.length === 0 ? (
-          <p style={{ color: "var(--foreground-muted)", fontSize: "14px", fontStyle: "italic" }}>
-            No items for this store
-          </p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {items.map((item, index) => {
-              const itemKey = `${keyPrefix}_${item}`;
-              const isChecked = checkedItems.has(itemKey);
-              
-              return (
-                <label
-                  key={index}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    backgroundColor: isChecked ? "rgba(16, 185, 129, 0.1)" : "rgba(255, 255, 255, 0.03)",
-                    border: `1px solid ${isChecked ? "rgba(16, 185, 129, 0.3)" : "rgba(255, 255, 255, 0.1)"}`,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => toggleItem(itemKey)}
-                    style={{
-                      width: "20px",
-                      height: "20px",
-                      marginTop: "2px",
-                      cursor: "pointer",
-                      accentColor: "#10b981",
-                    }}
-                  />
-                  <span
-                    style={{
-                      flex: 1,
-                      fontSize: "15px",
-                      color: isChecked ? "var(--foreground-muted)" : "var(--foreground)",
-                      textDecoration: isChecked ? "line-through" : "none",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {item}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  return (
-    <ProtectedRoute requiredPermission="meal-plan">
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color="#10b981" />
-
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "96px",
@@ -998,6 +935,69 @@ function MealPlanContent() {
           )}
         </div>
       </main>
+          <p style={{ color: "var(--foreground-muted)", fontSize: "14px", fontStyle: "italic" }}>
+            No items for this store
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {items.map((item, index) => {
+              const itemKey = `${keyPrefix}_${item}`;
+              const isChecked = checkedItems.has(itemKey);
+              
+              return (
+                <label
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "12px",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: isChecked ? "rgba(16, 185, 129, 0.1)" : "rgba(255, 255, 255, 0.03)",
+                    border: `1px solid ${isChecked ? "rgba(16, 185, 129, 0.3)" : "rgba(255, 255, 255, 0.1)"}`,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleItem(itemKey)}
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      marginTop: "2px",
+                      cursor: "pointer",
+                      accentColor: "#10b981",
+                    }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      fontSize: "15px",
+                      color: isChecked ? "var(--foreground-muted)" : "var(--foreground)",
+                      textDecoration: isChecked ? "line-through" : "none",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {item}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <ProtectedRoute requiredPermission="meal-plan">
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color="#10b981" />
+
 
       {/* Add Recipe Modal */}
       {showAddRecipeModal && (
