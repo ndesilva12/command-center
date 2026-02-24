@@ -87,6 +87,14 @@ export default function PoliticorpPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [historySearch, setHistorySearch] = useState("");
   const [historyLimit, setHistoryLimit] = useState(10);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   const [activeTab, setActiveTab] = useState<"result" | "history">("result");
 
   useEffect(() => {
@@ -179,8 +187,11 @@ export default function PoliticorpPage() {
 
   return (
     <>
-      <div style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 24px)", paddingBottom: "80px", minHeight: "calc(100vh - 144px)" }}>
-        <TopNav />
+      <TopNav />
+      <BottomNav />
+      <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
+        {!isMobile && <Sidebar />}
+        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "76px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "24px", paddingRight: isMobile ? "12px" : "20px" }}>
         <ToolBackground color={toolCustom.color} />
 
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 12px" }}>
@@ -492,9 +503,8 @@ export default function PoliticorpPage() {
             </div>
           )}
         </div>
+        </main>
       </div>
-      <BottomNav />
-      <Sidebar />
     </>
   );
 }
