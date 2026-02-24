@@ -82,7 +82,13 @@ export default function CuratePage() {
 
       const data = await response.json();
       
-      if (response.ok && data.success) {
+      if (response.ok && data.success && data.items) {
+        // Use the returned data directly
+        setResult(data);
+        setLoading(false);
+        loadHistory(historyLimit);
+      } else if (response.ok && data.success) {
+        // Fallback: poll Firestore if no items in response
         const startTime = Date.now();
         const maxWaitTime = 180000;
         const pollInterval = 2500;
