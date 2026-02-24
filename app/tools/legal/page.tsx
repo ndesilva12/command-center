@@ -338,10 +338,8 @@ export default function LegalPage() {
             ))}
           </div>
         </div>
+      </main>
       </div>
-
-      <BottomNav />
-      <Sidebar />
     </div>
   );
 }

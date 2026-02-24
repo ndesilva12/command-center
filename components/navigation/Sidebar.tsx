@@ -175,7 +175,7 @@ export function Sidebar() {
     <aside
       className="sidebar-scroll"
       style={{
-        position: "sticky",
+        position: "fixed",
         left: 0,
         top: 0,
         height: "100vh",
@@ -189,6 +189,7 @@ export function Sidebar() {
         flexShrink: 0,
         padding: collapsed ? "76px 8px 16px 8px" : "76px 12px 16px 12px",
         transition: "width 0.3s ease, padding 0.3s ease",
+        zIndex: 100,
       }}
     >
       {/* Collapse/Expand Button */}
@@ -196,18 +197,20 @@ export function Sidebar() {
         onClick={() => setCollapsed(!collapsed)}
         style={{
           position: "absolute",
-          top: "16px",
-          right: "8px",
+          top: "80px",
+          right: collapsed ? "50%" : "8px",
+          transform: collapsed ? "translateX(50%)" : "none",
           padding: "6px",
-          background: "rgba(255, 255, 255, 0.05)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          background: "rgba(255, 255, 255, 0.08)",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
           borderRadius: "6px",
-          color: "rgba(255, 255, 255, 0.6)",
+          color: "rgba(255, 255, 255, 0.7)",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           transition: "all 0.2s ease",
+          zIndex: 10,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
