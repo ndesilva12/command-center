@@ -34,6 +34,121 @@ export default function DarkSearchPage() {
   );
 }
 
+function DarkSearchContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('dark-search', 'Dark Search', '#6366f1');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mode, setMode] = useState<"long" | "short" | "links">("long");
+  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState<DarkSearchReport | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  const [activeTab, setActiveTab] = useState<"search" | "history">("search");
+  const [history, setHistory] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyLimit, setHistoryLimit] = useState(10);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    loadHistory(historyLimit);
+  }, [historyLimit]);
+
+  const loadHistory = async (limitCount: number = 10) => {
+    try {
+      const q = query(
+        collection(db, "dark_search_history"),
+        orderBy("timestamp", "desc"),
+        limit(limitCount)
+      );
+      const snapshot = await getDocs(q);
+      setHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      console.error("Error loading history:", error);
+    }
+  };
+
+  const filteredHistory = historySearch.trim()
+    ? history.filter(item =>
+        (item.query || item.results?.topic || "").toLowerCase().includes(historySearch.toLowerCase())
+      )
+    : history;
+
+  const loadFromHistory = (item: any) => {
+    const results = item.results || item;
+    setReport({
+      topic: results.topic || item.query || "Unknown",
+      mode: results.mode || item.mode || "long",
+      summary: results.summary || "",
+      sections: results.sections,
+      keyTakeaways: results.keyTakeaways,
+      alternativePerspectives: results.alternativePerspectives,
+      unansweredQuestions: results.unansweredQuestions,
+      socialMediaHighlights: results.socialMediaHighlights,
+      podcastReferences: results.podcastReferences,
+      links: results.links,
+      timestamp: results.timestamp || (item.timestamp ? new Date(item.timestamp).getTime() : Date.now()),
+    });
+    if (results.sections) {
+      setExpandedSections(new Set(results.sections.map((_: any, i: number) => i)));
+    }
+    setActiveTab("search");
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    setReport(null);
+    
+    try {
+      const response = await fetch('/api/dark-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery, mode }),
+      });
+
+      const data = await response.json();
+      
+      if (data.report) {
+        setReport(data.report);
+        if (data.report.sections) {
+          setExpandedSections(new Set(data.report.sections.map((_: any, i: number) => i)));
+        }
+        // Refresh history
+        setTimeout(() => loadHistory(historyLimit), 3000);
+      } else if (data.error) {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      alert('Failed to complete search');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSection = (index: number) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(index)) newExpanded.delete(index);
+    else newExpanded.add(index);
+    setExpandedSections(newExpanded);
+  };
+
+  const sectionColors = [toolCustom.color, "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#dc2626"];
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
+      
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "80px" : "32px",
@@ -246,121 +361,6 @@ export default function DarkSearchPage() {
           </div>
         )}
       </main>
-function DarkSearchContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('dark-search', 'Dark Search', '#6366f1');
-  const [searchQuery, setSearchQuery] = useState("");
-  const [mode, setMode] = useState<"long" | "short" | "links">("long");
-  const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<DarkSearchReport | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
-  const [activeTab, setActiveTab] = useState<"search" | "history">("search");
-  const [history, setHistory] = useState<any[]>([]);
-  const [historySearch, setHistorySearch] = useState("");
-  const [historyLimit, setHistoryLimit] = useState(10);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    loadHistory(historyLimit);
-  }, [historyLimit]);
-
-  const loadHistory = async (limitCount: number = 10) => {
-    try {
-      const q = query(
-        collection(db, "dark_search_history"),
-        orderBy("timestamp", "desc"),
-        limit(limitCount)
-      );
-      const snapshot = await getDocs(q);
-      setHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    } catch (error) {
-      console.error("Error loading history:", error);
-    }
-  };
-
-  const filteredHistory = historySearch.trim()
-    ? history.filter(item =>
-        (item.query || item.results?.topic || "").toLowerCase().includes(historySearch.toLowerCase())
-      )
-    : history;
-
-  const loadFromHistory = (item: any) => {
-    const results = item.results || item;
-    setReport({
-      topic: results.topic || item.query || "Unknown",
-      mode: results.mode || item.mode || "long",
-      summary: results.summary || "",
-      sections: results.sections,
-      keyTakeaways: results.keyTakeaways,
-      alternativePerspectives: results.alternativePerspectives,
-      unansweredQuestions: results.unansweredQuestions,
-      socialMediaHighlights: results.socialMediaHighlights,
-      podcastReferences: results.podcastReferences,
-      links: results.links,
-      timestamp: results.timestamp || (item.timestamp ? new Date(item.timestamp).getTime() : Date.now()),
-    });
-    if (results.sections) {
-      setExpandedSections(new Set(results.sections.map((_: any, i: number) => i)));
-    }
-    setActiveTab("search");
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-
-    setLoading(true);
-    setReport(null);
-    
-    try {
-      const response = await fetch('/api/dark-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery, mode }),
-      });
-
-      const data = await response.json();
-      
-      if (data.report) {
-        setReport(data.report);
-        if (data.report.sections) {
-          setExpandedSections(new Set(data.report.sections.map((_: any, i: number) => i)));
-        }
-        // Refresh history
-        setTimeout(() => loadHistory(historyLimit), 3000);
-      } else if (data.error) {
-        alert(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      alert('Failed to complete search');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleSection = (index: number) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(index)) newExpanded.delete(index);
-    else newExpanded.add(index);
-    setExpandedSections(newExpanded);
-  };
-
-  const sectionColors = [toolCustom.color, "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#dc2626"];
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
-      
 
       <style jsx global>{`
         @keyframes spin { to { transform: rotate(360deg); } }

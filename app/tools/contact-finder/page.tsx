@@ -57,6 +57,93 @@ export default function ContactFinderPage() {
   );
 }
 
+function ContactFinderContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('contact-finder', 'Contact Finder', '#6366f1');
+  const [query, setQuery] = useState("");
+  const [searchType, setSearchType] = useState<SearchType>("individual");
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<ContactResult[]>([]);
+  const [summary, setSummary] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setIsSearching(true);
+    setError(null);
+    setResults([]);
+    setSummary("");
+
+    try {
+      const response = await fetch("/api/contact-finder/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: query.trim(),
+          searchType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || "Search failed");
+      }
+
+      setResults(data.results || []);
+      setSummary(data.summary || "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleCopy = async (value: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedValue(value);
+    setTimeout(() => setCopiedValue(null), 2000);
+  };
+
+  const getContactLink = (contact: ContactMethod) => {
+    switch (contact.type) {
+      case "email":
+        return `mailto:${contact.value}`;
+      case "phone":
+        return `tel:${contact.value}`;
+      case "x":
+        return contact.value.startsWith("http") ? contact.value : `https://x.com/${contact.value.replace("@", "")}`;
+      case "instagram":
+        return contact.value.startsWith("http") ? contact.value : `https://instagram.com/${contact.value.replace("@", "")}`;
+      case "facebook":
+        return contact.value.startsWith("http") ? contact.value : `https://facebook.com/${contact.value}`;
+      case "linkedin":
+        return contact.value.startsWith("http") ? contact.value : `https://linkedin.com/in/${contact.value}`;
+      case "website":
+      case "form":
+        return contact.value.startsWith("http") ? contact.value : `https://${contact.value}`;
+      default:
+        return contact.value.startsWith("http") ? contact.value : undefined;
+    }
+  };
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
       <main
         style={{
           paddingTop: isMobile ? "72px" : "80px",
@@ -455,93 +542,6 @@ export default function ContactFinderPage() {
           </div>
         )}
       </main>
-function ContactFinderContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('contact-finder', 'Contact Finder', '#6366f1');
-  const [query, setQuery] = useState("");
-  const [searchType, setSearchType] = useState<SearchType>("individual");
-  const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<ContactResult[]>([]);
-  const [summary, setSummary] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [copiedValue, setCopiedValue] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-
-    setIsSearching(true);
-    setError(null);
-    setResults([]);
-    setSummary("");
-
-    try {
-      const response = await fetch("/api/contact-finder/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: query.trim(),
-          searchType,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.details || data.error || "Search failed");
-      }
-
-      setResults(data.results || []);
-      setSummary(data.summary || "");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleCopy = async (value: string) => {
-    await navigator.clipboard.writeText(value);
-    setCopiedValue(value);
-    setTimeout(() => setCopiedValue(null), 2000);
-  };
-
-  const getContactLink = (contact: ContactMethod) => {
-    switch (contact.type) {
-      case "email":
-        return `mailto:${contact.value}`;
-      case "phone":
-        return `tel:${contact.value}`;
-      case "x":
-        return contact.value.startsWith("http") ? contact.value : `https://x.com/${contact.value.replace("@", "")}`;
-      case "instagram":
-        return contact.value.startsWith("http") ? contact.value : `https://instagram.com/${contact.value.replace("@", "")}`;
-      case "facebook":
-        return contact.value.startsWith("http") ? contact.value : `https://facebook.com/${contact.value}`;
-      case "linkedin":
-        return contact.value.startsWith("http") ? contact.value : `https://linkedin.com/in/${contact.value}`;
-      case "website":
-      case "form":
-        return contact.value.startsWith("http") ? contact.value : `https://${contact.value}`;
-      default:
-        return contact.value.startsWith("http") ? contact.value : undefined;
-    }
-  };
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
 
       <style jsx global>{`
         @keyframes spin {

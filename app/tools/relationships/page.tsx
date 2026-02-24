@@ -30,6 +30,107 @@ export default function RelationshipsPage() {
   );
 }
 
+function RelationshipsContent() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectDescription, setNewProjectDescription] = useState("");
+  const [newProjectKeywords, setNewProjectKeywords] = useState("");
+  const [newProjectDateFrom, setNewProjectDateFrom] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/relationships/projects");
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (error) {
+      console.error("Failed to load projects:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) return;
+
+    setCreating(true);
+    try {
+      const keywords = newProjectKeywords.split(",").map(k => k.trim()).filter(Boolean);
+      const response = await fetch("/api/relationships/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newProjectName,
+          description: newProjectDescription,
+          keywords,
+          dateFrom: newProjectDateFrom || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        setShowCreateModal(false);
+        setNewProjectName("");
+        setNewProjectDescription("");
+        setNewProjectKeywords("");
+        setNewProjectDateFrom("");
+        loadProjects();
+      }
+    } catch (error) {
+      console.error("Failed to create project:", error);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string, projectName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm(`Are you sure you want to delete "${projectName}"? This will also delete all contacts and analysis for this project.`)) {
+      return;
+    }
+
+    setDeleting(projectId);
+    try {
+      const response = await fetch(`/api/relationships/projects/${projectId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        loadProjects();
+      } else {
+        alert("Failed to delete project");
+      }
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      alert("Failed to delete project");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color="#14b8a6" />
       <main
         style={{
           paddingTop: isMobile ? "72px" : "80px",
@@ -269,107 +370,6 @@ export default function RelationshipsPage() {
           </div>
         )}
       </main>
-function RelationshipsContent() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectDescription, setNewProjectDescription] = useState("");
-  const [newProjectKeywords, setNewProjectKeywords] = useState("");
-  const [newProjectDateFrom, setNewProjectDateFrom] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const loadProjects = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/relationships/projects");
-      const data = await response.json();
-      setProjects(data.projects || []);
-    } catch (error) {
-      console.error("Failed to load projects:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return;
-
-    setCreating(true);
-    try {
-      const keywords = newProjectKeywords.split(",").map(k => k.trim()).filter(Boolean);
-      const response = await fetch("/api/relationships/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newProjectName,
-          description: newProjectDescription,
-          keywords,
-          dateFrom: newProjectDateFrom || undefined,
-        }),
-      });
-
-      if (response.ok) {
-        setShowCreateModal(false);
-        setNewProjectName("");
-        setNewProjectDescription("");
-        setNewProjectKeywords("");
-        setNewProjectDateFrom("");
-        loadProjects();
-      }
-    } catch (error) {
-      console.error("Failed to create project:", error);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleDeleteProject = async (projectId: string, projectName: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!confirm(`Are you sure you want to delete "${projectName}"? This will also delete all contacts and analysis for this project.`)) {
-      return;
-    }
-
-    setDeleting(projectId);
-    try {
-      const response = await fetch(`/api/relationships/projects/${projectId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        loadProjects();
-      } else {
-        alert("Failed to delete project");
-      }
-    } catch (error) {
-      console.error("Failed to delete project:", error);
-      alert("Failed to delete project");
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color="#14b8a6" />
 
       {/* Create Project Modal */}
       {showCreateModal && (

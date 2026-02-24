@@ -22,6 +22,7 @@
     "framer-motion": "^12.34.0",
     "googleapis": "^171.4.0",
     "jszip": "^3.10.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "pdf-parse": "^2.4.5",
@@ -29,6 +30,7 @@
     "react-dom": "19.2.3",
     "react-force-graph": "^1.48.2",
     "react-force-graph-2d": "^1.29.1",
+    "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "rss-parser": "^3.13.0",
@@ -37,6 +39,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/jszip": "^3.4.0",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

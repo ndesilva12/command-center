@@ -44,6 +44,197 @@ export default function InvestorsPage() {
   );
 }
 
+function InvestorsContent() {
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('investors', 'Investors', '#6366f1');
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [viewingInvestor, setViewingInvestor] = useState<Investor | null>(null);
+  const [newInvestor, setNewInvestor] = useState({
+    name: '',
+    firm: '',
+    email: '',
+    phone: '',
+    linkedin: '',
+    focus: { stage: '', sector: '', checkSize: '' },
+    notes: '',
+  });
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    fetchInvestors();
+  }, []);
+
+  const fetchInvestors = async () => {
+    try {
+      const response = await fetch('/api/investors');
+      const data = await response.json();
+      setInvestors(data.items || []);
+    } catch (error) {
+      console.error('Error fetching investors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createInvestor = async () => {
+    if (!newInvestor.name.trim()) return;
+
+    try {
+      const response = await fetch('/api/investors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newInvestor),
+      });
+
+      if (response.ok) {
+        const created = await response.json();
+        setInvestors([...investors, created]);
+        setNewInvestor({
+          name: '',
+          firm: '',
+          email: '',
+          phone: '',
+          linkedin: '',
+          focus: { stage: '', sector: '', checkSize: '' },
+          notes: '',
+        });
+        setShowAddForm(false);
+      }
+    } catch (error) {
+      console.error('Error creating investor:', error);
+    }
+  };
+
+  const updateInvestor = async (id: string, updates: Partial<Investor>) => {
+    try {
+      const response = await fetch(`/api/investors/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (response.ok) {
+        setInvestors(investors.map(inv => 
+          inv.id === id ? { ...inv, ...updates } : inv
+        ));
+      }
+    } catch (error) {
+      console.error('Error updating investor:', error);
+    }
+  };
+
+  const deleteInvestor = async (id: string) => {
+    if (!confirm('Delete this investor?')) return;
+
+    try {
+      const response = await fetch(`/api/investors/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setInvestors(investors.filter(inv => inv.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting investor:', error);
+    }
+  };
+
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    const investor = investors.find(inv => inv.id === draggableId);
+    if (!investor) return;
+
+    const sourceStage = source.droppableId as Investor['stage'];
+    const destStage = destination.droppableId as Investor['stage'];
+
+    const newInvestors = Array.from(investors);
+    const sourceInvestors = newInvestors.filter(inv => inv.stage === sourceStage);
+    const destInvestors = sourceStage === destStage 
+      ? sourceInvestors 
+      : newInvestors.filter(inv => inv.stage === destStage);
+
+    const [removed] = sourceInvestors.splice(source.index, 1);
+    
+    if (sourceStage !== destStage) {
+      removed.stage = destStage;
+    }
+
+    if (sourceStage === destStage) {
+      sourceInvestors.splice(destination.index, 0, removed);
+    } else {
+      destInvestors.splice(destination.index, 0, removed);
+    }
+
+    const updateOrders = (items: Investor[]) => {
+      return items.map((inv, idx) => ({ ...inv, order: idx }));
+    };
+
+    const updatedSource = updateOrders(sourceInvestors);
+    const updatedDest = sourceStage === destStage ? updatedSource : updateOrders(destInvestors);
+
+    const finalInvestors = newInvestors.map(inv => {
+      const updated = [...updatedSource, ...updatedDest].find(u => u.id === inv.id);
+      return updated || inv;
+    });
+
+    setInvestors(finalInvestors);
+
+    try {
+      await updateInvestor(removed.id, { 
+        stage: destStage, 
+        order: destination.index 
+      });
+
+      const itemsToUpdate = sourceStage === destStage
+        ? updatedSource.filter(inv => inv.id !== removed.id)
+        : [...updatedSource, ...updatedDest].filter(inv => inv.id !== removed.id);
+
+      await Promise.all(
+        itemsToUpdate.map(inv => updateInvestor(inv.id, { order: inv.order }))
+      );
+    } catch (error) {
+      console.error('Error updating order:', error);
+      fetchInvestors();
+    }
+  };
+
+  const getInvestorsByStage = (stage: Investor['stage']) => {
+    return investors
+      .filter(inv => inv.stage === stage)
+      .sort((a, b) => a.order - b.order);
+  };
+
+  const stages: { id: Investor['stage']; title: string; color: string }[] = [
+    { id: 'research', title: 'Research', color: '#6366f1' },
+    { id: 'outreach', title: 'Outreach', color: '#8b5cf6' },
+    { id: 'meeting', title: 'Meeting', color: '#3b82f6' },
+    { id: 'follow_up', title: 'Follow-up', color: '#14b8a6' },
+    { id: 'committed', title: 'Committed', color: '#10b981' },
+    { id: 'passed', title: 'Passed', color: '#ef4444' },
+  ];
+
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+      <Sidebar />
+      <ToolBackground color={toolCustom.color} />
+      
       <main style={{
         paddingTop: isMobile ? "72px" : "80px",
         paddingBottom: isMobile ? "88px" : "32px",
@@ -815,197 +1006,6 @@ export default function InvestorsPage() {
           </div>
         )}
       </main>
-function InvestorsContent() {
-  const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('investors', 'Investors', '#6366f1');
-  const [investors, setInvestors] = useState<Investor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [viewingInvestor, setViewingInvestor] = useState<Investor | null>(null);
-  const [newInvestor, setNewInvestor] = useState({
-    name: '',
-    firm: '',
-    email: '',
-    phone: '',
-    linkedin: '',
-    focus: { stage: '', sector: '', checkSize: '' },
-    notes: '',
-  });
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  useEffect(() => {
-    fetchInvestors();
-  }, []);
-
-  const fetchInvestors = async () => {
-    try {
-      const response = await fetch('/api/investors');
-      const data = await response.json();
-      setInvestors(data.items || []);
-    } catch (error) {
-      console.error('Error fetching investors:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createInvestor = async () => {
-    if (!newInvestor.name.trim()) return;
-
-    try {
-      const response = await fetch('/api/investors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newInvestor),
-      });
-
-      if (response.ok) {
-        const created = await response.json();
-        setInvestors([...investors, created]);
-        setNewInvestor({
-          name: '',
-          firm: '',
-          email: '',
-          phone: '',
-          linkedin: '',
-          focus: { stage: '', sector: '', checkSize: '' },
-          notes: '',
-        });
-        setShowAddForm(false);
-      }
-    } catch (error) {
-      console.error('Error creating investor:', error);
-    }
-  };
-
-  const updateInvestor = async (id: string, updates: Partial<Investor>) => {
-    try {
-      const response = await fetch(`/api/investors/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        setInvestors(investors.map(inv => 
-          inv.id === id ? { ...inv, ...updates } : inv
-        ));
-      }
-    } catch (error) {
-      console.error('Error updating investor:', error);
-    }
-  };
-
-  const deleteInvestor = async (id: string) => {
-    if (!confirm('Delete this investor?')) return;
-
-    try {
-      const response = await fetch(`/api/investors/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setInvestors(investors.filter(inv => inv.id !== id));
-      }
-    } catch (error) {
-      console.error('Error deleting investor:', error);
-    }
-  };
-
-  const onDragEnd = async (result: DropResult) => {
-    const { source, destination, draggableId } = result;
-
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-      return;
-    }
-
-    const investor = investors.find(inv => inv.id === draggableId);
-    if (!investor) return;
-
-    const sourceStage = source.droppableId as Investor['stage'];
-    const destStage = destination.droppableId as Investor['stage'];
-
-    const newInvestors = Array.from(investors);
-    const sourceInvestors = newInvestors.filter(inv => inv.stage === sourceStage);
-    const destInvestors = sourceStage === destStage 
-      ? sourceInvestors 
-      : newInvestors.filter(inv => inv.stage === destStage);
-
-    const [removed] = sourceInvestors.splice(source.index, 1);
-    
-    if (sourceStage !== destStage) {
-      removed.stage = destStage;
-    }
-
-    if (sourceStage === destStage) {
-      sourceInvestors.splice(destination.index, 0, removed);
-    } else {
-      destInvestors.splice(destination.index, 0, removed);
-    }
-
-    const updateOrders = (items: Investor[]) => {
-      return items.map((inv, idx) => ({ ...inv, order: idx }));
-    };
-
-    const updatedSource = updateOrders(sourceInvestors);
-    const updatedDest = sourceStage === destStage ? updatedSource : updateOrders(destInvestors);
-
-    const finalInvestors = newInvestors.map(inv => {
-      const updated = [...updatedSource, ...updatedDest].find(u => u.id === inv.id);
-      return updated || inv;
-    });
-
-    setInvestors(finalInvestors);
-
-    try {
-      await updateInvestor(removed.id, { 
-        stage: destStage, 
-        order: destination.index 
-      });
-
-      const itemsToUpdate = sourceStage === destStage
-        ? updatedSource.filter(inv => inv.id !== removed.id)
-        : [...updatedSource, ...updatedDest].filter(inv => inv.id !== removed.id);
-
-      await Promise.all(
-        itemsToUpdate.map(inv => updateInvestor(inv.id, { order: inv.order }))
-      );
-    } catch (error) {
-      console.error('Error updating order:', error);
-      fetchInvestors();
-    }
-  };
-
-  const getInvestorsByStage = (stage: Investor['stage']) => {
-    return investors
-      .filter(inv => inv.stage === stage)
-      .sort((a, b) => a.order - b.order);
-  };
-
-  const stages: { id: Investor['stage']; title: string; color: string }[] = [
-    { id: 'research', title: 'Research', color: '#6366f1' },
-    { id: 'outreach', title: 'Outreach', color: '#8b5cf6' },
-    { id: 'meeting', title: 'Meeting', color: '#3b82f6' },
-    { id: 'follow_up', title: 'Follow-up', color: '#14b8a6' },
-    { id: 'committed', title: 'Committed', color: '#10b981' },
-    { id: 'passed', title: 'Passed', color: '#ef4444' },
-  ];
-
-  return (
-    <>
-      <TopNav />
-      <BottomNav />
-      <Sidebar />
-      <ToolBackground color={toolCustom.color} />
-      
 
       <style jsx global>{`
         @keyframes spin {
