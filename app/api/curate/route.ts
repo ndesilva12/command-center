@@ -288,7 +288,8 @@ Return ONLY valid JSON (no markdown, no explanation):
         timestamp: result.timestamp,
         items: curatedItems,
         total: curatedItems.length,
-        diversity: result.diversity,
+        categories: result.categories,
+        source_types: result.source_types,
         status: 'completed'
       });
     } catch (dbError) {
