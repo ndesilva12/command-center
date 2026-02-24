@@ -50,6 +50,12 @@ async function fetchCalendarEvents(
 }
 
 export async function GET(request: Request) {
+  const noCacheHeaders = {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  };
+
   try {
     const { searchParams } = new URL(request.url);
     const timeMin = searchParams.get('timeMin') || new Date().toISOString();
@@ -60,13 +66,13 @@ export async function GET(request: Request) {
     const accountsCookie = cookieStore.get('google_accounts');
 
     if (!accountsCookie || !accountsCookie.value) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401, headers: noCacheHeaders });
     }
 
     const accountEmails: string[] = JSON.parse(accountsCookie.value);
 
     if (accountEmails.length === 0) {
-      return NextResponse.json({ error: 'No Google accounts connected' }, { status: 401 });
+      return NextResponse.json({ error: 'No Google accounts connected' }, { status: 401, headers: noCacheHeaders });
     }
 
     // Fetch events from all accounts (or specific account if requested)
@@ -121,12 +127,18 @@ export async function GET(request: Request) {
     return NextResponse.json({
       events: allEvents,
       accounts: eventsFromAllAccounts.map(r => r.account),
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     });
   } catch (error) {
     console.error('Calendar events error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch calendar events' },
-      { status: 500 }
+      { status: 500, headers: noCacheHeaders }
     );
   }
 }

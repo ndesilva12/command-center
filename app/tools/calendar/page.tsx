@@ -85,7 +85,8 @@ export default function CalendarPage() {
       }
 
       const response = await fetch(
-        `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax.toISOString()}`
+        `/api/calendar/events?timeMin=${timeMin}&timeMax=${timeMax.toISOString()}`,
+        { cache: 'no-store' }
       );
 
       if (!response.ok) throw new Error("Failed to fetch events");

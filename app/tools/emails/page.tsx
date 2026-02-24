@@ -167,7 +167,7 @@ export default function EmailsPage() {
         params.set("q", folderQuery);
       }
 
-      const response = await fetch(`/api/gmail?${params.toString()}`);
+      const response = await fetch(`/api/gmail?${params.toString()}`, { cache: 'no-store' });
       if (!response.ok) throw new Error("Failed to fetch emails");
       
       const data = await response.json();

@@ -15,10 +15,16 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     const accountsCookie = cookieStore.get('google_accounts');
 
+    const noCacheHeaders = {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    };
+
     if (!accountsCookie || !accountsCookie.value) {
       return NextResponse.json(
         { error: 'Not authenticated with Google' },
-        { status: 401 }
+        { status: 401, headers: noCacheHeaders }
       );
     }
 
@@ -28,7 +34,7 @@ export async function GET(request: Request) {
     } catch {
       return NextResponse.json(
         { error: 'Invalid authentication data' },
-        { status: 401 }
+        { status: 401, headers: noCacheHeaders }
       );
     }
 
@@ -40,7 +46,7 @@ export async function GET(request: Request) {
     if (accountsToFetch.length === 0) {
       return NextResponse.json(
         { error: 'No accounts available' },
-        { status: 401 }
+        { status: 401, headers: noCacheHeaders }
       );
     }
 
@@ -111,12 +117,22 @@ export async function GET(request: Request) {
     return NextResponse.json({
       emails: allEmails,
       accounts: allAccounts,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
     });
   } catch (error) {
     console.error('Error fetching Gmail messages:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch emails' },
-      { status: 500 }
+      { status: 500, headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }}
     );
   }
 }
