@@ -149,7 +149,7 @@ export default function RosterMapPage() {
             minHeight: "100vh",
             paddingTop: isMobile ? "72px" : "76px",
             paddingBottom: isMobile ? "88px" : "24px",
-            paddingLeft: isMobile ? "12px" : "24px",
+            paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)",
             paddingRight: isMobile ? "12px" : "20px",
           }}
         >

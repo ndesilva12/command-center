@@ -149,7 +149,7 @@ export default function L3DPage() {
       <BottomNav />
       <div style={{ display: isMobile ? "block" : "flex", minHeight: "100vh" }}>
         {!isMobile && <Sidebar />}
-        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "76px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "24px", paddingRight: isMobile ? "12px" : "20px" }}>
+        <main style={{ flex: 1, minHeight: "100vh", paddingTop: isMobile ? "72px" : "76px", paddingBottom: isMobile ? "88px" : "24px", paddingLeft: isMobile ? "12px" : "calc(var(--sidebar-width, 240px) + 24px)", paddingRight: isMobile ? "12px" : "20px" }}>
           <ToolBackground color={toolCustom.color} />
         
           <div style={{ maxWidth: "900px", margin: "0 auto" }}>
