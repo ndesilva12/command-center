@@ -51,6 +51,7 @@ import {
   Database,
 } from "lucide-react";
 import { FullDatabaseBoard } from "./FullDatabaseBoard";
+import { BigBoardView } from "./BigBoardView";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2521,8 +2522,8 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
       {/* View content */}
       <div>
         {activeView === "fulldatabase" && <FullDatabaseBoard isMobile={isMobile} />}
+        {activeView === "rankings" && <BigBoardView isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "bigboard" && <PortalBigBoard isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "rankings" && <NormansRankings isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "roster" && <RosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "budget" && <BudgetRosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "network" && <NetworkTool isMobile={isMobile} syncTrigger={syncTrigger} />}

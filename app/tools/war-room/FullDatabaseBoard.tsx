@@ -122,8 +122,8 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
 
       // Track which players are on the Big Board
       const onBoard = new Set<string>();
-      [...(rankingsData.guards || []), ...(rankingsData.forwards || []), ...(rankingsData.bigMen || [])].forEach((p: any) => {
-        if (p.name) onBoard.add(p.name);
+      (rankingsData.players || []).forEach((p: any) => {
+        if (p.Player) onBoard.add(p.Player);
       });
       setBigBoardPlayers(onBoard);
     } catch (e: any) {
@@ -146,13 +146,15 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
         body: JSON.stringify({
           player: player.Player,
           team: player.Team,
+          conference: player.Conference,
           position: player.Position,
           year: player.Year,
-          conference: player.Conference,
           ppg: player.PPG,
           rpg: player.RPG,
           apg: player.APG,
-          tier: 'NR', // Default tier, can be changed in Big Board
+          fg: player["FG%"],
+          threePt: player["3P%"],
+          schoolHistory: player["School History"],
         }),
       });
       if (res.ok) {

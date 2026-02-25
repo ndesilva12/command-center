@@ -169,6 +169,15 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
     
+    // Shopping
+    match /shopping_items/{itemId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /shopping_lists/{listId} {
+      allow read, write: if isAuthenticated();
+    }
+    
     // Default deny
     match /{document=**} {
       allow read, write: if false;
