@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
 const SPREADSHEET_ID = '1yrpyWk1CA9wvHXngmWilFJZlQPd_1-QC8lKeAS1YPcs';
-const SHEET_NAME = "Norman's Rankings";
+const SHEET_NAME = "Big Board";
 
 // Headers: Player, Team, Conference, Position, Year, PPG, RPG, APG, FG%, 3P%, School History, Added
 

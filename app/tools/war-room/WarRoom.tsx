@@ -2455,7 +2455,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   const views = [
     { id: "fulldatabase" as const, label: "Players", icon: Database },
     { id: "rankings" as const, label: "Big Board", icon: Star },
-    { id: "roster" as const, label: "Roster Builder", icon: Users },
+    { id: "roster" as const, label: "Depth Charts", icon: Users },
     { id: "portal" as const, label: "The Portal", icon: TrendingUp },
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },
