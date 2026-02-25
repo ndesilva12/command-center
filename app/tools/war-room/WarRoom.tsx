@@ -48,7 +48,9 @@ import {
   Bookmark,
   Upload,
   Flag,
+  Database,
 } from "lucide-react";
+import { FullDatabaseBoard } from "./FullDatabaseBoard";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2424,7 +2426,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"bigboard" | "rankings" | "roster" | "budget" | "network" | "connections" | "strikelist">("bigboard");
+  const [activeView, setActiveView] = useState<"fulldatabase" | "bigboard" | "rankings" | "roster" | "budget" | "network" | "connections" | "strikelist">("fulldatabase");
   const [syncTrigger, setSyncTrigger] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [syncing, setSyncing] = useState(false);
@@ -2448,6 +2450,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   };
 
   const views = [
+    { id: "fulldatabase" as const, label: "Full Database", icon: Database },
     { id: "bigboard" as const, label: "Portal Big Board", icon: TrendingUp },
     { id: "rankings" as const, label: "Norman's Rankings", icon: Star },
     { id: "roster" as const, label: "Roster Builder", icon: Users },
@@ -2458,6 +2461,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   ];
 
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
+    fulldatabase: { active: "#f59e0b", border: "rgba(245,158,11,0.4)", bg: "rgba(245,158,11,0.12)" },
     bigboard: { active: "#60a5fa", border: "rgba(59,130,246,0.4)", bg: "rgba(59,130,246,0.12)" },
     rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
     roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
@@ -2516,6 +2520,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
 
       {/* View content */}
       <div>
+        {activeView === "fulldatabase" && <FullDatabaseBoard isMobile={isMobile} />}
         {activeView === "bigboard" && <PortalBigBoard isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "rankings" && <NormansRankings isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "roster" && <RosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
