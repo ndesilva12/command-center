@@ -52,6 +52,8 @@ import {
 } from "lucide-react";
 import { FullDatabaseBoard } from "./FullDatabaseBoard";
 import { BigBoardView } from "./BigBoardView";
+import { DepthChartBuilder } from "./DepthChartBuilder";
+import { ThePortal } from "./ThePortal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2427,7 +2429,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"fulldatabase" | "bigboard" | "rankings" | "roster" | "budget" | "network" | "connections" | "strikelist">("fulldatabase");
+  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "roster" | "portal" | "budget" | "network" | "connections">("fulldatabase");
   const [syncTrigger, setSyncTrigger] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [syncing, setSyncing] = useState(false);
@@ -2453,23 +2455,21 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   const views = [
     { id: "fulldatabase" as const, label: "Players", icon: Database },
     { id: "rankings" as const, label: "Big Board", icon: Star },
-    { id: "bigboard" as const, label: "Portal Scouting", icon: TrendingUp },
     { id: "roster" as const, label: "Roster Builder", icon: Users },
+    { id: "portal" as const, label: "The Portal", icon: TrendingUp },
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },
     { id: "connections" as const, label: "Coaching Connections", icon: Zap },
-    { id: "strikelist" as const, label: "Strike List", icon: Crosshair },
   ];
 
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
     fulldatabase: { active: "#f59e0b", border: "rgba(245,158,11,0.4)", bg: "rgba(245,158,11,0.12)" },
-    bigboard: { active: "#60a5fa", border: "rgba(59,130,246,0.4)", bg: "rgba(59,130,246,0.12)" },
     rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
     roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
+    portal: { active: "#60a5fa", border: "rgba(59,130,246,0.4)", bg: "rgba(59,130,246,0.12)" },
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
     network: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
     connections: { active: "#9ca3af", border: "rgba(107,114,128,0.4)", bg: "rgba(107,114,128,0.10)" },
-    strikelist: { active: "#f87171", border: "rgba(239,68,68,0.45)", bg: "rgba(239,68,68,0.10)" },
   };
 
   return (
@@ -2480,7 +2480,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: "16px", fontWeight: 700, color: "#f3f4f6" }}>War Room — Basketball Intelligence</div>
           <div style={{ fontSize: "12px", color: "#9ca3af" }}>
-            Real-time data from Google Sheets · Portal Big Board · Norman&apos;s Rankings · Strike List (Wave 1–3)
+            Real-time data from Google Sheets · Players · Big Board · Roster Builder · The Portal
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
@@ -2523,12 +2523,11 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
       <div>
         {activeView === "fulldatabase" && <FullDatabaseBoard isMobile={isMobile} />}
         {activeView === "rankings" && <BigBoardView isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "bigboard" && <PortalBigBoard isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "roster" && <RosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
+        {activeView === "roster" && <DepthChartBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
+        {activeView === "portal" && <ThePortal isMobile={isMobile} />}
         {activeView === "budget" && <BudgetRosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "network" && <NetworkTool isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "connections" && <CoachingConnections isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "strikelist" && <StrikeList isMobile={isMobile} syncTrigger={syncTrigger} />}
       </div>
     </div>
   );
