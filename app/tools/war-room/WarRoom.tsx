@@ -54,6 +54,7 @@ import { FullDatabaseBoard } from "./FullDatabaseBoard";
 import { BigBoardView } from "./BigBoardView";
 import { DepthChartBuilder } from "./DepthChartBuilder";
 import { ThePortal } from "./ThePortal";
+import { BartTorvik } from "./BartTorvik";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2429,7 +2430,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "roster" | "portal" | "budget" | "network" | "connections">("fulldatabase");
+  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "portal" | "budget" | "network" | "connections">("fulldatabase");
   const [syncTrigger, setSyncTrigger] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [syncing, setSyncing] = useState(false);
@@ -2455,8 +2456,9 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   const views = [
     { id: "fulldatabase" as const, label: "Players", icon: Database },
     { id: "rankings" as const, label: "Big Board", icon: Star },
+    { id: "torvik" as const, label: "Bart Torvik", icon: TrendingUp },
     { id: "roster" as const, label: "Depth Charts", icon: Users },
-    { id: "portal" as const, label: "The Portal", icon: TrendingUp },
+    { id: "portal" as const, label: "The Portal", icon: Target },
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },
     { id: "connections" as const, label: "Coaching Connections", icon: Zap },
@@ -2465,6 +2467,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
     fulldatabase: { active: "#f59e0b", border: "rgba(245,158,11,0.4)", bg: "rgba(245,158,11,0.12)" },
     rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
+    torvik: { active: "#ef4444", border: "rgba(239,68,68,0.4)", bg: "rgba(239,68,68,0.12)" },
     roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
     portal: { active: "#60a5fa", border: "rgba(59,130,246,0.4)", bg: "rgba(59,130,246,0.12)" },
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
@@ -2523,6 +2526,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
       <div>
         {activeView === "fulldatabase" && <FullDatabaseBoard isMobile={isMobile} />}
         {activeView === "rankings" && <BigBoardView isMobile={isMobile} syncTrigger={syncTrigger} />}
+        {activeView === "torvik" && <BartTorvik isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "roster" && <DepthChartBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "portal" && <ThePortal isMobile={isMobile} />}
         {activeView === "budget" && <BudgetRosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
