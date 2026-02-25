@@ -2450,9 +2450,9 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   };
 
   const views = [
-    { id: "fulldatabase" as const, label: "Full Database", icon: Database },
-    { id: "bigboard" as const, label: "Portal Big Board", icon: TrendingUp },
-    { id: "rankings" as const, label: "Norman's Rankings", icon: Star },
+    { id: "fulldatabase" as const, label: "Players", icon: Database },
+    { id: "rankings" as const, label: "Big Board", icon: Star },
+    { id: "bigboard" as const, label: "Portal Scouting", icon: TrendingUp },
     { id: "roster" as const, label: "Roster Builder", icon: Users },
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },

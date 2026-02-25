@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 populate-big-board.js
+full-db-school-history*.js

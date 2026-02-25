@@ -17,6 +17,9 @@ import {
   List,
   Star,
   Download,
+  Plus,
+  Check,
+  Loader2,
 } from "lucide-react";
 
 interface Player {
@@ -98,14 +101,31 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
   // View mode
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
+  // Big Board tracking
+  const [bigBoardPlayers, setBigBoardPlayers] = useState<Set<string>>(new Set());
+  const [addingPlayer, setAddingPlayer] = useState<string | null>(null);
+  const [recentlyAdded, setRecentlyAdded] = useState<Set<string>>(new Set());
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/cinderella/full-database?bust=${Date.now()}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setPlayers(data.players || []);
+      const [playersRes, rankingsRes] = await Promise.all([
+        fetch(`/api/cinderella/full-database?bust=${Date.now()}`),
+        fetch(`/api/cinderella/rankings?bust=${Date.now()}`),
+      ]);
+      const playersData = await playersRes.json();
+      const rankingsData = await rankingsRes.json();
+      
+      if (playersData.error) throw new Error(playersData.error);
+      setPlayers(playersData.players || []);
       setLastFetched(new Date());
+
+      // Track which players are on the Big Board
+      const onBoard = new Set<string>();
+      [...(rankingsData.guards || []), ...(rankingsData.forwards || []), ...(rankingsData.bigMen || [])].forEach((p: any) => {
+        if (p.name) onBoard.add(p.name);
+      });
+      setBigBoardPlayers(onBoard);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -116,6 +136,42 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const addToBigBoard = async (player: Player) => {
+    setAddingPlayer(player.Player);
+    try {
+      const res = await fetch('/api/cinderella/rankings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player: player.Player,
+          team: player.Team,
+          position: player.Position,
+          year: player.Year,
+          conference: player.Conference,
+          ppg: player.PPG,
+          rpg: player.RPG,
+          apg: player.APG,
+          tier: 'NR', // Default tier, can be changed in Big Board
+        }),
+      });
+      if (res.ok) {
+        setBigBoardPlayers(prev => new Set([...prev, player.Player]));
+        setRecentlyAdded(prev => new Set([...prev, player.Player]));
+        setTimeout(() => {
+          setRecentlyAdded(prev => {
+            const next = new Set(prev);
+            next.delete(player.Player);
+            return next;
+          });
+        }, 2000);
+      }
+    } catch (e) {
+      console.error('Failed to add player:', e);
+    } finally {
+      setAddingPlayer(null);
+    }
+  };
 
   // Extract unique values for filters
   const positions = useMemo(() => [...new Set(players.map(p => p.Position).filter(Boolean))].sort(), [players]);
@@ -222,6 +278,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", padding: "12px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", alignItems: "center" }}>
         <span style={{ fontSize: "13px", color: "#9ca3af" }}>
           <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> total players
+          {" · "}<strong style={{ color: "#f59e0b" }}>{bigBoardPlayers.size}</strong> on Big Board
           {" · "}<strong style={{ color: "#10b981" }}>{players.filter(p => p["Power Conf"] === "TRUE").length}</strong> Power Conf
           {" · "}<strong style={{ color: "#3b82f6" }}>{players.filter(p => p["School History"]).length}</strong> with transfer history
         </span>
@@ -430,6 +487,9 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                 <th style={{ padding: "10px 8px", textAlign: "center", width: "40px", color: "#6b7280", fontSize: "11px" }}>
                   <History size={12} />
                 </th>
+                <th style={{ padding: "10px 8px", textAlign: "center", width: "50px", color: "#6b7280", fontSize: "11px" }}>
+                  <Plus size={12} />
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -480,10 +540,40 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                       <td style={{ padding: "8px", textAlign: "center" }}>
                         {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                       </td>
+                      <td style={{ padding: "8px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
+                        {bigBoardPlayers.has(player.Player) ? (
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", borderRadius: "6px", background: recentlyAdded.has(player.Player) ? "rgba(16,185,129,0.15)" : "rgba(107,114,128,0.1)", color: recentlyAdded.has(player.Player) ? "#10b981" : "#6b7280", fontSize: "10px", fontWeight: 600 }}>
+                            <Check size={10} />
+                            {recentlyAdded.has(player.Player) ? "Added!" : "On Board"}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => addToBigBoard(player)}
+                            disabled={addingPlayer === player.Player}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid rgba(59,130,246,0.4)",
+                              background: "rgba(59,130,246,0.1)",
+                              color: "#60a5fa",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              cursor: addingPlayer === player.Player ? "wait" : "pointer",
+                              opacity: addingPlayer === player.Player ? 0.6 : 1,
+                            }}
+                          >
+                            {addingPlayer === player.Player ? <Loader2 size={10} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={10} />}
+                            Add
+                          </button>
+                        )}
+                      </td>
                     </tr>
                     {isExpanded && hasHistory && (
                       <tr>
-                        <td colSpan={14} style={{ padding: "0", background: "rgba(59,130,246,0.03)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
+                        <td colSpan={15} style={{ padding: "0", background: "rgba(59,130,246,0.03)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
                           <div style={{ padding: "12px 16px 12px 48px" }}>
                             <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
                               <History size={14} style={{ color: "#60a5fa", marginTop: "2px", flexShrink: 0 }} />
@@ -578,12 +668,44 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#9ca3af" }}>
+                <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#9ca3af", alignItems: "center" }}>
                   <span><strong style={{ color: "#d1d5db" }}>{player.RPG}</strong> RPG</span>
                   <span><strong style={{ color: "#d1d5db" }}>{player.APG}</strong> APG</span>
                   <span>{player["FG%"]}% FG</span>
                   <span>{player["3P%"]}% 3P</span>
-                  {hasHistory && <History size={12} style={{ color: "#60a5fa", marginLeft: "auto" }} />}
+                  <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
+                    {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
+                    <div onClick={e => e.stopPropagation()}>
+                      {bigBoardPlayers.has(player.Player) ? (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", borderRadius: "6px", background: recentlyAdded.has(player.Player) ? "rgba(16,185,129,0.15)" : "rgba(107,114,128,0.1)", color: recentlyAdded.has(player.Player) ? "#10b981" : "#6b7280", fontSize: "10px", fontWeight: 600 }}>
+                          <Check size={10} />
+                          {recentlyAdded.has(player.Player) ? "Added!" : "On Board"}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => addToBigBoard(player)}
+                          disabled={addingPlayer === player.Player}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "4px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid rgba(59,130,246,0.4)",
+                            background: "rgba(59,130,246,0.1)",
+                            color: "#60a5fa",
+                            fontSize: "11px",
+                            fontWeight: 600,
+                            cursor: addingPlayer === player.Player ? "wait" : "pointer",
+                            opacity: addingPlayer === player.Player ? 0.6 : 1,
+                          }}
+                        >
+                          {addingPlayer === player.Player ? <Loader2 size={10} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={10} />}
+                          Add
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {isExpanded && hasHistory && (
