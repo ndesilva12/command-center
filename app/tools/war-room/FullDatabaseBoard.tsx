@@ -21,6 +21,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
+import { fmt } from "./utils";
 
 interface Player {
   _rowIndex: string;
@@ -532,13 +533,13 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                         </span>
                       </td>
                       <td style={{ padding: "8px", color: "#9ca3af" }}>{player.Year}</td>
-                      <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{player.PPG || "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{player.RPG || "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{player.APG || "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player.MPG || "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${player["FG%"]}%` : "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${player["3P%"]}%` : "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["eFG%"] ? `${player["eFG%"]}%` : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{fmt(player.PPG)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.RPG)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.APG)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{fmt(player.MPG)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${fmt(player["FG%"])}%` : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["eFG%"] ? `${fmt(player["eFG%"])}%` : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
                         {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                       </td>
@@ -665,16 +666,16 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "18px", fontWeight: 800, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{player.PPG || "—"}</div>
+                    <div style={{ fontSize: "18px", fontWeight: 800, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{fmt(player.PPG)}</div>
                     <div style={{ fontSize: "10px", color: "#6b7280" }}>PPG</div>
                   </div>
                 </div>
 
                 <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#9ca3af", alignItems: "center" }}>
-                  <span><strong style={{ color: "#d1d5db" }}>{player.RPG}</strong> RPG</span>
-                  <span><strong style={{ color: "#d1d5db" }}>{player.APG}</strong> APG</span>
-                  <span>{player["FG%"]}% FG</span>
-                  <span>{player["3P%"]}% 3P</span>
+                  <span><strong style={{ color: "#d1d5db" }}>{fmt(player.RPG)}</strong> RPG</span>
+                  <span><strong style={{ color: "#d1d5db" }}>{fmt(player.APG)}</strong> APG</span>
+                  <span>{fmt(player["FG%"])}% FG</span>
+                  <span>{fmt(player["3P%"])}% 3P</span>
                   <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
                     {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                     <div onClick={e => e.stopPropagation()}>

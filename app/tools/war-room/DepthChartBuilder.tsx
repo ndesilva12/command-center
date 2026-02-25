@@ -10,6 +10,7 @@ import {
   Edit2,
   Check,
 } from "lucide-react";
+import { fmt } from "./utils";
 
 interface BigBoardPlayer {
   Player: string;
@@ -408,9 +409,9 @@ export function DepthChartBuilder({ isMobile, syncTrigger }: { isMobile: boolean
                           </button>
                         </div>
                         <div style={{ display: "flex", gap: "8px", marginTop: "6px", fontSize: "11px", color: "#9ca3af" }}>
-                          <span><strong style={{ color: "#d1d5db" }}>{player.PPG}</strong> PPG</span>
-                          <span><strong style={{ color: "#d1d5db" }}>{player.RPG}</strong> RPG</span>
-                          <span><strong style={{ color: "#d1d5db" }}>{player.APG}</strong> APG</span>
+                          <span><strong style={{ color: "#d1d5db" }}>{fmt(player.PPG)}</strong> PPG</span>
+                          <span><strong style={{ color: "#d1d5db" }}>{fmt(player.RPG)}</strong> RPG</span>
+                          <span><strong style={{ color: "#d1d5db" }}>{fmt(player.APG)}</strong> APG</span>
                         </div>
                         {isStarter && (
                           <div style={{ position: "absolute", top: "-8px", right: "8px", padding: "2px 6px", borderRadius: "4px", background: colors.bg, border: `1px solid ${colors.border}`, fontSize: "9px", fontWeight: 700, color: colors.text, letterSpacing: "0.05em" }}>
@@ -550,7 +551,7 @@ export function DepthChartBuilder({ isMobile, syncTrigger }: { isMobile: boolean
                         <div style={{ fontSize: "11px", color: "#6b7280" }}>{player.Team} · {player.Position} · {player.Year}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "14px", fontWeight: 700, color: "#10b981" }}>{player.PPG}</div>
+                        <div style={{ fontSize: "14px", fontWeight: 700, color: "#10b981" }}>{fmt(player.PPG)}</div>
                         <div style={{ fontSize: "10px", color: "#6b7280" }}>PPG</div>
                       </div>
                     </div>

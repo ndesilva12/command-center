@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { fmt } from "./utils";
 
 interface BigBoardPlayer {
   _rowIndex: string;
@@ -335,11 +336,11 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
                       </span>
                     </td>
                     <td style={{ padding: "8px", color: "#9ca3af" }}>{player.Year}</td>
-                    <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{player.PPG || "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{player.RPG || "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{player.APG || "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${player["FG%"]}%` : "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${player["3P%"]}%` : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{fmt(player.PPG)}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.RPG)}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.APG)}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${fmt(player["FG%"])}%` : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
                     <td style={{ padding: "8px", color: "#6b7280", fontSize: "11px" }}>{player.Added || "—"}</td>
                     <td style={{ padding: "8px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
                       <button
