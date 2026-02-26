@@ -76,6 +76,8 @@ export default function EmailsPage() {
   const [emailViewMode, setEmailViewMode] = useState<"html" | "text">("html");
   const [isMobile, setIsMobile] = useState(false);
   const [isStarred, setIsStarred] = useState(false);
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Mobile detection
   useEffect(() => {
@@ -535,6 +537,84 @@ export default function EmailsPage() {
     }
   };
 
+  // Multi-select handlers
+  const toggleEmailSelection = (e: React.MouseEvent, emailId: string) => {
+    e.stopPropagation();
+    setSelectedEmails(prev => {
+      const next = new Set(prev);
+      if (next.has(emailId)) {
+        next.delete(emailId);
+      } else {
+        next.add(emailId);
+      }
+      // Exit selection mode if nothing selected
+      if (next.size === 0) {
+        setIsSelectionMode(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectionMode = () => {
+    if (isSelectionMode) {
+      setSelectedEmails(new Set());
+    }
+    setIsSelectionMode(!isSelectionMode);
+  };
+
+  const selectAllEmails = () => {
+    setSelectedEmails(new Set(emails.map(e => e.id)));
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedEmails.size === 0) return;
+    
+    for (const emailId of selectedEmails) {
+      const email = emails.find(e => e.id === emailId);
+      if (!email) continue;
+      
+      const accountEmail = email.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
+      try {
+        await fetch(`/api/gmail/${emailId}/actions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "archive", account: accountEmail }),
+        });
+      } catch (err) {
+        console.error("Failed to archive:", err);
+      }
+    }
+    
+    setEmails(prev => prev.filter(e => !selectedEmails.has(e.id)));
+    setSelectedEmails(new Set());
+    setIsSelectionMode(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedEmails.size === 0) return;
+    if (!confirm(`Delete ${selectedEmails.size} email(s)?`)) return;
+    
+    for (const emailId of selectedEmails) {
+      const email = emails.find(e => e.id === emailId);
+      if (!email) continue;
+      
+      const accountEmail = email.accountEmail || (selectedAccount !== "all" ? selectedAccount : undefined);
+      try {
+        await fetch(`/api/gmail/${emailId}/actions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "trash", account: accountEmail }),
+        });
+      } catch (err) {
+        console.error("Failed to delete:", err);
+      }
+    }
+    
+    setEmails(prev => prev.filter(e => !selectedEmails.has(e.id)));
+    setSelectedEmails(new Set());
+    setIsSelectionMode(false);
+  };
+
   const handleToggleStar = async () => {
     if (!selectedEmail) return;
     
@@ -929,121 +1009,205 @@ export default function EmailsPage() {
             </div>
           ) : (
             <div>
+              {/* Selection Mode Header */}
+              {isSelectionMode && selectedEmails.size > 0 && (
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "12px", 
+                  padding: "12px 20px", 
+                  backgroundColor: "rgba(99, 102, 241, 0.1)", 
+                  borderBottom: "1px solid rgba(99, 102, 241, 0.2)" 
+                }}>
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: toolCustom.color }}>
+                    {selectedEmails.size} selected
+                  </span>
+                  <button onClick={selectAllEmails} style={{ fontSize: "13px", color: "var(--foreground-muted)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                    Select All
+                  </button>
+                  <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={handleBulkArchive}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)", color: "var(--foreground)", border: "none", cursor: "pointer", fontSize: "13px" }}
+                    >
+                      <Archive style={{ width: "14px", height: "14px" }} /> Archive
+                    </button>
+                    <button
+                      onClick={handleBulkDelete}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#f87171", border: "none", cursor: "pointer", fontSize: "13px" }}
+                    >
+                      <Trash2 style={{ width: "14px", height: "14px" }} /> Delete
+                    </button>
+                    <button
+                      onClick={() => { setSelectedEmails(new Set()); setIsSelectionMode(false); }}
+                      style={{ padding: "6px 12px", borderRadius: "6px", backgroundColor: "rgba(255, 255, 255, 0.05)", color: "var(--foreground-muted)", border: "none", cursor: "pointer", fontSize: "13px" }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
               {emails.map((email, index) => (
                 <div
                   key={email.id}
-                  onClick={() => handleViewEmail(email)}
+                  onClick={() => isSelectionMode ? toggleEmailSelection({ stopPropagation: () => {} } as React.MouseEvent, email.id) : handleViewEmail(email)}
                   style={{
                     display: "flex",
-                    flexDirection: "column",
-                    gap: isMobile ? "2px" : "6px",
-                    padding: isMobile ? "10px 10px" : "16px 20px",
+                    alignItems: "stretch",
+                    padding: isMobile ? "10px 10px" : "12px 20px",
                     borderTop: "none",
                     borderRight: "none",
                     borderBottom: index < emails.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
                     borderLeft: email.isUnread ? "3px solid #00aaff" : "3px solid transparent",
                     cursor: "pointer",
                     transition: "background 0.15s",
+                    backgroundColor: selectedEmails.has(email.id) ? "rgba(99, 102, 241, 0.1)" : "transparent",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  onMouseEnter={(e) => !selectedEmails.has(email.id) && (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
+                  onMouseLeave={(e) => !selectedEmails.has(email.id) && (e.currentTarget.style.background = "transparent")}
                 >
-                  {/* Row 1: Sender + Date + Actions */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
-                    <span style={{ 
-                      fontSize: isMobile ? "12px" : "14px", 
+                  {/* Selection checkbox / indicator */}
+                  <div 
+                    onClick={(e) => { e.stopPropagation(); toggleEmailSelection(e, email.id); if (!isSelectionMode) setIsSelectionMode(true); }}
+                    style={{ 
+                      width: "28px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      flexShrink: 0,
+                      marginRight: "8px",
+                    }}
+                  >
+                    <div style={{
+                      width: "18px",
+                      height: "18px",
+                      borderRadius: "4px",
+                      border: selectedEmails.has(email.id) ? "none" : "2px solid rgba(255, 255, 255, 0.2)",
+                      backgroundColor: selectedEmails.has(email.id) ? toolCustom.color : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "all 0.15s",
+                    }}>
+                      {selectedEmails.has(email.id) && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6L5 9L10 3" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Email content */}
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: isMobile ? "2px" : "4px" }}>
+                    {/* Row 1: Sender + Date */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ 
+                        fontSize: isMobile ? "12px" : "14px", 
+                        color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
+                        fontWeight: email.isUnread ? 600 : 400, 
+                        whiteSpace: "nowrap", 
+                        overflow: "hidden", 
+                        textOverflow: "ellipsis",
+                        flex: 1,
+                        minWidth: 0,
+                      }}>
+                        {formatEmailSender(email.from)}
+                      </span>
+                      <span style={{ fontSize: isMobile ? "10px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        {formatDate(email.date)}
+                      </span>
+                    </div>
+                    {/* Row 2: Subject */}
+                    <div style={{ 
+                      fontSize: isMobile ? "13px" : "15px", 
                       color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
-                      fontWeight: email.isUnread ? 600 : 400, 
+                      fontWeight: email.isUnread ? 500 : 400, 
+                      lineHeight: 1.3,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}>
+                      {email.subject}
+                    </div>
+                    {/* Row 3: Snippet */}
+                    <div style={{ 
+                      fontSize: isMobile ? "11px" : "13px", 
+                      color: "var(--foreground-muted)", 
                       whiteSpace: "nowrap", 
                       overflow: "hidden", 
-                      textOverflow: "ellipsis",
-                      flexShrink: 1,
-                      minWidth: 0,
+                      textOverflow: "ellipsis", 
+                      opacity: 0.6 
                     }}>
-                      {formatEmailSender(email.from)}
-                    </span>
-                    <span style={{ fontSize: isMobile ? "10px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
-                      {formatDate(email.date)}
-                    </span>
-                    <a
-                      href={getSuperhumanUrl(email.threadId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center", 
-                        width: isMobile ? "24px" : "24px", 
-                        height: isMobile ? "24px" : "24px", 
-                        borderRadius: "4px", 
-                        backgroundColor: "rgba(255, 255, 255, 0.08)", 
-                        color: "var(--foreground-muted)", 
-                        flexShrink: 0,
-                      }}
-                    >
-                      <ExternalLink style={{ width: "12px", height: "12px" }} />
-                    </a>
-                    <button
-                      onClick={(e) => handleArchiveEmail(e, email)}
-                      style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center", 
-                        width: isMobile ? "24px" : "24px", 
-                        height: isMobile ? "24px" : "24px", 
-                        borderRadius: "4px", 
-                        backgroundColor: "rgba(255, 255, 255, 0.08)", 
-                        color: "var(--foreground-muted)", 
-                        border: "none", 
-                        cursor: "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Archive style={{ width: "12px", height: "12px" }} />
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteEmail(e, email)}
-                      style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center", 
-                        width: isMobile ? "24px" : "24px", 
-                        height: isMobile ? "24px" : "24px", 
-                        borderRadius: "4px", 
-                        backgroundColor: "rgba(255, 255, 255, 0.08)", 
-                        color: "var(--foreground-muted)", 
-                        border: "none", 
-                        cursor: "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Trash2 style={{ width: "12px", height: "12px" }} />
-                    </button>
+                      {email.snippet}
+                    </div>
                   </div>
-                  {/* Row 2: Subject (single line on mobile) */}
-                  <div style={{ 
-                    fontSize: isMobile ? "13px" : "15px", 
-                    color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
-                    fontWeight: email.isUnread ? 500 : 400, 
-                    lineHeight: 1.3,
-                    whiteSpace: isMobile ? "nowrap" : "normal",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}>
-                    {email.subject}
-                  </div>
-                  {/* Row 3: Snippet */}
-                  <div style={{ 
-                    fontSize: isMobile ? "11px" : "13px", 
-                    color: "var(--foreground-muted)", 
-                    whiteSpace: "nowrap", 
-                    overflow: "hidden", 
-                    textOverflow: "ellipsis", 
-                    opacity: 0.6 
-                  }}>
-                    {email.snippet}
-                  </div>
+                  
+                  {/* Fixed-right action buttons */}
+                  {!isSelectionMode && (
+                    <div style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: "6px", 
+                      marginLeft: "12px",
+                      flexShrink: 0,
+                    }}>
+                      <a
+                        href={getSuperhumanUrl(email.threadId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center", 
+                          width: "28px", 
+                          height: "28px", 
+                          borderRadius: "6px", 
+                          backgroundColor: "rgba(255, 255, 255, 0.06)", 
+                          color: "var(--foreground-muted)",
+                        }}
+                        title="Open in Superhuman"
+                      >
+                        <ExternalLink style={{ width: "14px", height: "14px" }} />
+                      </a>
+                      <button
+                        onClick={(e) => handleArchiveEmail(e, email)}
+                        style={{ 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center", 
+                          width: "28px", 
+                          height: "28px", 
+                          borderRadius: "6px", 
+                          backgroundColor: "rgba(255, 255, 255, 0.06)", 
+                          color: "var(--foreground-muted)", 
+                          border: "none", 
+                          cursor: "pointer",
+                        }}
+                        title="Archive"
+                      >
+                        <Archive style={{ width: "14px", height: "14px" }} />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteEmail(e, email)}
+                        style={{ 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center", 
+                          width: "28px", 
+                          height: "28px", 
+                          borderRadius: "6px", 
+                          backgroundColor: "rgba(255, 255, 255, 0.06)", 
+                          color: "var(--foreground-muted)", 
+                          border: "none", 
+                          cursor: "pointer",
+                        }}
+                        title="Delete"
+                      >
+                        <Trash2 style={{ width: "14px", height: "14px" }} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
