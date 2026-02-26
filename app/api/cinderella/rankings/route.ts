@@ -5,7 +5,7 @@ import { google } from 'googleapis';
 const SPREADSHEET_ID = '1yrpyWk1CA9wvHXngmWilFJZlQPd_1-QC8lKeAS1YPcs';
 const SHEET_NAME = "Big Board";
 
-// Headers: Player, Team, Conference, Position, Year, PPG, RPG, APG, FG%, 3P%, School History, Added
+// Headers: Player, Team, Conference, Position, Year, PPG, RPG, APG, FG%, 3P%, School History, Added, Ast%, OReb%, BPM
 
 export async function GET() {
   try {
@@ -14,7 +14,7 @@ export async function GET() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:L`,
+      range: `${SHEET_NAME}!A:O`,
     });
 
     const rows = response.data.values || [];
@@ -51,7 +51,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { player, team, conference, position, year, ppg, rpg, apg, fg, threePt, schoolHistory } = body;
+    const { player, team, conference, position, year, ppg, rpg, apg, fg, threePt, schoolHistory, astPct, orebPct, bpm } = body;
 
     if (!player || !team) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Player already on Big Board' }, { status: 409 });
     }
 
-    // Add new row
+    // Add new row with Torvik stats
     const newRow = [
       player,
       team,
@@ -84,11 +84,14 @@ export async function POST(request: Request) {
       threePt || '',
       schoolHistory || '',
       new Date().toISOString().split('T')[0], // Added date
+      astPct || '',  // Ast%
+      orebPct || '', // OReb%
+      bpm || '',     // BPM
     ];
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A:L`,
+      range: `${SHEET_NAME}!A:O`,
       valueInputOption: 'RAW',
       insertDataOption: 'INSERT_ROWS',
       requestBody: {
@@ -117,7 +120,7 @@ export async function DELETE(request: NextRequest) {
       // Get row count
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:L`,
+        range: `${SHEET_NAME}!A:O`,
       });
       const rowCount = response.data.values?.length || 0;
       
@@ -125,7 +128,7 @@ export async function DELETE(request: NextRequest) {
         // Clear all data rows (keep header)
         await sheets.spreadsheets.values.clear({
           spreadsheetId: SPREADSHEET_ID,
-          range: `${SHEET_NAME}!A2:L${rowCount}`,
+          range: `${SHEET_NAME}!A2:O${rowCount}`,
         });
       }
       return NextResponse.json({ ok: true, cleared: rowCount - 1 });
@@ -135,7 +138,7 @@ export async function DELETE(request: NextRequest) {
       // Find and remove specific player
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: `${SHEET_NAME}!A:L`,
+        range: `${SHEET_NAME}!A:O`,
       });
       const rows = response.data.values || [];
 
@@ -143,7 +146,7 @@ export async function DELETE(request: NextRequest) {
         if (rows[i][0] === playerName) {
           await sheets.spreadsheets.values.clear({
             spreadsheetId: SPREADSHEET_ID,
-            range: `${SHEET_NAME}!A${i + 1}:L${i + 1}`,
+            range: `${SHEET_NAME}!A${i + 1}:O${i + 1}`,
           });
           return NextResponse.json({ ok: true, removed: playerName });
         }

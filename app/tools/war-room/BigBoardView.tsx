@@ -29,9 +29,12 @@ interface BigBoardPlayer {
   "3P%": string;
   "School History": string;
   Added: string;
+  "Ast%": string;
+  "OReb%": string;
+  BPM: string;
 }
 
-type SortKey = "Player" | "Team" | "PPG" | "RPG" | "APG" | "FG%" | "3P%" | "Added";
+type SortKey = "Player" | "Team" | "PPG" | "RPG" | "APG" | "FG%" | "3P%" | "Added" | "Ast%" | "OReb%" | "BPM";
 type SortDir = "asc" | "desc";
 
 const POSITION_COLORS: Record<string, string> = {
@@ -131,7 +134,7 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
       let aVal: string | number = a[sortKey] || "";
       let bVal: string | number = b[sortKey] || "";
 
-      if (["PPG", "RPG", "APG", "FG%", "3P%"].includes(sortKey)) {
+      if (["PPG", "RPG", "APG", "FG%", "3P%", "Ast%", "OReb%", "BPM"].includes(sortKey)) {
         aVal = parseFloat(aVal as string) || 0;
         bVal = parseFloat(bVal as string) || 0;
       }
@@ -274,10 +277,10 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(139,92,246,0.2)", background: "rgba(139,92,246,0.05)" }}>
               <th style={{ padding: "10px 8px", textAlign: "left", width: "32px" }}></th>
-              {(["Player", "Team", "Position", "Year", "PPG", "RPG", "APG", "FG%", "3P%", "Added"] as const).map(col => {
-                const isSortable = ["Player", "Team", "PPG", "RPG", "APG", "FG%", "3P%", "Added"].includes(col);
+              {(["Player", "Team", "Position", "Year", "PPG", "RPG", "APG", "FG%", "3P%", "Ast%", "OReb%", "BPM", "Added"] as const).map(col => {
+                const isSortable = ["Player", "Team", "PPG", "RPG", "APG", "FG%", "3P%", "Ast%", "OReb%", "BPM", "Added"].includes(col);
                 const isActive = sortKey === col;
-                const isNumeric = ["PPG", "RPG", "APG", "FG%", "3P%"].includes(col);
+                const isNumeric = ["PPG", "RPG", "APG", "FG%", "3P%", "Ast%", "OReb%", "BPM"].includes(col);
                 return (
                   <th
                     key={col}
@@ -341,6 +344,9 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
                     <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.APG)}</td>
                     <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${fmt(player["FG%"])}%` : "—"}</td>
                     <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: player["Ast%"] && parseFloat(player["Ast%"]) >= 20 ? "#60a5fa" : "#9ca3af" }}>{player["Ast%"] ? fmt(player["Ast%"]) : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: player["OReb%"] && parseFloat(player["OReb%"]) >= 10 ? "#f59e0b" : "#9ca3af" }}>{player["OReb%"] ? fmt(player["OReb%"]) : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", fontWeight: player.BPM && parseFloat(player.BPM) >= 5 ? 700 : 400, color: player.BPM && parseFloat(player.BPM) >= 8 ? "#10b981" : player.BPM && parseFloat(player.BPM) >= 5 ? "#60a5fa" : player.BPM && parseFloat(player.BPM) < 0 ? "#ef4444" : "#9ca3af" }}>{player.BPM ? fmt(player.BPM) : "—"}</td>
                     <td style={{ padding: "8px", color: "#6b7280", fontSize: "11px" }}>{player.Added || "—"}</td>
                     <td style={{ padding: "8px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
                       <button
@@ -364,7 +370,7 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
                   </tr>
                   {isExpanded && hasHistory && (
                     <tr>
-                      <td colSpan={12} style={{ padding: "0", background: "rgba(139,92,246,0.03)", borderBottom: "1px solid rgba(139,92,246,0.15)" }}>
+                      <td colSpan={15} style={{ padding: "0", background: "rgba(139,92,246,0.03)", borderBottom: "1px solid rgba(139,92,246,0.15)" }}>
                         <div style={{ padding: "12px 16px 12px 48px" }}>
                           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
                             <History size={14} style={{ color: "#a78bfa", marginTop: "2px", flexShrink: 0 }} />

@@ -175,6 +175,9 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
           fg: player["FG%"],
           threePt: player["3P%"],
           schoolHistory: player["School History"],
+          astPct: player["Ast%"],
+          orebPct: player["OReb%"],
+          bpm: player.BPM,
         }),
       });
       if (res.ok) {
