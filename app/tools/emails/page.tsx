@@ -949,7 +949,7 @@ export default function EmailsPage() {
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   {/* Row 1: Sender + Date + Actions */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "4px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden" }}>
                     <span style={{ 
                       fontSize: isMobile ? "12px" : "14px", 
                       color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
@@ -957,71 +957,69 @@ export default function EmailsPage() {
                       whiteSpace: "nowrap", 
                       overflow: "hidden", 
                       textOverflow: "ellipsis",
-                      flex: 1,
+                      flexShrink: 1,
                       minWidth: 0,
                     }}>
                       {formatEmailSender(email.from)}
                     </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "4px" : "6px", flexShrink: 0 }}>
-                      <span style={{ fontSize: isMobile ? "10px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap" }}>
-                        {formatDate(email.date)}
-                      </span>
-                      <a
-                        href={getSuperhumanUrl(email.threadId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          width: isMobile ? "22px" : "24px", 
-                          height: isMobile ? "22px" : "24px", 
-                          borderRadius: "4px", 
-                          backgroundColor: "rgba(255, 255, 255, 0.15)", 
-                          color: "rgba(255, 255, 255, 0.7)", 
-                          transition: "all 0.15s" 
-                        }}
-                      >
-                        <ExternalLink style={{ width: isMobile ? "11px" : "12px", height: isMobile ? "11px" : "12px" }} />
-                      </a>
-                      <button
-                        onClick={(e) => handleArchiveEmail(e, email)}
-                        style={{ 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          width: isMobile ? "22px" : "24px", 
-                          height: isMobile ? "22px" : "24px", 
-                          borderRadius: "4px", 
-                          backgroundColor: "rgba(255, 255, 255, 0.15)", 
-                          color: "rgba(255, 255, 255, 0.7)", 
-                          border: "none", 
-                          cursor: "pointer", 
-                          transition: "all 0.15s" 
-                        }}
-                      >
-                        <Archive style={{ width: isMobile ? "11px" : "12px", height: isMobile ? "11px" : "12px" }} />
-                      </button>
-                      <button
-                        onClick={(e) => handleDeleteEmail(e, email)}
-                        style={{ 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          width: isMobile ? "22px" : "24px", 
-                          height: isMobile ? "22px" : "24px", 
-                          borderRadius: "4px", 
-                          backgroundColor: "rgba(255, 255, 255, 0.15)", 
-                          color: "rgba(255, 255, 255, 0.7)", 
-                          border: "none", 
-                          cursor: "pointer", 
-                          transition: "all 0.15s" 
-                        }}
-                      >
-                        <Trash2 style={{ width: isMobile ? "11px" : "12px", height: isMobile ? "11px" : "12px" }} />
-                      </button>
-                    </div>
+                    <span style={{ fontSize: isMobile ? "10px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                      {formatDate(email.date)}
+                    </span>
+                    <a
+                      href={getSuperhumanUrl(email.threadId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center", 
+                        width: isMobile ? "24px" : "24px", 
+                        height: isMobile ? "24px" : "24px", 
+                        borderRadius: "4px", 
+                        backgroundColor: "rgba(255, 255, 255, 0.08)", 
+                        color: "var(--foreground-muted)", 
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ExternalLink style={{ width: "12px", height: "12px" }} />
+                    </a>
+                    <button
+                      onClick={(e) => handleArchiveEmail(e, email)}
+                      style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center", 
+                        width: isMobile ? "24px" : "24px", 
+                        height: isMobile ? "24px" : "24px", 
+                        borderRadius: "4px", 
+                        backgroundColor: "rgba(255, 255, 255, 0.08)", 
+                        color: "var(--foreground-muted)", 
+                        border: "none", 
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Archive style={{ width: "12px", height: "12px" }} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteEmail(e, email)}
+                      style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center", 
+                        width: isMobile ? "24px" : "24px", 
+                        height: isMobile ? "24px" : "24px", 
+                        borderRadius: "4px", 
+                        backgroundColor: "rgba(255, 255, 255, 0.08)", 
+                        color: "var(--foreground-muted)", 
+                        border: "none", 
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Trash2 style={{ width: "12px", height: "12px" }} />
+                    </button>
                   </div>
                   {/* Row 2: Subject (single line on mobile) */}
                   <div style={{ 
