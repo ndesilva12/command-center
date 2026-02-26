@@ -487,7 +487,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                   <ExternalLink size={12} />
                 </th>
                 {(["Player", "Team", "Pos", "Year", "PPG", "RPG", "APG", "eFG%", "3P%", "Ast%", "OReb%", "BPM"] as const).map(col => {
-                  const sortCol = col === "Pos" ? "Position" : col === "FT Rate" ? "FT Rate" : col;
+                  const sortCol = col === "Pos" ? "Position" : col;
                   const isSortable = ["Player", "Team", "PPG", "RPG", "APG", "eFG%", "3P%", "Ast%", "OReb%", "BPM"].includes(col);
                   const isActive = sortKey === sortCol;
                   const isNumeric = ["PPG", "RPG", "APG", "eFG%", "3P%", "Ast%", "OReb%", "BPM"].includes(col);
