@@ -57,9 +57,13 @@ interface Player {
   "Power Conf": string;
   Selection: string;
   "School History": string;
+  // Torvik advanced stats
+  "Ast%": string;
+  "OReb%": string;
+  BPM: string;
 }
 
-type SortKey = "Player" | "Team" | "Conference" | "PPG" | "RPG" | "APG" | "MPG" | "FG%" | "3P%" | "eFG%";
+type SortKey = "Player" | "Team" | "Conference" | "PPG" | "RPG" | "APG" | "MPG" | "FG%" | "3P%" | "eFG%" | "Ast%" | "OReb%" | "BPM";
 type SortDir = "asc" | "desc";
 
 const ITEMS_PER_PAGE = 50;
@@ -217,7 +221,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
       let bVal: string | number = b[sortKey] || "";
 
       // Numeric sort for stats
-      if (["PPG", "RPG", "APG", "MPG", "FG%", "3P%", "eFG%"].includes(sortKey)) {
+      if (["PPG", "RPG", "APG", "MPG", "FG%", "3P%", "eFG%", "Ast%", "OReb%", "BPM"].includes(sortKey)) {
         aVal = parseFloat(aVal as string) || 0;
         bVal = parseFloat(bVal as string) || 0;
       }
@@ -479,11 +483,11 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                 <th style={{ padding: "10px 8px", textAlign: "center", width: "32px", color: "#6b7280", fontSize: "11px" }}>
                   <ExternalLink size={12} />
                 </th>
-                {(["Player", "Team", "Pos", "Year", "PPG", "RPG", "APG", "eFG%", "3P%", "FT Rate"] as const).map(col => {
+                {(["Player", "Team", "Pos", "Year", "PPG", "RPG", "APG", "eFG%", "3P%", "Ast%", "OReb%", "BPM"] as const).map(col => {
                   const sortCol = col === "Pos" ? "Position" : col === "FT Rate" ? "FT Rate" : col;
-                  const isSortable = ["Player", "Team", "PPG", "RPG", "APG", "eFG%", "3P%"].includes(col);
+                  const isSortable = ["Player", "Team", "PPG", "RPG", "APG", "eFG%", "3P%", "Ast%", "OReb%", "BPM"].includes(col);
                   const isActive = sortKey === sortCol;
-                  const isNumeric = ["PPG", "RPG", "APG", "eFG%", "3P%", "FT Rate"].includes(col);
+                  const isNumeric = ["PPG", "RPG", "APG", "eFG%", "3P%", "Ast%", "OReb%", "BPM"].includes(col);
                   return (
                     <th
                       key={col}
@@ -556,7 +560,9 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                       <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.APG)}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["eFG%"] ? `${fmt(player["eFG%"])}%` : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FT Rate"] ? fmt(player["FT Rate"]) : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: player["Ast%"] && parseFloat(player["Ast%"]) >= 20 ? "#60a5fa" : "#9ca3af" }}>{player["Ast%"] ? fmt(player["Ast%"]) : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: player["OReb%"] && parseFloat(player["OReb%"]) >= 10 ? "#f59e0b" : "#9ca3af" }}>{player["OReb%"] ? fmt(player["OReb%"]) : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", fontWeight: player.BPM && parseFloat(player.BPM) >= 5 ? 700 : 400, color: player.BPM && parseFloat(player.BPM) >= 8 ? "#10b981" : player.BPM && parseFloat(player.BPM) >= 5 ? "#60a5fa" : player.BPM && parseFloat(player.BPM) < 0 ? "#ef4444" : "#9ca3af" }}>{player.BPM ? fmt(player.BPM) : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
                         {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                       </td>
@@ -593,7 +599,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                     </tr>
                     {isExpanded && hasHistory && (
                       <tr>
-                        <td colSpan={13} style={{ padding: "0", background: "rgba(59,130,246,0.03)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
+                        <td colSpan={15} style={{ padding: "0", background: "rgba(59,130,246,0.03)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
                           <div style={{ padding: "12px 16px 12px 48px" }}>
                             <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
                               <History size={14} style={{ color: "#60a5fa", marginTop: "2px", flexShrink: 0 }} />
@@ -693,7 +699,9 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                   <span><strong style={{ color: "#d1d5db" }}>{fmt(player.APG)}</strong> APG</span>
                   <span>{fmt(player["eFG%"])}% eFG</span>
                   <span>{fmt(player["3P%"])}% 3P</span>
-                  <span>FTR {fmt(player["FT Rate"])}</span>
+                  {player["Ast%"] && <span style={{ color: parseFloat(player["Ast%"]) >= 20 ? "#60a5fa" : "#9ca3af" }}>{fmt(player["Ast%"])} Ast%</span>}
+                  {player["OReb%"] && <span style={{ color: parseFloat(player["OReb%"]) >= 10 ? "#f59e0b" : "#9ca3af" }}>{fmt(player["OReb%"])} OReb%</span>}
+                  {player.BPM && <span style={{ color: parseFloat(player.BPM) >= 5 ? "#10b981" : parseFloat(player.BPM) < 0 ? "#ef4444" : "#9ca3af", fontWeight: parseFloat(player.BPM) >= 5 ? 700 : 400 }}>{fmt(player.BPM)} BPM</span>}
                   <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
                     <a
                       href={getBarttorvikUrl(player.Player, player.Team)}
