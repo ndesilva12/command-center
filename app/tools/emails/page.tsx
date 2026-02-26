@@ -576,14 +576,14 @@ export default function EmailsPage() {
         margin: "0 auto"
       }}>
         {/* Page Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "space-between", marginBottom: isMobile ? "16px" : "24px", gap: isMobile ? "12px" : "0" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <Mail style={{ width: "24px", height: "24px", color: toolCustom.color }} />
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
+            <Mail style={{ width: isMobile ? "20px" : "24px", height: isMobile ? "20px" : "24px", color: toolCustom.color }} />
+            <h1 style={{ fontSize: isMobile ? "20px" : "24px", fontWeight: 700, color: "var(--foreground)" }}>{toolCustom.name}</h1>
           </div>
           
           {isConnected && (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: isMobile ? "wrap" : "nowrap" }}>
               <a
                 href="https://mail.superhuman.com"
                 target="_blank"
@@ -592,18 +592,18 @@ export default function EmailsPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  padding: "8px 14px",
+                  padding: isMobile ? "6px 10px" : "8px 14px",
                   borderRadius: "8px",
                   backgroundColor: "rgba(255, 255, 255, 0.05)",
                   color: "var(--foreground-muted)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
                   textDecoration: "none",
-                  fontSize: "13px",
+                  fontSize: isMobile ? "12px" : "13px",
                   transition: "all 0.15s",
                 }}
               >
                 <ExternalLink style={{ width: "14px", height: "14px" }} />
-                Open in Superhuman
+                {isMobile ? "Superhuman" : "Open in Superhuman"}
               </a>
               
               {/* Account Selector */}
@@ -615,14 +615,14 @@ export default function EmailsPage() {
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      padding: "8px 12px",
+                      padding: isMobile ? "6px 10px" : "8px 12px",
                       borderRadius: "8px",
                       backgroundColor: "rgba(255, 255, 255, 0.05)",
                       color: "var(--foreground)",
                       border: "1px solid rgba(255, 255, 255, 0.1)",
                       cursor: "pointer",
-                      fontSize: "13px",
-                      minWidth: "140px",
+                      fontSize: isMobile ? "12px" : "13px",
+                      minWidth: isMobile ? "auto" : "140px",
                     }}
                   >
                     {selectedAccount === "all" ? (
@@ -792,17 +792,17 @@ export default function EmailsPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  padding: "8px 14px",
+                  padding: isMobile ? "6px 10px" : "8px 14px",
                   borderRadius: "8px",
                   backgroundColor: "rgba(255, 255, 255, 0.05)",
                   color: "var(--foreground-muted)",
                   border: "none",
                   cursor: loading ? "not-allowed" : "pointer",
-                  fontSize: "13px",
+                  fontSize: isMobile ? "12px" : "13px",
                 }}
               >
                 <RefreshCw style={{ width: "14px", height: "14px", animation: loading ? "spin 1s linear infinite" : "none" }} />
-                Refresh
+                {!isMobile && "Refresh"}
               </button>
               
               <button
@@ -811,18 +811,18 @@ export default function EmailsPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  padding: "8px 14px",
+                  padding: isMobile ? "6px 10px" : "8px 14px",
                   borderRadius: "8px",
                   backgroundColor: toolCustom.color,
                   color: "#000",
                   border: "none",
                   cursor: "pointer",
-                  fontSize: "13px",
+                  fontSize: isMobile ? "12px" : "13px",
                   fontWeight: 500,
                 }}
               >
                 <Plus style={{ width: "14px", height: "14px" }} />
-                Compose
+                {isMobile ? "New" : "Compose"}
               </button>
             </div>
           )}
@@ -830,7 +830,7 @@ export default function EmailsPage() {
 
         {/* Folder Tabs */}
         {isConnected && (
-          <div style={{ display: "flex", gap: "4px", marginBottom: "16px", overflowX: "auto", paddingBottom: "4px" }}>
+          <div style={{ display: "flex", gap: "4px", marginBottom: isMobile ? "12px" : "16px", overflowX: "auto", paddingBottom: "4px", WebkitOverflowScrolling: "touch" }}>
             {(Object.keys(FOLDER_CONFIG) as EmailFolder[]).map((folder) => {
               const config = FOLDER_CONFIG[folder];
               const FolderIcon = config.icon;
@@ -842,21 +842,21 @@ export default function EmailsPage() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "6px",
-                    padding: "8px 14px",
+                    gap: isMobile ? "4px" : "6px",
+                    padding: isMobile ? "6px 10px" : "8px 14px",
                     borderRadius: "8px",
                     backgroundColor: isActive ? "rgba(0, 170, 255, 0.15)" : "rgba(255, 255, 255, 0.03)",
                     color: isActive ? toolCustom.color : "var(--foreground-muted)",
                     border: isActive ? "1px solid rgba(0, 170, 255, 0.3)" : "1px solid transparent",
                     cursor: "pointer",
-                    fontSize: "13px",
+                    fontSize: isMobile ? "12px" : "13px",
                     fontWeight: isActive ? 500 : 400,
                     whiteSpace: "nowrap",
                     transition: "all 0.15s",
                     flexShrink: 0,
                   }}
                 >
-                  <FolderIcon style={{ width: "14px", height: "14px" }} />
+                  <FolderIcon style={{ width: isMobile ? "12px" : "14px", height: isMobile ? "12px" : "14px" }} />
                   {config.label}
                 </button>
               );
@@ -866,15 +866,15 @@ export default function EmailsPage() {
 
         {/* Search Bar */}
         {isConnected && (
-          <div style={{ marginBottom: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
-              <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+          <div style={{ marginBottom: isMobile ? "12px" : "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: isMobile ? "8px 12px" : "10px 14px", borderRadius: "10px", backgroundColor: "rgba(255, 255, 255, 0.05)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <Search style={{ width: isMobile ? "16px" : "18px", height: isMobile ? "16px" : "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
               <input
                 type="text"
                 placeholder="Search emails..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ flex: 1, backgroundColor: "transparent", border: "none", outline: "none", color: "var(--foreground)", fontSize: "14px" }}
+                style={{ flex: 1, backgroundColor: "transparent", border: "none", outline: "none", color: "var(--foreground)", fontSize: isMobile ? "13px" : "14px" }}
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery("")} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "rgba(255, 255, 255, 0.1)", border: "none", cursor: "pointer", color: "var(--foreground-muted)" }}>
@@ -936,8 +936,8 @@ export default function EmailsPage() {
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: "6px",
-                    padding: "16px 20px",
+                    gap: isMobile ? "4px" : "6px",
+                    padding: isMobile ? "12px 12px" : "16px 20px",
                     borderTop: "none",
                     borderRight: "none",
                     borderBottom: index < emails.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
@@ -948,19 +948,28 @@ export default function EmailsPage() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: "14px", color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", fontWeight: email.isUnread ? 600 : 400, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {/* Row 1: Sender + Account Badge + Date */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: 0 }}>
+                      <span style={{ 
+                        fontSize: isMobile ? "13px" : "14px", 
+                        color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
+                        fontWeight: email.isUnread ? 600 : 400, 
+                        whiteSpace: "nowrap", 
+                        overflow: "hidden", 
+                        textOverflow: "ellipsis",
+                        maxWidth: isMobile ? "140px" : "none"
+                      }}>
                         {formatEmailSender(email.from)}
                       </span>
                       {selectedAccount === "all" && accounts.length > 1 && email.accountEmail && (
-                        <span style={{ fontSize: "11px", color: toolCustom.color, backgroundColor: "rgba(0, 170, 255, 0.1)", padding: "2px 6px", borderRadius: "4px", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        <span style={{ fontSize: "10px", color: toolCustom.color, backgroundColor: "rgba(0, 170, 255, 0.15)", padding: "1px 5px", borderRadius: "3px", whiteSpace: "nowrap", flexShrink: 0 }}>
                           {email.accountName || email.accountEmail.split("@")[0]}
                         </span>
                       )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                      <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "4px" : "8px", flexShrink: 0 }}>
+                      <span style={{ fontSize: isMobile ? "11px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap" }}>
                         {formatDate(email.date)}
                       </span>
                       <a
@@ -968,28 +977,61 @@ export default function EmailsPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.05)", color: "var(--foreground-muted)", transition: "all 0.15s" }}
+                        style={{ 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center", 
+                          width: isMobile ? "28px" : "24px", 
+                          height: isMobile ? "28px" : "24px", 
+                          borderRadius: "4px", 
+                          backgroundColor: "rgba(255, 255, 255, 0.1)", 
+                          color: "var(--foreground-muted)", 
+                          transition: "all 0.15s" 
+                        }}
                       >
-                        <ExternalLink style={{ width: "12px", height: "12px" }} />
+                        <ExternalLink style={{ width: isMobile ? "14px" : "12px", height: isMobile ? "14px" : "12px" }} />
                       </a>
-                      <button
-                        onClick={(e) => handleArchiveEmail(e, email)}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.05)", color: "var(--foreground-muted)", border: "none", cursor: "pointer", transition: "all 0.15s" }}
-                      >
-                        <Archive style={{ width: "12px", height: "12px" }} />
-                      </button>
-                      <button
-                        onClick={(e) => handleDeleteEmail(e, email)}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.05)", color: "var(--foreground-muted)", border: "none", cursor: "pointer", transition: "all 0.15s" }}
-                      >
-                        <Trash2 style={{ width: "12px", height: "12px" }} />
-                      </button>
+                      {!isMobile && (
+                        <>
+                          <button
+                            onClick={(e) => handleArchiveEmail(e, email)}
+                            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.1)", color: "var(--foreground-muted)", border: "none", cursor: "pointer", transition: "all 0.15s" }}
+                          >
+                            <Archive style={{ width: "12px", height: "12px" }} />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteEmail(e, email)}
+                            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "4px", backgroundColor: "rgba(255, 255, 255, 0.1)", color: "var(--foreground-muted)", border: "none", cursor: "pointer", transition: "all 0.15s" }}
+                          >
+                            <Trash2 style={{ width: "12px", height: "12px" }} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div style={{ fontSize: "15px", color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", fontWeight: email.isUnread ? 500 : 400, lineHeight: 1.4 }}>
+                  {/* Row 2: Subject */}
+                  <div style={{ 
+                    fontSize: isMobile ? "14px" : "15px", 
+                    color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
+                    fontWeight: email.isUnread ? 500 : 400, 
+                    lineHeight: 1.4,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical" as const,
+                  }}>
                     {email.subject}
                   </div>
-                  <div style={{ fontSize: "13px", color: "var(--foreground-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", opacity: 0.7 }}>
+                  {/* Row 3: Snippet */}
+                  <div style={{ 
+                    fontSize: isMobile ? "12px" : "13px", 
+                    color: "var(--foreground-muted)", 
+                    whiteSpace: "nowrap", 
+                    overflow: "hidden", 
+                    textOverflow: "ellipsis", 
+                    opacity: 0.7 
+                  }}>
                     {email.snippet}
                   </div>
                 </div>
