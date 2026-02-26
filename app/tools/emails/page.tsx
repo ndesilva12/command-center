@@ -936,40 +936,39 @@ export default function EmailsPage() {
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: isMobile ? "4px" : "6px",
-                    padding: isMobile ? "12px 12px" : "16px 20px",
+                    gap: isMobile ? "2px" : "6px",
+                    padding: isMobile ? "10px 10px" : "16px 20px",
                     borderTop: "none",
                     borderRight: "none",
                     borderBottom: index < emails.length - 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
-                    borderLeft: email.isUnread ? "4px solid #00aaff" : "4px solid transparent",
+                    borderLeft: email.isUnread ? "3px solid #00aaff" : "3px solid transparent",
                     cursor: "pointer",
                     transition: "background 0.15s",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  {/* Row 1: Sender + Account Badge + Date */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1, minWidth: 0 }}>
+                  {/* Row 1: Sender + Date + External Link */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flex: 1, minWidth: 0 }}>
                       <span style={{ 
-                        fontSize: isMobile ? "13px" : "14px", 
+                        fontSize: isMobile ? "12px" : "14px", 
                         color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
                         fontWeight: email.isUnread ? 600 : 400, 
                         whiteSpace: "nowrap", 
                         overflow: "hidden", 
                         textOverflow: "ellipsis",
-                        maxWidth: isMobile ? "140px" : "none"
                       }}>
                         {formatEmailSender(email.from)}
                       </span>
                       {selectedAccount === "all" && accounts.length > 1 && email.accountEmail && (
-                        <span style={{ fontSize: "10px", color: toolCustom.color, backgroundColor: "rgba(0, 170, 255, 0.15)", padding: "1px 5px", borderRadius: "3px", whiteSpace: "nowrap", flexShrink: 0 }}>
+                        <span style={{ fontSize: "9px", color: toolCustom.color, backgroundColor: "rgba(0, 170, 255, 0.15)", padding: "1px 4px", borderRadius: "3px", whiteSpace: "nowrap", flexShrink: 0 }}>
                           {email.accountName || email.accountEmail.split("@")[0]}
                         </span>
                       )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "4px" : "8px", flexShrink: 0 }}>
-                      <span style={{ fontSize: isMobile ? "11px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "6px" : "8px", flexShrink: 0 }}>
+                      <span style={{ fontSize: isMobile ? "10px" : "12px", color: "var(--foreground-muted)", whiteSpace: "nowrap" }}>
                         {formatDate(email.date)}
                       </span>
                       <a
@@ -981,15 +980,15 @@ export default function EmailsPage() {
                           display: "flex", 
                           alignItems: "center", 
                           justifyContent: "center", 
-                          width: isMobile ? "28px" : "24px", 
-                          height: isMobile ? "28px" : "24px", 
+                          width: isMobile ? "24px" : "24px", 
+                          height: isMobile ? "24px" : "24px", 
                           borderRadius: "4px", 
-                          backgroundColor: "rgba(255, 255, 255, 0.1)", 
+                          backgroundColor: "rgba(255, 255, 255, 0.12)", 
                           color: "var(--foreground-muted)", 
                           transition: "all 0.15s" 
                         }}
                       >
-                        <ExternalLink style={{ width: isMobile ? "14px" : "12px", height: isMobile ? "14px" : "12px" }} />
+                        <ExternalLink style={{ width: "12px", height: "12px" }} />
                       </a>
                       {!isMobile && (
                         <>
@@ -1009,28 +1008,26 @@ export default function EmailsPage() {
                       )}
                     </div>
                   </div>
-                  {/* Row 2: Subject */}
+                  {/* Row 2: Subject (single line on mobile) */}
                   <div style={{ 
-                    fontSize: isMobile ? "14px" : "15px", 
+                    fontSize: isMobile ? "13px" : "15px", 
                     color: email.isUnread ? "var(--foreground)" : "var(--foreground-muted)", 
                     fontWeight: email.isUnread ? 500 : 400, 
-                    lineHeight: 1.4,
+                    lineHeight: 1.3,
+                    whiteSpace: isMobile ? "nowrap" : "normal",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical" as const,
                   }}>
                     {email.subject}
                   </div>
                   {/* Row 3: Snippet */}
                   <div style={{ 
-                    fontSize: isMobile ? "12px" : "13px", 
+                    fontSize: isMobile ? "11px" : "13px", 
                     color: "var(--foreground-muted)", 
                     whiteSpace: "nowrap", 
                     overflow: "hidden", 
                     textOverflow: "ellipsis", 
-                    opacity: 0.7 
+                    opacity: 0.6 
                   }}>
                     {email.snippet}
                   </div>
