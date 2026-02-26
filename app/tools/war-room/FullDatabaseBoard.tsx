@@ -20,6 +20,7 @@ import {
   Plus,
   Check,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { fmt } from "./utils";
 
@@ -74,6 +75,20 @@ const POSITION_COLORS: Record<string, string> = {
 };
 
 const YEAR_ORDER: Record<string, number> = { Fr: 1, So: 2, Jr: 3, Sr: 4 };
+
+// Generate Barttorvik player URL
+const getBarttorvikUrl = (playerName: string, team: string) => {
+  const player = encodeURIComponent(playerName);
+  const teamClean = encodeURIComponent(team);
+  return `https://barttorvik.com/player.php?year=2026&p=${player}&t=${teamClean}`;
+};
+
+// Generate ESPN player URL (if ESPN ID exists)
+const getEspnUrl = (espnId: string, playerName: string) => {
+  if (!espnId) return null;
+  const slug = playerName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return `https://www.espn.com/mens-college-basketball/player/_/id/${espnId}/${slug}`;
+};
 
 export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -461,15 +476,18 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: isMobile ? "800px" : "auto" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)" }}>
-                <th style={{ padding: "10px 8px", textAlign: "left", width: "32px" }}></th>
-                {(["Player", "Team", "Conference", "Position", "Year", "PPG", "RPG", "APG", "MPG", "FG%", "3P%", "eFG%"] as const).map(col => {
-                  const isSortable = ["Player", "Team", "Conference", "PPG", "RPG", "APG", "MPG", "FG%", "3P%", "eFG%"].includes(col);
-                  const isActive = sortKey === col;
-                  const isNumeric = ["PPG", "RPG", "APG", "MPG", "FG%", "3P%", "eFG%"].includes(col);
+                <th style={{ padding: "10px 8px", textAlign: "center", width: "32px", color: "#6b7280", fontSize: "11px" }}>
+                  <ExternalLink size={12} />
+                </th>
+                {(["Player", "Team", "Pos", "Year", "PPG", "RPG", "APG", "eFG%", "3P%", "FT Rate"] as const).map(col => {
+                  const sortCol = col === "Pos" ? "Position" : col === "FT Rate" ? "FT Rate" : col;
+                  const isSortable = ["Player", "Team", "PPG", "RPG", "APG", "eFG%", "3P%"].includes(col);
+                  const isActive = sortKey === sortCol;
+                  const isNumeric = ["PPG", "RPG", "APG", "eFG%", "3P%", "FT Rate"].includes(col);
                   return (
                     <th
                       key={col}
-                      onClick={() => isSortable && handleSort(col as SortKey)}
+                      onClick={() => isSortable && handleSort(sortCol as SortKey)}
                       style={{
                         padding: "10px 8px",
                         textAlign: isNumeric ? "right" : "left",
@@ -482,7 +500,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                         userSelect: "none",
                       }}
                     >
-                      {col === "Position" ? "Pos" : col}
+                      {col}
                       {isActive && (sortDir === "desc" ? " ↓" : " ↑")}
                     </th>
                   );
@@ -512,21 +530,21 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                       }}
                       onClick={() => hasHistory && toggleExpand(player._rowIndex)}
                     >
-                      <td style={{ padding: "8px", textAlign: "center" }}>
-                        {hasHistory && (
-                          isExpanded ? <ChevronUp size={14} style={{ color: "#60a5fa" }} /> : <ChevronDown size={14} style={{ color: "#4b5563" }} />
-                        )}
+                      <td style={{ padding: "8px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
+                        <a
+                          href={getBarttorvikUrl(player.Player, player.Team)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "22px", height: "22px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", color: "#9ca3af" }}
+                          title="View on Barttorvik"
+                        >
+                          <ExternalLink size={11} />
+                        </a>
                       </td>
                       <td style={{ padding: "8px", fontWeight: 600, color: "#f3f4f6", whiteSpace: "nowrap" }}>
                         {player.Player}
                       </td>
                       <td style={{ padding: "8px", color: "#9ca3af", whiteSpace: "nowrap" }}>{player.Team}</td>
-                      <td style={{ padding: "8px", color: "#6b7280", whiteSpace: "nowrap" }}>
-                        <span style={{ fontSize: "10px" }}>{player.Conference}</span>
-                        {player["Power Conf"] === "TRUE" && (
-                          <Star size={10} style={{ marginLeft: "4px", color: "#f59e0b", verticalAlign: "middle" }} fill="#f59e0b" />
-                        )}
-                      </td>
                       <td style={{ padding: "8px" }}>
                         <span style={{ padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 600, background: `${posColor}20`, color: posColor }}>
                           {player.Position}
@@ -536,10 +554,9 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                       <td style={{ padding: "8px", textAlign: "right", fontWeight: 700, color: ppg >= 15 ? "#10b981" : ppg >= 10 ? "#60a5fa" : "#d1d5db" }}>{fmt(player.PPG)}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.RPG)}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.APG)}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{fmt(player.MPG)}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${fmt(player["FG%"])}%` : "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["eFG%"] ? `${fmt(player["eFG%"])}%` : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FT Rate"] ? fmt(player["FT Rate"]) : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
                         {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                       </td>
@@ -576,7 +593,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                     </tr>
                     {isExpanded && hasHistory && (
                       <tr>
-                        <td colSpan={15} style={{ padding: "0", background: "rgba(59,130,246,0.03)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
+                        <td colSpan={13} style={{ padding: "0", background: "rgba(59,130,246,0.03)", borderBottom: "1px solid rgba(59,130,246,0.15)" }}>
                           <div style={{ padding: "12px 16px 12px 48px" }}>
                             <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
                               <History size={14} style={{ color: "#60a5fa", marginTop: "2px", flexShrink: 0 }} />
@@ -671,12 +688,23 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#9ca3af", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "12px", fontSize: "11px", color: "#9ca3af", alignItems: "center", flexWrap: "wrap" }}>
                   <span><strong style={{ color: "#d1d5db" }}>{fmt(player.RPG)}</strong> RPG</span>
                   <span><strong style={{ color: "#d1d5db" }}>{fmt(player.APG)}</strong> APG</span>
-                  <span>{fmt(player["FG%"])}% FG</span>
+                  <span>{fmt(player["eFG%"])}% eFG</span>
                   <span>{fmt(player["3P%"])}% 3P</span>
+                  <span>FTR {fmt(player["FT Rate"])}</span>
                   <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <a
+                      href={getBarttorvikUrl(player.Player, player.Team)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "22px", height: "22px", borderRadius: "4px", background: "rgba(255,255,255,0.08)", color: "#9ca3af" }}
+                      title="View on Barttorvik"
+                    >
+                      <ExternalLink size={11} />
+                    </a>
                     {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                     <div onClick={e => e.stopPropagation()}>
                       {bigBoardPlayers.has(player.Player) ? (
