@@ -1,6 +1,45 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
+// Add a new lead
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { type, text, author, market, url, source, status = 'new' } = body;
+
+    if (!type || !text || !market) {
+      return NextResponse.json({ error: 'Missing required fields: type, text, market' }, { status: 400 });
+    }
+
+    // Check for duplicate by URL
+    if (url) {
+      const existing = await adminDb.collection('local_leads')
+        .where('url', '==', url)
+        .limit(1)
+        .get();
+      if (!existing.empty) {
+        return NextResponse.json({ error: 'Lead already exists', existingId: existing.docs[0].id }, { status: 409 });
+      }
+    }
+
+    const docRef = await adminDb.collection('local_leads').add({
+      type,
+      text,
+      author: author || 'unknown',
+      market,
+      url: url || '',
+      source: source || 'manual',
+      status,
+      discoveredAt: new Date().toISOString()
+    });
+
+    return NextResponse.json({ success: true, id: docRef.id });
+  } catch (error) {
+    console.error('Error adding lead:', error);
+    return NextResponse.json({ error: 'Failed to add lead' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
