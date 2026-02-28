@@ -79,6 +79,7 @@ const ICON_MAP: Record<string, any> = {
   "war-room": Target,
   "jmail": Mail,
   "roster-map": Globe,
+  "local-leads": Target,
 };
 
 interface ToolCustomization {
@@ -134,6 +135,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "war-room": "#dc2626",
   "jmail": "#dc2626",
   "roster-map": "#f97316",
+  "local-leads": "#22c55e",
 };
 
 // Build flat DEFAULT_TOOLS from ALL_TOOLS (no category separation)

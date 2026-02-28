@@ -52,6 +52,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'roster-map', name: 'Roster Map', href: '/tools/roster-map', description: 'Visualize where college basketball players come from on a map' },
   { id: 'summarizer', name: 'Summarizer', href: '/tools/summarizer', description: 'Condense any content into custom-length summaries' },
   { id: 'business', name: 'Business Intel', href: '/tools/business', description: 'Private business intelligence and public records' },
+  { id: 'local-leads', name: 'Local Leads', href: '/tools/local-leads', description: 'Lead generation for MA South Shore businesses' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];
