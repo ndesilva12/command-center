@@ -537,10 +537,29 @@ function LeadsPanel({ leads, category, onDiscover, discovering, toolColor }: {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: "14px", marginBottom: "6px" }}>{lead.text}</p>
-              <div style={{ display: "flex", gap: "12px", fontSize: "12px", color: "var(--muted)" }}>
-                <span>{lead.market || lead.town}</span>
-                <span>{lead.source}</span>
+              <div style={{ display: "flex", gap: "12px", fontSize: "12px", color: "var(--muted)", flexWrap: "wrap" }}>
+                <span>📍 {lead.market || lead.town}</span>
+                {lead.author && <span>👤 {lead.author}</span>}
+                <span>via {lead.source}</span>
               </div>
+              {lead.url && (
+                <a 
+                  href={lead.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ 
+                    display: "inline-flex", 
+                    alignItems: "center", 
+                    gap: "4px",
+                    marginTop: "8px",
+                    fontSize: "12px",
+                    color: "#3b82f6",
+                    textDecoration: "none"
+                  }}
+                >
+                  <ExternalLink size={12} /> View Original Post
+                </a>
+              )}
             </div>
             <span style={{
               padding: "4px 8px",
