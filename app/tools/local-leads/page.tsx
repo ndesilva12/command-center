@@ -1,562 +1,516 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Target, TrendingUp, Users, DollarSign, Clock, Search, Building2, Mail, Phone, ExternalLink, Plus, ChevronRight, Zap, MapPin } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { collection, query, orderBy, limit, getDocs, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { TopNav } from "@/components/navigation/TopNav";
+import { BottomNav } from "@/components/navigation/BottomNav";
+import { Sidebar } from "@/components/navigation/Sidebar";
+import { useToolCustomizations } from "@/hooks/useToolCustomizations";
+import { ToolBackground } from "@/components/tools/ToolBackground";
+import { Search, Send, DollarSign, Users, Zap, Building2, Mail, ExternalLink, Trash2, ChevronRight } from "lucide-react";
+
+// Strategic markets for each lead type
+const LEAD_CATEGORIES = [
+  { id: 'roofing', label: 'Roofing', icon: '🏠', price: 30, market: 'Houston, TX', reason: 'Hail storms, huge market' },
+  { id: 'plumbing', label: 'Plumbing', icon: '🔧', price: 25, market: 'Phoenix, AZ', reason: 'Hard water, pipe issues' },
+  { id: 'hvac', label: 'HVAC', icon: '❄️', price: 35, market: 'Dallas, TX', reason: 'Extreme temps, AC demand' },
+  { id: 'electrical', label: 'Electrical', icon: '⚡', price: 25, market: 'Los Angeles, CA', reason: 'Solar, EV chargers' },
+  { id: 'landscaping', label: 'Landscaping', icon: '🌿', price: 20, market: 'Miami, FL', reason: 'Year-round outdoor' },
+  { id: 'cleaning', label: 'Cleaning', icon: '✨', price: 20, market: 'San Francisco, CA', reason: 'Busy professionals' },
+  { id: 'painting', label: 'Painting', icon: '🎨', price: 20, market: 'Denver, CO', reason: 'Housing boom' },
+  { id: 'contractor', label: 'General Contractor', icon: '🔨', price: 35, market: 'Atlanta, GA', reason: 'Construction boom' },
+  { id: 'legal', label: 'Legal', icon: '⚖️', price: 75, market: 'Chicago, IL', reason: 'High litigation' },
+  { id: 'realtor', label: 'Realtor', icon: '🏡', price: 25, market: 'Austin, TX', reason: 'Hot real estate' },
+];
 
 interface Lead {
   id: string;
-  source: 'x' | 'reddit' | 'facebook';
   type: string;
   text: string;
   author: string;
-  location: string;
   town: string;
+  market: string;
   url: string;
-  status: 'new' | 'contacted' | 'sold' | 'delivered' | 'expired';
-  soldTo?: string;
+  source: string;
+  status: 'new' | 'sent' | 'sold' | 'delivered';
   price?: number;
   discoveredAt: string;
-  soldAt?: string;
 }
 
 interface Business {
   id: string;
   name: string;
   type: string;
-  town: string;
+  market: string;
   email: string;
   phone?: string;
-  website?: string;
-  status: 'prospect' | 'contacted' | 'negotiating' | 'active' | 'churned';
+  status: 'prospect' | 'contacted' | 'active';
   pricePerLead?: number;
-  totalLeadsBought: number;
-  totalRevenue: number;
-  lastContact?: string;
-  notes?: string;
 }
-
-interface Stats {
-  leadsFound: number;
-  leadsSold: number;
-  totalRevenue: number;
-  activeBusinesses: number;
-  conversionRate: number;
-}
-
-const TOWNS = [
-  'Wellesley', 'Needham', 'Natick', 'Dover', 'Medfield', 'Millis', 'Medway',
-  'Franklin', 'Bellingham', 'Mansfield', 'Norton', 'Taunton', 'Raynham',
-  'Bridgewater', 'Middleboro', 'Lakeville', 'Rochester', 'Marion',
-  'Mattapoisett', 'Fairhaven', 'New Bedford', 'Dartmouth'
-];
-
-const LEAD_TYPES = [
-  { id: 'roofing', label: 'Roofing', price: 30, icon: '🏠' },
-  { id: 'plumbing', label: 'Plumbing', price: 25, icon: '🔧' },
-  { id: 'hvac', label: 'HVAC', price: 35, icon: '❄️' },
-  { id: 'electrical', label: 'Electrical', price: 25, icon: '⚡' },
-  { id: 'landscaping', label: 'Landscaping', price: 20, icon: '🌿' },
-  { id: 'cleaning', label: 'Cleaning', price: 20, icon: '✨' },
-  { id: 'painting', label: 'Painting', price: 20, icon: '🎨' },
-  { id: 'contractor', label: 'Contractor', price: 35, icon: '🔨' },
-  { id: 'legal', label: 'Legal', price: 75, icon: '⚖️' },
-  { id: 'realtor', label: 'Realtor', price: 25, icon: '🏡' },
-];
 
 export default function LocalLeadsPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'leads' | 'businesses' | 'outreach'>('dashboard');
+  const { getCustomization } = useToolCustomizations();
+  const toolCustom = getCustomization('local-leads', 'Local Leads', '#22c55e');
+  
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [stats, setStats] = useState<Stats>({ leadsFound: 0, leadsSold: 0, totalRevenue: 0, activeBusinesses: 0, conversionRate: 0 });
   const [loading, setLoading] = useState(true);
-  const [discoveryRunning, setDiscoveryRunning] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [tab, setTab] = useState<'leads' | 'businesses' | 'outreach'>('leads');
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch('/api/local-leads');
-      if (res.ok) {
-        const data = await res.json();
-        setLeads(data.leads || []);
-        setBusinesses(data.businesses || []);
-        setStats(data.stats || { leadsFound: 0, leadsSold: 0, totalRevenue: 0, activeBusinesses: 0, conversionRate: 0 });
-      }
-    } catch (err) {
-      console.error('Failed to fetch local leads data:', err);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    loadData();
+  }, []);
 
-  const runDiscovery = async () => {
-    setDiscoveryRunning(true);
+  const loadData = async () => {
+    try {
+      // Load leads
+      const leadsQ = query(collection(db, "local_leads"), orderBy("discoveredAt", "desc"), limit(100));
+      const leadsSnap = await getDocs(leadsQ);
+      setLeads(leadsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Lead)));
+
+      // Load businesses
+      const bizQ = query(collection(db, "local_leads_businesses"), orderBy("name"));
+      const bizSnap = await getDocs(bizQ);
+      setBusinesses(bizSnap.docs.map(d => ({ id: d.id, ...d.data() } as Business)));
+    } catch (err) {
+      console.error("Failed to load data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const runDiscovery = async (categoryId: string) => {
+    setDiscovering(true);
+    const cat = LEAD_CATEGORIES.find(c => c.id === categoryId);
+    if (!cat) return;
+
     try {
       const res = await fetch('/api/local-leads/discover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ towns: TOWNS, types: LEAD_TYPES.map(t => t.id) })
+        body: JSON.stringify({ 
+          types: [categoryId], 
+          market: cat.market,
+          searchTerms: [`${cat.label} ${cat.market}`, `need ${cat.id} ${cat.market}`]
+        })
       });
-      if (res.ok) {
-        const data = await res.json();
-        alert(`Discovery complete! Found ${data.newLeads} new leads.`);
-        fetchData();
-      }
+      const data = await res.json();
+      alert(`Found ${data.newLeads || 0} new leads in ${cat.market}`);
+      loadData();
     } catch (err) {
-      console.error('Discovery failed:', err);
+      console.error("Discovery failed:", err);
     } finally {
-      setDiscoveryRunning(false);
+      setDiscovering(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-green-500/30 border-t-green-500 rounded-full animate-spin" />
-          <p className="text-gray-400">Loading Local Leads...</p>
+  // Stats
+  const totalLeads = leads.length;
+  const newLeads = leads.filter(l => l.status === 'new').length;
+  const soldLeads = leads.filter(l => l.status === 'sold' || l.status === 'delivered').length;
+  const totalRevenue = leads.filter(l => l.status === 'sold' || l.status === 'delivered').reduce((sum, l) => sum + (l.price || 0), 0);
+  const activeBusinesses = businesses.filter(b => b.status === 'active').length;
+
+  const filteredLeads = activeCategory 
+    ? leads.filter(l => l.type === activeCategory)
+    : leads;
+
+  return (
+    <>
+      <TopNav />
+      <Sidebar />
+      <BottomNav />
+
+      <main
+        style={{
+          flex: 1,
+          minHeight: "100vh",
+          paddingTop: isMobile ? "64px" : "68px",
+          paddingBottom: isMobile ? "80px" : "16px",
+          paddingLeft: isMobile ? "8px" : "calc(var(--sidebar-width, 240px) + 8px)",
+          paddingRight: isMobile ? "8px" : "8px",
+        }}
+      >
+        <ToolBackground color={toolCustom.color} />
+
+        <div style={{ 
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row",
+          gap: "12px",
+          height: isMobile ? "auto" : "calc(100vh - 84px)",
+        }}>
+          {/* Left Panel: Categories */}
+          <div style={{ 
+            width: isMobile ? "100%" : "280px",
+            minWidth: isMobile ? "100%" : "280px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}>
+            {/* Header */}
+            <div className="glass card" style={{ padding: "16px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <span style={{ color: toolCustom.color }}>🎯</span> {toolCustom.name}
+              </h2>
+              <p style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "16px" }}>
+                AI-powered lead generation
+              </p>
+
+              {/* Quick Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                  <div style={{ fontSize: "24px", fontWeight: 700, color: toolCustom.color }}>${totalRevenue}</div>
+                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Revenue</div>
+                </div>
+                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                  <div style={{ fontSize: "24px", fontWeight: 700 }}>{totalLeads}</div>
+                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Leads</div>
+                </div>
+                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                  <div style={{ fontSize: "24px", fontWeight: 700 }}>{soldLeads}</div>
+                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Sold</div>
+                </div>
+                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                  <div style={{ fontSize: "24px", fontWeight: 700 }}>{activeBusinesses}</div>
+                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Buyers</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto" }}>
+              <h3 style={{ fontSize: "13px", fontWeight: 700, marginBottom: "12px", color: "var(--muted)" }}>
+                CATEGORIES
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <button
+                  onClick={() => setActiveCategory(null)}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--glass-border)",
+                    background: !activeCategory ? toolCustom.color : "transparent",
+                    color: !activeCategory ? "#fff" : "var(--foreground)",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "13px"
+                  }}
+                >
+                  <span>All Leads</span>
+                  <span style={{ opacity: 0.7 }}>{leads.length}</span>
+                </button>
+                {LEAD_CATEGORIES.map(cat => {
+                  const count = leads.filter(l => l.type === cat.id).length;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--glass-border)",
+                        background: activeCategory === cat.id ? toolCustom.color : "transparent",
+                        color: activeCategory === cat.id ? "#fff" : "var(--foreground)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "13px"
+                      }}
+                    >
+                      <span>{cat.icon} {cat.label}</span>
+                      <span style={{ opacity: 0.7, fontSize: "12px" }}>{cat.market.split(',')[0]} • {count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Content */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "12px", overflow: "hidden" }}>
+            {/* Tabs */}
+            <div className="glass card" style={{ padding: "8px", display: "flex", gap: "8px" }}>
+              {(['leads', 'businesses', 'outreach'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: tab === t ? toolCustom.color : "transparent",
+                    color: tab === t ? "#fff" : "var(--muted)",
+                    fontWeight: 600,
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    textTransform: "capitalize"
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+
+            {/* Content */}
+            <div className="glass card" style={{ flex: 1, padding: "16px", overflow: "auto" }}>
+              {tab === 'leads' && (
+                <LeadsPanel 
+                  leads={filteredLeads} 
+                  category={activeCategory ? LEAD_CATEGORIES.find(c => c.id === activeCategory) : null}
+                  onDiscover={() => activeCategory && runDiscovery(activeCategory)}
+                  discovering={discovering}
+                  toolColor={toolCustom.color}
+                />
+              )}
+              {tab === 'businesses' && (
+                <BusinessesPanel 
+                  businesses={businesses}
+                  onRefresh={loadData}
+                  toolColor={toolCustom.color}
+                />
+              )}
+              {tab === 'outreach' && (
+                <OutreachPanel 
+                  businesses={businesses}
+                  toolColor={toolCustom.color}
+                />
+              )}
+            </div>
+          </div>
         </div>
+      </main>
+    </>
+  );
+}
+
+function LeadsPanel({ leads, category, onDiscover, discovering, toolColor }: {
+  leads: Lead[];
+  category: typeof LEAD_CATEGORIES[0] | null;
+  onDiscover: () => void;
+  discovering: boolean;
+  toolColor: string;
+}) {
+  if (leads.length === 0) {
+    return (
+      <div style={{ textAlign: "center", padding: "40px 20px" }}>
+        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔍</div>
+        <h3 style={{ fontSize: "18px", marginBottom: "8px" }}>No leads yet</h3>
+        <p style={{ color: "var(--muted)", fontSize: "14px", marginBottom: "20px" }}>
+          {category ? `Find ${category.label.toLowerCase()} leads in ${category.market}` : 'Select a category to start'}
+        </p>
+        {category && (
+          <button
+            onClick={onDiscover}
+            disabled={discovering}
+            style={{
+              padding: "12px 24px",
+              borderRadius: "8px",
+              border: "none",
+              background: toolColor,
+              color: "#fff",
+              fontWeight: 600,
+              cursor: discovering ? "not-allowed" : "pointer"
+            }}
+          >
+            {discovering ? "Searching..." : `Find ${category.label} Leads`}
+          </button>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white pb-20">
-      {/* Hero Header */}
-      <div className="bg-gradient-to-r from-green-600/20 via-emerald-600/10 to-teal-600/20 border-b border-green-500/20">
-        <div className="px-4 py-6 md:px-6 md:py-8">
-          {/* Title Row */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/25">
-                <Target className="w-6 h-6 md:w-7 md:h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
-                  Local Leads
-                </h1>
-                <p className="text-sm text-gray-400">MA South Shore • Wellesley → Dartmouth</p>
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      {category && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+          <div>
+            <h3 style={{ fontSize: "16px", fontWeight: 700 }}>{category.icon} {category.label}</h3>
+            <p style={{ fontSize: "12px", color: "var(--muted)" }}>{category.market} • ${category.price}/lead</p>
+          </div>
+          <button
+            onClick={onDiscover}
+            disabled={discovering}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "6px",
+              border: "none",
+              background: toolColor,
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "13px",
+              cursor: discovering ? "not-allowed" : "pointer"
+            }}
+          >
+            {discovering ? "..." : "Find More"}
+          </button>
+        </div>
+      )}
+      {leads.map(lead => (
+        <div key={lead.id} style={{
+          padding: "12px",
+          background: "var(--glass-bg)",
+          borderRadius: "8px",
+          border: "1px solid var(--glass-border)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: "14px", marginBottom: "6px" }}>{lead.text}</p>
+              <div style={{ display: "flex", gap: "12px", fontSize: "12px", color: "var(--muted)" }}>
+                <span>{lead.market || lead.town}</span>
+                <span>{lead.source}</span>
               </div>
             </div>
-          </div>
-
-          {/* Revenue Card */}
-          <div className="bg-gray-900/60 backdrop-blur rounded-2xl p-4 mb-4 border border-green-500/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Revenue</p>
-                <p className="text-3xl md:text-4xl font-bold text-green-400">${stats.totalRevenue.toFixed(2)}</p>
-              </div>
-              <button
-                onClick={runDiscovery}
-                disabled={discoveryRunning}
-                className="px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:from-gray-700 disabled:to-gray-700 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-green-500/25 disabled:shadow-none flex items-center gap-2"
-              >
-                {discoveryRunning ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Searching...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    <span>Find Leads</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <QuickStat icon={<Zap className="w-4 h-4" />} label="Leads Found" value={stats.leadsFound} color="blue" />
-            <QuickStat icon={<TrendingUp className="w-4 h-4" />} label="Leads Sold" value={stats.leadsSold} color="green" />
-            <QuickStat icon={<Building2 className="w-4 h-4" />} label="Active Buyers" value={stats.activeBusinesses} color="purple" />
-            <QuickStat icon={<Clock className="w-4 h-4" />} label="New Today" value={leads.filter(l => l.status === 'new').length} color="yellow" />
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="px-4 md:px-6 flex gap-1 overflow-x-auto pb-0 -mb-px">
-          {(['dashboard', 'leads', 'businesses', 'outreach'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-3 rounded-t-xl font-medium text-sm transition-all whitespace-nowrap capitalize ${
-                activeTab === tab
-                  ? 'bg-gray-900 text-green-400 border-t border-l border-r border-green-500/30'
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="px-4 md:px-6 py-6">
-        {activeTab === 'dashboard' && <DashboardTab stats={stats} leads={leads} businesses={businesses} />}
-        {activeTab === 'leads' && <LeadsTab leads={leads} businesses={businesses} onRefresh={fetchData} />}
-        {activeTab === 'businesses' && <BusinessesTab businesses={businesses} onRefresh={fetchData} />}
-        {activeTab === 'outreach' && <OutreachTab businesses={businesses} />}
-      </div>
-    </div>
-  );
-}
-
-function QuickStat({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
-  const colors: Record<string, string> = {
-    blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30 text-blue-400',
-    green: 'from-green-500/20 to-green-600/10 border-green-500/30 text-green-400',
-    purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30 text-purple-400',
-    yellow: 'from-yellow-500/20 to-yellow-600/10 border-yellow-500/30 text-yellow-400',
-  };
-
-  return (
-    <div className={`bg-gradient-to-br ${colors[color]} border rounded-xl p-3`}>
-      <div className="flex items-center gap-2 mb-1">
-        {icon}
-        <span className="text-xs text-gray-400">{label}</span>
-      </div>
-      <p className="text-2xl font-bold">{value}</p>
-    </div>
-  );
-}
-
-function DashboardTab({ stats, leads, businesses }: { stats: Stats; leads: Lead[]; businesses: Business[] }) {
-  const recentLeads = leads.slice(0, 5);
-  const activeBusinesses = businesses.filter(b => b.status === 'active');
-  const newLeads = leads.filter(l => l.status === 'new');
-
-  return (
-    <div className="space-y-6">
-      {/* Pipeline */}
-      <div className="bg-gray-900/50 backdrop-blur rounded-2xl p-4 border border-gray-800">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-400" />
-          Lead Pipeline
-        </h3>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {[
-            { status: 'new', label: 'New', color: 'yellow' },
-            { status: 'contacted', label: 'Contacted', color: 'blue' },
-            { status: 'sold', label: 'Sold', color: 'green' },
-            { status: 'delivered', label: 'Delivered', color: 'purple' },
-            { status: 'expired', label: 'Expired', color: 'gray' },
-          ].map(({ status, label, color }) => {
-            const count = leads.filter(l => l.status === status).length;
-            const colorMap: Record<string, string> = {
-              yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-              blue: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-              green: 'bg-green-500/20 text-green-400 border-green-500/30',
-              purple: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-              gray: 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-            };
-            return (
-              <div key={status} className={`flex-1 min-w-[80px] text-center p-3 rounded-xl border ${colorMap[color]}`}>
-                <p className="text-2xl font-bold">{count}</p>
-                <p className="text-xs mt-1">{label}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Recent Leads */}
-      <div className="bg-gray-900/50 backdrop-blur rounded-2xl p-4 border border-gray-800">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Zap className="w-5 h-5 text-yellow-400" />
-          Recent Leads
-        </h3>
-        {recentLeads.length === 0 ? (
-          <EmptyState
-            icon={<Search className="w-8 h-8" />}
-            title="No leads yet"
-            description="Hit 'Find Leads' to discover people looking for contractors in your area."
-          />
-        ) : (
-          <div className="space-y-3">
-            {recentLeads.map(lead => (
-              <LeadCard key={lead.id} lead={lead} compact />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Active Buyers */}
-      <div className="bg-gray-900/50 backdrop-blur rounded-2xl p-4 border border-gray-800">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-purple-400" />
-          Active Buyers
-        </h3>
-        {activeBusinesses.length === 0 ? (
-          <EmptyState
-            icon={<Users className="w-8 h-8" />}
-            title="No buyers yet"
-            description="Add local businesses and start outreach to sign up lead buyers."
-          />
-        ) : (
-          <div className="space-y-3">
-            {activeBusinesses.map(biz => (
-              <BusinessCard key={biz.id} business={biz} compact />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 mb-4">
-        {icon}
-      </div>
-      <h4 className="text-lg font-medium text-gray-300 mb-2">{title}</h4>
-      <p className="text-sm text-gray-500 max-w-xs">{description}</p>
-    </div>
-  );
-}
-
-function LeadCard({ lead, compact = false }: { lead: Lead; compact?: boolean }) {
-  const typeInfo = LEAD_TYPES.find(t => t.id === lead.type) || { icon: '📋', label: lead.type, price: 25 };
-  const statusColors: Record<string, string> = {
-    new: 'bg-yellow-500/20 text-yellow-400',
-    contacted: 'bg-blue-500/20 text-blue-400',
-    sold: 'bg-green-500/20 text-green-400',
-    delivered: 'bg-purple-500/20 text-purple-400',
-    expired: 'bg-gray-500/20 text-gray-400',
-  };
-
-  return (
-    <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50">
-      <div className="flex items-start gap-3">
-        <div className="text-2xl">{typeInfo.icon}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm capitalize">{typeInfo.label}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[lead.status]}`}>
+            <span style={{
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontWeight: 600,
+              background: lead.status === 'new' ? '#eab308' : lead.status === 'sold' ? '#22c55e' : '#6b7280',
+              color: '#fff'
+            }}>
               {lead.status}
             </span>
           </div>
-          <p className="text-sm text-gray-400 line-clamp-2">{lead.text}</p>
-          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              {lead.town}
-            </span>
-            <span>{lead.source}</span>
-          </div>
         </div>
-        <div className="text-right">
-          <p className="text-green-400 font-semibold">${typeInfo.price}</p>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
 
-function BusinessCard({ business, compact = false }: { business: Business; compact?: boolean }) {
-  const statusColors: Record<string, string> = {
-    prospect: 'bg-gray-500/20 text-gray-400',
-    contacted: 'bg-blue-500/20 text-blue-400',
-    negotiating: 'bg-yellow-500/20 text-yellow-400',
-    active: 'bg-green-500/20 text-green-400',
-    churned: 'bg-red-500/20 text-red-400',
-  };
-
-  return (
-    <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium">{business.name}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[business.status]}`}>
-              {business.status}
-            </span>
-          </div>
-          <p className="text-sm text-gray-400">{business.type} • {business.town}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-green-400 font-semibold">${business.pricePerLead}/lead</p>
-          <p className="text-xs text-gray-500">{business.totalLeadsBought} bought</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LeadsTab({ leads, businesses, onRefresh }: { leads: Lead[]; businesses: Business[]; onRefresh: () => void }) {
-  const [filter, setFilter] = useState<string>('all');
-
-  const filteredLeads = leads.filter(l => filter === 'all' || l.status === filter);
-
-  return (
-    <div className="space-y-4">
-      {/* Filter Pills */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {['all', 'new', 'contacted', 'sold', 'delivered'].map(status => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
-              filter === status
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            {status === 'all' ? 'All Leads' : status.charAt(0).toUpperCase() + status.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Leads List */}
-      {filteredLeads.length === 0 ? (
-        <EmptyState
-          icon={<Search className="w-8 h-8" />}
-          title="No leads found"
-          description="Run discovery to find new leads or change your filter."
-        />
-      ) : (
-        <div className="space-y-3">
-          {filteredLeads.map(lead => (
-            <LeadCard key={lead.id} lead={lead} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BusinessesTab({ businesses, onRefresh }: { businesses: Business[]; onRefresh: () => void }) {
+function BusinessesPanel({ businesses, onRefresh, toolColor }: {
+  businesses: Business[];
+  onRefresh: () => void;
+  toolColor: string;
+}) {
   const [showAdd, setShowAdd] = useState(false);
-  const [newBiz, setNewBiz] = useState({ name: '', type: 'roofing', town: 'Wellesley', email: '', phone: '', pricePerLead: 25 });
+  const [newBiz, setNewBiz] = useState({ name: '', type: 'roofing', market: 'Houston, TX', email: '', phone: '' });
 
   const addBusiness = async () => {
     try {
-      await fetch('/api/local-leads/businesses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newBiz, status: 'prospect' })
+      await addDoc(collection(db, "local_leads_businesses"), {
+        ...newBiz,
+        status: 'prospect',
+        pricePerLead: LEAD_CATEGORIES.find(c => c.id === newBiz.type)?.price || 25,
+        createdAt: new Date().toISOString()
       });
       setShowAdd(false);
-      setNewBiz({ name: '', type: 'roofing', town: 'Wellesley', email: '', phone: '', pricePerLead: 25 });
+      setNewBiz({ name: '', type: 'roofing', market: 'Houston, TX', email: '', phone: '' });
       onRefresh();
     } catch (err) {
-      console.error('Failed to add business:', err);
+      console.error("Failed to add business:", err);
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Add Button */}
+    <div>
       <button
         onClick={() => setShowAdd(!showAdd)}
-        className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-semibold flex items-center justify-center gap-2"
+        style={{
+          width: "100%",
+          padding: "12px",
+          borderRadius: "8px",
+          border: "none",
+          background: toolColor,
+          color: "#fff",
+          fontWeight: 600,
+          marginBottom: "16px",
+          cursor: "pointer"
+        }}
       >
-        <Plus className="w-5 h-5" />
-        Add Business
+        + Add Business
       </button>
 
-      {/* Add Form */}
       {showAdd && (
-        <div className="bg-gray-900/80 backdrop-blur rounded-2xl p-4 border border-green-500/30 space-y-4">
+        <div style={{ padding: "16px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)", marginBottom: "16px" }}>
           <input
             placeholder="Business Name"
             value={newBiz.name}
             onChange={e => setNewBiz({ ...newBiz, name: e.target.value })}
-            className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 focus:border-green-500 outline-none"
+            style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid var(--glass-border)", background: "transparent", color: "var(--foreground)", marginBottom: "8px" }}
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
             <select
               value={newBiz.type}
-              onChange={e => setNewBiz({ ...newBiz, type: e.target.value })}
-              className="px-4 py-3 bg-gray-800 rounded-xl border border-gray-700"
+              onChange={e => {
+                const cat = LEAD_CATEGORIES.find(c => c.id === e.target.value);
+                setNewBiz({ ...newBiz, type: e.target.value, market: cat?.market || '' });
+              }}
+              style={{ padding: "10px", borderRadius: "6px", border: "1px solid var(--glass-border)", background: "var(--glass-bg)", color: "var(--foreground)" }}
             >
-              {LEAD_TYPES.map(t => <option key={t.id} value={t.id}>{t.icon} {t.label}</option>)}
+              {LEAD_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
             </select>
-            <select
-              value={newBiz.town}
-              onChange={e => setNewBiz({ ...newBiz, town: e.target.value })}
-              className="px-4 py-3 bg-gray-800 rounded-xl border border-gray-700"
-            >
-              {TOWNS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <input
+              placeholder="Market"
+              value={newBiz.market}
+              onChange={e => setNewBiz({ ...newBiz, market: e.target.value })}
+              style={{ padding: "10px", borderRadius: "6px", border: "1px solid var(--glass-border)", background: "transparent", color: "var(--foreground)" }}
+            />
           </div>
           <input
             placeholder="Email"
-            type="email"
             value={newBiz.email}
             onChange={e => setNewBiz({ ...newBiz, email: e.target.value })}
-            className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 focus:border-green-500 outline-none"
+            style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid var(--glass-border)", background: "transparent", color: "var(--foreground)", marginBottom: "8px" }}
           />
-          <input
-            placeholder="Phone"
-            value={newBiz.phone}
-            onChange={e => setNewBiz({ ...newBiz, phone: e.target.value })}
-            className="w-full px-4 py-3 bg-gray-800 rounded-xl border border-gray-700 focus:border-green-500 outline-none"
-          />
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowAdd(false)}
-              className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={addBusiness}
-              className="flex-1 py-3 bg-green-600 hover:bg-green-500 rounded-xl font-medium"
-            >
-              Save
-            </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => setShowAdd(false)} style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1px solid var(--glass-border)", background: "transparent", color: "var(--foreground)", cursor: "pointer" }}>Cancel</button>
+            <button onClick={addBusiness} style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "none", background: toolColor, color: "#fff", cursor: "pointer" }}>Save</button>
           </div>
         </div>
       )}
 
-      {/* Business List */}
       {businesses.length === 0 ? (
-        <EmptyState
-          icon={<Building2 className="w-8 h-8" />}
-          title="No businesses yet"
-          description="Add local contractors to start selling leads."
-        />
+        <div style={{ textAlign: "center", padding: "40px", color: "var(--muted)" }}>
+          <Building2 size={48} style={{ marginBottom: "16px", opacity: 0.5 }} />
+          <p>No businesses yet. Add your first prospect.</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {businesses.map(biz => (
-            <div key={biz.id} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
-              <div className="flex items-start justify-between mb-3">
+            <div key={biz.id} style={{
+              padding: "12px",
+              background: "var(--glass-bg)",
+              borderRadius: "8px",
+              border: "1px solid var(--glass-border)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h4 className="font-semibold">{biz.name}</h4>
-                  <p className="text-sm text-gray-400 capitalize">{biz.type} • {biz.town}</p>
+                  <div style={{ fontWeight: 600 }}>{biz.name}</div>
+                  <div style={{ fontSize: "12px", color: "var(--muted)" }}>{biz.type} • {biz.market}</div>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  biz.status === 'active' ? 'bg-green-500/20 text-green-400' :
-                  biz.status === 'contacted' ? 'bg-blue-500/20 text-blue-400' :
-                  'bg-gray-500/20 text-gray-400'
-                }`}>{biz.status}</span>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ color: toolColor, fontWeight: 600 }}>${biz.pricePerLead}/lead</div>
+                  <span style={{
+                    fontSize: "11px",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    background: biz.status === 'active' ? '#22c55e33' : '#6b728033',
+                    color: biz.status === 'active' ? '#22c55e' : '#9ca3af'
+                  }}>{biz.status}</span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3 text-sm">
-                {biz.email && (
-                  <a href={`mailto:${biz.email}`} className="flex items-center gap-1 text-blue-400 hover:underline">
-                    <Mail className="w-4 h-4" />
-                    {biz.email}
-                  </a>
-                )}
-                {biz.phone && (
-                  <a href={`tel:${biz.phone}`} className="flex items-center gap-1 text-gray-400">
-                    <Phone className="w-4 h-4" />
-                    {biz.phone}
-                  </a>
-                )}
-              </div>
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-700">
-                <span className="text-green-400 font-semibold">${biz.pricePerLead || 25}/lead</span>
-                <span className="text-sm text-gray-500">{biz.totalLeadsBought || 0} leads bought • ${biz.totalRevenue || 0} revenue</span>
-              </div>
+              {biz.email && (
+                <div style={{ marginTop: "8px", fontSize: "12px" }}>
+                  <a href={`mailto:${biz.email}`} style={{ color: "#3b82f6" }}>{biz.email}</a>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -565,82 +519,90 @@ function BusinessesTab({ businesses, onRefresh }: { businesses: Business[]; onRe
   );
 }
 
-function OutreachTab({ businesses }: { businesses: Business[] }) {
+function OutreachPanel({ businesses, toolColor }: { businesses: Business[]; toolColor: string }) {
   const prospects = businesses.filter(b => b.status === 'prospect' || b.status === 'contacted');
 
   const emailTemplate = `Hi,
 
-I run a local lead generation service for home service businesses in the Wellesley-to-Dartmouth corridor.
+I used AI to find a lead for you. Here's the first one free.
 
-I find homeowners actively looking for help on Reddit, Facebook groups, and local forums - then sell those leads to contractors like you.
+Pay $X per lead here: [LINK]
 
-How it works:
-• I send you the lead (name, contact, specific need, source)
-• You only pay for leads you want
-• $30/lead, no contracts, no minimums
-• Exclusive OR shared pricing available
+Let me know if you have questions.
 
-I have leads waiting now. Want me to send you a free sample?
-
-Best,
-Norman de Silva
-normancdesilva@gmail.com`;
+- Norman`;
 
   return (
-    <div className="space-y-6">
-      {/* Prospects */}
-      <div className="bg-gray-900/50 backdrop-blur rounded-2xl p-4 border border-gray-800">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Mail className="w-5 h-5 text-blue-400" />
-          Prospects to Contact ({prospects.length})
-        </h3>
-        {prospects.length === 0 ? (
-          <EmptyState
-            icon={<Users className="w-8 h-8" />}
-            title="No prospects"
-            description="Add businesses to start outreach."
-          />
-        ) : (
-          <div className="space-y-3">
-            {prospects.map(biz => (
-              <div key={biz.id} className="bg-gray-800/50 rounded-xl p-3 border border-gray-700/50 flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{biz.name}</p>
-                  <p className="text-sm text-gray-400">{biz.type} • {biz.town}</p>
-                </div>
-                {biz.email ? (
-                  <a
-                    href={`mailto:${biz.email}?subject=Qualified ${biz.type} leads in ${biz.town} - $30 each&body=${encodeURIComponent(emailTemplate)}`}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium flex items-center gap-2"
-                  >
-                    <Mail className="w-4 h-4" />
-                    Email
-                  </a>
-                ) : (
-                  <span className="text-sm text-gray-500">No email</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Email Template */}
-      <div className="bg-gray-900/50 backdrop-blur rounded-2xl p-4 border border-gray-800">
-        <h3 className="text-lg font-semibold mb-4">📝 Email Template</h3>
-        <pre className="text-sm text-gray-300 bg-gray-800 rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">
+    <div>
+      <div style={{ marginBottom: "20px" }}>
+        <h3 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "12px" }}>📧 Outreach Template</h3>
+        <pre style={{
+          padding: "16px",
+          background: "var(--glass-bg)",
+          borderRadius: "8px",
+          border: "1px solid var(--glass-border)",
+          fontSize: "13px",
+          whiteSpace: "pre-wrap",
+          fontFamily: "inherit"
+        }}>
           {emailTemplate}
         </pre>
         <button
-          onClick={() => {
-            navigator.clipboard.writeText(emailTemplate);
-            alert('Copied!');
+          onClick={() => { navigator.clipboard.writeText(emailTemplate); alert('Copied!'); }}
+          style={{
+            marginTop: "8px",
+            padding: "8px 16px",
+            borderRadius: "6px",
+            border: "1px solid var(--glass-border)",
+            background: "transparent",
+            color: "var(--foreground)",
+            cursor: "pointer",
+            fontSize: "12px"
           }}
-          className="mt-3 w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-sm font-medium"
         >
           Copy Template
         </button>
       </div>
+
+      <h3 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "12px" }}>📋 Prospects ({prospects.length})</h3>
+      {prospects.length === 0 ? (
+        <p style={{ color: "var(--muted)", fontSize: "13px" }}>Add businesses to start outreach</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {prospects.map(biz => (
+            <div key={biz.id} style={{
+              padding: "12px",
+              background: "var(--glass-bg)",
+              borderRadius: "8px",
+              border: "1px solid var(--glass-border)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <div>
+                <div style={{ fontWeight: 600 }}>{biz.name}</div>
+                <div style={{ fontSize: "12px", color: "var(--muted)" }}>{biz.type} • {biz.market}</div>
+              </div>
+              {biz.email && (
+                <a
+                  href={`mailto:${biz.email}?subject=Free ${biz.type} lead for you&body=${encodeURIComponent(emailTemplate.replace('$X', String(biz.pricePerLead || 25)))}`}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    background: toolColor,
+                    color: "#fff",
+                    textDecoration: "none",
+                    fontSize: "13px",
+                    fontWeight: 600
+                  }}
+                >
+                  Email
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
