@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { collection, query, orderBy, limit, getDocs, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
@@ -97,15 +97,15 @@ export default function LocalLeadsPage() {
 
   const loadData = async () => {
     try {
-      // Load leads
-      const leadsQ = query(collection(db, "local_leads"), orderBy("discoveredAt", "desc"), limit(100));
-      const leadsSnap = await getDocs(leadsQ);
-      setLeads(leadsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Lead)));
-
-      // Load businesses
-      const bizQ = query(collection(db, "local_leads_businesses"), orderBy("name"));
-      const bizSnap = await getDocs(bizQ);
-      setBusinesses(bizSnap.docs.map(d => ({ id: d.id, ...d.data() } as Business)));
+      // Use API route instead of direct Firestore (more reliable)
+      const res = await fetch('/api/local-leads');
+      if (res.ok) {
+        const data = await res.json();
+        setLeads(data.leads || []);
+        setBusinesses(data.businesses || []);
+      } else {
+        console.error("API error:", res.status);
+      }
     } catch (err) {
       console.error("Failed to load data:", err);
     } finally {
