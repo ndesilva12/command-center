@@ -28,8 +28,20 @@ const LEAD_CATEGORIES = [
   { id: 'painting-rural', label: 'Painting', icon: '🎨', price: 20, market: 'Fort Collins, CO area', marketType: 'rural', reason: 'Growing suburbs' },
   { id: 'contractor-metro', label: 'General Contractor', icon: '🔨', price: 35, market: 'Atlanta, GA', marketType: 'metro', reason: 'Construction boom' },
   { id: 'contractor-rural', label: 'General Contractor', icon: '🔨', price: 35, market: 'Savannah, GA area', marketType: 'rural', reason: 'Historic homes, renovations' },
-  { id: 'legal-metro', label: 'Legal', icon: '⚖️', price: 75, market: 'Chicago, IL', marketType: 'metro', reason: 'High litigation' },
-  { id: 'legal-rural', label: 'Legal', icon: '⚖️', price: 75, market: 'Peoria, IL area', marketType: 'rural', reason: 'Regional hub, PI cases' },
+  { id: 'legal-pi-metro', label: 'Personal Injury', icon: '🩹', price: 75, market: 'Chicago, IL', marketType: 'metro', reason: 'High volume accidents' },
+  { id: 'legal-pi-rural', label: 'Personal Injury', icon: '🩹', price: 75, market: 'Peoria, IL area', marketType: 'rural', reason: 'Regional accidents, trucking' },
+  { id: 'legal-divorce-metro', label: 'Divorce/Family', icon: '💔', price: 50, market: 'Los Angeles, CA', marketType: 'metro', reason: 'High divorce rate' },
+  { id: 'legal-divorce-rural', label: 'Divorce/Family', icon: '💔', price: 50, market: 'Riverside, CA area', marketType: 'rural', reason: 'Growing suburbs' },
+  { id: 'legal-bankruptcy-metro', label: 'Bankruptcy', icon: '📉', price: 40, market: 'Detroit, MI', marketType: 'metro', reason: 'Economic challenges' },
+  { id: 'legal-bankruptcy-rural', label: 'Bankruptcy', icon: '📉', price: 40, market: 'Flint, MI area', marketType: 'rural', reason: 'Industrial decline' },
+  { id: 'legal-immigration-metro', label: 'Immigration', icon: '🌎', price: 60, market: 'Miami, FL', marketType: 'metro', reason: 'Immigration hub' },
+  { id: 'legal-immigration-rural', label: 'Immigration', icon: '🌎', price: 60, market: 'McAllen, TX area', marketType: 'rural', reason: 'Border region' },
+  { id: 'legal-criminal-metro', label: 'Criminal Defense', icon: '⚔️', price: 50, market: 'Houston, TX', marketType: 'metro', reason: 'High crime volume' },
+  { id: 'legal-criminal-rural', label: 'Criminal Defense', icon: '⚔️', price: 50, market: 'Beaumont, TX area', marketType: 'rural', reason: 'Regional courts' },
+  { id: 'legal-estate-metro', label: 'Estate Planning', icon: '📜', price: 40, market: 'Phoenix, AZ', marketType: 'metro', reason: 'Retiree population' },
+  { id: 'legal-estate-rural', label: 'Estate Planning', icon: '📜', price: 40, market: 'Scottsdale, AZ area', marketType: 'rural', reason: 'Wealthy retirees' },
+  { id: 'legal-employment-metro', label: 'Employment Law', icon: '👔', price: 50, market: 'New York, NY', marketType: 'metro', reason: 'Corporate hub' },
+  { id: 'legal-employment-rural', label: 'Employment Law', icon: '👔', price: 50, market: 'Albany, NY area', marketType: 'rural', reason: 'State government' },
   { id: 'realtor-metro', label: 'Realtor', icon: '🏡', price: 25, market: 'Austin, TX', marketType: 'metro', reason: 'Hot real estate' },
   { id: 'realtor-rural', label: 'Realtor', icon: '🏡', price: 25, market: 'Fredericksburg, TX', marketType: 'rural', reason: 'Hill Country, vacation homes' },
 ];
@@ -542,32 +554,41 @@ function BusinessesPanel({ businesses, onRefresh, toolColor }: {
 
 function OutreachPanel({ businesses, toolColor }: { businesses: Business[]; toolColor: string }) {
   const prospects = businesses.filter(b => b.status === 'prospect' || b.status === 'contacted');
+  
+  const [emailTemplate, setEmailTemplate] = useState(`Hi,
 
-  const emailTemplate = `Hi,
+I found 3 leads for your [TYPE] practice in [MARKET]. Here's the first one free:
 
-I used AI to find a lead for you. Here's the first one free.
+"[LEAD_TEXT]"
+- Source: [SOURCE]
 
-Pay $X per lead here: [LINK]
+Pay $[PRICE]/lead for more: [PAYMENT_LINK]
 
-Let me know if you have questions.
-
-- Norman`;
+- Norman`);
 
   return (
     <div>
       <div style={{ marginBottom: "20px" }}>
-        <h3 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "12px" }}>📧 Outreach Template</h3>
-        <pre style={{
-          padding: "16px",
-          background: "var(--glass-bg)",
-          borderRadius: "8px",
-          border: "1px solid var(--glass-border)",
-          fontSize: "13px",
-          whiteSpace: "pre-wrap",
-          fontFamily: "inherit"
-        }}>
-          {emailTemplate}
-        </pre>
+        <h3 style={{ fontSize: "14px", fontWeight: 700, marginBottom: "8px" }}>📧 Email Template (editable)</h3>
+        <p style={{ fontSize: "11px", color: "var(--muted)", marginBottom: "12px" }}>
+          Placeholders: [TYPE], [MARKET], [LEAD_TEXT], [SOURCE], [PRICE], [PAYMENT_LINK]
+        </p>
+        <textarea
+          value={emailTemplate}
+          onChange={(e) => setEmailTemplate(e.target.value)}
+          style={{
+            width: "100%",
+            minHeight: "180px",
+            padding: "12px",
+            background: "var(--glass-bg)",
+            borderRadius: "8px",
+            border: "1px solid var(--glass-border)",
+            fontSize: "13px",
+            fontFamily: "inherit",
+            color: "var(--foreground)",
+            resize: "vertical"
+          }}
+        />
         <button
           onClick={() => { navigator.clipboard.writeText(emailTemplate); alert('Copied!'); }}
           style={{
