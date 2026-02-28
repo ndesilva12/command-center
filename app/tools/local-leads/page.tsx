@@ -82,6 +82,7 @@ export default function LocalLeadsPage() {
   const [discovering, setDiscovering] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [tab, setTab] = useState<'leads' | 'businesses' | 'outreach'>('leads');
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -148,11 +149,98 @@ export default function LocalLeadsPage() {
     ? leads.filter(l => l.type === activeCategory)
     : leads;
 
+  const selectedCat = activeCategory ? LEAD_CATEGORIES.find(c => c.id === activeCategory) : null;
+
+  // Mobile category modal
+  const CategoryModal = () => (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.8)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center'
+      }}
+      onClick={() => setShowCategoryModal(false)}
+    >
+      <div 
+        style={{
+          background: 'var(--background)',
+          borderRadius: '16px 16px 0 0',
+          width: '100%',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          padding: '16px'
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 700 }}>Select Category</h3>
+          <button 
+            onClick={() => setShowCategoryModal(false)}
+            style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--foreground)' }}
+          >×</button>
+        </div>
+        <button
+          onClick={() => { setActiveCategory(null); setShowCategoryModal(false); }}
+          style={{
+            width: '100%',
+            padding: '14px',
+            borderRadius: '10px',
+            border: '1px solid var(--glass-border)',
+            background: !activeCategory ? toolCustom.color : 'var(--glass-bg)',
+            color: !activeCategory ? '#fff' : 'var(--foreground)',
+            textAlign: 'left',
+            cursor: 'pointer',
+            marginBottom: '8px',
+            fontSize: '15px',
+            fontWeight: 600
+          }}
+        >
+          All Leads ({leads.length})
+        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {LEAD_CATEGORIES.map(cat => {
+            const count = leads.filter(l => l.type === cat.id).length;
+            const isRural = cat.marketType === 'rural';
+            return (
+              <button
+                key={cat.id}
+                onClick={() => { setActiveCategory(cat.id); setShowCategoryModal(false); }}
+                style={{
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--glass-border)',
+                  background: activeCategory === cat.id ? toolCustom.color : 'var(--glass-bg)',
+                  color: activeCategory === cat.id ? '#fff' : 'var(--foreground)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <div style={{ fontSize: '20px', marginBottom: '4px' }}>{cat.icon}</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>{cat.label}</div>
+                <div style={{ fontSize: '11px', opacity: 0.7 }}>{isRural ? '🌾' : '🏙️'} {count}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <TopNav />
       <Sidebar />
       <BottomNav />
+
+      {/* Mobile Category Modal */}
+      {isMobile && showCategoryModal && <CategoryModal />}
 
       <main
         style={{
@@ -172,108 +260,152 @@ export default function LocalLeadsPage() {
           gap: "12px",
           height: isMobile ? "auto" : "calc(100vh - 84px)",
         }}>
-          {/* Left Panel: Categories */}
-          <div style={{ 
-            width: isMobile ? "100%" : "280px",
-            minWidth: isMobile ? "100%" : "280px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "12px",
-          }}>
-            {/* Header */}
-            <div className="glass card" style={{ padding: "16px" }}>
-              <h2 style={{ fontSize: "20px", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <span style={{ color: toolCustom.color }}>🎯</span> {toolCustom.name}
-              </h2>
-              <p style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "16px" }}>
-                AI-powered lead generation
-              </p>
+          {/* Mobile: Compact Header + Category Selector */}
+          {isMobile && (
+            <div className="glass card" style={{ padding: "12px" }}>
+              {/* Stats Row */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
+                <div style={{ flex: 1, padding: "10px", background: "var(--glass-bg)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ fontSize: "20px", fontWeight: 700, color: toolCustom.color }}>${totalRevenue}</div>
+                  <div style={{ fontSize: "10px", color: "var(--muted)" }}>Revenue</div>
+                </div>
+                <div style={{ flex: 1, padding: "10px", background: "var(--glass-bg)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ fontSize: "20px", fontWeight: 700 }}>{totalLeads}</div>
+                  <div style={{ fontSize: "10px", color: "var(--muted)" }}>Leads</div>
+                </div>
+                <div style={{ flex: 1, padding: "10px", background: "var(--glass-bg)", borderRadius: "8px", textAlign: "center" }}>
+                  <div style={{ fontSize: "20px", fontWeight: 700 }}>{soldLeads}</div>
+                  <div style={{ fontSize: "10px", color: "var(--muted)" }}>Sold</div>
+                </div>
+              </div>
+              {/* Category Selector Button */}
+              <button
+                onClick={() => setShowCategoryModal(true)}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "10px",
+                  border: "1px solid var(--glass-border)",
+                  background: toolCustom.color,
+                  color: "#fff",
+                  cursor: "pointer",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontSize: "15px",
+                  fontWeight: 600
+                }}
+              >
+                <span>{selectedCat ? `${selectedCat.icon} ${selectedCat.label}` : '🎯 All Leads'}</span>
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
 
-              {/* Quick Stats */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 700, color: toolCustom.color }}>${totalRevenue}</div>
-                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Revenue</div>
+          {/* Desktop: Left Panel: Categories */}
+          {!isMobile && (
+            <div style={{ 
+              width: "280px",
+              minWidth: "280px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}>
+              {/* Header */}
+              <div className="glass card" style={{ padding: "16px" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ color: toolCustom.color }}>🎯</span> {toolCustom.name}
+                </h2>
+                <p style={{ color: "var(--muted)", fontSize: "13px", marginBottom: "16px" }}>
+                  AI-powered lead generation
+                </p>
+
+                {/* Quick Stats */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                  <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                    <div style={{ fontSize: "24px", fontWeight: 700, color: toolCustom.color }}>${totalRevenue}</div>
+                    <div style={{ fontSize: "11px", color: "var(--muted)" }}>Revenue</div>
+                  </div>
+                  <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                    <div style={{ fontSize: "24px", fontWeight: 700 }}>{totalLeads}</div>
+                    <div style={{ fontSize: "11px", color: "var(--muted)" }}>Leads</div>
+                  </div>
+                  <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                    <div style={{ fontSize: "24px", fontWeight: 700 }}>{soldLeads}</div>
+                    <div style={{ fontSize: "11px", color: "var(--muted)" }}>Sold</div>
+                  </div>
+                  <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
+                    <div style={{ fontSize: "24px", fontWeight: 700 }}>{activeBusinesses}</div>
+                    <div style={{ fontSize: "11px", color: "var(--muted)" }}>Buyers</div>
+                  </div>
                 </div>
-                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 700 }}>{totalLeads}</div>
-                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Leads</div>
-                </div>
-                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 700 }}>{soldLeads}</div>
-                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Sold</div>
-                </div>
-                <div style={{ padding: "12px", background: "var(--glass-bg)", borderRadius: "8px", border: "1px solid var(--glass-border)" }}>
-                  <div style={{ fontSize: "24px", fontWeight: 700 }}>{activeBusinesses}</div>
-                  <div style={{ fontSize: "11px", color: "var(--muted)" }}>Buyers</div>
+              </div>
+
+              {/* Categories */}
+              <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto" }}>
+                <h3 style={{ fontSize: "13px", fontWeight: 700, marginBottom: "12px", color: "var(--muted)" }}>
+                  CATEGORIES
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <button
+                    onClick={() => setActiveCategory(null)}
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--glass-border)",
+                      background: !activeCategory ? toolCustom.color : "transparent",
+                      color: !activeCategory ? "#fff" : "var(--foreground)",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: "13px"
+                    }}
+                  >
+                    <span>All Leads</span>
+                    <span style={{ opacity: 0.7 }}>{leads.length}</span>
+                  </button>
+                  {LEAD_CATEGORIES.map(cat => {
+                    const count = leads.filter(l => l.type === cat.id).length;
+                    const isRural = cat.marketType === 'rural';
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => setActiveCategory(cat.id)}
+                        style={{
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--glass-border)",
+                          background: activeCategory === cat.id ? toolCustom.color : "transparent",
+                          color: activeCategory === cat.id ? "#fff" : "var(--foreground)",
+                          textAlign: "left",
+                          cursor: "pointer",
+                          fontSize: "12px"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span>{cat.icon} {cat.label}</span>
+                          <span style={{ 
+                            fontSize: "10px", 
+                            padding: "2px 6px", 
+                            borderRadius: "4px",
+                            background: isRural ? "#f59e0b33" : "#3b82f633",
+                            color: isRural ? "#f59e0b" : "#3b82f6"
+                          }}>
+                            {isRural ? 'RURAL' : 'METRO'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "4px" }}>
+                          {cat.market} • {count} leads
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
-
-            {/* Categories */}
-            <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto" }}>
-              <h3 style={{ fontSize: "13px", fontWeight: 700, marginBottom: "12px", color: "var(--muted)" }}>
-                CATEGORIES
-              </h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <button
-                  onClick={() => setActiveCategory(null)}
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid var(--glass-border)",
-                    background: !activeCategory ? toolCustom.color : "transparent",
-                    color: !activeCategory ? "#fff" : "var(--foreground)",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    fontSize: "13px"
-                  }}
-                >
-                  <span>All Leads</span>
-                  <span style={{ opacity: 0.7 }}>{leads.length}</span>
-                </button>
-                {LEAD_CATEGORIES.map(cat => {
-                  const count = leads.filter(l => l.type === cat.id).length;
-                  const isRural = cat.marketType === 'rural';
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
-                      style={{
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--glass-border)",
-                        background: activeCategory === cat.id ? toolCustom.color : "transparent",
-                        color: activeCategory === cat.id ? "#fff" : "var(--foreground)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        fontSize: "12px"
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span>{cat.icon} {cat.label}</span>
-                        <span style={{ 
-                          fontSize: "10px", 
-                          padding: "2px 6px", 
-                          borderRadius: "4px",
-                          background: isRural ? "#f59e0b33" : "#3b82f633",
-                          color: isRural ? "#f59e0b" : "#3b82f6"
-                        }}>
-                          {isRural ? 'RURAL' : 'METRO'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "4px" }}>
-                        {cat.market} • {count} leads
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Right Panel: Content */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "12px", overflow: "hidden" }}>
