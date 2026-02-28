@@ -10,18 +10,28 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ToolBackground } from "@/components/tools/ToolBackground";
 import { Search, Send, DollarSign, Users, Zap, Building2, Mail, ExternalLink, Trash2, ChevronRight } from "lucide-react";
 
-// Strategic markets for each lead type
+// Strategic markets for each lead type - one metro, one rural per category
 const LEAD_CATEGORIES = [
-  { id: 'roofing', label: 'Roofing', icon: '🏠', price: 30, market: 'Houston, TX', reason: 'Hail storms, huge market' },
-  { id: 'plumbing', label: 'Plumbing', icon: '🔧', price: 25, market: 'Phoenix, AZ', reason: 'Hard water, pipe issues' },
-  { id: 'hvac', label: 'HVAC', icon: '❄️', price: 35, market: 'Dallas, TX', reason: 'Extreme temps, AC demand' },
-  { id: 'electrical', label: 'Electrical', icon: '⚡', price: 25, market: 'Los Angeles, CA', reason: 'Solar, EV chargers' },
-  { id: 'landscaping', label: 'Landscaping', icon: '🌿', price: 20, market: 'Miami, FL', reason: 'Year-round outdoor' },
-  { id: 'cleaning', label: 'Cleaning', icon: '✨', price: 20, market: 'San Francisco, CA', reason: 'Busy professionals' },
-  { id: 'painting', label: 'Painting', icon: '🎨', price: 20, market: 'Denver, CO', reason: 'Housing boom' },
-  { id: 'contractor', label: 'General Contractor', icon: '🔨', price: 35, market: 'Atlanta, GA', reason: 'Construction boom' },
-  { id: 'legal', label: 'Legal', icon: '⚖️', price: 75, market: 'Chicago, IL', reason: 'High litigation' },
-  { id: 'realtor', label: 'Realtor', icon: '🏡', price: 25, market: 'Austin, TX', reason: 'Hot real estate' },
+  { id: 'roofing-metro', label: 'Roofing', icon: '🏠', price: 30, market: 'Houston, TX', marketType: 'metro', reason: 'Hail storms, huge market' },
+  { id: 'roofing-rural', label: 'Roofing', icon: '🏠', price: 30, market: 'Joplin, MO area', marketType: 'rural', reason: 'Tornado alley, less competition' },
+  { id: 'plumbing-metro', label: 'Plumbing', icon: '🔧', price: 25, market: 'Phoenix, AZ', marketType: 'metro', reason: 'Hard water, pipe issues' },
+  { id: 'plumbing-rural', label: 'Plumbing', icon: '🔧', price: 25, market: 'Prescott, AZ area', marketType: 'rural', reason: 'Older homes, retirees' },
+  { id: 'hvac-metro', label: 'HVAC', icon: '❄️', price: 35, market: 'Dallas, TX', marketType: 'metro', reason: 'Extreme temps, AC demand' },
+  { id: 'hvac-rural', label: 'HVAC', icon: '❄️', price: 35, market: 'Amarillo, TX area', marketType: 'rural', reason: 'Rural Texas, extreme temps' },
+  { id: 'electrical-metro', label: 'Electrical', icon: '⚡', price: 25, market: 'Los Angeles, CA', marketType: 'metro', reason: 'Solar, EV chargers' },
+  { id: 'electrical-rural', label: 'Electrical', icon: '⚡', price: 25, market: 'Bakersfield, CA area', marketType: 'rural', reason: 'Agricultural, solar farms' },
+  { id: 'landscaping-metro', label: 'Landscaping', icon: '🌿', price: 20, market: 'Miami, FL', marketType: 'metro', reason: 'Year-round outdoor' },
+  { id: 'landscaping-rural', label: 'Landscaping', icon: '🌿', price: 20, market: 'Naples, FL area', marketType: 'rural', reason: 'Wealthy retirees' },
+  { id: 'cleaning-metro', label: 'Cleaning', icon: '✨', price: 20, market: 'San Francisco, CA', marketType: 'metro', reason: 'Busy professionals' },
+  { id: 'cleaning-rural', label: 'Cleaning', icon: '✨', price: 20, market: 'Napa Valley, CA', marketType: 'rural', reason: 'Vacation homes, wine country' },
+  { id: 'painting-metro', label: 'Painting', icon: '🎨', price: 20, market: 'Denver, CO', marketType: 'metro', reason: 'Housing boom' },
+  { id: 'painting-rural', label: 'Painting', icon: '🎨', price: 20, market: 'Fort Collins, CO area', marketType: 'rural', reason: 'Growing suburbs' },
+  { id: 'contractor-metro', label: 'General Contractor', icon: '🔨', price: 35, market: 'Atlanta, GA', marketType: 'metro', reason: 'Construction boom' },
+  { id: 'contractor-rural', label: 'General Contractor', icon: '🔨', price: 35, market: 'Savannah, GA area', marketType: 'rural', reason: 'Historic homes, renovations' },
+  { id: 'legal-metro', label: 'Legal', icon: '⚖️', price: 75, market: 'Chicago, IL', marketType: 'metro', reason: 'High litigation' },
+  { id: 'legal-rural', label: 'Legal', icon: '⚖️', price: 75, market: 'Peoria, IL area', marketType: 'rural', reason: 'Regional hub, PI cases' },
+  { id: 'realtor-metro', label: 'Realtor', icon: '🏡', price: 25, market: 'Austin, TX', marketType: 'metro', reason: 'Hot real estate' },
+  { id: 'realtor-rural', label: 'Realtor', icon: '🏡', price: 25, market: 'Fredericksburg, TX', marketType: 'rural', reason: 'Hill Country, vacation homes' },
 ];
 
 interface Lead {
@@ -215,6 +225,7 @@ export default function LocalLeadsPage() {
                 </button>
                 {LEAD_CATEGORIES.map(cat => {
                   const count = leads.filter(l => l.type === cat.id).length;
+                  const isRural = cat.marketType === 'rural';
                   return (
                     <button
                       key={cat.id}
@@ -227,14 +238,24 @@ export default function LocalLeadsPage() {
                         color: activeCategory === cat.id ? "#fff" : "var(--foreground)",
                         textAlign: "left",
                         cursor: "pointer",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        fontSize: "13px"
+                        fontSize: "12px"
                       }}
                     >
-                      <span>{cat.icon} {cat.label}</span>
-                      <span style={{ opacity: 0.7, fontSize: "12px" }}>{cat.market.split(',')[0]} • {count}</span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>{cat.icon} {cat.label}</span>
+                        <span style={{ 
+                          fontSize: "10px", 
+                          padding: "2px 6px", 
+                          borderRadius: "4px",
+                          background: isRural ? "#f59e0b33" : "#3b82f633",
+                          color: isRural ? "#f59e0b" : "#3b82f6"
+                        }}>
+                          {isRural ? 'RURAL' : 'METRO'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "11px", opacity: 0.7, marginTop: "4px" }}>
+                        {cat.market} • {count} leads
+                      </div>
                     </button>
                   );
                 })}
