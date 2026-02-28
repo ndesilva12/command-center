@@ -294,7 +294,7 @@ export default function LocalLeadsPage() {
               {tab === 'leads' && (
                 <LeadsPanel 
                   leads={filteredLeads} 
-                  category={activeCategory ? LEAD_CATEGORIES.find(c => c.id === activeCategory) : null}
+                  category={activeCategory ? LEAD_CATEGORIES.find(c => c.id === activeCategory) || null : null}
                   onDiscover={() => activeCategory && runDiscovery(activeCategory)}
                   discovering={discovering}
                   toolColor={toolCustom.color}
@@ -323,7 +323,7 @@ export default function LocalLeadsPage() {
 
 function LeadsPanel({ leads, category, onDiscover, discovering, toolColor }: {
   leads: Lead[];
-  category: typeof LEAD_CATEGORIES[0] | null;
+  category: { id: string; label: string; icon: string; price: number; market: string; marketType?: string; reason: string } | null;
   onDiscover: () => void;
   discovering: boolean;
   toolColor: string;
