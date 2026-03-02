@@ -482,12 +482,51 @@ function GamesView({ games, title, getRowBackground }: { games: Game[]; title: s
     pairs.push(games.slice(i, i + 2));
   }
 
+  // Fixed column widths for alignment
+  const colWidths = {
+    team: "22%",
+    spread: "9%",
+    model: "9%",
+    net: "9%",
+    rd: "8%",
+    avgRank: "10%",
+    final: "12%",
+    ats: "8%",
+    patterns: "8%",
+  };
+
   return (
     <div>
       <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "var(--foreground)" }}>
         {title}
       </h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      
+      {/* Header row - separate table for alignment */}
+      <div style={{ 
+        borderRadius: "8px 8px 0 0", 
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        borderBottom: "none",
+        background: "rgba(255, 255, 255, 0.03)",
+      }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <thead>
+            <tr>
+              <th style={{ width: colWidths.team, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Team</th>
+              <th style={{ width: colWidths.spread, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Spread</th>
+              <th style={{ width: colWidths.model, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Model</th>
+              <th style={{ width: colWidths.net, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Net</th>
+              <th style={{ width: colWidths.rd, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>RD</th>
+              <th style={{ width: colWidths.avgRank, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Avg Rank</th>
+              <th style={{ width: colWidths.final, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Final</th>
+              <th style={{ width: colWidths.ats, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>ATS</th>
+              <th style={{ width: colWidths.patterns, padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Patterns</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      {/* Game pairs */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
         {pairs.map((pair, pairIdx) => (
           <div
             key={pairIdx}
@@ -498,22 +537,7 @@ function GamesView({ games, title, getRowBackground }: { games: Game[]; title: s
               overflow: "hidden",
             }}
           >
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              {pairIdx === 0 && (
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Team</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Spread</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Model</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Net</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>RD</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Avg Rank</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Final</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>ATS</th>
-                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Patterns</th>
-                  </tr>
-                </thead>
-              )}
+            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <tbody>
                 {pair.map((game, idx) => (
                   <tr
@@ -523,16 +547,17 @@ function GamesView({ games, title, getRowBackground }: { games: Game[]; title: s
                       borderBottom: idx === 0 && pair.length > 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
                     }}
                   >
-                    <td style={{ padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)" }}>{game.team}</td>
-                    <td style={{ padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#f87171" }}>
+                    <td style={{ width: colWidths.team, padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{game.team}</td>
+                    <td style={{ width: colWidths.spread, padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#f87171" }}>
                       {game.spread > 0 ? '+' : ''}{game.spread}
                     </td>
-                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.model.toFixed(1)}</td>
-                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.net.toFixed(1)}</td>
-                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.rankDiff.toFixed(0)}</td>
-                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.avgRank.toFixed(0)}</td>
-                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.finalScore || '-'}</td>
+                    <td style={{ width: colWidths.model, padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.model.toFixed(1)}</td>
+                    <td style={{ width: colWidths.net, padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.net.toFixed(1)}</td>
+                    <td style={{ width: colWidths.rd, padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.rankDiff.toFixed(0)}</td>
+                    <td style={{ width: colWidths.avgRank, padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.avgRank.toFixed(0)}</td>
+                    <td style={{ width: colWidths.final, padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.finalScore || '-'}</td>
                     <td style={{
+                      width: colWidths.ats,
                       padding: "10px 8px",
                       fontSize: "13px",
                       fontWeight: 600,
@@ -540,7 +565,7 @@ function GamesView({ games, title, getRowBackground }: { games: Game[]; title: s
                     }}>
                       {game.ats || '-'}
                     </td>
-                    <td style={{ padding: "10px 8px", fontSize: "11px", color: "var(--foreground-muted)" }}>
+                    <td style={{ width: colWidths.patterns, padding: "10px 8px", fontSize: "11px", color: "var(--foreground-muted)" }}>
                       {game.matchingPatterns?.length ? game.matchingPatterns.length : '-'}
                     </td>
                   </tr>
