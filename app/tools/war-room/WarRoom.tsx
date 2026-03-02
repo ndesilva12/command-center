@@ -1612,7 +1612,7 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
   const [people, setPeople] = useState<NetworkPerson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [subView, setSubView] = useState<"directory" | "map">("directory");
+  const [subView, setSubView] = useState<"people" | "schools" | "map">("people");
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("All");
   const [filterRelationship, setFilterRelationship] = useState<"All" | "1st" | "2nd">("All");
@@ -1865,28 +1865,33 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Sub-view tabs */}
-      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-        <button onClick={() => setSubView("directory")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "directory" ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "directory" ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)", color: subView === "directory" ? "#60a5fa" : "#9ca3af", fontSize: "13px", fontWeight: subView === "directory" ? 600 : 400, cursor: "pointer" }}>
+      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+        <button onClick={() => setSubView("people")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "people" ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "people" ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)", color: subView === "people" ? "#60a5fa" : "#9ca3af", fontSize: "13px", fontWeight: subView === "people" ? 600 : 400, cursor: "pointer" }}>
           <Users size={14} />People Directory
         </button>
-        <button onClick={() => setSubView("map")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "map" ? "1px solid rgba(139,92,246,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "map" ? "rgba(139,92,246,0.12)" : "rgba(255,255,255,0.03)", color: subView === "map" ? "#a78bfa" : "#9ca3af", fontSize: "13px", fontWeight: subView === "map" ? 600 : 400, cursor: "pointer" }}>
+        <button onClick={() => setSubView("schools")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "schools" ? "1px solid rgba(139,92,246,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "schools" ? "rgba(139,92,246,0.12)" : "rgba(255,255,255,0.03)", color: subView === "schools" ? "#a78bfa" : "#9ca3af", fontSize: "13px", fontWeight: subView === "schools" ? 600 : 400, cursor: "pointer" }}>
+          <List size={14} />School Directory
+        </button>
+        <button onClick={() => setSubView("map")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "map" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "map" ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.03)", color: subView === "map" ? "#10b981" : "#9ca3af", fontSize: "13px", fontWeight: subView === "map" ? 600 : 400, cursor: "pointer" }}>
           <Network size={14} />Network Map
         </button>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "12px", color: "#6b7280" }}>{people.length} contacts</span>
-          <button onClick={() => { setShowBulkImport(v => !v); setShowAddForm(false); setBulkResult(null); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.3)", color: "#a78bfa", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
-            <Upload size={13} />Bulk Import
-          </button>
-          <button onClick={() => { setShowAddForm(v => !v); setEditingId(null); setFormData(emptyPerson); setShowBulkImport(false); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.35)", color: "#10b981", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
-            <Plus size={13} />Add Person
-          </button>
-        </div>
+        {subView === "people" && (
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "12px", color: "#6b7280" }}>{people.length} contacts</span>
+            <button onClick={() => { setShowBulkImport(v => !v); setShowAddForm(false); setBulkResult(null); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(139,92,246,0.10)", border: "1px solid rgba(139,92,246,0.3)", color: "#a78bfa", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+              <Upload size={13} />Bulk Import
+            </button>
+            <button onClick={() => { setShowAddForm(v => !v); setEditingId(null); setFormData(emptyPerson); setShowBulkImport(false); }} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.35)", color: "#10b981", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+              <Plus size={13} />Add Person
+            </button>
+          </div>
+        )}
       </div>
 
-      {showBulkImport && <BulkImportModal />}
-      {showAddForm && <PersonForm />}
+      {subView === "people" && showBulkImport && <BulkImportModal />}
+      {subView === "people" && showAddForm && <PersonForm />}
 
-      {subView === "directory" && (
+      {subView === "people" && (
         <>
           {/* Search + filters */}
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
@@ -1967,6 +1972,10 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
             })}
           </div>
         </>
+      )}
+
+      {subView === "schools" && (
+        <D1Directory isMobile={isMobile} />
       )}
 
       {subView === "map" && (
@@ -2431,7 +2440,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "portal" | "budget" | "network" | "connections" | "directory">("fulldatabase");
+  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "portal" | "budget" | "network" | "connections">("fulldatabase");
   const [syncTrigger, setSyncTrigger] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [syncing, setSyncing] = useState(false);
@@ -2463,7 +2472,6 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },
     { id: "connections" as const, label: "Coaching Connections", icon: Zap },
-    { id: "directory" as const, label: "D1 Directory", icon: List },
   ];
 
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
@@ -2475,7 +2483,6 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
     network: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
     connections: { active: "#9ca3af", border: "rgba(107,114,128,0.4)", bg: "rgba(107,114,128,0.10)" },
-    directory: { active: "#8b5cf6", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
   };
 
   return (
@@ -2535,7 +2542,6 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
         {activeView === "budget" && <BudgetRosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "network" && <NetworkTool isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "connections" && <CoachingConnections isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "directory" && <D1Directory isMobile={isMobile} />}
       </div>
     </div>
   );
