@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { google } from 'googleapis';
+import { getCinderellaAuth } from '@/lib/cinderella-auth';
 
-const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
-const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
 const SHEET_ID = '1434MZVRl65IRlNNk6XlKY7_mCbZzDqWANOqjS5AU22Y';
-const TOKEN_PATH = '/Users/normandesilva/.config/google/token_norman_desilva_gmail_com.json';
 
 // Pattern definitions matching the dashboard
 const PATTERNS = [
@@ -25,7 +24,6 @@ export async function GET(request: NextRequest) {
 
   try {
     if (action === 'data') {
-      // Fetch all data from the sheet
       const data = await fetchSheetData();
       return NextResponse.json(data);
     } else if (action === 'status') {
@@ -48,37 +46,11 @@ export async function POST(request: NextRequest) {
     const { action } = body;
 
     if (action === 'sync') {
-      // Run cbb_sync.sh via OpenClaw gateway
-      const command = 'cd /Users/normandesilva/openclaw/openclaw/skills/cbb-scraper && bash cbb_sync.sh 2>&1 | grep -v "FutureWarning\\|NotOpenSSLWarning\\|warnings.warn\\|google-auth"';
-      
-      const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          tool: 'exec',
-          args: {
-            command: command,
-            timeout: 120
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return NextResponse.json(
-          { error: `Gateway error: ${response.status}`, details: errorText },
-          { status: 500 }
-        );
-      }
-
-      const data = await response.json();
+      // Sync requires local execution - return instructions
       return NextResponse.json({
-        success: true,
-        output: data.result?.stdout || 'Sync completed',
-        error: data.result?.stderr
+        success: false,
+        message: 'Sync must be run locally. Use: cd /Users/normandesilva/openclaw/openclaw/skills/cbb-scraper && bash cbb_sync.sh',
+        note: 'Or ask Jimmy to run "cbb sync" for you.'
       });
     }
 
@@ -93,87 +65,43 @@ export async function POST(request: NextRequest) {
 }
 
 async function fetchSheetData() {
-  // Use exec to run a Python script that fetches the data
-  const pythonScript = `
-import json
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
+  const auth = await getCinderellaAuth();
+  const sheets = google.sheets({ version: 'v4', auth });
 
-TOKEN_PATH = '${TOKEN_PATH}'
-SHEET_ID = '${SHEET_ID}'
-
-with open(TOKEN_PATH, 'r') as f:
-    token_data = json.load(f)
-
-creds = Credentials(
-    token=token_data['access_token'],
-    refresh_token=token_data.get('refresh_token'),
-    token_uri='https://oauth2.googleapis.com/token',
-    client_id=token_data.get('client_id'),
-    client_secret=token_data.get('client_secret')
-)
-
-service = build('sheets', 'v4', credentials=creds)
-
-# Get dashboard (rows 1-20)
-dashboard = service.spreadsheets().values().get(
-    spreadsheetId=SHEET_ID,
-    range='Analysis!A1:N20',
-    valueRenderOption='FORMATTED_VALUE'
-).execute().get('values', [])
-
-# Get all game data (rows 21+)
-games = service.spreadsheets().values().get(
-    spreadsheetId=SHEET_ID,
-    range='Analysis!A21:O5000',
-    valueRenderOption='FORMATTED_VALUE'
-).execute().get('values', [])
-
-print(json.dumps({'dashboard': dashboard, 'games': games}))
-`;
-
-  const command = `/usr/bin/python3 -c "${pythonScript.replace(/"/g, '\\"').replace(/\n/g, '\\n')}" 2>/dev/null`;
-
-  const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      tool: 'exec',
-      args: {
-        command: command,
-        timeout: 30
-      }
-    })
+  // Get dashboard (rows 1-20)
+  const dashboardResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Analysis!A1:N20',
   });
+  const dashboard = dashboardResponse.data.values || [];
 
-  if (!response.ok) {
-    throw new Error(`Gateway error: ${response.status}`);
-  }
+  // Get all game data (rows 21+)
+  const gamesResponse = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Analysis!A21:O5000',
+  });
+  const gamesRaw = gamesResponse.data.values || [];
 
-  const data = await response.json();
-  
-  if (data.error) {
-    throw new Error(data.error);
-  }
-
-  const stdout = data.result?.stdout || '{}';
-  const result = JSON.parse(stdout);
-  
   // Parse dashboard data into pattern stats
   const patterns = PATTERNS.map(p => {
-    const row = result.dashboard[p.row - 1] || [];
+    const row = dashboard[p.row - 1] || [];
     return {
       ...p,
-      wins: parseInt(row[9]) || 0,
-      losses: parseInt(row[10]) || 0,
+      wins: parseFloat(row[9]) || 0,
+      losses: parseFloat(row[10]) || 0,
       winPct: parseFloat(row[11]) || 0,
       roi: parseFloat(row[12]) || 0,
-      sample: parseInt(row[13]) || 0,
+      sample: parseFloat(row[13]) || 0,
     };
   });
+
+  // Parse criteria from dashboard row 4
+  const criteriaRow = dashboard[3] || [];
+  const criteria = {
+    rdMin: parseFloat(criteriaRow[1]) || -6,
+    rdMax: parseFloat(criteriaRow[3]) || 6,
+    rdSpread: parseFloat(criteriaRow[5]) || 0,
+  };
 
   // Parse game data
   const today = new Date();
@@ -182,7 +110,7 @@ print(json.dumps({'dashboard': dashboard, 'games': games}))
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = `${tomorrow.getMonth() + 1}/${tomorrow.getDate()}`;
 
-  const games = (result.games || []).map((row: string[], idx: number) => ({
+  const games = gamesRaw.map((row: string[], idx: number) => ({
     id: idx,
     team: row[0] || '',
     spread: parseFloat(row[1]) || 0,
@@ -201,20 +129,14 @@ print(json.dumps({'dashboard': dashboard, 'games': games}))
     date: row[14] || '',
   }));
 
-  // Get dashboard criteria for pattern matching
-  const dashboardData = result.dashboard || [];
-  const criteria = {
-    rdMin: parseFloat(dashboardData[3]?.[1]) || -6,
-    rdMax: parseFloat(dashboardData[3]?.[3]) || 6,
-    rdSpread: parseFloat(dashboardData[3]?.[5]) || 0,
-    // Add more criteria as needed
-  };
+  const todayGames = games.filter((g: any) => g.date === todayStr);
+  const tomorrowGames = games.filter((g: any) => g.date === tomorrowStr);
 
   return {
     patterns,
     games,
-    todayGames: games.filter((g: any) => g.date === todayStr),
-    tomorrowGames: games.filter((g: any) => g.date === tomorrowStr),
+    todayGames,
+    tomorrowGames,
     criteria,
     todayStr,
     tomorrowStr,
