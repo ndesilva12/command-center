@@ -109,6 +109,9 @@ async function fetchSheetData() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = `${tomorrow.getMonth() + 1}/${tomorrow.getDate()}`;
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = `${yesterday.getMonth() + 1}/${yesterday.getDate()}`;
 
   const games = gamesRaw.map((row: string[], idx: number) => ({
     id: idx,
@@ -129,15 +132,18 @@ async function fetchSheetData() {
     date: row[14] || '',
   }));
 
+  const yesterdayGames = games.filter((g: any) => g.date === yesterdayStr);
   const todayGames = games.filter((g: any) => g.date === todayStr);
   const tomorrowGames = games.filter((g: any) => g.date === tomorrowStr);
 
   return {
     patterns,
     games,
+    yesterdayGames,
     todayGames,
     tomorrowGames,
     criteria,
+    yesterdayStr,
     todayStr,
     tomorrowStr,
   };

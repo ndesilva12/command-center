@@ -44,9 +44,11 @@ interface Game {
 interface CBBData {
   patterns: Pattern[];
   games: Game[];
+  yesterdayGames: Game[];
   todayGames: Game[];
   tomorrowGames: Game[];
   criteria: any;
+  yesterdayStr: string;
   todayStr: string;
   tomorrowStr: string;
 }
@@ -76,7 +78,7 @@ export default function CBBPage() {
 function CBBContent() {
   const { getCustomization } = useToolCustomizations();
   const toolCustom = getCustomization('cbb', 'CBB Value Plays', '#22c55e');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'today' | 'tomorrow'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'yesterday' | 'today' | 'tomorrow'>('dashboard');
   const [isMobile, setIsMobile] = useState(false);
   const [data, setData] = useState<CBBData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,12 +103,14 @@ function CBBContent() {
       
       // Add pattern matching to games
       const gamesWithPatterns = addPatternMatching(result.games, result.criteria);
+      const yesterdayWithPatterns = addPatternMatching(result.yesterdayGames, result.criteria);
       const todayWithPatterns = addPatternMatching(result.todayGames, result.criteria);
       const tomorrowWithPatterns = addPatternMatching(result.tomorrowGames, result.criteria);
       
       setData({
         ...result,
         games: gamesWithPatterns,
+        yesterdayGames: yesterdayWithPatterns,
         todayGames: todayWithPatterns,
         tomorrowGames: tomorrowWithPatterns,
       });
@@ -306,6 +310,7 @@ function CBBContent() {
         }}>
           {[
             { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+            { id: 'yesterday', label: `Yesterday (${data?.yesterdayStr || ''})`, icon: Calendar, count: data?.yesterdayGames?.length },
             { id: 'today', label: `Today (${data?.todayStr || ''})`, icon: Calendar, count: data?.todayGames?.length },
             { id: 'tomorrow', label: `Tomorrow (${data?.tomorrowStr || ''})`, icon: Target, count: data?.tomorrowGames?.length },
           ].map(({ id, label, icon: Icon, count }) => (
@@ -354,6 +359,11 @@ function CBBContent() {
         {/* Dashboard Tab */}
         {!loading && activeTab === 'dashboard' && data && (
           <DashboardView patterns={data.patterns} />
+        )}
+
+        {/* Yesterday Tab */}
+        {!loading && activeTab === 'yesterday' && data && (
+          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} />
         )}
 
         {/* Today Tab */}
