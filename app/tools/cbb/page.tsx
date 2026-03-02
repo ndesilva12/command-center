@@ -53,18 +53,24 @@ interface CBBData {
   tomorrowStr: string;
 }
 
-// Pattern colors for highlighting
-const PATTERN_COLORS: Record<string, string> = {
-  rank_diff: 'rgba(216, 235, 211, 0.8)',
-  pattern_1: 'rgba(255, 242, 204, 0.8)',
-  pattern_2: 'rgba(217, 234, 247, 0.8)',
-  pattern_3: 'rgba(244, 224, 224, 0.8)',
-  pattern_4: 'rgba(234, 224, 244, 0.8)',
-  pattern_5: 'rgba(255, 229, 204, 0.8)',
-  pattern_6: 'rgba(224, 244, 224, 0.8)',
-  pattern_8: 'rgba(204, 229, 255, 0.8)',
-  pattern_9: 'rgba(244, 244, 204, 0.8)',
-  pattern_10: 'rgba(224, 234, 244, 0.8)',
+// Pattern numbers for display
+const PATTERN_NUMBERS: Record<string, string> = {
+  rank_diff: '1',
+  pattern_1: '2',
+  pattern_2: '3',
+  pattern_3: '4',
+  pattern_4: '5',
+  pattern_5: '6',
+  pattern_6: '7',
+  pattern_8: '8',
+  pattern_9: '9',
+  pattern_10: '10',
+};
+
+// Highlight colors - lime green for #1 (rank_diff), tool green for others
+const HIGHLIGHT_COLORS = {
+  rankDiff: 'rgba(132, 204, 22, 0.25)',  // Bright lime green for #1
+  standard: 'rgba(34, 197, 94, 0.2)',     // Tool green for others
 };
 
 export default function CBBPage() {
@@ -211,8 +217,18 @@ function CBBContent() {
     if (!game.matchingPatterns || game.matchingPatterns.length === 0) {
       return 'transparent';
     }
-    // Use the first matching pattern's color
-    return PATTERN_COLORS[game.matchingPatterns[0]] || 'transparent';
+    // Use lime green for rank_diff (#1), tool green for others
+    if (game.matchingPatterns.includes('rank_diff')) {
+      return HIGHLIGHT_COLORS.rankDiff;
+    }
+    return HIGHLIGHT_COLORS.standard;
+  };
+
+  const getPatternNumbers = (game: Game) => {
+    if (!game.matchingPatterns || game.matchingPatterns.length === 0) {
+      return '-';
+    }
+    return game.matchingPatterns.map(p => PATTERN_NUMBERS[p] || '?').join(', ');
   };
 
   return (
@@ -363,17 +379,17 @@ function CBBContent() {
 
         {/* Yesterday Tab */}
         {!loading && activeTab === 'yesterday' && data && (
-          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} />
+          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} />
         )}
 
         {/* Today Tab */}
         {!loading && activeTab === 'today' && data && (
-          <GamesView games={data.todayGames} title={`Today's Games (${data.todayStr})`} getRowBackground={getRowBackground} />
+          <GamesView games={data.todayGames} title={`Today's Games (${data.todayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} />
         )}
 
         {/* Tomorrow Tab */}
         {!loading && activeTab === 'tomorrow' && data && (
-          <GamesView games={data.tomorrowGames} title={`Tomorrow's Games (${data.tomorrowStr})`} getRowBackground={getRowBackground} />
+          <GamesView games={data.tomorrowGames} title={`Tomorrow's Games (${data.tomorrowStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} />
         )}
       </main>
     </>
@@ -437,6 +453,8 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
       }}>
         {patterns.map(pattern => {
           const labels = PATTERN_LABELS[pattern.id] || { title: pattern.name, subtitle: '' };
+          const patternNum = PATTERN_NUMBERS[pattern.id] || '?';
+          const isRankDiff = pattern.id === 'rank_diff';
           return (
             <div
               key={pattern.id}
@@ -444,14 +462,27 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
                 padding: "16px",
                 borderRadius: "12px",
                 background: "rgba(255, 255, 255, 0.03)",
-                border: `2px solid ${pattern.color}`,
+                border: `2px solid ${isRankDiff ? '#84cc16' : '#22c55e'}`,
                 backdropFilter: "blur(10px)",
+                position: "relative",
               }}
             >
-              <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px", color: "var(--foreground)" }}>
+              {/* Large pattern number */}
+              <div style={{
+                position: "absolute",
+                top: "12px",
+                right: "16px",
+                fontSize: "48px",
+                fontWeight: 700,
+                color: isRankDiff ? 'rgba(132, 204, 22, 0.3)' : 'rgba(34, 197, 94, 0.25)',
+                lineHeight: 1,
+              }}>
+                {patternNum}
+              </div>
+              <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px", color: "var(--foreground)", paddingRight: "50px" }}>
                 {labels.title}
               </div>
-              <div style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "12px" }}>
+              <div style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "12px", paddingRight: "50px" }}>
                 {labels.subtitle}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
@@ -476,7 +507,7 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
   );
 }
 
-function GamesView({ games, title, getRowBackground }: { games: Game[]; title: string; getRowBackground: (g: Game) => string }) {
+function GamesView({ games, title, getRowBackground, getPatternNumbers }: { games: Game[]; title: string; getRowBackground: (g: Game) => string; getPatternNumbers: (g: Game) => string }) {
   if (games.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--foreground-muted)" }}>
@@ -575,8 +606,8 @@ function GamesView({ games, title, getRowBackground }: { games: Game[]; title: s
                     }}>
                       {game.ats || '-'}
                     </td>
-                    <td style={{ width: colWidths.patterns, padding: "10px 8px", fontSize: "11px", color: "var(--foreground-muted)" }}>
-                      {game.matchingPatterns?.length ? game.matchingPatterns.length : '-'}
+                    <td style={{ width: colWidths.patterns, padding: "10px 8px", fontSize: "12px", fontWeight: 500, color: "var(--foreground)" }}>
+                      {getPatternNumbers(game)}
                     </td>
                   </tr>
                 ))}

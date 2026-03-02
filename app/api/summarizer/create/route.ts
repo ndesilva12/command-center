@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -117,6 +118,28 @@ Return ONLY valid JSON:
         key_points: [],
         word_count: textContent.text.split(/\s+/).length
       };
+    }
+
+    // Save to Firestore
+    const db = getAdminDb();
+    const docData = {
+      url,
+      title: result.title || new URL(url).hostname,
+      targetPages: pages,
+      status: 'completed',
+      content: result.summary || '',
+      summary: result.summary || '',
+      key_points: result.key_points || [],
+      word_count: result.word_count || 0,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+    
+    try {
+      await db.collection('summarizer_history').add(docData);
+    } catch (saveError) {
+      console.error('Failed to save to Firestore:', saveError);
+      // Continue anyway - return result even if save fails
     }
 
     return NextResponse.json({
