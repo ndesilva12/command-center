@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { Trophy, RefreshCw, Calendar, TrendingUp, Target, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trophy, RefreshCw, Calendar, TrendingUp, Target, Loader2 } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -467,26 +467,6 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
 }
 
 function GamesView({ games, title, getRowBackground }: { games: Game[]; title: string; getRowBackground: (g: Game) => string }) {
-  const [sortField, setSortField] = useState<string>('spread');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-
-  const sortedGames = useMemo(() => {
-    return [...games].sort((a, b) => {
-      const aVal = (a as any)[sortField] || 0;
-      const bVal = (b as any)[sortField] || 0;
-      return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-    });
-  }, [games, sortField, sortDir]);
-
-  const toggleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDir('desc');
-    }
-  };
-
   if (games.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--foreground-muted)" }}>
@@ -496,81 +476,79 @@ function GamesView({ games, title, getRowBackground }: { games: Game[]; title: s
     );
   }
 
-  const SortHeader = ({ field, label }: { field: string; label: string }) => (
-    <th
-      onClick={() => toggleSort(field)}
-      style={{
-        padding: "10px 8px",
-        textAlign: "left",
-        fontWeight: 600,
-        fontSize: "12px",
-        color: "var(--foreground-muted)",
-        cursor: "pointer",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-        {label}
-        {sortField === field && (
-          sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />
-        )}
-      </div>
-    </th>
-  );
+  // Group games into pairs (every 2 consecutive games)
+  const pairs: Game[][] = [];
+  for (let i = 0; i < games.length; i += 2) {
+    pairs.push(games.slice(i, i + 2));
+  }
 
   return (
     <div>
       <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "var(--foreground)" }}>
         {title}
       </h2>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-              <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Team</th>
-              <SortHeader field="spread" label="Spread" />
-              <SortHeader field="model" label="Model" />
-              <SortHeader field="net" label="Net" />
-              <SortHeader field="rankDiff" label="RD" />
-              <SortHeader field="avgRank" label="Avg Rank" />
-              <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Final</th>
-              <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>ATS</th>
-              <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Patterns</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedGames.map((game, idx) => (
-              <tr
-                key={game.id}
-                style={{
-                  background: getRowBackground(game),
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                }}
-              >
-                <td style={{ padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)" }}>{game.team}</td>
-                <td style={{ padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#f87171" }}>
-                  {game.spread > 0 ? '+' : ''}{game.spread}
-                </td>
-                <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.model.toFixed(1)}</td>
-                <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.net.toFixed(1)}</td>
-                <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.rankDiff.toFixed(0)}</td>
-                <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.avgRank.toFixed(0)}</td>
-                <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.finalScore || '-'}</td>
-                <td style={{
-                  padding: "10px 8px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: game.ats === 'W' ? '#4ade80' : game.ats === 'L' ? '#f87171' : 'var(--foreground-muted)'
-                }}>
-                  {game.ats || '-'}
-                </td>
-                <td style={{ padding: "10px 8px", fontSize: "11px", color: "var(--foreground-muted)" }}>
-                  {game.matchingPatterns?.length ? game.matchingPatterns.length : '-'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {pairs.map((pair, pairIdx) => (
+          <div
+            key={pairIdx}
+            style={{
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              background: "rgba(255, 255, 255, 0.02)",
+              overflow: "hidden",
+            }}
+          >
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              {pairIdx === 0 && (
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Team</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Spread</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Model</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Net</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>RD</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Avg Rank</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Final</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>ATS</th>
+                    <th style={{ padding: "10px 8px", textAlign: "left", fontWeight: 600, fontSize: "12px", color: "var(--foreground-muted)" }}>Patterns</th>
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                {pair.map((game, idx) => (
+                  <tr
+                    key={game.id}
+                    style={{
+                      background: getRowBackground(game),
+                      borderBottom: idx === 0 && pair.length > 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
+                    }}
+                  >
+                    <td style={{ padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)" }}>{game.team}</td>
+                    <td style={{ padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#f87171" }}>
+                      {game.spread > 0 ? '+' : ''}{game.spread}
+                    </td>
+                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.model.toFixed(1)}</td>
+                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.net.toFixed(1)}</td>
+                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.rankDiff.toFixed(0)}</td>
+                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.avgRank.toFixed(0)}</td>
+                    <td style={{ padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.finalScore || '-'}</td>
+                    <td style={{
+                      padding: "10px 8px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      color: game.ats === 'W' ? '#4ade80' : game.ats === 'L' ? '#f87171' : 'var(--foreground-muted)'
+                    }}>
+                      {game.ats || '-'}
+                    </td>
+                    <td style={{ padding: "10px 8px", fontSize: "11px", color: "var(--foreground-muted)" }}>
+                      {game.matchingPatterns?.length ? game.matchingPatterns.length : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
 
       {/* Summary */}
