@@ -370,6 +370,50 @@ function CBBContent() {
   );
 }
 
+// Plain English pattern descriptions
+const PATTERN_LABELS: Record<string, { title: string; subtitle: string }> = {
+  rank_diff: {
+    title: "Evenly Matched Underdog",
+    subtitle: "Teams within 6 ranks of each other, taking the points"
+  },
+  pattern_1: {
+    title: "Big Underdog Value",
+    subtitle: "Model likes the dog getting 18+ points"
+  },
+  pattern_2: {
+    title: "Mid-Range Value Dog",
+    subtitle: "Solid team (Net 10-15) getting 14+ points"
+  },
+  pattern_3: {
+    title: "Model Favors the Dog",
+    subtitle: "Model agrees with underdog getting 14+ points"
+  },
+  pattern_4: {
+    title: "Strong Model Edge",
+    subtitle: "Model strongly favors dog getting 14+ points"
+  },
+  pattern_5: {
+    title: "Competent Underdog",
+    subtitle: "Decent team (Net 0-15) getting 14+ points"
+  },
+  pattern_6: {
+    title: "Model Loves the Spread",
+    subtitle: "Model heavily favors dog getting 7+ points"
+  },
+  pattern_8: {
+    title: "Double-Digit Dog",
+    subtitle: "Model supports underdog getting 10+ points"
+  },
+  pattern_9: {
+    title: "Big Spread, Beatable Favorite",
+    subtitle: "14+ point dog against non-elite team (Net < 20)"
+  },
+  pattern_10: {
+    title: "Quality Dog, Big Spread",
+    subtitle: "Good team (Net 10+) getting 10+ points with model support"
+  },
+};
+
 function DashboardView({ patterns }: { patterns: Pattern[] }) {
   return (
     <div>
@@ -378,53 +422,45 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
       </h2>
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
         gap: "16px",
       }}>
-        {patterns.map(pattern => (
-          <div
-            key={pattern.id}
-            style={{
-              padding: "16px",
-              borderRadius: "12px",
-              background: pattern.color,
-              border: "1px solid rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "12px", color: "#1a1a1a" }}>
-              {pattern.name}
+        {patterns.map(pattern => {
+          const labels = PATTERN_LABELS[pattern.id] || { title: pattern.name, subtitle: '' };
+          return (
+            <div
+              key={pattern.id}
+              style={{
+                padding: "16px",
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.03)",
+                border: `2px solid ${pattern.color}`,
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px", color: "var(--foreground)" }}>
+                {labels.title}
+              </div>
+              <div style={{ fontSize: "12px", color: "var(--foreground-muted)", marginBottom: "12px" }}>
+                {labels.subtitle}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
+                <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                  <span style={{ fontWeight: 500, color: "var(--foreground)" }}>Record:</span> {pattern.wins}-{pattern.losses}
+                </div>
+                <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                  <span style={{ fontWeight: 500, color: "var(--foreground)" }}>Win%:</span> {pattern.winPct.toFixed(1)}%
+                </div>
+                <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                  <span style={{ fontWeight: 500, color: "var(--foreground)" }}>ROI:</span> {pattern.roi > 0 ? '+' : ''}{pattern.roi.toFixed(1)}%
+                </div>
+                <div style={{ fontSize: "13px", color: "var(--foreground-muted)" }}>
+                  <span style={{ fontWeight: 500, color: "var(--foreground)" }}>Sample:</span> {pattern.sample}
+                </div>
+              </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px" }}>
-              <div style={{ fontSize: "13px", color: "#333" }}>
-                <span style={{ fontWeight: 500 }}>Record:</span> {pattern.wins}-{pattern.losses}
-              </div>
-              <div style={{ fontSize: "13px", color: "#333" }}>
-                <span style={{ fontWeight: 500 }}>Win%:</span> {pattern.winPct.toFixed(1)}%
-              </div>
-              <div style={{ fontSize: "13px", color: "#333" }}>
-                <span style={{ fontWeight: 500 }}>ROI:</span> {pattern.roi > 0 ? '+' : ''}{pattern.roi.toFixed(1)}%
-              </div>
-              <div style={{ fontSize: "13px", color: "#333" }}>
-                <span style={{ fontWeight: 500 }}>Sample:</span> {pattern.sample}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Legend */}
-      <div style={{ marginTop: "24px", padding: "16px", borderRadius: "8px", background: "rgba(255, 255, 255, 0.03)", border: "1px solid rgba(255, 255, 255, 0.1)" }}>
-        <h3 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "12px", color: "var(--foreground)" }}>
-          Pattern Legend
-        </h3>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-          {patterns.map(p => (
-            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <div style={{ width: "16px", height: "16px", borderRadius: "4px", background: p.color }} />
-              <span style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>{p.name}</span>
-            </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
