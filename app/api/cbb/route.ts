@@ -49,36 +49,10 @@ export async function POST(request: NextRequest) {
     const { action } = body;
 
     if (action === 'sync') {
-      // Ping Jimmy to run the sync
-      try {
-        const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            tool: 'sessions_send',
-            args: {
-              sessionKey: 'agent:main:main',
-              message: '[CBB Sync Request from Command Center] Please run: cbb sync'
-            }
-          })
-        });
-
-        if (response.ok) {
-          return NextResponse.json({
-            success: true,
-            message: 'Sync request sent to Jimmy. Check Telegram for updates.'
-          });
-        }
-      } catch (e) {
-        // Gateway not reachable - fallback message
-      }
-      
+      // Can't reach local gateway from Vercel - tell user to ask Jimmy
       return NextResponse.json({
-        success: false,
-        message: 'Could not reach Jimmy. Run manually: cd ~/openclaw/openclaw/skills/cbb-scraper && bash cbb_sync.sh'
+        success: true,
+        message: '📨 Tell Jimmy: "cbb sync" in Telegram to run the sync.'
       });
     }
 
