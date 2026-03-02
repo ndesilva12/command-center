@@ -75,7 +75,7 @@ export default function CBBPage() {
 
 function CBBContent() {
   const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('cbb', 'CBB Value Plays', '#f97316');
+  const toolCustom = getCustomization('cbb', 'CBB Value Plays', '#22c55e');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'today' | 'tomorrow'>('dashboard');
   const [isMobile, setIsMobile] = useState(false);
   const [data, setData] = useState<CBBData | null>(null);
@@ -232,7 +232,7 @@ function CBBContent() {
         <div style={{ marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <Trophy style={{ width: "32px", height: "32px", color: "#f97316" }} />
+              <Trophy style={{ width: "32px", height: "32px", color: "#22c55e" }} />
               <h1 style={{ fontSize: isMobile ? "24px" : "32px", fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
                 {toolCustom.name}
               </h1>
@@ -243,9 +243,9 @@ function CBBContent() {
               style={{
                 padding: "10px 20px",
                 borderRadius: "8px",
-                border: "1px solid rgba(249, 115, 22, 0.4)",
-                background: syncing ? "rgba(249, 115, 22, 0.2)" : "rgba(249, 115, 22, 0.12)",
-                color: "#fb923c",
+                border: "1px solid rgba(34, 197, 94, 0.4)",
+                background: syncing ? "rgba(34, 197, 94, 0.2)" : "rgba(34, 197, 94, 0.12)",
+                color: "#4ade80",
                 fontSize: "14px",
                 fontWeight: 600,
                 cursor: syncing ? "not-allowed" : "pointer",
@@ -315,9 +315,9 @@ function CBBContent() {
               style={{
                 padding: isMobile ? "8px 16px" : "10px 20px",
                 borderRadius: "8px",
-                border: activeTab === id ? "1px solid rgba(249, 115, 22, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
-                background: activeTab === id ? "rgba(249, 115, 22, 0.12)" : "rgba(255, 255, 255, 0.03)",
-                color: activeTab === id ? "#fb923c" : "rgba(255, 255, 255, 0.7)",
+                border: activeTab === id ? "1px solid rgba(34, 197, 94, 0.4)" : "1px solid rgba(255, 255, 255, 0.1)",
+                background: activeTab === id ? "rgba(34, 197, 94, 0.12)" : "rgba(255, 255, 255, 0.03)",
+                color: activeTab === id ? "#4ade80" : "rgba(255, 255, 255, 0.7)",
                 fontSize: isMobile ? "13px" : "14px",
                 fontWeight: activeTab === id ? 600 : 500,
                 cursor: "pointer",
@@ -333,7 +333,7 @@ function CBBContent() {
                 <span style={{
                   padding: "2px 6px",
                   borderRadius: "4px",
-                  background: activeTab === id ? "rgba(249, 115, 22, 0.3)" : "rgba(255, 255, 255, 0.1)",
+                  background: activeTab === id ? "rgba(34, 197, 94, 0.3)" : "rgba(255, 255, 255, 0.1)",
                   fontSize: "11px",
                 }}>
                   {count}
