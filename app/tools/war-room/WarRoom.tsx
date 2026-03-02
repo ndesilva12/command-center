@@ -55,6 +55,7 @@ import { BigBoardView } from "./BigBoardView";
 import { DepthChartBuilder } from "./DepthChartBuilder";
 import { ThePortal } from "./ThePortal";
 import { BartTorvik } from "./BartTorvik";
+import { D1Directory } from "./D1Directory";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2430,7 +2431,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "portal" | "budget" | "network" | "connections">("fulldatabase");
+  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "portal" | "budget" | "network" | "connections" | "directory">("fulldatabase");
   const [syncTrigger, setSyncTrigger] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [syncing, setSyncing] = useState(false);
@@ -2462,6 +2463,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },
     { id: "connections" as const, label: "Coaching Connections", icon: Zap },
+    { id: "directory" as const, label: "D1 Directory", icon: List },
   ];
 
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
@@ -2473,6 +2475,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
     network: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
     connections: { active: "#9ca3af", border: "rgba(107,114,128,0.4)", bg: "rgba(107,114,128,0.10)" },
+    directory: { active: "#8b5cf6", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
   };
 
   return (
@@ -2532,6 +2535,7 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
         {activeView === "budget" && <BudgetRosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "network" && <NetworkTool isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "connections" && <CoachingConnections isMobile={isMobile} syncTrigger={syncTrigger} />}
+        {activeView === "directory" && <D1Directory isMobile={isMobile} />}
       </div>
     </div>
   );
