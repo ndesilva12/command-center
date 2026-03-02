@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Trophy, RefreshCw, Calendar, TrendingUp, Target, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Trophy, RefreshCw, Calendar, TrendingUp, Target, Loader2, Pencil, Check, X } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -23,6 +23,7 @@ interface Pattern {
 
 interface Game {
   id: number;
+  row: number;  // Actual sheet row number for editing
   team: string;
   spread: number;
   model: number;
@@ -231,6 +232,22 @@ function CBBContent() {
     return game.matchingPatterns.map(p => PATTERN_NUMBERS[p] || '?').join(', ');
   };
 
+  const handleGameUpdate = (game: Game, newTeam: string) => {
+    // Update local state to reflect the change
+    if (data) {
+      const updateGames = (games: Game[]) => 
+        games.map(g => g.id === game.id ? { ...g, team: newTeam } : g);
+      
+      setData({
+        ...data,
+        games: updateGames(data.games),
+        yesterdayGames: updateGames(data.yesterdayGames),
+        todayGames: updateGames(data.todayGames),
+        tomorrowGames: updateGames(data.tomorrowGames),
+      });
+    }
+  };
+
   return (
     <>
       <TopNav />
@@ -379,17 +396,17 @@ function CBBContent() {
 
         {/* Yesterday Tab */}
         {!loading && activeTab === 'yesterday' && data && (
-          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} />
+          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} onGameUpdate={handleGameUpdate} />
         )}
 
         {/* Today Tab */}
         {!loading && activeTab === 'today' && data && (
-          <GamesView games={data.todayGames} title={`Today's Games (${data.todayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} />
+          <GamesView games={data.todayGames} title={`Today's Games (${data.todayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} onGameUpdate={handleGameUpdate} />
         )}
 
         {/* Tomorrow Tab */}
         {!loading && activeTab === 'tomorrow' && data && (
-          <GamesView games={data.tomorrowGames} title={`Tomorrow's Games (${data.tomorrowStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} />
+          <GamesView games={data.tomorrowGames} title={`Tomorrow's Games (${data.tomorrowStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} onGameUpdate={handleGameUpdate} />
         )}
       </main>
     </>
@@ -507,7 +524,108 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
   );
 }
 
-function GamesView({ games, title, getRowBackground, getPatternNumbers }: { games: Game[]; title: string; getRowBackground: (g: Game) => string; getPatternNumbers: (g: Game) => string }) {
+// Editable team name cell
+function EditableTeamCell({ game, onUpdate }: { game: Game; onUpdate: (game: Game, newName: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(game.team);
+  const [saving, setSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const handleSave = async () => {
+    if (value === game.team) {
+      setEditing(false);
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const response = await fetch('/api/cbb/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: game.row, column: 'team', value }),
+      });
+      
+      if (response.ok) {
+        onUpdate(game, value);
+        setEditing(false);
+      } else {
+        alert('Failed to save');
+        setValue(game.team);
+      }
+    } catch (e) {
+      alert('Failed to save');
+      setValue(game.team);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setValue(game.team);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') handleCancel();
+  };
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={saving}
+          style={{
+            padding: '4px 8px',
+            fontSize: '13px',
+            border: '1px solid rgba(34, 197, 94, 0.5)',
+            borderRadius: '4px',
+            background: 'rgba(0, 0, 0, 0.3)',
+            color: 'var(--foreground)',
+            width: '140px',
+          }}
+        />
+        <button onClick={handleSave} disabled={saving} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
+          <Check size={14} color="#4ade80" />
+        </button>
+        <button onClick={handleCancel} disabled={saving} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
+          <X size={14} color="#f87171" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      onClick={() => setEditing(true)}
+      style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '6px', 
+        cursor: 'pointer',
+        padding: '2px 0',
+      }}
+      title="Click to edit"
+    >
+      <span>{game.team}</span>
+      <Pencil size={12} style={{ opacity: 0.4 }} />
+    </div>
+  );
+}
+
+function GamesView({ games, title, getRowBackground, getPatternNumbers, onGameUpdate }: { games: Game[]; title: string; getRowBackground: (g: Game) => string; getPatternNumbers: (g: Game) => string; onGameUpdate: (game: Game, newTeam: string) => void }) {
   if (games.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--foreground-muted)" }}>
@@ -588,7 +706,9 @@ function GamesView({ games, title, getRowBackground, getPatternNumbers }: { game
                       borderBottom: idx === 0 && pair.length > 1 ? "1px solid rgba(255, 255, 255, 0.05)" : "none",
                     }}
                   >
-                    <td style={{ width: colWidths.team, padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{game.team}</td>
+                    <td style={{ width: colWidths.team, padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <EditableTeamCell game={game} onUpdate={onGameUpdate} />
+                    </td>
                     <td style={{ width: colWidths.spread, padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#f87171" }}>
                       {game.spread > 0 ? '+' : ''}{game.spread}
                     </td>

@@ -115,6 +115,7 @@ async function fetchSheetData() {
 
   const games = gamesRaw.map((row: string[], idx: number) => ({
     id: idx,
+    row: 21 + idx,  // Actual sheet row number (data starts at row 21)
     team: row[0] || '',
     spread: parseFloat(row[1]) || 0,
     model: parseFloat(row[2]) || 0,
