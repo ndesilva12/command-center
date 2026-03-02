@@ -40,17 +40,45 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const OPENCLAW_GATEWAY = process.env.OPENCLAW_GATEWAY || 'http://localhost:18789';
+const OPENCLAW_TOKEN = 'fb23d6588a51f03dbfed5d1a3476737417034393f6b9ea57';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { action } = body;
 
     if (action === 'sync') {
-      // Sync requires local execution - return instructions
+      // Ping Jimmy to run the sync
+      try {
+        const response = await fetch(`${OPENCLAW_GATEWAY}/tools/invoke`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENCLAW_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            tool: 'sessions_send',
+            args: {
+              sessionKey: 'agent:main:main',
+              message: '[CBB Sync Request from Command Center] Please run: cbb sync'
+            }
+          })
+        });
+
+        if (response.ok) {
+          return NextResponse.json({
+            success: true,
+            message: 'Sync request sent to Jimmy. Check Telegram for updates.'
+          });
+        }
+      } catch (e) {
+        // Gateway not reachable - fallback message
+      }
+      
       return NextResponse.json({
         success: false,
-        message: 'Sync must be run locally. Use: cd /Users/normandesilva/openclaw/openclaw/skills/cbb-scraper && bash cbb_sync.sh',
-        note: 'Or ask Jimmy to run "cbb sync" for you.'
+        message: 'Could not reach Jimmy. Run manually: cd ~/openclaw/openclaw/skills/cbb-scraper && bash cbb_sync.sh'
       });
     }
 
