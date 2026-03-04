@@ -43,6 +43,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'war-room', name: 'War Room', href: '/tools/war-room', description: 'Basketball intelligence, portal scouting, roster building, network mapping' },
   { id: 'roster-map', name: 'Roster Map', href: '/tools/roster-map', description: 'Visualize where college basketball players come from on a map' },
   { id: 'summarizer', name: 'Summarizer', href: '/tools/summarizer', description: 'Condense any content into custom-length summaries' },
+  { id: 'business', name: 'Business Intel', href: '/tools/business', description: 'Private business intelligence and public records' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];
