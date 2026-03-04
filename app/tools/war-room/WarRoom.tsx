@@ -1612,7 +1612,7 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
   const [people, setPeople] = useState<NetworkPerson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [subView, setSubView] = useState<"people" | "schools" | "map">("people");
+  const [subView, setSubView] = useState<"people" | "map">("people");
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("All");
   const [filterRelationship, setFilterRelationship] = useState<"All" | "1st" | "2nd">("All");
@@ -1869,9 +1869,6 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
         <button onClick={() => setSubView("people")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "people" ? "1px solid rgba(59,130,246,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "people" ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.03)", color: subView === "people" ? "#60a5fa" : "#9ca3af", fontSize: "13px", fontWeight: subView === "people" ? 600 : 400, cursor: "pointer" }}>
           <Users size={14} />People Directory
         </button>
-        <button onClick={() => setSubView("schools")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "schools" ? "1px solid rgba(139,92,246,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "schools" ? "rgba(139,92,246,0.12)" : "rgba(255,255,255,0.03)", color: subView === "schools" ? "#a78bfa" : "#9ca3af", fontSize: "13px", fontWeight: subView === "schools" ? 600 : 400, cursor: "pointer" }}>
-          <List size={14} />School Directory
-        </button>
         <button onClick={() => setSubView("map")} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", borderRadius: "8px", border: subView === "map" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.1)", background: subView === "map" ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.03)", color: subView === "map" ? "#10b981" : "#9ca3af", fontSize: "13px", fontWeight: subView === "map" ? 600 : 400, cursor: "pointer" }}>
           <Network size={14} />Network Map
         </button>
@@ -1972,10 +1969,6 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
             })}
           </div>
         </>
-      )}
-
-      {subView === "schools" && (
-        <D1Directory isMobile={isMobile} />
       )}
 
       {subView === "map" && (
@@ -2440,7 +2433,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
 // ─── MAIN WAR ROOM COMPONENT ──────────────────────────────────────────────────
 
 export function WarRoom({ isMobile }: { isMobile: boolean }) {
-  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "portal" | "budget" | "network" | "connections">("fulldatabase");
+  const [activeView, setActiveView] = useState<"fulldatabase" | "rankings" | "torvik" | "roster" | "budget" | "network" | "schools">("fulldatabase");
   const [syncTrigger, setSyncTrigger] = useState(Date.now());
   const [lastSyncedAt, setLastSyncedAt] = useState(new Date());
   const [syncing, setSyncing] = useState(false);
@@ -2468,10 +2461,9 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     { id: "rankings" as const, label: "Big Board", icon: Star },
     { id: "torvik" as const, label: "Bart Torvik", icon: TrendingUp },
     { id: "roster" as const, label: "Depth Charts", icon: Users },
-    { id: "portal" as const, label: "The Portal", icon: Target },
     { id: "budget" as const, label: "Budget Builder", icon: DollarSign },
     { id: "network" as const, label: "Network", icon: Network },
-    { id: "connections" as const, label: "Coaching Connections", icon: Zap },
+    { id: "schools" as const, label: "School Directory", icon: List },
   ];
 
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
@@ -2479,10 +2471,9 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
     torvik: { active: "#ef4444", border: "rgba(239,68,68,0.4)", bg: "rgba(239,68,68,0.12)" },
     roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
-    portal: { active: "#60a5fa", border: "rgba(59,130,246,0.4)", bg: "rgba(59,130,246,0.12)" },
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
     network: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
-    connections: { active: "#9ca3af", border: "rgba(107,114,128,0.4)", bg: "rgba(107,114,128,0.10)" },
+    schools: { active: "#8b5cf6", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },
   };
 
   return (
@@ -2538,10 +2529,9 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
         {activeView === "rankings" && <BigBoardView isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "torvik" && <BartTorvik isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "roster" && <DepthChartBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "portal" && <ThePortal isMobile={isMobile} />}
         {activeView === "budget" && <BudgetRosterBuilder isMobile={isMobile} syncTrigger={syncTrigger} />}
         {activeView === "network" && <NetworkTool isMobile={isMobile} syncTrigger={syncTrigger} />}
-        {activeView === "connections" && <CoachingConnections isMobile={isMobile} syncTrigger={syncTrigger} />}
+        {activeView === "schools" && <D1Directory isMobile={isMobile} />}
       </div>
     </div>
   );

@@ -454,15 +454,9 @@ const D1_TEAMS: Team[] = [
   { name: "South Carolina State", mascot: "Bulldogs", conference: "MEAC", website: "scstateathletics.com", rosterUrl: "https://scstateathletics.com/sports/mens-basketball/roster", staffUrl: "https://scstateathletics.com/sports/mens-basketball/coaches" },
 ];
 
-// Get unique conferences with sorting by tier
+// Get unique conferences - Top 5 power conferences first, then alphabetical
 const CONF_ORDER = [
-  "ACC", "Big 12", "Big East", "Big Ten", "SEC",  // Power 5
-  "American", "Mountain West", "WCC", "A-10",      // High-Major
-  "MVC", "MAC", "C-USA", "Sun Belt", "CAA", "Ivy", // Mid-Major
-  "Horizon", "MAAC", "Patriot", "SoCon",           // Low-Major
-  "America East", "ASUN", "Big Sky", "Big South", "Big West",
-  "NEC", "OVC", "Southland", "Summit", "WAC",
-  "SWAC", "MEAC"                                   // HBCU
+  "ACC", "Big 12", "Big East", "Big Ten", "SEC"  // Power 5 at top, rest alphabetical
 ];
 
 const CONFERENCES = [...new Set(D1_TEAMS.map(t => t.conference))].sort((a, b) => {
