@@ -38,15 +38,11 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'jmail', name: 'JMail', href: '/tools/jmail', description: 'Search Jeffrey Epstein\'s emails (2002-2011)' },
   { id: 'legal', name: 'Legal', href: '/tools/legal', description: 'Legal assistant and contract review' },
   { id: 'relationships', name: 'Relationships', href: '/tools/relationships', description: 'Contact insights' },
-  { id: 'business-info', name: 'Business Info', href: '/tools/business-info', description: 'Company research' },
-  { id: 'corporate', name: 'Corporate', href: '/tools/corporate', description: 'Corporate insights' },
   { id: 'politicorp', name: 'Politicorp', href: '/tools/politicorp', description: 'Corporate political analysis and compass' },
-  { id: 'cinderella', name: 'Cinderella Project', href: '/tools/cinderella', description: 'PE-backed NCAA basketball acquisition tracker' },
   { id: 'cbb', name: 'CBB Value Plays', href: '/tools/cbb', description: 'College basketball ATS value play analysis with pattern-based betting' },
   { id: 'war-room', name: 'War Room', href: '/tools/war-room', description: 'Basketball intelligence, portal scouting, roster building, network mapping' },
   { id: 'roster-map', name: 'Roster Map', href: '/tools/roster-map', description: 'Visualize where college basketball players come from on a map' },
   { id: 'summarizer', name: 'Summarizer', href: '/tools/summarizer', description: 'Condense any content into custom-length summaries' },
-  { id: 'business', name: 'Business Intel', href: '/tools/business', description: 'Private business intelligence and public records' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];
