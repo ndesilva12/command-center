@@ -14,7 +14,6 @@ export interface ToolDefinition {
 export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
   { id: 'emails', name: 'Emails', href: '/tools/emails', description: 'Gmail inbox and management' },
   { id: 'calendar', name: 'Calendar', href: '/tools/calendar', description: 'Google Calendar events' },
-  { id: 'contacts', name: 'Contacts', href: '/tools/contacts', description: 'Google Contacts' },
   { id: 'people', name: 'People', href: '/tools/people', description: 'Personal network from Notion' },
   { id: 'recommendations', name: 'Recommendations', href: '/tools/recommendations', description: 'Track suggestions' },
   { id: 'read', name: 'Read', href: '/tools/read', description: 'RSS feed reader' },
@@ -22,12 +21,9 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
   { id: 'market', name: 'Market', href: '/tools/market', description: 'Stocks and crypto prices' },
   { id: 'notes', name: 'Notes', href: '/tools/notes', description: 'Quick notes' },
   { id: 'files', name: 'Files', href: '/tools/files', description: 'Google Drive files' },
-  { id: 'spotify', name: 'Spotify', href: '/tools/spotify', description: 'Music streaming' },
   { id: 'trending', name: 'Trending', href: '/tools/trending', description: 'Trending topics' },
-  { id: 'rosters', name: 'Rosters', href: '/tools/rosters', description: 'Team rosters' },
   { id: 'meals', name: 'Meals', href: '/tools/meals', description: 'Weekly meal planning' },
   { id: 'image-lookup', name: 'Image Lookup', href: '/tools/image-lookup', description: 'Reverse image search' },
-  { id: 'investors', name: 'Investors', href: '/tools/investors', description: 'Fundraising pipeline' },
   { id: 'shopping', name: 'Shopping', href: '/tools/shopping', description: 'Shopping wishlist and lists' },
   { id: 'emailer', name: 'Emailer', href: '/tools/emailer', description: 'Send personalized bulk emails' },
 ];
@@ -41,9 +37,7 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'dark-search', name: 'Dark Search', href: '/tools/dark-search', description: 'Dark web search' },
   { id: 'jmail', name: 'JMail', href: '/tools/jmail', description: 'Search Jeffrey Epstein\'s emails (2002-2011)' },
   { id: 'legal', name: 'Legal', href: '/tools/legal', description: 'Legal assistant and contract review' },
-  { id: 'contact-finder', name: 'Contact Finder', href: '/tools/contact-finder', description: 'Find contact info' },
   { id: 'relationships', name: 'Relationships', href: '/tools/relationships', description: 'Contact insights' },
-  { id: 'mission', name: 'Mission', href: '/tools/mission', description: 'Task management' },
   { id: 'business-info', name: 'Business Info', href: '/tools/business-info', description: 'Company research' },
   { id: 'corporate', name: 'Corporate', href: '/tools/corporate', description: 'Corporate insights' },
   { id: 'politicorp', name: 'Politicorp', href: '/tools/politicorp', description: 'Corporate political analysis and compass' },
@@ -53,7 +47,6 @@ export const INTELLIGENCE_TOOLS: ToolDefinition[] = [
   { id: 'roster-map', name: 'Roster Map', href: '/tools/roster-map', description: 'Visualize where college basketball players come from on a map' },
   { id: 'summarizer', name: 'Summarizer', href: '/tools/summarizer', description: 'Condense any content into custom-length summaries' },
   { id: 'business', name: 'Business Intel', href: '/tools/business', description: 'Private business intelligence and public records' },
-  { id: 'local-leads', name: 'Local Leads', href: '/tools/local-leads', description: 'Lead generation for MA South Shore businesses' },
 ];
 
 export const ALL_TOOLS = [...PRODUCTIVITY_TOOLS, ...INTELLIGENCE_TOOLS];
