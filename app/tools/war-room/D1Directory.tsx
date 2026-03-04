@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Search, ExternalLink, Users, ChevronDown, ChevronUp } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Search, ExternalLink, Users, ChevronDown, ChevronUp, Star, X, Check, Clock, XCircle } from "lucide-react";
 
 interface Team {
   name: string;
@@ -10,6 +10,15 @@ interface Team {
   website: string;
   rosterUrl: string;
   staffUrl: string;
+}
+
+type EngagementStatus = "engaged" | "approved" | "declined";
+
+interface EngagedSchool {
+  name: string;
+  conference: string;
+  status: EngagementStatus;
+  engagedAt: string;
 }
 
 // Complete D1 Basketball Teams Directory - ALL 32 CONFERENCES (362 teams)
@@ -472,11 +481,58 @@ interface D1DirectoryProps {
   isMobile: boolean;
 }
 
+const STORAGE_KEY = "warroom_engaged_schools";
+
 export function D1Directory({ isMobile }: D1DirectoryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedConference, setSelectedConference] = useState<string>("all");
-  // Default to ALL COLLAPSED
   const [expandedConferences, setExpandedConferences] = useState<Set<string>>(new Set());
+  const [engagedSchools, setEngagedSchools] = useState<EngagedSchool[]>([]);
+
+  // Load engaged schools from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setEngagedSchools(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse engaged schools:", e);
+      }
+    }
+  }, []);
+
+  // Save engaged schools to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(engagedSchools));
+  }, [engagedSchools]);
+
+  const engageSchool = (team: Team) => {
+    if (engagedSchools.some(s => s.name === team.name)) return;
+    setEngagedSchools(prev => [...prev, {
+      name: team.name,
+      conference: team.conference,
+      status: "engaged",
+      engagedAt: new Date().toISOString(),
+    }]);
+  };
+
+  const removeEngagedSchool = (name: string) => {
+    setEngagedSchools(prev => prev.filter(s => s.name !== name));
+  };
+
+  const updateSchoolStatus = (name: string, status: EngagementStatus) => {
+    setEngagedSchools(prev => prev.map(s => s.name === name ? { ...s, status } : s));
+  };
+
+  const isEngaged = (teamName: string) => engagedSchools.some(s => s.name === teamName);
+
+  const getTeamByName = (name: string) => D1_TEAMS.find(t => t.name === name);
+
+  const statusConfig: Record<EngagementStatus, { label: string; color: string; bg: string; border: string; icon: any }> = {
+    engaged: { label: "Engaged", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.12)", border: "rgba(245, 158, 11, 0.3)", icon: Clock },
+    approved: { label: "Approved", color: "#10b981", bg: "rgba(16, 185, 129, 0.12)", border: "rgba(16, 185, 129, 0.3)", icon: Check },
+    declined: { label: "Declined", color: "#ef4444", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.3)", icon: XCircle },
+  };
 
   const filteredTeams = useMemo(() => {
     let teams = D1_TEAMS;
@@ -591,7 +647,113 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
       {/* Results count */}
       <div style={{ fontSize: "12px", color: "#6b7280" }}>
         Showing {filteredTeams.length} teams across {Object.keys(teamsByConference).length} conferences
+        {engagedSchools.length > 0 && <span> · {engagedSchools.length} engaged</span>}
       </div>
+
+      {/* Engaged Schools Section */}
+      {engagedSchools.length > 0 && (
+        <div style={{ borderRadius: "12px", border: "1px solid rgba(245, 158, 11, 0.3)", background: "rgba(245, 158, 11, 0.05)", overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", background: "rgba(245, 158, 11, 0.08)", borderBottom: "1px solid rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Star size={16} color="#f59e0b" />
+            <span style={{ fontWeight: 600, fontSize: "14px", color: "#f59e0b" }}>Engaged Schools</span>
+            <span style={{ fontSize: "12px", color: "#9ca3af", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "4px" }}>
+              {engagedSchools.length}
+            </span>
+          </div>
+          <div style={{ padding: "8px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <th style={{ textAlign: "left", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>School</th>
+                  <th style={{ textAlign: "left", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>Conference</th>
+                  <th style={{ textAlign: "center", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>Status</th>
+                  <th style={{ textAlign: "center", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>Links</th>
+                  <th style={{ textAlign: "center", padding: "8px 12px", color: "#9ca3af", fontWeight: 500, width: "40px" }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {engagedSchools.map((school, idx) => {
+                  const team = getTeamByName(school.name);
+                  const cfg = statusConfig[school.status];
+                  const StatusIcon = cfg.icon;
+                  return (
+                    <tr key={school.name} style={{ borderBottom: idx < engagedSchools.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
+                      <td style={{ padding: "10px 12px", color: "#f3f4f6", fontWeight: 500 }}>{school.name}</td>
+                      <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{school.conference}</td>
+                      <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                        <select
+                          value={school.status}
+                          onChange={(e) => updateSchoolStatus(school.name, e.target.value as EngagementStatus)}
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: "6px",
+                            background: cfg.bg,
+                            border: `1px solid ${cfg.border}`,
+                            color: cfg.color,
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                            outline: "none",
+                          }}
+                        >
+                          <option value="engaged">🕐 Engaged</option>
+                          <option value="approved">✓ Approved</option>
+                          <option value="declined">✗ Declined</option>
+                        </select>
+                      </td>
+                      <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                        {team && (
+                          <a
+                            href={team.rosterUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              background: "rgba(139, 92, 246, 0.12)",
+                              border: "1px solid rgba(139, 92, 246, 0.3)",
+                              color: "#a78bfa",
+                              fontSize: "12px",
+                              textDecoration: "none",
+                              fontWeight: 500,
+                            }}
+                          >
+                            <Users size={12} />
+                            View
+                            <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </td>
+                      <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                        <button
+                          onClick={() => removeEngagedSchool(school.name)}
+                          style={{
+                            padding: "4px",
+                            borderRadius: "4px",
+                            background: "rgba(239, 68, 68, 0.1)",
+                            border: "1px solid rgba(239, 68, 68, 0.2)",
+                            color: "#ef4444",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                          title="Remove from engaged"
+                        >
+                          <X size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Teams by Conference */}
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -630,39 +792,71 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
                       <th style={{ textAlign: "left", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>Team</th>
                       <th style={{ textAlign: "left", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>Mascot</th>
                       <th style={{ textAlign: "center", padding: "8px 12px", color: "#9ca3af", fontWeight: 500 }}>Roster/Staff</th>
+                      <th style={{ textAlign: "center", padding: "8px 12px", color: "#9ca3af", fontWeight: 500, width: "100px" }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {teams.sort((a, b) => a.name.localeCompare(b.name)).map((team, idx) => (
-                      <tr key={team.name} style={{ borderBottom: idx < teams.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
-                        <td style={{ padding: "10px 12px", color: "#f3f4f6", fontWeight: 500 }}>{team.name}</td>
-                        <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{team.mascot}</td>
-                        <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                          <a
-                            href={team.rosterUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              padding: "4px 10px",
-                              borderRadius: "6px",
-                              background: "rgba(139, 92, 246, 0.12)",
-                              border: "1px solid rgba(139, 92, 246, 0.3)",
-                              color: "#a78bfa",
-                              fontSize: "12px",
-                              textDecoration: "none",
-                              fontWeight: 500,
-                            }}
-                          >
-                            <Users size={12} />
-                            View
-                            <ExternalLink size={10} />
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
+                    {teams.sort((a, b) => a.name.localeCompare(b.name)).map((team, idx) => {
+                      const engaged = isEngaged(team.name);
+                      return (
+                        <tr key={team.name} style={{ borderBottom: idx < teams.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
+                          <td style={{ padding: "10px 12px", color: "#f3f4f6", fontWeight: 500 }}>
+                            {team.name}
+                            {engaged && <Star size={12} color="#f59e0b" style={{ marginLeft: "6px", display: "inline" }} />}
+                          </td>
+                          <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{team.mascot}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                            <a
+                              href={team.rosterUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                background: "rgba(139, 92, 246, 0.12)",
+                                border: "1px solid rgba(139, 92, 246, 0.3)",
+                                color: "#a78bfa",
+                                fontSize: "12px",
+                                textDecoration: "none",
+                                fontWeight: 500,
+                              }}
+                            >
+                              <Users size={12} />
+                              View
+                              <ExternalLink size={10} />
+                            </a>
+                          </td>
+                          <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                            {engaged ? (
+                              <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 500 }}>Engaged ★</span>
+                            ) : (
+                              <button
+                                onClick={() => engageSchool(team)}
+                                style={{
+                                  padding: "4px 10px",
+                                  borderRadius: "6px",
+                                  background: "rgba(245, 158, 11, 0.12)",
+                                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                                  color: "#f59e0b",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                <Star size={12} />
+                                Engage
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
