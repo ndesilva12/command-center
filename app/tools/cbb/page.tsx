@@ -160,7 +160,7 @@ function CBBContent() {
     fetchData();
   }, []);
 
-  // Pattern matching logic
+  // Pattern matching logic - uses dynamic criteria from sheet
   function addPatternMatching(games: Game[], criteria: any): Game[] {
     return games.map(game => {
       const matching: string[] = [];
@@ -170,43 +170,43 @@ function CBBContent() {
       const rd = game.rankDiff;
 
       // Rank Diff pattern (row 4)
-      if (rd >= (criteria.rdMin || -6) && rd <= (criteria.rdMax || 6) && spread >= (criteria.rdSpread || 0)) {
+      if (rd >= (criteria.rdMin ?? -5) && rd <= (criteria.rdMax ?? 5) && spread >= (criteria.rdSpread ?? 0)) {
         matching.push('rank_diff');
       }
-      // Pattern 1: Model≤0, Spread≥18
-      if (model <= 0 && spread >= 18) {
+      // Pattern 1: Model≤X, Spread≥Y
+      if (model <= (criteria.p1Model ?? 0) && spread >= (criteria.p1Spread ?? 18)) {
         matching.push('pattern_1');
       }
-      // Pattern 2: Net[10,15), Spread≥14
-      if (net >= 10 && net < 15 && spread >= 14) {
+      // Pattern 2: Net[X,Y), Spread≥Z
+      if (net >= (criteria.p2NetMin ?? 10) && net < (criteria.p2NetMax ?? 15) && spread >= (criteria.p2Spread ?? 14)) {
         matching.push('pattern_2');
       }
-      // Pattern 3: Model≤0, Spread≥14
-      if (model <= 0 && spread >= 14) {
+      // Pattern 3: Model≤X, Spread≥Y
+      if (model <= (criteria.p3Model ?? 0) && spread >= (criteria.p3Spread ?? 14)) {
         matching.push('pattern_3');
       }
-      // Pattern 4: Model≤-1, Spread≥14
-      if (model <= -1 && spread >= 14) {
+      // Pattern 4: Model≤X, Spread≥Y
+      if (model <= (criteria.p4Model ?? -1) && spread >= (criteria.p4Spread ?? 14)) {
         matching.push('pattern_4');
       }
-      // Pattern 5: Net[0,15), Spread≥14
-      if (net >= 0 && net < 15 && spread >= 14) {
+      // Pattern 5: Net[X,Y), Spread≥Z
+      if (net >= (criteria.p5NetMin ?? 0) && net < (criteria.p5NetMax ?? 15) && spread >= (criteria.p5Spread ?? 11)) {
         matching.push('pattern_5');
       }
-      // Pattern 6: Model≤-5, Spread≥7
-      if (model <= -5 && spread >= 7) {
+      // Pattern 6: Model≤X, Spread≥Y
+      if (model <= (criteria.p6Model ?? -5) && spread >= (criteria.p6Spread ?? 7)) {
         matching.push('pattern_6');
       }
-      // Pattern 8: Model≤0, Spread≥10
-      if (model <= 0 && spread >= 10) {
+      // Pattern 8: Model≤X, Spread≥Y
+      if (model <= (criteria.p8Model ?? 0) && spread >= (criteria.p8Spread ?? 10)) {
         matching.push('pattern_8');
       }
-      // Pattern 9: Spread≥14, Net<20
-      if (spread >= 14 && net < 20) {
+      // Pattern 9: Spread≥X, Net<Y
+      if (spread >= (criteria.p9Spread ?? 14) && net < (criteria.p9NetMax ?? 20)) {
         matching.push('pattern_9');
       }
-      // Pattern 10: Model≤0, Spread≥10, Net≥10
-      if (model <= 0 && spread >= 10 && net >= 10) {
+      // Pattern 10: Model≤X, Spread≥Y, Net≥Z
+      if (model <= (criteria.p10Model ?? 0) && spread >= (criteria.p10Spread ?? 10) && net >= (criteria.p10NetMin ?? 10)) {
         matching.push('pattern_10');
       }
 
