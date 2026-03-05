@@ -232,6 +232,20 @@ function CBBContent() {
     return game.matchingPatterns.map(p => PATTERN_NUMBERS[p] || '?').join(', ');
   };
 
+  const getPatternNumbersWithWinPct = (game: Game) => {
+    if (!game.matchingPatterns || game.matchingPatterns.length === 0 || !data) {
+      return '-';
+    }
+    return game.matchingPatterns.map(patternId => {
+      const num = PATTERN_NUMBERS[patternId] || '?';
+      const pattern = data.patterns.find(p => p.id === patternId);
+      if (pattern && pattern.winPct > 0) {
+        return `${num} (${pattern.winPct.toFixed(0)}%)`;
+      }
+      return num;
+    }).join(', ');
+  };
+
   const handleGameUpdate = (game: Game, newTeam: string) => {
     // Update local state to reflect the change
     if (data) {
@@ -396,17 +410,17 @@ function CBBContent() {
 
         {/* Yesterday Tab */}
         {!loading && activeTab === 'yesterday' && data && (
-          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} onGameUpdate={handleGameUpdate} />
+          <GamesView games={data.yesterdayGames} title={`Yesterday's Games (${data.yesterdayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbersWithWinPct} onGameUpdate={handleGameUpdate} />
         )}
 
         {/* Today Tab */}
         {!loading && activeTab === 'today' && data && (
-          <GamesView games={data.todayGames} title={`Today's Games (${data.todayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} onGameUpdate={handleGameUpdate} />
+          <GamesView games={data.todayGames} title={`Today's Games (${data.todayStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbersWithWinPct} onGameUpdate={handleGameUpdate} />
         )}
 
         {/* Tomorrow Tab */}
         {!loading && activeTab === 'tomorrow' && data && (
-          <GamesView games={data.tomorrowGames} title={`Tomorrow's Games (${data.tomorrowStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbers} onGameUpdate={handleGameUpdate} />
+          <GamesView games={data.tomorrowGames} title={`Tomorrow's Games (${data.tomorrowStr})`} getRowBackground={getRowBackground} getPatternNumbers={getPatternNumbersWithWinPct} onGameUpdate={handleGameUpdate} />
         )}
       </main>
     </>
