@@ -628,6 +628,8 @@ function DashboardView({ patterns, todayGames, todayStr }: { patterns: Pattern[]
                         const patternNum = PATTERN_NUMBERS[patternId] || '?';
                         const isRankDiff = patternId === 'rank_diff';
                         const labels = PATTERN_LABELS[patternId] || { title: patternId };
+                        const pattern = patterns.find(p => p.id === patternId);
+                        const winPct = pattern?.winPct || 0;
                         return (
                           <div
                             key={patternId}
@@ -644,7 +646,7 @@ function DashboardView({ patterns, todayGames, todayStr }: { patterns: Pattern[]
                               gap: "6px",
                             }}
                           >
-                            #{patternNum}
+                            #{patternNum} {winPct > 0 && <span style={{ fontWeight: 600, opacity: 0.85 }}>({winPct.toFixed(0)}%)</span>}
                           </div>
                         );
                       })}
