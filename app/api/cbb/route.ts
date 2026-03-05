@@ -105,13 +105,13 @@ async function fetchSheetData() {
     rdSpread: parseFloat(criteriaRow[5]) || 0,
   };
 
-  // Parse game data
-  const today = new Date();
-  const todayStr = `${today.getMonth() + 1}/${today.getDate()}`;
-  const tomorrow = new Date(today);
+  // Parse game data - use Eastern Time for date calculations
+  const nowET = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const todayStr = `${nowET.getMonth() + 1}/${nowET.getDate()}`;
+  const tomorrow = new Date(nowET);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = `${tomorrow.getMonth() + 1}/${tomorrow.getDate()}`;
-  const yesterday = new Date(today);
+  const yesterday = new Date(nowET);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = `${yesterday.getMonth() + 1}/${yesterday.getDate()}`;
 
