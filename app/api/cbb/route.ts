@@ -97,63 +97,73 @@ async function fetchSheetData() {
     };
   });
 
-  // Parse criteria from dashboard - read actual values from the sheet
-  // Row 4: Rank Diff - columns: C=RD Min, D=value, E=RD Max, F=value, G=Spread >=, H=value
-  const rdRow = dashboard[3] || [];
-  // Row 7: Pattern 5 - columns: C=Net >=, D=value, E=Net <, F=value, G=Spread >=, H=value
-  const p5Row = dashboard[6] || [];
-  // Row 8: Pattern 10 - columns: C=Net >=, D=value, E=Model <=, F=value, G=Spread >=, H=value
-  const p10Row = dashboard[7] || [];
-  // Row 9: Pattern 2 - columns: C=Net >=, D=value, E=Net <, F=value, G=Spread >=, H=value
-  const p2Row = dashboard[8] || [];
-  // Row 10: Pattern 9 - columns: E=Net <, F=value, G=Spread >=, H=value
-  const p9Row = dashboard[9] || [];
-  // Row 11: Pattern 3 - columns: E=Model <=, F=value, G=Spread >=, H=value
-  const p3Row = dashboard[10] || [];
-  // Row 12: Pattern 8 - columns: E=Model <=, F=value, G=Spread >=, H=value
-  const p8Row = dashboard[11] || [];
-  // Row 13: Pattern 4 - columns: E=Model <=, F=value, G=Spread >=, H=value
-  const p4Row = dashboard[12] || [];
-  // Row 14: Pattern 6 - columns: E=Model <=, F=value, G=Spread >=, H=value
-  const p6Row = dashboard[13] || [];
-  // Row 15: Pattern 1 - columns: E=Model <=, F=value, G=Spread >=, H=value
-  const p1Row = dashboard[14] || [];
+  // Parse criteria from dashboard - CORRECT row mapping based on actual sheet structure:
+  // Row 4: Rank Diff - D=RD Min value, F=RD Max value, H=Spread >= value
+  // Row 7: Pattern 5 (Net[0,15), Spread>=X) - D=Net >=, F=Net <, H=Spread >=
+  // Row 8: Pattern 10 (Model<=0, Spread>=10, Net>=10) - D=Net >=, F=Model <=, H=Spread >=
+  // Row 9: Pattern 9 (Spread>=14, Net<20) - F=Net <, H=Spread >=
+  // Row 10: Pattern 8 (Model<=0, Spread>=10) - F=Model <=, H=Spread >=
+  // Row 11: Pattern 2 (Net[10,15), Spread>=14) - D=Net >=, F=Net <, H=Spread >=
+  // Row 12: Pattern 3 (Model<=0, Spread>=14) - F=Model <=, H=Spread >=
+  // Row 13: Pattern 4 (Model<=-1, Spread>=14) - F=Model <=, H=Spread >=
+  // Row 14: Pattern 6 (Model<=-5, Spread>=7) - F=Model <=, H=Spread >=
+  // Row 15: Pattern 1 (Model<=0, Spread>=18) - F=Model <=, H=Spread >=
+  
+  const row4 = dashboard[3] || [];   // Rank Diff
+  const row7 = dashboard[6] || [];   // Pattern 5
+  const row8 = dashboard[7] || [];   // Pattern 10
+  const row9 = dashboard[8] || [];   // Pattern 9
+  const row10 = dashboard[9] || [];  // Pattern 8
+  const row11 = dashboard[10] || []; // Pattern 2
+  const row12 = dashboard[11] || []; // Pattern 3
+  const row13 = dashboard[12] || []; // Pattern 4
+  const row14 = dashboard[13] || []; // Pattern 6
+  const row15 = dashboard[14] || []; // Pattern 1
 
   const criteria = {
-    // Rank Diff criteria
-    rdMin: parseFloat(rdRow[3]) || -5,
-    rdMax: parseFloat(rdRow[5]) || 5,
-    rdSpread: parseFloat(rdRow[7]) || 0,
-    // Pattern 5: Net[0,15), Spread>=X
-    p5NetMin: parseFloat(p5Row[3]) || 0,
-    p5NetMax: parseFloat(p5Row[5]) || 15,
-    p5Spread: parseFloat(p5Row[7]) || 11,
-    // Pattern 10: Model<=0, Spread>=10, Net>=10
-    p10NetMin: parseFloat(p10Row[3]) || 10,
-    p10Model: parseFloat(p10Row[5]) || 0,
-    p10Spread: parseFloat(p10Row[7]) || 10,
-    // Pattern 2: Net[10,15), Spread>=14
-    p2NetMin: parseFloat(p2Row[3]) || 10,
-    p2NetMax: parseFloat(p2Row[5]) || 15,
-    p2Spread: parseFloat(p2Row[7]) || 14,
-    // Pattern 9: Spread>=14, Net<20
-    p9NetMax: parseFloat(p9Row[5]) || 20,
-    p9Spread: parseFloat(p9Row[7]) || 14,
-    // Pattern 3: Model<=0, Spread>=14
-    p3Model: parseFloat(p3Row[5]) || 0,
-    p3Spread: parseFloat(p3Row[7]) || 14,
-    // Pattern 8: Model<=0, Spread>=10
-    p8Model: parseFloat(p8Row[5]) || 0,
-    p8Spread: parseFloat(p8Row[7]) || 10,
-    // Pattern 4: Model<=-1, Spread>=14
-    p4Model: parseFloat(p4Row[5]) || -1,
-    p4Spread: parseFloat(p4Row[7]) || 14,
-    // Pattern 6: Model<=-5, Spread>=7
-    p6Model: parseFloat(p6Row[5]) || -5,
-    p6Spread: parseFloat(p6Row[7]) || 7,
-    // Pattern 1: Model<=0, Spread>=18
-    p1Model: parseFloat(p1Row[5]) || 0,
-    p1Spread: parseFloat(p1Row[7]) || 18,
+    // Rank Diff (row 4): RD between Min and Max, Spread >= X
+    rdMin: parseFloat(row4[3]) || -5,      // Column D
+    rdMax: parseFloat(row4[5]) || 5,       // Column F
+    rdSpread: parseFloat(row4[7]) || 0,    // Column H
+    
+    // Pattern 5 (row 7): Net[X,Y), Spread>=Z
+    p5NetMin: parseFloat(row7[3]) || 0,    // Column D
+    p5NetMax: parseFloat(row7[5]) || 15,   // Column F
+    p5Spread: parseFloat(row7[7]) || 11,   // Column H
+    
+    // Pattern 10 (row 8): Model<=X, Spread>=Y, Net>=Z
+    p10NetMin: parseFloat(row8[3]) || 10,  // Column D
+    p10Model: parseFloat(row8[5]) || 0,    // Column F
+    p10Spread: parseFloat(row8[7]) || 10,  // Column H
+    
+    // Pattern 9 (row 9): Spread>=X, Net<Y
+    p9NetMax: parseFloat(row9[5]) || 20,   // Column F
+    p9Spread: parseFloat(row9[7]) || 14,   // Column H
+    
+    // Pattern 8 (row 10): Model<=X, Spread>=Y
+    p8Model: parseFloat(row10[5]) || 0,    // Column F
+    p8Spread: parseFloat(row10[7]) || 10,  // Column H
+    
+    // Pattern 2 (row 11): Net[X,Y), Spread>=Z
+    p2NetMin: parseFloat(row11[3]) || 10,  // Column D
+    p2NetMax: parseFloat(row11[5]) || 15,  // Column F
+    p2Spread: parseFloat(row11[7]) || 14,  // Column H
+    
+    // Pattern 3 (row 12): Model<=X, Spread>=Y
+    p3Model: parseFloat(row12[5]) || 0,    // Column F
+    p3Spread: parseFloat(row12[7]) || 14,  // Column H
+    
+    // Pattern 4 (row 13): Model<=X, Spread>=Y
+    p4Model: parseFloat(row13[5]) || -1,   // Column F
+    p4Spread: parseFloat(row13[7]) || 14,  // Column H
+    
+    // Pattern 6 (row 14): Model<=X, Spread>=Y
+    p6Model: parseFloat(row14[5]) || -5,   // Column F
+    p6Spread: parseFloat(row14[7]) || 7,   // Column H
+    
+    // Pattern 1 (row 15): Model<=X, Spread>=Y
+    p1Model: parseFloat(row15[5]) || 0,    // Column F
+    p1Spread: parseFloat(row15[7]) || 18,  // Column H
   };
 
   // Parse game data - use Eastern Time for date calculations
