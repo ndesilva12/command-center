@@ -5,17 +5,28 @@ import { getCinderellaAuth } from '@/lib/cinderella-auth';
 const SHEET_ID = '1434MZVRl65IRlNNk6XlKY7_mCbZzDqWANOqjS5AU22Y';
 
 // Pattern definitions matching the dashboard
+// PATTERNS must match actual sheet row positions!
+// Row 4: Rank Diff
+// Row 7: Pattern 5 - Net[0,15), Spread≥11
+// Row 8: Pattern 10 - Model≤0, Spread≥10, Net≥10
+// Row 9: Pattern 9 - Spread≥14, Net<20
+// Row 10: Pattern 8 - Model≤0, Spread≥10
+// Row 11: Pattern 2 - Net[10,15), Spread≥14
+// Row 12: Pattern 3 - Model≤0, Spread≥14
+// Row 13: Pattern 4 - Model≤-1, Spread≥14
+// Row 14: Pattern 6 - Model≤-5, Spread≥7
+// Row 15: Pattern 1 - Model≤0, Spread≥18
 const PATTERNS = [
   { id: 'rank_diff', name: 'Rank Diff', row: 4, color: '#d8ebd3' },
-  { id: 'pattern_1', name: 'Model≤0, Spread≥18', row: 7, color: '#fff2cc' },
-  { id: 'pattern_2', name: 'Net[10,15), Spread≥14', row: 8, color: '#d9eaf7' },
-  { id: 'pattern_3', name: 'Model≤0, Spread≥14', row: 9, color: '#f4e0e0' },
-  { id: 'pattern_4', name: 'Model≤-1, Spread≥14', row: 10, color: '#eae0f4' },
-  { id: 'pattern_5', name: 'Net[0,15), Spread≥14', row: 11, color: '#ffe5cc' },
-  { id: 'pattern_6', name: 'Model≤-5, Spread≥7', row: 12, color: '#e0f4e0' },
-  { id: 'pattern_8', name: 'Model≤0, Spread≥10', row: 13, color: '#cce5ff' },
-  { id: 'pattern_9', name: 'Spread≥14, Net<20', row: 14, color: '#f4f4cc' },
-  { id: 'pattern_10', name: 'Model≤0, Spread≥10, Net≥10', row: 15, color: '#e0eaf4' },
+  { id: 'pattern_5', name: 'Net[0,15), Spread≥11', row: 7, color: '#ffe5cc' },
+  { id: 'pattern_10', name: 'Model≤0, Spread≥10, Net≥10', row: 8, color: '#e0eaf4' },
+  { id: 'pattern_9', name: 'Spread≥14, Net<20', row: 9, color: '#f4f4cc' },
+  { id: 'pattern_8', name: 'Model≤0, Spread≥10', row: 10, color: '#cce5ff' },
+  { id: 'pattern_2', name: 'Net[10,15), Spread≥14', row: 11, color: '#d9eaf7' },
+  { id: 'pattern_3', name: 'Model≤0, Spread≥14', row: 12, color: '#f4e0e0' },
+  { id: 'pattern_4', name: 'Model≤-1, Spread≥14', row: 13, color: '#eae0f4' },
+  { id: 'pattern_6', name: 'Model≤-5, Spread≥7', row: 14, color: '#e0f4e0' },
+  { id: 'pattern_1', name: 'Model≤0, Spread≥18', row: 15, color: '#fff2cc' },
 ];
 
 export async function GET(request: NextRequest) {
