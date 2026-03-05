@@ -306,9 +306,9 @@ function CBBContent() {
             padding: "12px 16px",
             marginBottom: "16px",
             borderRadius: "8px",
-            background: "rgba(239, 68, 68, 0.1)",
-            border: "1px solid rgba(239, 68, 68, 0.3)",
-            color: "#f87171",
+            background: "rgba(124, 58, 237, 0.1)",
+            border: "1px solid rgba(124, 58, 237, 0.3)",
+            color: "#a78bfa",
           }}>
             {error}
           </div>
@@ -391,7 +391,7 @@ function CBBContent() {
 
         {/* Dashboard Tab */}
         {!loading && activeTab === 'dashboard' && data && (
-          <DashboardView patterns={data.patterns} />
+          <DashboardView patterns={data.patterns} todayGames={data.todayGames} todayStr={data.todayStr} />
         )}
 
         {/* Yesterday Tab */}
@@ -457,9 +457,193 @@ const PATTERN_LABELS: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
-function DashboardView({ patterns }: { patterns: Pattern[] }) {
+function DashboardView({ patterns, todayGames, todayStr }: { patterns: Pattern[]; todayGames: Game[]; todayStr: string }) {
+  // Filter to only qualifying games (games that match at least one pattern)
+  const qualifyingGames = todayGames.filter(g => g.matchingPatterns && g.matchingPatterns.length > 0);
+  
+  // Group games by pattern for the summary
+  const patternCounts: Record<string, Game[]> = {};
+  qualifyingGames.forEach(game => {
+    game.matchingPatterns?.forEach(pattern => {
+      if (!patternCounts[pattern]) patternCounts[pattern] = [];
+      patternCounts[pattern].push(game);
+    });
+  });
+
   return (
     <div>
+      {/* TODAY'S QUALIFYING PLAYS - Hero Section */}
+      <div style={{
+        padding: "24px",
+        borderRadius: "16px",
+        background: "linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(132, 204, 22, 0.1) 100%)",
+        border: "2px solid rgba(34, 197, 94, 0.4)",
+        marginBottom: "32px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <div>
+            <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#4ade80", margin: 0, display: "flex", alignItems: "center", gap: "10px" }}>
+              🎯 Today's Value Plays
+              <span style={{
+                padding: "4px 12px",
+                borderRadius: "20px",
+                background: qualifyingGames.length > 0 ? "rgba(34, 197, 94, 0.3)" : "rgba(107, 114, 128, 0.3)",
+                fontSize: "16px",
+                fontWeight: 700,
+              }}>
+                {qualifyingGames.length}
+              </span>
+            </h2>
+            <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginTop: "4px" }}>
+              {todayStr} • Games matching profitable patterns
+            </p>
+          </div>
+        </div>
+
+        {qualifyingGames.length === 0 ? (
+          <div style={{
+            padding: "32px",
+            textAlign: "center",
+            color: "var(--foreground-muted)",
+            fontSize: "15px",
+          }}>
+            No games qualify for patterns today. Check back later as lines move.
+          </div>
+        ) : (
+          <>
+            {/* Pattern Summary Badges */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "20px" }}>
+              {Object.entries(patternCounts)
+                .sort(([a], [b]) => {
+                  const numA = parseInt(PATTERN_NUMBERS[a] || '99');
+                  const numB = parseInt(PATTERN_NUMBERS[b] || '99');
+                  return numA - numB;
+                })
+                .map(([patternId, games]) => {
+                  const labels = PATTERN_LABELS[patternId] || { title: patternId, subtitle: '' };
+                  const patternNum = PATTERN_NUMBERS[patternId] || '?';
+                  const isRankDiff = patternId === 'rank_diff';
+                  return (
+                    <div
+                      key={patternId}
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: "8px",
+                        background: isRankDiff ? "rgba(132, 204, 22, 0.2)" : "rgba(34, 197, 94, 0.15)",
+                        border: `1px solid ${isRankDiff ? 'rgba(132, 204, 22, 0.5)' : 'rgba(34, 197, 94, 0.4)'}`,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <span style={{
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "6px",
+                        background: isRankDiff ? "#84cc16" : "#22c55e",
+                        color: "#000",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>
+                        {patternNum}
+                      </span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--foreground)" }}>
+                        {labels.title}
+                      </span>
+                      <span style={{
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                        background: "rgba(255, 255, 255, 0.1)",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        color: "#4ade80",
+                      }}>
+                        {games.length} {games.length === 1 ? 'game' : 'games'}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Qualifying Games List */}
+            <div style={{
+              display: "grid",
+              gap: "12px",
+            }}>
+              {qualifyingGames.map(game => {
+                const patternNums = game.matchingPatterns?.map(p => PATTERN_NUMBERS[p] || '?').join(', ') || '-';
+                const hasRankDiff = game.matchingPatterns?.includes('rank_diff');
+                return (
+                  <div
+                    key={game.id}
+                    style={{
+                      padding: "16px 20px",
+                      borderRadius: "12px",
+                      background: hasRankDiff ? "rgba(132, 204, 22, 0.12)" : "rgba(34, 197, 94, 0.08)",
+                      border: `1px solid ${hasRankDiff ? 'rgba(132, 204, 22, 0.35)' : 'rgba(34, 197, 94, 0.25)'}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "12px",
+                    }}
+                  >
+                    {/* Team & Spread */}
+                    <div style={{ flex: "1", minWidth: "200px" }}>
+                      <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--foreground)", marginBottom: "4px" }}>
+                        {game.team}
+                      </div>
+                      <div style={{ display: "flex", gap: "16px", fontSize: "13px", color: "var(--foreground-muted)" }}>
+                        <span>
+                          <strong style={{ color: game.spread > 0 ? "#4ade80" : "#a78bfa" }}>
+                            {game.spread > 0 ? '+' : ''}{game.spread}
+                          </strong> spread
+                        </span>
+                        <span>Model: {game.model.toFixed(1)}</span>
+                        <span>Net: {game.net.toFixed(1)}</span>
+                        <span>RD: {game.rankDiff.toFixed(0)}</span>
+                      </div>
+                    </div>
+
+                    {/* Pattern Badges */}
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      {game.matchingPatterns?.map(patternId => {
+                        const patternNum = PATTERN_NUMBERS[patternId] || '?';
+                        const isRankDiff = patternId === 'rank_diff';
+                        const labels = PATTERN_LABELS[patternId] || { title: patternId };
+                        return (
+                          <div
+                            key={patternId}
+                            title={labels.title}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "6px",
+                              background: isRankDiff ? "#84cc16" : "#22c55e",
+                              color: "#000",
+                              fontSize: "13px",
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            #{patternNum}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Pattern Performance Grid */}
       <h2 style={{ fontSize: "20px", fontWeight: 600, marginBottom: "16px", color: "var(--foreground)" }}>
         🏀 Pattern Performance
       </h2>
@@ -472,6 +656,7 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
           const labels = PATTERN_LABELS[pattern.id] || { title: pattern.name, subtitle: '' };
           const patternNum = PATTERN_NUMBERS[pattern.id] || '?';
           const isRankDiff = pattern.id === 'rank_diff';
+          const todayCount = patternCounts[pattern.id]?.length || 0;
           return (
             <div
               key={pattern.id}
@@ -496,6 +681,22 @@ function DashboardView({ patterns }: { patterns: Pattern[] }) {
               }}>
                 {patternNum}
               </div>
+              {/* Today indicator */}
+              {todayCount > 0 && (
+                <div style={{
+                  position: "absolute",
+                  top: "-8px",
+                  left: "16px",
+                  padding: "2px 10px",
+                  borderRadius: "12px",
+                  background: isRankDiff ? "#84cc16" : "#22c55e",
+                  color: "#000",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                }}>
+                  {todayCount} TODAY
+                </div>
+              )}
               <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px", color: "var(--foreground)", paddingRight: "50px" }}>
                 {labels.title}
               </div>
@@ -601,7 +802,7 @@ function EditableTeamCell({ game, onUpdate }: { game: Game; onUpdate: (game: Gam
           <Check size={14} color="#4ade80" />
         </button>
         <button onClick={handleCancel} disabled={saving} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
-          <X size={14} color="#f87171" />
+          <X size={14} color="#a78bfa" />
         </button>
       </div>
     );
@@ -709,7 +910,7 @@ function GamesView({ games, title, getRowBackground, getPatternNumbers, onGameUp
                     <td style={{ width: colWidths.team, padding: "10px 8px", fontSize: "13px", fontWeight: 500, color: "var(--foreground)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       <EditableTeamCell game={game} onUpdate={onGameUpdate} />
                     </td>
-                    <td style={{ width: colWidths.spread, padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#f87171" }}>
+                    <td style={{ width: colWidths.spread, padding: "10px 8px", fontSize: "13px", color: game.spread > 0 ? "#4ade80" : "#a78bfa" }}>
                       {game.spread > 0 ? '+' : ''}{game.spread}
                     </td>
                     <td style={{ width: colWidths.model, padding: "10px 8px", fontSize: "13px", color: "var(--foreground-muted)" }}>{game.model.toFixed(1)}</td>
@@ -722,7 +923,7 @@ function GamesView({ games, title, getRowBackground, getPatternNumbers, onGameUp
                       padding: "10px 8px",
                       fontSize: "13px",
                       fontWeight: 600,
-                      color: game.ats === 'W' ? '#4ade80' : game.ats === 'L' ? '#f87171' : 'var(--foreground-muted)'
+                      color: game.ats === 'W' ? '#4ade80' : game.ats === 'L' ? '#a78bfa' : 'var(--foreground-muted)'
                     }}>
                       {game.ats || '-'}
                     </td>

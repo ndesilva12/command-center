@@ -561,19 +561,19 @@ export default function EmailerPage() {
                         borderRadius: "8px",
                         backgroundColor: r.status === "SENT" || r.status === "DRY_RUN"
                           ? "rgba(16, 185, 129, 0.06)"
-                          : "rgba(239, 68, 68, 0.06)",
-                        border: `1px solid ${r.status === "SENT" || r.status === "DRY_RUN" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)"}`,
+                          : "rgba(124, 58, 237, 0.06)",
+                        border: `1px solid ${r.status === "SENT" || r.status === "DRY_RUN" ? "rgba(16,185,129,0.15)" : "rgba(124,58,237,0.15)"}`,
                       }}
                     >
                       {r.status === "SENT" || r.status === "DRY_RUN" ? (
                         <CheckCircle style={{ width: "16px", height: "16px", color: "#10b981", flexShrink: 0 }} />
                       ) : (
-                        <AlertCircle style={{ width: "16px", height: "16px", color: "#ef4444", flexShrink: 0 }} />
+                        <AlertCircle style={{ width: "16px", height: "16px", color: "#7c3aed", flexShrink: 0 }} />
                       )}
                       <span style={{ fontSize: "13px", color: "var(--foreground)", flex: 1 }}>
                         {r.name} ({r.email})
                       </span>
-                      <span style={{ fontSize: "12px", color: r.status === "SENT" || r.status === "DRY_RUN" ? "#10b981" : "#ef4444", fontWeight: 600 }}>
+                      <span style={{ fontSize: "12px", color: r.status === "SENT" || r.status === "DRY_RUN" ? "#10b981" : "#7c3aed", fontWeight: 600 }}>
                         {r.status}
                       </span>
                     </div>
@@ -727,7 +727,7 @@ function HistoryItem({ entry: h, toolColor }: { entry: HistoryEntry; toolColor: 
               </span>
             )}
             {(h.failed != null && h.failed > 0) && (
-              <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+              <span style={{ fontSize: "12px", padding: "4px 8px", borderRadius: "4px", backgroundColor: "rgba(124,58,237,0.1)", color: "#7c3aed" }}>
                 {h.failed} failed
               </span>
             )}
@@ -767,8 +767,8 @@ function HistoryItem({ entry: h, toolColor }: { entry: HistoryEntry; toolColor: 
                     <td style={{ padding: "8px" }}>
                       <span style={{
                         fontSize: "11px", padding: "2px 6px", borderRadius: "4px",
-                        backgroundColor: r.status === "SENT" ? "rgba(16,185,129,0.1)" : r.status === "DRY_RUN" ? "rgba(139,92,246,0.1)" : "rgba(239,68,68,0.1)",
-                        color: r.status === "SENT" ? "#10b981" : r.status === "DRY_RUN" ? "#a78bfa" : "#ef4444",
+                        backgroundColor: r.status === "SENT" ? "rgba(16,185,129,0.1)" : r.status === "DRY_RUN" ? "rgba(139,92,246,0.1)" : "rgba(124,58,237,0.1)",
+                        color: r.status === "SENT" ? "#10b981" : r.status === "DRY_RUN" ? "#a78bfa" : "#7c3aed",
                       }}>
                         {r.status}
                       </span>

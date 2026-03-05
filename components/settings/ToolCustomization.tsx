@@ -97,11 +97,12 @@ interface Tool {
 }
 
 // Default colors for tools
+// Allowed: blue, green, purple, gold, silver, grey, black, white, charcoal
 const DEFAULT_COLORS: Record<string, string> = {
   "curate": "#8b5cf6",
   "l3d": "#10b981",
   "deep-search": "#6366f1",
-  "dark-search": "#dc2626",
+  "dark-search": "#7c3aed",
   "image-lookup": "#a78bfa",
   "contact-finder": "#6366f1",
   "relationships": "#14b8a6",
@@ -109,18 +110,18 @@ const DEFAULT_COLORS: Record<string, string> = {
   "investors": "#3b82f6",
   "business-info": "#8b5cf6",
   "corporate": "#10b981",
-  "politicorp": "#ef4444",
+  "politicorp": "#6366f1",
   "emails": "#3b82f6",
   "calendar": "#10b981",
   "contacts": "#8b5cf6",
   "people": "#06b6d4",
-  "recommendations": "#ec4899",
+  "recommendations": "#a78bfa",
   "read": "#10b981",
   "bookmarks": "#06b6d4",
   "market": "#3b82f6",
   "notes": "#a78bfa",
   "files": "#6366f1",
-  "legal": "#f59e0b",
+  "legal": "#d4af37",
   "spotify": "#1DB954",
   "trending": "#14b8a6",
   "rosters": "#3b82f6",
@@ -130,11 +131,11 @@ const DEFAULT_COLORS: Record<string, string> = {
   "emailer": "#3b82f6",
   "white-papers": "#6366f1",
   "one-pager": "#7c3aed",
-  "cinderella": "#ef4444",
+  "cinderella": "#3b82f6",
   "business": "#6366f1",
-  "war-room": "#dc2626",
-  "jmail": "#dc2626",
-  "roster-map": "#f97316",
+  "war-room": "#6366f1",
+  "jmail": "#7c3aed",
+  "roster-map": "#14b8a6",
   "local-leads": "#22c55e",
 };
 
@@ -363,10 +364,10 @@ export function ToolCustomization() {
       {error && (
         <div style={{
           padding: "12px 16px",
-          background: "rgba(220, 38, 38, 0.1)",
-          border: "1px solid rgba(220, 38, 38, 0.2)",
+          background: "rgba(107, 114, 128, 0.1)",
+          border: "1px solid rgba(107, 114, 128, 0.2)",
           borderRadius: "8px",
-          color: "#dc2626",
+          color: "#9ca3af",
           fontSize: "14px",
           marginBottom: "16px",
         }}>
@@ -487,10 +488,10 @@ export function ToolCustomization() {
                   padding: "8px",
                   background: customization.visible
                     ? "rgba(16, 185, 129, 0.1)"
-                    : "rgba(220, 38, 38, 0.1)",
-                  border: `1px solid ${customization.visible ? 'rgba(16, 185, 129, 0.2)' : 'rgba(220, 38, 38, 0.2)'}`,
+                    : "rgba(107, 114, 128, 0.1)",
+                  border: `1px solid ${customization.visible ? 'rgba(16, 185, 129, 0.2)' : 'rgba(107, 114, 128, 0.2)'}`,
                   borderRadius: "6px",
-                  color: customization.visible ? "#10b981" : "#dc2626",
+                  color: customization.visible ? "#10b981" : "#6b7280",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -513,10 +514,10 @@ export function ToolCustomization() {
                     padding: "8px",
                     background: customization.mobileVisible
                       ? "rgba(59, 130, 246, 0.1)"
-                      : "rgba(220, 38, 38, 0.1)",
-                    border: `1px solid ${customization.mobileVisible ? 'rgba(59, 130, 246, 0.2)' : 'rgba(220, 38, 38, 0.2)'}`,
+                      : "rgba(107, 114, 128, 0.1)",
+                    border: `1px solid ${customization.mobileVisible ? 'rgba(59, 130, 246, 0.2)' : 'rgba(107, 114, 128, 0.2)'}`,
                     borderRadius: "6px",
-                    color: customization.mobileVisible ? "#3b82f6" : "#dc2626",
+                    color: customization.mobileVisible ? "#3b82f6" : "#6b7280",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",

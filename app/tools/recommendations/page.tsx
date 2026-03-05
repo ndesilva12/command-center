@@ -169,7 +169,7 @@ function RecommendationsContent() {
       product: '#10b981',
       service: '#14b8a6',
       person: '#a78bfa',
-      podcast: '#ef4444',
+      podcast: '#7c3aed',
       tool: '#6366f1',
       other: '#64748b',
     };
@@ -678,7 +678,7 @@ function RecommendationsContent() {
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#ef4444",
+                      color: "#7c3aed",
                       cursor: "pointer",
                       padding: "4px",
                       opacity: 0.6,

@@ -198,9 +198,9 @@ export function ManualMealSelector({ userId, weekOf, onSelectionsChange }: Manua
                   style={{
                     padding: "6px",
                     borderRadius: "6px",
-                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                    color: "#ef4444",
+                    border: "1px solid rgba(124, 58, 237, 0.3)",
+                    backgroundColor: "rgba(124, 58, 237, 0.1)",
+                    color: "#7c3aed",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",

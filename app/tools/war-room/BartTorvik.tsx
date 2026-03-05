@@ -46,7 +46,7 @@ const POSITION_COLORS: Record<string, string> = {
   F: "#10b981",
   SF: "#10b981",
   PF: "#34d399",
-  C: "#f59e0b",
+  C: "#d4af37",
 };
 
 export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger: number }) {
@@ -202,7 +202,7 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
   if (loading) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0", gap: "12px" }}>
-        <RefreshCw size={20} style={{ animation: "spin 1s linear infinite", color: "#ef4444" }} />
+        <RefreshCw size={20} style={{ animation: "spin 1s linear infinite", color: "#7c3aed" }} />
         <span style={{ color: "#9ca3af", fontSize: "14px" }}>Loading Bart Torvik rankings…</span>
         <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -211,7 +211,7 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
 
   if (error) {
     return (
-      <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px" }}>
+      <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)", color: "#7c3aed", fontSize: "14px" }}>
         {error}
       </div>
     );
@@ -220,11 +220,11 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Header */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", padding: "12px 16px", borderRadius: "10px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", alignItems: "center" }}>
-        <TrendingUp size={16} style={{ color: "#ef4444" }} />
+      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", padding: "12px 16px", borderRadius: "10px", background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.2)", alignItems: "center" }}>
+        <TrendingUp size={16} style={{ color: "#7c3aed" }} />
         <span style={{ fontSize: "13px", color: "#9ca3af" }}>
-          <strong style={{ color: "#ef4444" }}>{players.length}</strong> players with PORPAG ratings
-          {" · "}<strong style={{ color: "#f59e0b" }}>{bigBoardPlayers.size}</strong> on Big Board
+          <strong style={{ color: "#7c3aed" }}>{players.length}</strong> players with PORPAG ratings
+          {" · "}<strong style={{ color: "#d4af37" }}>{bigBoardPlayers.size}</strong> on Big Board
         </span>
         <a 
           href="https://barttorvik.com/playerstat.php?link=y&year=2026&start=20251101&end=20260501"
@@ -275,9 +275,9 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
             gap: "6px",
             padding: "10px 16px",
             borderRadius: "8px",
-            border: hasActiveFilters ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.12)",
-            background: hasActiveFilters ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)",
-            color: hasActiveFilters ? "#f87171" : "#9ca3af",
+            border: hasActiveFilters ? "1px solid #7c3aed" : "1px solid rgba(255,255,255,0.12)",
+            background: hasActiveFilters ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
+            color: hasActiveFilters ? "#a78bfa" : "#9ca3af",
             fontSize: "13px",
             cursor: "pointer",
           }}
@@ -287,7 +287,7 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
         </button>
 
         {hasActiveFilters && (
-          <button onClick={clearFilters} style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#f87171", fontSize: "12px", cursor: "pointer" }}>
+          <button onClick={clearFilters} style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.1)", color: "#a78bfa", fontSize: "12px", cursor: "pointer" }}>
             Clear All
           </button>
         )}
@@ -337,17 +337,17 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(239,68,68,0.2)", background: "rgba(255,255,255,0.01)" }}>
+      <div style={{ overflowX: "auto", borderRadius: "10px", border: "1px solid rgba(124,58,237,0.2)", background: "rgba(255,255,255,0.01)" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: isMobile ? "800px" : "auto" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)" }}>
-              <th style={{ padding: "10px 8px", textAlign: "center", width: "50px", color: "#ef4444", fontWeight: 700, fontSize: "11px" }}>RANK</th>
+            <tr style={{ borderBottom: "1px solid rgba(124,58,237,0.2)", background: "rgba(124,58,237,0.05)" }}>
+              <th style={{ padding: "10px 8px", textAlign: "center", width: "50px", color: "#7c3aed", fontWeight: 700, fontSize: "11px" }}>RANK</th>
               <th style={{ padding: "10px 8px", textAlign: "left", width: "32px" }}></th>
               <th style={{ padding: "10px 8px", textAlign: "left", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>Player</th>
               <th style={{ padding: "10px 8px", textAlign: "left", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>Team</th>
               <th style={{ padding: "10px 8px", textAlign: "left", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>Pos</th>
               <th style={{ padding: "10px 8px", textAlign: "left", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>Year</th>
-              <th style={{ padding: "10px 8px", textAlign: "right", color: "#ef4444", fontWeight: 700, fontSize: "11px" }}>PORPAG</th>
+              <th style={{ padding: "10px 8px", textAlign: "right", color: "#7c3aed", fontWeight: 700, fontSize: "11px" }}>PORPAG</th>
               <th style={{ padding: "10px 8px", textAlign: "right", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>PPG</th>
               <th style={{ padding: "10px 8px", textAlign: "right", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>RPG</th>
               <th style={{ padding: "10px 8px", textAlign: "right", color: "#9ca3af", fontWeight: 600, fontSize: "11px" }}>APG</th>
@@ -372,23 +372,23 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
                   <tr
                     style={{
                       borderBottom: isExpanded ? "none" : "1px solid rgba(255,255,255,0.05)",
-                      background: isExpanded ? "rgba(239,68,68,0.05)" : (i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent"),
+                      background: isExpanded ? "rgba(124,58,237,0.05)" : (i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent"),
                       cursor: hasHistory ? "pointer" : "default",
                     }}
                     onClick={() => hasHistory && toggleExpand(player._rowIndex)}
                   >
-                    <td style={{ padding: "8px", textAlign: "center", fontWeight: 800, color: rank <= 10 ? "#ef4444" : rank <= 50 ? "#f59e0b" : "#6b7280" }}>
+                    <td style={{ padding: "8px", textAlign: "center", fontWeight: 800, color: rank <= 10 ? "#7c3aed" : rank <= 50 ? "#d4af37" : "#6b7280" }}>
                       {rank}
                     </td>
                     <td style={{ padding: "8px", textAlign: "center" }}>
                       {hasHistory && (
-                        isExpanded ? <ChevronUp size={14} style={{ color: "#ef4444" }} /> : <ChevronDown size={14} style={{ color: "#4b5563" }} />
+                        isExpanded ? <ChevronUp size={14} style={{ color: "#7c3aed" }} /> : <ChevronDown size={14} style={{ color: "#4b5563" }} />
                       )}
                     </td>
                     <td style={{ padding: "8px", fontWeight: 600, color: "#f3f4f6", whiteSpace: "nowrap" }}>
                       {player.Player}
                       {player["Power Conf"] === "TRUE" && (
-                        <Star size={10} style={{ marginLeft: "6px", color: "#f59e0b", verticalAlign: "middle" }} fill="#f59e0b" />
+                        <Star size={10} style={{ marginLeft: "6px", color: "#d4af37", verticalAlign: "middle" }} fill="#d4af37" />
                       )}
                     </td>
                     <td style={{ padding: "8px", color: "#9ca3af", whiteSpace: "nowrap" }}>{player.Team}</td>
@@ -398,14 +398,14 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
                       </span>
                     </td>
                     <td style={{ padding: "8px", color: "#9ca3af" }}>{player.Year}</td>
-                    <td style={{ padding: "8px", textAlign: "right", fontWeight: 800, color: porpag >= 5 ? "#ef4444" : porpag >= 3 ? "#f59e0b" : "#d1d5db" }}>
+                    <td style={{ padding: "8px", textAlign: "right", fontWeight: 800, color: porpag >= 5 ? "#7c3aed" : porpag >= 3 ? "#d4af37" : "#d1d5db" }}>
                       {fmt(player.PORPAG)}
                     </td>
                     <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.PPG)}</td>
                     <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.RPG)}</td>
                     <td style={{ padding: "8px", textAlign: "right", color: "#d1d5db" }}>{fmt(player.APG)}</td>
                     <td style={{ padding: "8px", textAlign: "center" }}>
-                      {hasHistory && <History size={12} style={{ color: "#ef4444" }} />}
+                      {hasHistory && <History size={12} style={{ color: "#7c3aed" }} />}
                     </td>
                     <td style={{ padding: "8px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
                       {bigBoardPlayers.has(player.Player) ? (
@@ -422,9 +422,9 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
                             gap: "4px",
                             padding: "4px 10px",
                             borderRadius: "6px",
-                            border: "1px solid rgba(239,68,68,0.4)",
-                            background: "rgba(239,68,68,0.1)",
-                            color: "#f87171",
+                            border: "1px solid rgba(124,58,237,0.4)",
+                            background: "rgba(124,58,237,0.1)",
+                            color: "#a78bfa",
                             fontSize: "11px",
                             fontWeight: 600,
                             cursor: addingPlayer === player.Player ? "wait" : "pointer",
@@ -438,12 +438,12 @@ export function BartTorvik({ isMobile, syncTrigger }: { isMobile: boolean; syncT
                   </tr>
                   {isExpanded && hasHistory && (
                     <tr>
-                      <td colSpan={12} style={{ padding: "0", background: "rgba(239,68,68,0.03)", borderBottom: "1px solid rgba(239,68,68,0.15)" }}>
+                      <td colSpan={12} style={{ padding: "0", background: "rgba(124,58,237,0.03)", borderBottom: "1px solid rgba(124,58,237,0.15)" }}>
                         <div style={{ padding: "12px 16px 12px 70px" }}>
                           <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                            <History size={14} style={{ color: "#ef4444", marginTop: "2px", flexShrink: 0 }} />
+                            <History size={14} style={{ color: "#7c3aed", marginTop: "2px", flexShrink: 0 }} />
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: "11px", fontWeight: 600, color: "#ef4444", marginBottom: "6px", letterSpacing: "0.05em" }}>SCHOOL HISTORY</div>
+                              <div style={{ fontSize: "11px", fontWeight: 600, color: "#7c3aed", marginBottom: "6px", letterSpacing: "0.05em" }}>SCHOOL HISTORY</div>
                               <div style={{ fontSize: "13px", color: "#d1d5db", lineHeight: 1.5 }}>
                                 {player["School History"].split(" → ").map((school, idx, arr) => (
                                   <span key={idx}>

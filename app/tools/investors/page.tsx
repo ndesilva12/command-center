@@ -225,7 +225,7 @@ function InvestorsContent() {
     { id: 'meeting', title: 'Meeting', color: '#3b82f6' },
     { id: 'follow_up', title: 'Follow-up', color: '#14b8a6' },
     { id: 'committed', title: 'Committed', color: '#10b981' },
-    { id: 'passed', title: 'Passed', color: '#ef4444' },
+    { id: 'passed', title: 'Passed', color: '#7c3aed' },
   ];
 
   return (
@@ -793,7 +793,7 @@ function InvestorsContent() {
                                     style={{
                                       background: "none",
                                       border: "none",
-                                      color: "#ef4444",
+                                      color: "#7c3aed",
                                       cursor: "pointer",
                                       padding: "2px",
                                       opacity: 0.6,

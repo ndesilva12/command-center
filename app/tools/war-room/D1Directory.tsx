@@ -529,9 +529,9 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
   const getTeamByName = (name: string) => D1_TEAMS.find(t => t.name === name);
 
   const statusConfig: Record<EngagementStatus, { label: string; color: string; bg: string; border: string; icon: any }> = {
-    engaged: { label: "Engaged", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.12)", border: "rgba(245, 158, 11, 0.3)", icon: Clock },
+    engaged: { label: "Engaged", color: "#d4af37", bg: "rgba(212, 175, 55, 0.12)", border: "rgba(212, 175, 55, 0.3)", icon: Clock },
     approved: { label: "Approved", color: "#10b981", bg: "rgba(16, 185, 129, 0.12)", border: "rgba(16, 185, 129, 0.3)", icon: Check },
-    declined: { label: "Declined", color: "#ef4444", bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.3)", icon: XCircle },
+    declined: { label: "Declined", color: "#7c3aed", bg: "rgba(124, 58, 237, 0.12)", border: "rgba(124, 58, 237, 0.3)", icon: XCircle },
   };
 
   const filteredTeams = useMemo(() => {
@@ -652,10 +652,10 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
 
       {/* Engaged Schools Section */}
       {engagedSchools.length > 0 && (
-        <div style={{ borderRadius: "12px", border: "1px solid rgba(245, 158, 11, 0.3)", background: "rgba(245, 158, 11, 0.05)", overflow: "hidden" }}>
-          <div style={{ padding: "12px 16px", background: "rgba(245, 158, 11, 0.08)", borderBottom: "1px solid rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", gap: "8px" }}>
-            <Star size={16} color="#f59e0b" />
-            <span style={{ fontWeight: 600, fontSize: "14px", color: "#f59e0b" }}>Engaged Schools</span>
+        <div style={{ borderRadius: "12px", border: "1px solid rgba(212, 175, 55, 0.3)", background: "rgba(212, 175, 55, 0.05)", overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", background: "rgba(212, 175, 55, 0.08)", borderBottom: "1px solid rgba(212, 175, 55, 0.2)", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Star size={16} color="#d4af37" />
+            <span style={{ fontWeight: 600, fontSize: "14px", color: "#d4af37" }}>Engaged Schools</span>
             <span style={{ fontSize: "12px", color: "#9ca3af", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "4px" }}>
               {engagedSchools.length}
             </span>
@@ -733,9 +733,9 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
                           style={{
                             padding: "4px",
                             borderRadius: "4px",
-                            background: "rgba(239, 68, 68, 0.1)",
-                            border: "1px solid rgba(239, 68, 68, 0.2)",
-                            color: "#ef4444",
+                            background: "rgba(124, 58, 237, 0.1)",
+                            border: "1px solid rgba(124, 58, 237, 0.2)",
+                            color: "#7c3aed",
                             cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
@@ -802,7 +802,7 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
                         <tr key={team.name} style={{ borderBottom: idx < teams.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
                           <td style={{ padding: "10px 12px", color: "#f3f4f6", fontWeight: 500 }}>
                             {team.name}
-                            {engaged && <Star size={12} color="#f59e0b" style={{ marginLeft: "6px", display: "inline" }} />}
+                            {engaged && <Star size={12} color="#d4af37" style={{ marginLeft: "6px", display: "inline" }} />}
                           </td>
                           <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{team.mascot}</td>
                           <td style={{ padding: "10px 12px", textAlign: "center" }}>
@@ -831,16 +831,16 @@ export function D1Directory({ isMobile }: D1DirectoryProps) {
                           </td>
                           <td style={{ padding: "10px 12px", textAlign: "center" }}>
                             {engaged ? (
-                              <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 500 }}>Engaged ★</span>
+                              <span style={{ fontSize: "11px", color: "#d4af37", fontWeight: 500 }}>Engaged ★</span>
                             ) : (
                               <button
                                 onClick={() => engageSchool(team)}
                                 style={{
                                   padding: "4px 10px",
                                   borderRadius: "6px",
-                                  background: "rgba(245, 158, 11, 0.12)",
-                                  border: "1px solid rgba(245, 158, 11, 0.3)",
-                                  color: "#f59e0b",
+                                  background: "rgba(212, 175, 55, 0.12)",
+                                  border: "1px solid rgba(212, 175, 55, 0.3)",
+                                  color: "#d4af37",
                                   fontSize: "12px",
                                   fontWeight: 500,
                                   cursor: "pointer",

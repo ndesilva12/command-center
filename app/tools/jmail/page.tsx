@@ -33,7 +33,7 @@ interface SearchResult {
 
 export default function JMailPage() {
   const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization('jmail', 'JMail', '#dc2626');
+  const toolCustom = getCustomization('jmail', 'JMail', '#7c3aed');
   const [keywordQuery, setKeywordQuery] = useState("");
   const [jimmyQuery, setJimmyQuery] = useState("");
   const [loading, setLoading] = useState(false);

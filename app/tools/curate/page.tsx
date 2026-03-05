@@ -341,7 +341,7 @@ export default function CuratePage() {
                             borderRadius: "4px",
                             border: "none",
                             background: "transparent",
-                            color: "#ef4444",
+                            color: "#7c3aed",
                             cursor: "pointer",
                             fontSize: "11px"
                           }}
@@ -427,7 +427,7 @@ export default function CuratePage() {
                                 borderRadius: "4px",
                                 border: "none",
                                 background: "transparent",
-                                color: "#ef4444",
+                                color: "#7c3aed",
                                 cursor: "pointer",
                                 fontSize: "14px"
                               }}

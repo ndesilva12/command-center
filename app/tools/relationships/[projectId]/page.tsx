@@ -210,7 +210,7 @@ function ProjectDetailContent() {
   };
 
   const getUrgencyColor = (score: number) => {
-    if (score >= 8) return '#ef4444'; // red
+    if (score >= 8) return '#7c3aed'; // red
     if (score >= 5) return '#06b6d4'; // cyan
     return '#10b981'; // green
   };
@@ -365,10 +365,10 @@ function ProjectDetailContent() {
                       alignItems: "center",
                       gap: "8px",
                       padding: "12px 24px",
-                      background: "rgba(239, 68, 68, 0.1)",
-                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      background: "rgba(124, 58, 237, 0.1)",
+                      border: "1px solid rgba(124, 58, 237, 0.3)",
                       borderRadius: "8px",
-                      color: "#ef4444",
+                      color: "#7c3aed",
                       fontSize: "14px",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -405,13 +405,13 @@ function ProjectDetailContent() {
                 <div
                   style={{
                     padding: "20px",
-                    background: "rgba(239, 68, 68, 0.1)",
-                    border: "1px solid rgba(239, 68, 68, 0.2)",
+                    background: "rgba(124, 58, 237, 0.1)",
+                    border: "1px solid rgba(124, 58, 237, 0.2)",
                     borderRadius: "12px",
                   }}
                 >
-                  <div style={{ fontSize: "14px", color: "#ef4444", marginBottom: "8px" }}>Need Follow-up</div>
-                  <div style={{ fontSize: "32px", fontWeight: 700, color: "#ef4444" }}>{summary.needsFollowUp}</div>
+                  <div style={{ fontSize: "14px", color: "#7c3aed", marginBottom: "8px" }}>Need Follow-up</div>
+                  <div style={{ fontSize: "32px", fontWeight: 700, color: "#7c3aed" }}>{summary.needsFollowUp}</div>
                 </div>
                 <div
                   style={{
@@ -513,7 +513,7 @@ function ProjectDetailContent() {
                       key={contact.email}
                       style={{
                         background: "rgba(255, 255, 255, 0.02)",
-                        border: `1px solid ${contact.needsFollowUp ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
+                        border: `1px solid ${contact.needsFollowUp ? 'rgba(124, 58, 237, 0.3)' : 'rgba(255, 255, 255, 0.1)'}`,
                         borderRadius: "12px",
                         overflow: "hidden",
                       }}
@@ -533,7 +533,7 @@ function ProjectDetailContent() {
                                 {contact.name}
                               </h3>
                               {contact.needsFollowUp && (
-                                <AlertCircle style={{ width: "18px", height: "18px", color: "#ef4444" }} />
+                                <AlertCircle style={{ width: "18px", height: "18px", color: "#7c3aed" }} />
                               )}
                             </div>
 
@@ -585,8 +585,8 @@ function ProjectDetailContent() {
                                     borderRadius: "12px",
                                     fontSize: "12px",
                                     fontWeight: 600,
-                                    background: "rgba(239, 68, 68, 0.2)",
-                                    color: "#ef4444",
+                                    background: "rgba(124, 58, 237, 0.2)",
+                                    color: "#7c3aed",
                                   }}
                                 >
                                   Needs follow-up
@@ -603,10 +603,10 @@ function ProjectDetailContent() {
                               }}
                               style={{
                                 padding: "6px 12px",
-                                background: "rgba(239, 68, 68, 0.1)",
-                                border: "1px solid rgba(239, 68, 68, 0.3)",
+                                background: "rgba(124, 58, 237, 0.1)",
+                                border: "1px solid rgba(124, 58, 237, 0.3)",
                                 borderRadius: "6px",
-                                color: "#ef4444",
+                                color: "#7c3aed",
                                 fontSize: "12px",
                                 fontWeight: 600,
                                 cursor: "pointer",
@@ -790,7 +790,7 @@ function ProjectDetailContent() {
           <div
             style={{
               background: "#0f0f0f",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
+              border: "1px solid rgba(124, 58, 237, 0.3)",
               borderRadius: "12px",
               padding: "32px",
               maxWidth: "500px",
@@ -799,8 +799,8 @@ function ProjectDetailContent() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-              <Trash2 style={{ width: "24px", height: "24px", color: "#ef4444" }} />
-              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#ef4444", margin: 0 }}>
+              <Trash2 style={{ width: "24px", height: "24px", color: "#7c3aed" }} />
+              <h2 style={{ fontSize: "24px", fontWeight: 700, color: "#7c3aed", margin: 0 }}>
                 Delete Project?
               </h2>
             </div>
@@ -816,7 +816,7 @@ function ProjectDetailContent() {
               <li>Project settings and configuration</li>
             </ul>
 
-            <p style={{ fontSize: "14px", color: "#ef4444", fontWeight: 600, marginBottom: "24px" }}>
+            <p style={{ fontSize: "14px", color: "#7c3aed", fontWeight: 600, marginBottom: "24px" }}>
               This action cannot be undone.
             </p>
 
@@ -845,8 +845,8 @@ function ProjectDetailContent() {
                   flex: 1,
                   padding: "12px",
                   background: deleting
-                    ? "rgba(239, 68, 68, 0.3)"
-                    : "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                    ? "rgba(124, 58, 237, 0.3)"
+                    : "linear-gradient(135deg, #7c3aed 0%, #7c3aed 100%)",
                   border: "none",
                   borderRadius: "8px",
                   color: "#ffffff",

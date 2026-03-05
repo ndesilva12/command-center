@@ -146,7 +146,7 @@ export function ConnectedAccounts() {
                   background: "rgba(220, 38, 38, 0.1)",
                   border: "1px solid rgba(220, 38, 38, 0.2)",
                   borderRadius: "8px",
-                  color: "#dc2626",
+                  color: "#7c3aed",
                   cursor: "pointer",
                   transition: "all 0.2s",
                 }}

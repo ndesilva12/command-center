@@ -169,7 +169,7 @@ export default function TrendingPage() {
           </div>
         ) : error ? (
           <div style={{ background: "rgba(255, 255, 255, 0.03)", backdropFilter: "blur(12px)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "12px", overflow: "hidden" }}>
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#a78bfa" }}>
               <p>{error}</p>
               <button
                 onClick={fetchTrends}

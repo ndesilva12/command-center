@@ -167,7 +167,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
         <BottomNav />
       <Sidebar />
         <main style={{ paddingTop: "calc(64px + var(--tool-nav-height, 56px) + 16px)", paddingBottom: "32px", minHeight: "100vh", maxWidth: "900px", margin: "0 auto", padding: "calc(64px + var(--tool-nav-height, 56px) + 16px) 24px 32px 24px" }}>
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
+          <div style={{ textAlign: "center", padding: "60px 20px", color: "#a78bfa" }}>
             <p>{error}</p>
             <button
               onClick={() => router.push("/tools/people")}
@@ -244,7 +244,7 @@ export default function PersonDetailPage({ params }: PersonDetailPageProps) {
                 padding: "8px 14px",
                 borderRadius: "8px",
                 backgroundColor: "rgba(248, 113, 113, 0.1)",
-                color: "#f87171",
+                color: "#a78bfa",
                 border: "1px solid rgba(248, 113, 113, 0.3)",
                 cursor: deleting ? "not-allowed" : "pointer",
                 fontSize: "13px",

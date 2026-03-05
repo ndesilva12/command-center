@@ -48,9 +48,9 @@ function PoliticalCompass({ economicScore, governmentScore, color = "#10b981" }:
 
 function LeaningBadge({ leaning, confidence }: { leaning: string; confidence: number }) {
   const colorMap: Record<string, string> = {
-    "Far Left": "#dc2626",
-    "Left": "#ef4444",
-    "Center-Left": "#f97316",
+    "Far Left": "#7c3aed",
+    "Left": "#7c3aed",
+    "Center-Left": "#14b8a6",
     "Center": "#a855f7",
     "Center-Right": "#10b981",
     "Right": "#2563eb",
@@ -328,7 +328,7 @@ export default function PoliticorpPage() {
                                 borderRadius: "10px",
                                 fontSize: "12px",
                                 background: d.party === "Democrat" ? "rgba(59,130,246,0.2)" : d.party === "Republican" ? "rgba(239,68,68,0.2)" : "rgba(168,85,247,0.2)",
-                                color: d.party === "Democrat" ? toolCustom.color : d.party === "Republican" ? "#ef4444" : "#a855f7"
+                                color: d.party === "Democrat" ? toolCustom.color : d.party === "Republican" ? "#7c3aed" : "#a855f7"
                               }}>
                                 {d.party}
                               </span>
@@ -384,7 +384,7 @@ export default function PoliticorpPage() {
                       <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px" }}>
                         {n.source} • {n.date} •{" "}
                         <span style={{
-                          color: n.sentiment === "positive" ? toolCustom.color : n.sentiment === "negative" ? "#ef4444" : "var(--muted)"
+                          color: n.sentiment === "positive" ? toolCustom.color : n.sentiment === "negative" ? "#7c3aed" : "var(--muted)"
                         }}>
                           {n.sentiment}
                         </span>

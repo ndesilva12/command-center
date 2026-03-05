@@ -45,8 +45,8 @@ const POSITION_COLORS: Record<string, { bg: string; border: string; text: string
   PG: { bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.3)", text: "#60a5fa" },
   SG: { bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.3)", text: "#818cf8" },
   SF: { bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.3)", text: "#34d399" },
-  PF: { bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.3)", text: "#fbbf24" },
-  C: { bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.3)", text: "#f87171" },
+  PF: { bg: "rgba(212,175,55,0.1)", border: "rgba(212,175,55,0.3)", text: "#d4af37" },
+  C: { bg: "rgba(124,58,237,0.1)", border: "rgba(124,58,237,0.3)", text: "#a78bfa" },
 };
 
 const createEmptyChart = (id: string, name: string, rows: number = 4): DepthChart => ({
@@ -323,7 +323,7 @@ export function DepthChartBuilder({ isMobile, syncTrigger }: { isMobile: boolean
           </button>
           <button
             onClick={() => clearChart(activeChartId)}
-            style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#f87171", fontSize: "12px", cursor: "pointer" }}
+            style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", border: "1px solid rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.1)", color: "#a78bfa", fontSize: "12px", cursor: "pointer" }}
           >
             <Trash2 size={12} />
             Clear
@@ -332,7 +332,7 @@ export function DepthChartBuilder({ isMobile, syncTrigger }: { isMobile: boolean
       </div>
 
       {bigBoardPlayers.length === 0 && (
-        <div style={{ padding: "24px", borderRadius: "10px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", color: "#fbbf24", fontSize: "14px", textAlign: "center" }}>
+        <div style={{ padding: "24px", borderRadius: "10px", background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)", color: "#d4af37", fontSize: "14px", textAlign: "center" }}>
           Add players to your <strong>Big Board</strong> first, then build your depth charts from those selections.
         </div>
       )}

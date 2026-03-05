@@ -759,7 +759,7 @@ export default function ReadPage() {
                         flex: 1,
                         padding: "10px 12px",
                         background: "rgba(255, 255, 255, 0.05)",
-                        border: feedError ? "1px solid #ef4444" : "1px solid rgba(255, 255, 255, 0.1)",
+                        border: feedError ? "1px solid #7c3aed" : "1px solid rgba(255, 255, 255, 0.1)",
                         borderRadius: "8px",
                         color: "white",
                         fontSize: "14px",
@@ -799,7 +799,7 @@ export default function ReadPage() {
                     </button>
                   </div>
                   {feedError && (
-                    <div style={{ color: "#ef4444", fontSize: "12px" }}>{feedError}</div>
+                    <div style={{ color: "#7c3aed", fontSize: "12px" }}>{feedError}</div>
                   )}
                 </div>
               ) : (
@@ -887,9 +887,9 @@ export default function ReadPage() {
                           style={{
                             padding: "2px 6px",
                             borderRadius: "4px",
-                            background: "rgba(239, 68, 68, 0.15)",
+                            background: "rgba(124, 58, 237, 0.15)",
                             border: "none",
-                            color: "#ef4444",
+                            color: "#7c3aed",
                             cursor: "pointer",
                             fontSize: "10px",
                             fontWeight: 600,
@@ -954,9 +954,9 @@ export default function ReadPage() {
                         style={{
                           padding: "4px",
                           borderRadius: "4px",
-                          background: "rgba(239, 68, 68, 0.1)",
+                          background: "rgba(124, 58, 237, 0.1)",
                           border: "none",
-                          color: "#ef4444",
+                          color: "#7c3aed",
                           cursor: isDeleting ? "not-allowed" : "pointer",
                           opacity: isDeleting ? 0.5 : 0.7,
                           flexShrink: 0,
@@ -1036,7 +1036,7 @@ export default function ReadPage() {
             style={{
               background: "rgba(30, 41, 59, 0.98)",
               borderRadius: "12px",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
+              border: "1px solid rgba(124, 58, 237, 0.3)",
               maxWidth: "400px",
               width: "100%",
               padding: "24px",
@@ -1072,7 +1072,7 @@ export default function ReadPage() {
                 style={{
                   padding: "10px 18px",
                   borderRadius: "8px",
-                  background: deletingFeedId === confirmDelete.id ? "rgba(239, 68, 68, 0.3)" : "#ef4444",
+                  background: deletingFeedId === confirmDelete.id ? "rgba(124, 58, 237, 0.3)" : "#7c3aed",
                   border: "none",
                   color: "white",
                   fontSize: "13px",

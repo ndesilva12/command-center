@@ -44,7 +44,7 @@ const POSITION_COLORS: Record<string, string> = {
   F: "#10b981",
   SF: "#10b981",
   PF: "#34d399",
-  C: "#f59e0b",
+  C: "#d4af37",
 };
 
 export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger: number }) {
@@ -180,7 +180,7 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
 
   if (error) {
     return (
-      <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px" }}>
+      <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)", color: "#7c3aed", fontSize: "14px" }}>
         {error}
       </div>
     );
@@ -214,7 +214,7 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
           </button>
           <button
             onClick={() => setShowClearConfirm(true)}
-            style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#f87171", fontSize: "12px", cursor: "pointer" }}
+            style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", border: "1px solid rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.1)", color: "#a78bfa", fontSize: "12px", cursor: "pointer" }}
           >
             <Trash2 size={12} />
             Clear All
@@ -224,14 +224,14 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
 
       {/* Clear confirmation */}
       {showClearConfirm && (
-        <div style={{ padding: "16px", borderRadius: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-          <AlertTriangle size={18} style={{ color: "#ef4444" }} />
+        <div style={{ padding: "16px", borderRadius: "10px", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <AlertTriangle size={18} style={{ color: "#7c3aed" }} />
           <span style={{ fontSize: "14px", color: "#fca5a5" }}>Remove all {players.length} players from Big Board?</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
             <button onClick={() => setShowClearConfirm(false)} style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "#9ca3af", fontSize: "12px", cursor: "pointer" }}>
               Cancel
             </button>
-            <button onClick={clearAll} disabled={clearing} style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.5)", background: "rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "12px", fontWeight: 600, cursor: clearing ? "wait" : "pointer" }}>
+            <button onClick={clearAll} disabled={clearing} style={{ padding: "6px 14px", borderRadius: "6px", border: "1px solid rgba(124,58,237,0.5)", background: "rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: "12px", fontWeight: 600, cursor: clearing ? "wait" : "pointer" }}>
               {clearing ? "Clearing…" : "Yes, Clear All"}
             </button>
           </div>
@@ -345,8 +345,8 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
                     <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["FG%"] ? `${fmt(player["FG%"])}%` : "—"}</td>
                     <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
                     <td style={{ padding: "8px", textAlign: "right", color: player["Ast%"] && parseFloat(player["Ast%"]) >= 20 ? "#60a5fa" : "#9ca3af" }}>{player["Ast%"] ? fmt(player["Ast%"]) : "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right", color: player["OReb%"] && parseFloat(player["OReb%"]) >= 10 ? "#f59e0b" : "#9ca3af" }}>{player["OReb%"] ? fmt(player["OReb%"]) : "—"}</td>
-                    <td style={{ padding: "8px", textAlign: "right", fontWeight: player.BPM && parseFloat(player.BPM) >= 5 ? 700 : 400, color: player.BPM && parseFloat(player.BPM) >= 8 ? "#10b981" : player.BPM && parseFloat(player.BPM) >= 5 ? "#60a5fa" : player.BPM && parseFloat(player.BPM) < 0 ? "#ef4444" : "#9ca3af" }}>{player.BPM ? fmt(player.BPM) : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", color: player["OReb%"] && parseFloat(player["OReb%"]) >= 10 ? "#d4af37" : "#9ca3af" }}>{player["OReb%"] ? fmt(player["OReb%"]) : "—"}</td>
+                    <td style={{ padding: "8px", textAlign: "right", fontWeight: player.BPM && parseFloat(player.BPM) >= 5 ? 700 : 400, color: player.BPM && parseFloat(player.BPM) >= 8 ? "#10b981" : player.BPM && parseFloat(player.BPM) >= 5 ? "#60a5fa" : player.BPM && parseFloat(player.BPM) < 0 ? "#7c3aed" : "#9ca3af" }}>{player.BPM ? fmt(player.BPM) : "—"}</td>
                     <td style={{ padding: "8px", color: "#6b7280", fontSize: "11px" }}>{player.Added || "—"}</td>
                     <td style={{ padding: "8px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
                       <button
@@ -357,9 +357,9 @@ export function BigBoardView({ isMobile, syncTrigger }: { isMobile: boolean; syn
                           alignItems: "center",
                           padding: "4px 8px",
                           borderRadius: "4px",
-                          border: "1px solid rgba(239,68,68,0.3)",
-                          background: "rgba(239,68,68,0.1)",
-                          color: "#f87171",
+                          border: "1px solid rgba(124,58,237,0.3)",
+                          background: "rgba(124,58,237,0.1)",
+                          color: "#a78bfa",
                           cursor: removingPlayer === player.Player ? "wait" : "pointer",
                           opacity: removingPlayer === player.Player ? 0.5 : 1,
                         }}

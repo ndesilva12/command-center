@@ -599,7 +599,7 @@ export default function CalendarPage() {
               <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           ) : error ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#a78bfa" }}>
               <p>{error}</p>
               <button onClick={fetchEvents} style={{ marginTop: "16px", padding: "8px 16px", borderRadius: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)", color: "var(--foreground)", border: "none", cursor: "pointer" }}>Try Again</button>
             </div>
@@ -753,7 +753,7 @@ export default function CalendarPage() {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  style={{ padding: "12px 20px", borderRadius: "10px", border: "1px solid rgba(239, 68, 68, 0.3)", background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", fontSize: "14px", fontWeight: 600, cursor: deleting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "6px", opacity: deleting ? 0.5 : 1 }}
+                  style={{ padding: "12px 20px", borderRadius: "10px", border: "1px solid rgba(124, 58, 237, 0.3)", background: "rgba(124, 58, 237, 0.1)", color: "#7c3aed", fontSize: "14px", fontWeight: 600, cursor: deleting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "6px", opacity: deleting ? 0.5 : 1 }}
                 >
                   <Trash2 style={{ width: "14px", height: "14px" }} />{deleting ? "Deleting..." : "Delete"}
                 </button>

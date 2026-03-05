@@ -12,7 +12,7 @@ const TOOL_INFO: Record<string, { name: string; description: string; color: stri
   curate: { name: "Curate", description: "Curated intelligence feeds and insights", color: "#8b5cf6" },
   l3d: { name: "L3D", description: "Last 30 days research and analytics", color: "#10b981" },
   "deep-search": { name: "Deep Search", description: "Deep web search capabilities", color: "#6366f1" },
-  "dark-search": { name: "Dark Search", description: "Dark web search and monitoring", color: "#dc2626" },
+  "dark-search": { name: "Dark Search", description: "Dark web search and monitoring", color: "#7c3aed" },
   "image-lookup": { name: "Image Lookup", description: "Reverse image search and analysis", color: "#a78bfa" },
   "contact-finder": { name: "Contact Finder", description: "Find contact information", color: "#6366f1" },
   relationships: { name: "Relationships", description: "Contact insights and relationships", color: "#14b8a6" },

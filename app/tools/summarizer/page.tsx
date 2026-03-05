@@ -220,9 +220,9 @@ export default function SummarizerPage() {
                 </div>
 
                 {error && (
-                  <div style={{ padding: "12px", borderRadius: "8px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <AlertCircle style={{ width: "16px", height: "16px", color: "#ef4444", flexShrink: 0 }} />
-                    <span style={{ fontSize: "13px", color: "#ef4444" }}>{error}</span>
+                  <div style={{ padding: "12px", borderRadius: "8px", backgroundColor: "rgba(124, 58, 237, 0.1)", border: "1px solid rgba(124, 58, 237, 0.3)", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <AlertCircle style={{ width: "16px", height: "16px", color: "#7c3aed", flexShrink: 0 }} />
+                    <span style={{ fontSize: "13px", color: "#7c3aed" }}>{error}</span>
                   </div>
                 )}
 
@@ -291,8 +291,8 @@ export default function SummarizerPage() {
                                 </span>
                                 <span style={{
                                   fontSize: "12px", padding: "3px 8px", borderRadius: "4px",
-                                  backgroundColor: summary.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : summary.status === 'failed' ? "rgba(239, 68, 68, 0.1)" : "rgba(0, 170, 255, 0.1)",
-                                  color: summary.status === 'completed' ? "#10b981" : summary.status === 'failed' ? "#ef4444" : toolCustom.color,
+                                  backgroundColor: summary.status === 'completed' ? "rgba(16, 185, 129, 0.1)" : summary.status === 'failed' ? "rgba(124, 58, 237, 0.1)" : "rgba(0, 170, 255, 0.1)",
+                                  color: summary.status === 'completed' ? "#10b981" : summary.status === 'failed' ? "#7c3aed" : toolCustom.color,
                                   display: "flex", alignItems: "center", gap: "4px",
                                 }}>
                                   {summary.status === 'completed' && <CheckCircle style={{ width: "12px", height: "12px" }} />}

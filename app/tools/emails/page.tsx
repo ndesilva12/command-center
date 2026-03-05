@@ -997,7 +997,7 @@ export default function EmailsPage() {
               <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           ) : error ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#a78bfa" }}>
               <p>{error}</p>
               <button onClick={fetchEmails} style={{ marginTop: "16px", padding: "8px 16px", borderRadius: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)", color: "var(--foreground)", border: "none", cursor: "pointer" }}>
                 Try Again
@@ -1034,7 +1034,7 @@ export default function EmailsPage() {
                     </button>
                     <button
                       onClick={handleBulkDelete}
-                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#f87171", border: "none", cursor: "pointer", fontSize: "13px" }}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "6px", backgroundColor: "rgba(124, 58, 237, 0.2)", color: "#a78bfa", border: "none", cursor: "pointer", fontSize: "13px" }}
                     >
                       <Trash2 style={{ width: "14px", height: "14px" }} /> Delete
                     </button>
@@ -1793,7 +1793,7 @@ export default function EmailsPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <Trash2 style={{ width: "32px", height: "32px", color: "#ef4444", marginBottom: "16px" }} />
+            <Trash2 style={{ width: "32px", height: "32px", color: "#7c3aed", marginBottom: "16px" }} />
             <h3 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", marginBottom: "8px" }}>
               Delete Email?
             </h3>
@@ -1822,7 +1822,7 @@ export default function EmailsPage() {
                   padding: "10px 20px",
                   borderRadius: "8px",
                   border: "none",
-                  backgroundColor: "#ef4444",
+                  backgroundColor: "#7c3aed",
                   color: "white",
                   fontSize: "14px",
                   fontWeight: 500,

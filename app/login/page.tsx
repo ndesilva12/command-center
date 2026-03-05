@@ -193,12 +193,12 @@ export default function LoginPage() {
             <div
               style={{
                 padding: "12px",
-                background: "rgba(239, 68, 68, 0.1)",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
+                background: "rgba(124, 58, 237, 0.1)",
+                border: "1px solid rgba(124, 58, 237, 0.2)",
                 borderRadius: "8px",
                 marginBottom: "16px",
                 fontSize: "14px",
-                color: "#ef4444",
+                color: "#7c3aed",
               }}
             >
               {error}

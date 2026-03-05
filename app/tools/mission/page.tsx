@@ -618,7 +618,7 @@ function MissionContent() {
                                     style={{
                                       background: "none",
                                       border: "none",
-                                      color: "#ef4444",
+                                      color: "#7c3aed",
                                       cursor: "pointer",
                                       padding: "4px",
                                       opacity: 0.6,

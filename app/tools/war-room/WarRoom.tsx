@@ -325,7 +325,7 @@ const TIER_COLORS: Record<string, { bg: string; border: string; text: string; ba
   T2: { bg: "rgba(59,130,246,0.07)", border: "rgba(59,130,246,0.4)", text: "#3b82f6", badge: "rgba(59,130,246,0.15)" },
   T3: { bg: "rgba(107,114,128,0.07)", border: "rgba(107,114,128,0.4)", text: "#9ca3af", badge: "rgba(107,114,128,0.15)" },
   T4: { bg: "rgba(107,114,128,0.07)", border: "rgba(107,114,128,0.3)", text: "#9ca3af", badge: "rgba(107,114,128,0.12)" },
-  "T4-RF": { bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.5)", text: "#ef4444", badge: "rgba(239,68,68,0.2)" },
+  "T4-RF": { bg: "rgba(124,58,237,0.1)", border: "rgba(124,58,237,0.5)", text: "#7c3aed", badge: "rgba(124,58,237,0.2)" },
   NR: { bg: "rgba(75,85,99,0.05)", border: "rgba(75,85,99,0.2)", text: "#6b7280", badge: "rgba(75,85,99,0.1)" },
 };
 
@@ -339,7 +339,7 @@ function getTierStyle(tier: string) {
 }
 
 function getRiskStyle(risk: "low" | "moderate" | "high") {
-  if (risk === "high") return { color: "#ef4444", bg: "rgba(239,68,68,0.12)", dot: "#ef4444" };
+  if (risk === "high") return { color: "#7c3aed", bg: "rgba(124,58,237,0.12)", dot: "#7c3aed" };
   if (risk === "moderate") return { color: "#3b82f6", bg: "rgba(59,130,246,0.12)", dot: "#3b82f6" };
   return { color: "#10b981", bg: "rgba(16,185,129,0.12)", dot: "#10b981" };
 }
@@ -373,7 +373,7 @@ function LoadingSpinner() {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)", color: "#7c3aed", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
       <AlertTriangle size={16} />
       {message}
     </div>
@@ -544,7 +544,7 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
             const unverified = players.filter((p) => p["Net Adj.Rtg"].toLowerCase().includes("est.")).length;
             return unverified > 0 ? <>{" · "}<strong style={{ color: "#6b7280" }} title="Players with estimated Net Adj Rtg">~{unverified} unverified</strong></> : null;
           })()}
-          {flaggedCount > 0 && <>{" · "}<strong style={{ color: "#ef4444" }}>🚩 {flaggedCount} flagged</strong></>}
+          {flaggedCount > 0 && <>{" · "}<strong style={{ color: "#7c3aed" }}>🚩 {flaggedCount} flagged</strong></>}
         </span>
         {lastFetched && (
           <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>
@@ -563,8 +563,8 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
           <List size={13} />List
         </button>
         <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)" }} />
-        <button onClick={() => setFilterFlagged(v => !v)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "20px", border: filterFlagged ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.12)", background: filterFlagged ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)", color: filterFlagged ? "#ef4444" : "#9ca3af", fontSize: "12px", fontWeight: filterFlagged ? 600 : 400, cursor: "pointer" }}>
-          <Bookmark size={12} fill={filterFlagged ? "#ef4444" : "none"} stroke={filterFlagged ? "#ef4444" : "#9ca3af"} />
+        <button onClick={() => setFilterFlagged(v => !v)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", borderRadius: "20px", border: filterFlagged ? "1px solid #7c3aed" : "1px solid rgba(255,255,255,0.12)", background: filterFlagged ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)", color: filterFlagged ? "#7c3aed" : "#9ca3af", fontSize: "12px", fontWeight: filterFlagged ? 600 : 400, cursor: "pointer" }}>
+          <Bookmark size={12} fill={filterFlagged ? "#7c3aed" : "none"} stroke={filterFlagged ? "#7c3aed" : "#9ca3af"} />
           Flagged{flaggedCount > 0 ? ` (${flaggedCount})` : ""}
         </button>
       </div>
@@ -635,17 +635,17 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
                 const isOpen = openNotesFor === player.Player;
                 return (
                   <React.Fragment key={i}>
-                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: isFlagged ? "rgba(239,68,68,0.04)" : i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: isFlagged ? "rgba(124,58,237,0.04)" : i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
                       <td style={{ padding: "7px 8px", textAlign: "center" }}>
                         <button onClick={() => toggleFlag(player.Player)} title={isFlagged ? "Unflag" : "Flag player"} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", alignItems: "center", opacity: savingFlag === player.Player ? 0.5 : 1 }}>
-                          <Bookmark size={13} fill={isFlagged ? "#ef4444" : "none"} stroke={isFlagged ? "#ef4444" : "#4b5563"} />
+                          <Bookmark size={13} fill={isFlagged ? "#7c3aed" : "none"} stroke={isFlagged ? "#7c3aed" : "#4b5563"} />
                         </button>
                       </td>
                       <td style={{ padding: "7px 8px", fontWeight: 600, color: "#f3f4f6", whiteSpace: "nowrap" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                           <div style={{ width: "3px", height: "16px", borderRadius: "2px", background: tierStyle.text, flexShrink: 0 }} />
                           {player.Player}
-                          {player.Tier.includes("RF") && <AlertTriangle size={11} color="#ef4444" />}
+                          {player.Tier.includes("RF") && <AlertTriangle size={11} color="#7c3aed" />}
                         </div>
                       </td>
                       <td style={{ padding: "7px 8px", color: "#9ca3af", whiteSpace: "nowrap" }}>{player["Current School"]}</td>
@@ -707,24 +707,24 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
             const hasImpactFlag = player["Team Impact Flag"] && player["Team Impact Flag"].trim() !== "";
             const flightRisk = parseFloat(player["Flight Risk Score"] || "0");
             const hasFlightRisk = !isNaN(flightRisk) && flightRisk > 0;
-            const flightRiskColor = flightRisk >= 7 ? "#ef4444" : flightRisk >= 5 ? "#3b82f6" : "#10b981";
-            const flightRiskBg = flightRisk >= 7 ? "rgba(239,68,68,0.12)" : flightRisk >= 5 ? "rgba(59,130,246,0.12)" : "rgba(16,185,129,0.12)";
+            const flightRiskColor = flightRisk >= 7 ? "#7c3aed" : flightRisk >= 5 ? "#3b82f6" : "#10b981";
+            const flightRiskBg = flightRisk >= 7 ? "rgba(124,58,237,0.12)" : flightRisk >= 5 ? "rgba(59,130,246,0.12)" : "rgba(16,185,129,0.12)";
             const isFlagged = !!localFlags[player.Player];
             const hasNotes = !!(localNotes[player.Player]);
             const noteText = localNotes[player.Player] || "";
             const isOpen = openNotesFor === player.Player;
             return (
-              <div key={i} style={{ padding: "14px 16px", borderRadius: "12px", background: isFlagged ? "rgba(239,68,68,0.05)" : tierStyle.bg, border: `1px solid ${isFlagged ? "rgba(239,68,68,0.35)" : tierStyle.border}`, position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: isFlagged ? "#ef4444" : tierStyle.text, borderRadius: "12px 0 0 12px" }} />
+              <div key={i} style={{ padding: "14px 16px", borderRadius: "12px", background: isFlagged ? "rgba(124,58,237,0.05)" : tierStyle.bg, border: `1px solid ${isFlagged ? "rgba(124,58,237,0.35)" : tierStyle.border}`, position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: isFlagged ? "#7c3aed" : tierStyle.text, borderRadius: "12px 0 0 12px" }} />
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
                       <span style={{ fontSize: "15px", fontWeight: 700, color: "#f3f4f6" }}>{player.Player}</span>
                       <span style={{ padding: "2px 7px", borderRadius: "10px", fontSize: "10px", fontWeight: 700, background: tierStyle.badge, color: tierStyle.text, letterSpacing: "0.04em" }}>{player.Tier}</span>
-                      {player.Tier.includes("RF") && <AlertTriangle size={13} color="#ef4444" />}
+                      {player.Tier.includes("RF") && <AlertTriangle size={13} color="#7c3aed" />}
                       {/* Flag button */}
                       <button onClick={(e) => { e.stopPropagation(); toggleFlag(player.Player); }} title={isFlagged ? "Unflag player" : "Flag player"} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", marginLeft: "2px", opacity: savingFlag === player.Player ? 0.5 : 1 }}>
-                        <Bookmark size={13} fill={isFlagged ? "#ef4444" : "none"} stroke={isFlagged ? "#ef4444" : "#4b5563"} />
+                        <Bookmark size={13} fill={isFlagged ? "#7c3aed" : "none"} stroke={isFlagged ? "#7c3aed" : "#4b5563"} />
                       </button>
                       {/* Notes button */}
                       <button onClick={(e) => { e.stopPropagation(); setOpenNotesFor(isOpen ? null : player.Player); }} title="Player notes" style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", display: "inline-flex", color: hasNotes ? "#60a5fa" : "#4b5563" }}>
@@ -802,7 +802,7 @@ function SortablePlayerItem({ player, rank, isDragging }: { player: RankingPlaye
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <div ref={setNodeRef} style={{ ...style, display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: player.isRedFlag ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${player.isRedFlag ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}`, cursor: "default" }}>
+    <div ref={setNodeRef} style={{ ...style, display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: player.isRedFlag ? "rgba(124,58,237,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${player.isRedFlag ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.08)"}`, cursor: "default" }}>
       <div {...attributes} {...listeners} style={{ cursor: "grab", color: "#4b5563", flexShrink: 0, display: "flex", alignItems: "center" }}>
         <GripVertical size={16} />
       </div>
@@ -810,7 +810,7 @@ function SortablePlayerItem({ player, rank, isDragging }: { player: RankingPlaye
       <span style={{ padding: "2px 7px", borderRadius: "8px", fontSize: "10px", fontWeight: 700, background: tierStyle.badge, color: tierStyle.text, flexShrink: 0 }}>{player.tier}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          {player.isRedFlag && <AlertTriangle size={12} color="#ef4444" />}
+          {player.isRedFlag && <AlertTriangle size={12} color="#7c3aed" />}
           <span style={{ fontSize: "13px", fontWeight: 700, color: player.isRedFlag ? "#fca5a5" : "#f3f4f6", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{player.name}</span>
         </div>
         <div style={{ fontSize: "11px", color: "#6b7280" }}>{player.school} · {player.pos} · {player.yr}</div>
@@ -943,12 +943,12 @@ function NormansRankings({ isMobile, syncTrigger }: { isMobile: boolean; syncTri
                   {group.map((player, i) => {
                     const ts = getTierStyle(player.tier);
                     return (
-                      <div key={i} style={{ padding: "12px 14px", borderRadius: "10px", background: player.isRedFlag ? "rgba(239,68,68,0.08)" : ts.bg, border: `1px solid ${player.isRedFlag ? "rgba(239,68,68,0.4)" : ts.border}`, position: "relative", overflow: "hidden" }}>
-                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: player.isRedFlag ? "#ef4444" : ts.text }} />
+                      <div key={i} style={{ padding: "12px 14px", borderRadius: "10px", background: player.isRedFlag ? "rgba(124,58,237,0.08)" : ts.bg, border: `1px solid ${player.isRedFlag ? "rgba(124,58,237,0.4)" : ts.border}`, position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: player.isRedFlag ? "#7c3aed" : ts.text }} />
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: player.scoutNotes ? "8px" : "0" }}>
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-                              {player.isRedFlag && <AlertTriangle size={13} color="#ef4444" />}
+                              {player.isRedFlag && <AlertTriangle size={13} color="#7c3aed" />}
                               <span style={{ fontSize: "14px", fontWeight: 700, color: player.isRedFlag ? "#fca5a5" : "#f3f4f6" }}>{player.name}</span>
                             </div>
                             <div style={{ fontSize: "11px", color: "#9ca3af", display: "flex", gap: "6px" }}>
@@ -1110,12 +1110,12 @@ function RosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigg
         })}
       </div>
       {strikeOrder.length > 0 && (
-        <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ef4444", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}><Zap size={16} />PORTAL STRIKE ORDER — Opens ~March 23, 2026</h3>
+        <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.2)" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#7c3aed", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}><Zap size={16} />PORTAL STRIKE ORDER — Opens ~March 23, 2026</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {strikeOrder.map((target, i) => (
               <div key={i} style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: "12px", alignItems: "flex-start", flexWrap: "wrap" }}>
-                <span style={{ padding: "2px 8px", borderRadius: "6px", background: i <= 1 ? "rgba(239,68,68,0.15)" : "rgba(107,114,128,0.1)", color: i <= 1 ? "#ef4444" : "#9ca3af", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap" }}>{target.priority}</span>
+                <span style={{ padding: "2px 8px", borderRadius: "6px", background: i <= 1 ? "rgba(124,58,237,0.15)" : "rgba(107,114,128,0.1)", color: i <= 1 ? "#7c3aed" : "#9ca3af", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap" }}>{target.priority}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "#f3f4f6", marginBottom: "2px" }}>{target.player} <span style={{ fontSize: "12px", color: "#9ca3af" }}>({target.school})</span></div>
                   <div style={{ fontSize: "12px", color: "#9ca3af" }}>{target.reason}</div>
@@ -1155,7 +1155,7 @@ function PlayerPickerDropdown({ players, onSelect, onClose, currentPlayer }: { p
         <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, school, position…" style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#f3f4f6", fontSize: "13px", outline: "none" }} />
         <div style={{ overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
           {currentPlayer && (
-            <button onClick={() => { onSelect(null); onClose(); }} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "12px", cursor: "pointer", textAlign: "left" }}>
+            <button onClick={() => { onSelect(null); onClose(); }} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: "12px", cursor: "pointer", textAlign: "left" }}>
               Remove player
             </button>
           )}
@@ -1448,7 +1448,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
       </div>
 
       {/* Budget Bar */}
-      <div style={{ padding: "16px 20px", borderRadius: "12px", background: "linear-gradient(135deg, rgba(16,185,129,0.07), rgba(59,130,246,0.05))", border: `1px solid ${isOverBudget ? "rgba(239,68,68,0.4)" : "rgba(16,185,129,0.25)"}` }}>
+      <div style={{ padding: "16px 20px", borderRadius: "12px", background: "linear-gradient(135deg, rgba(16,185,129,0.07), rgba(59,130,246,0.05))", border: `1px solid ${isOverBudget ? "rgba(124,58,237,0.4)" : "rgba(16,185,129,0.25)"}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
           <div>
             <div style={{ fontSize: "16px", fontWeight: 800, color: "#f3f4f6", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1458,7 +1458,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
             <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>Total budget: $8,000,000 · Set player salaries</div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "20px", fontWeight: 800, color: isOverBudget ? "#ef4444" : "#10b981" }}>{formatSalary(remaining)} left</div>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: isOverBudget ? "#7c3aed" : "#10b981" }}>{formatSalary(remaining)} left</div>
             <div style={{ fontSize: "11px", color: "#6b7280" }}>of $8M total</div>
           </div>
         </div>
@@ -1467,7 +1467,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${guardTotal / TOTAL_BUDGET * 100}%`, background: "#3b82f6", transition: "width 0.3s ease" }} />
           <div style={{ position: "absolute", left: `${guardTotal / TOTAL_BUDGET * 100}%`, top: 0, bottom: 0, width: `${forwardTotal / TOTAL_BUDGET * 100}%`, background: "#10b981", transition: "all 0.3s ease" }} />
           <div style={{ position: "absolute", left: `${(guardTotal + forwardTotal) / TOTAL_BUDGET * 100}%`, top: 0, bottom: 0, width: `${benchTotal / TOTAL_BUDGET * 100}%`, background: "#6b7280", transition: "all 0.3s ease" }} />
-          {isOverBudget && <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", background: "#ef4444", animation: "pulse 1s ease-in-out infinite" }} />}
+          {isOverBudget && <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", background: "#7c3aed", animation: "pulse 1s ease-in-out infinite" }} />}
         </div>
         <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
@@ -1483,7 +1483,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
       {warnings.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {warnings.map((w, i) => (
-            <div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12px", color: "#ef4444", display: "flex", alignItems: "center", gap: "6px" }}>
+            <div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", fontSize: "12px", color: "#7c3aed", display: "flex", alignItems: "center", gap: "6px" }}>
               <AlertTriangle size={12} />{w}
             </div>
           ))}
@@ -1579,7 +1579,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
                 {saving ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : saveStatus === "saved" ? <Check size={12} /> : <Save size={12} />}
                 {saving ? "Saving…" : saveStatus === "saved" ? "Saved!" : "Save Config"}
               </button>
-              <button onClick={handleReset} style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "12px", cursor: "pointer" }}>
+              <button onClick={handleReset} style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: "12px", cursor: "pointer" }}>
                 <Trash2 size={12} />
               </button>
             </div>
@@ -1958,7 +1958,7 @@ function NetworkTool({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger
                         <button onClick={() => startEdit(person)} style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "6px", background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.25)", color: "#60a5fa", fontSize: "12px", cursor: "pointer" }}>
                           <Edit2 size={12} />Edit
                         </button>
-                        <button onClick={() => handleDelete(person.id)} style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "6px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "12px", cursor: "pointer" }}>
+                        <button onClick={() => handleDelete(person.id)} style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "6px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: "12px", cursor: "pointer" }}>
                           <Trash2 size={12} />Delete
                         </button>
                       </div>
@@ -2191,15 +2191,15 @@ function CoachingConnections({ isMobile, syncTrigger }: { isMobile: boolean; syn
           <strong style={{ color: "#e5e7eb" }}>{connections.length}</strong> coaching connections
           {" · "}<strong style={{ color: "#10b981" }}>{connections.filter((c) => c.strength === 5).length} Strength-5</strong>
           {" · "}<strong style={{ color: "#3b82f6" }}>{connections.filter((c) => c.strength === 4).length} Strength-4</strong>
-          {" · "}<strong style={{ color: "#ef4444" }}>{connections.filter((c) => c.priority.toLowerCase() === "high").length} High-Priority</strong>
+          {" · "}<strong style={{ color: "#7c3aed" }}>{connections.filter((c) => c.priority.toLowerCase() === "high").length} High-Priority</strong>
         </span>
         {lastFetched && <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>Synced: {lastFetched.toLocaleTimeString()} · live</span>}
       </div>
       {grouped.order.map((priority) => {
         const group = grouped.result[priority];
         if (!group || group.length === 0) return null;
-        const priorityColor = priority === "High" ? "#ef4444" : priority === "Medium" ? "#3b82f6" : "#6b7280";
-        const priorityBg = priority === "High" ? "rgba(239,68,68,0.08)" : priority === "Medium" ? "rgba(59,130,246,0.06)" : "rgba(107,114,128,0.05)";
+        const priorityColor = priority === "High" ? "#7c3aed" : priority === "Medium" ? "#3b82f6" : "#6b7280";
+        const priorityBg = priority === "High" ? "rgba(124,58,237,0.08)" : priority === "Medium" ? "rgba(59,130,246,0.06)" : "rgba(107,114,128,0.05)";
         return (
           <div key={priority}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", paddingBottom: "8px", borderBottom: `1px solid ${priorityColor}30` }}>
@@ -2270,7 +2270,7 @@ function nilTierColor(nilTier: string): { color: string; bg: string } {
 function flightRiskColor(risk: string): string {
   const r = parseFloat(risk);
   if (isNaN(r)) return "#6b7280";
-  if (r >= 7) return "#ef4444";
+  if (r >= 7) return "#7c3aed";
   if (r >= 5) return "#3b82f6";
   return "#10b981";
 }
@@ -2424,7 +2424,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
     <div style={{ display: "flex", gap: "0", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", background: "rgba(255,255,255,0.02)" }}>
       <StatBlock icon={<Users size={14} color="#9ca3af" />} label="Players Tracked" value={stats ? String(stats.totalPlayers) : "—"} valueColor="#e5e7eb" />
       <StatBlock icon={<Star size={14} color="#10b981" />} label="T1 Targets" value={stats ? String(stats.t1Count) : "—"} valueColor="#10b981" />
-      <StatBlock icon={<Clock size={14} color={portalOpen ? "#ef4444" : "#3b82f6"} />} label={portalOpen ? "Portal OPEN" : "Portal Opens"} value={portalOpen ? "NOW" : `${daysUntilPortal}d`} valueColor={portalOpen ? "#ef4444" : "#3b82f6"} sub="Mar 23, 2026" />
+      <StatBlock icon={<Clock size={14} color={portalOpen ? "#7c3aed" : "#3b82f6"} />} label={portalOpen ? "Portal OPEN" : "Portal Opens"} value={portalOpen ? "NOW" : `${daysUntilPortal}d`} valueColor={portalOpen ? "#7c3aed" : "#3b82f6"} sub="Mar 23, 2026" />
       <StatBlock icon={<Target size={14} color="#3b82f6" />} label="Wave 1 Strikes" value="6" valueColor="#3b82f6" sub="Day 1 contacts" />
     </div>
   );
@@ -2467,9 +2467,9 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
   ];
 
   const tabAccent: Record<string, { active: string; border: string; bg: string }> = {
-    fulldatabase: { active: "#f59e0b", border: "rgba(245,158,11,0.4)", bg: "rgba(245,158,11,0.12)" },
+    fulldatabase: { active: "#d4af37", border: "rgba(212,175,55,0.4)", bg: "rgba(212,175,55,0.12)" },
     rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
-    torvik: { active: "#ef4444", border: "rgba(239,68,68,0.4)", bg: "rgba(239,68,68,0.12)" },
+    torvik: { active: "#7c3aed", border: "rgba(124,58,237,0.4)", bg: "rgba(124,58,237,0.12)" },
     roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
     network: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.10)" },

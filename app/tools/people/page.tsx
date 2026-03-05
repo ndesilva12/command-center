@@ -322,7 +322,7 @@ export default function PeoplePage() {
               <RefreshCw style={{ width: "32px", height: "32px", color: toolCustom.color, animation: "spin 1s linear infinite" }} />
             </div>
           ) : error ? (
-            <div style={{ textAlign: "center", padding: "60px 20px", color: "#f87171" }}>
+            <div style={{ textAlign: "center", padding: "60px 20px", color: "#a78bfa" }}>
               <p>{error}</p>
               <button
                 onClick={fetchPeople}

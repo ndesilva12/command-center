@@ -390,8 +390,8 @@ export default function LocalLeadsPage() {
                             fontSize: "10px", 
                             padding: "2px 6px", 
                             borderRadius: "4px",
-                            background: isRural ? "#f59e0b33" : "#3b82f633",
-                            color: isRural ? "#f59e0b" : "#3b82f6"
+                            background: isRural ? "#d4af3733" : "#3b82f633",
+                            color: isRural ? "#d4af37" : "#3b82f6"
                           }}>
                             {isRural ? 'RURAL' : 'METRO'}
                           </span>

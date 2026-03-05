@@ -274,8 +274,8 @@ function RelationshipsContent() {
                           width: "32px",
                           height: "32px",
                           padding: 0,
-                          background: "rgba(239, 68, 68, 0.1)",
-                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                          background: "rgba(124, 58, 237, 0.1)",
+                          border: "1px solid rgba(124, 58, 237, 0.2)",
                           borderRadius: "6px",
                           cursor: deleting === project.id ? "not-allowed" : "pointer",
                           transition: "all 0.2s",
@@ -283,19 +283,19 @@ function RelationshipsContent() {
                         }}
                         onMouseEnter={(e) => {
                           if (deleting !== project.id) {
-                            e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
-                            e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.4)";
+                            e.currentTarget.style.background = "rgba(124, 58, 237, 0.2)";
+                            e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.4)";
                           }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
-                          e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.2)";
+                          e.currentTarget.style.background = "rgba(124, 58, 237, 0.1)";
+                          e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.2)";
                         }}
                       >
                         {deleting === project.id ? (
-                          <Loader2 style={{ width: "16px", height: "16px", color: "#ef4444", animation: "spin 1s linear infinite" }} />
+                          <Loader2 style={{ width: "16px", height: "16px", color: "#7c3aed", animation: "spin 1s linear infinite" }} />
                         ) : (
-                          <Trash2 style={{ width: "16px", height: "16px", color: "#ef4444" }} />
+                          <Trash2 style={{ width: "16px", height: "16px", color: "#7c3aed" }} />
                         )}
                       </button>
                       <ArrowRight style={{ width: "18px", height: "18px", color: "var(--foreground-muted)" }} />
@@ -317,8 +317,8 @@ function RelationshipsContent() {
                     </div>
                     {project.needsFollowUp && project.needsFollowUp > 0 && (
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Sparkles style={{ width: "16px", height: "16px", color: "#ef4444" }} />
-                        <span style={{ fontSize: "14px", color: "#ef4444", fontWeight: 600 }}>
+                        <Sparkles style={{ width: "16px", height: "16px", color: "#7c3aed" }} />
+                        <span style={{ fontSize: "14px", color: "#7c3aed", fontWeight: 600 }}>
                           {project.needsFollowUp} need follow-up
                         </span>
                       </div>

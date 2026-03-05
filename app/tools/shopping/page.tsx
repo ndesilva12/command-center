@@ -300,7 +300,7 @@ export default function ShoppingPage() {
 
   const getPriorityColor = (priority: string) => {
     switch(priority) {
-      case 'high': return '#ef4444';
+      case 'high': return '#7c3aed';
       case 'medium': return '#6366f1';
       case 'low': return '#10b981';
       default: return '#6b7280';
@@ -576,9 +576,9 @@ export default function ShoppingPage() {
                             style={{
                               padding: "4px",
                               borderRadius: "4px",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                              backgroundColor: "rgba(239, 68, 68, 0.1)",
-                              color: "#ef4444",
+                              border: "1px solid rgba(124, 58, 237, 0.3)",
+                              backgroundColor: "rgba(124, 58, 237, 0.1)",
+                              color: "#7c3aed",
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
@@ -808,9 +808,9 @@ export default function ShoppingPage() {
                               style={{
                                 padding: "8px",
                                 borderRadius: "6px",
-                                border: "1px solid rgba(239, 68, 68, 0.3)",
-                                backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                color: "#ef4444",
+                                border: "1px solid rgba(124, 58, 237, 0.3)",
+                                backgroundColor: "rgba(124, 58, 237, 0.1)",
+                                color: "#7c3aed",
                                 cursor: "pointer",
                                 display: "flex",
                                 alignItems: "center",

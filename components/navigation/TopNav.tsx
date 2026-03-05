@@ -350,8 +350,8 @@ export function TopNav() {
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#ef4444";
-                e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                e.currentTarget.style.color = "#7c3aed";
+                e.currentTarget.style.background = "rgba(124, 58, 237, 0.1)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.color = "var(--muted)";

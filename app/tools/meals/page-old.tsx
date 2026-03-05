@@ -513,9 +513,9 @@ export default function MealsPage() {
                         style={{
                           padding: "8px 12px",
                           borderRadius: "6px",
-                          border: "1px solid rgba(239, 68, 68, 0.3)",
-                          backgroundColor: "rgba(239, 68, 68, 0.1)",
-                          color: "#ef4444",
+                          border: "1px solid rgba(124, 58, 237, 0.3)",
+                          backgroundColor: "rgba(124, 58, 237, 0.1)",
+                          color: "#7c3aed",
                           fontSize: "13px",
                           fontWeight: 600,
                           cursor: deletingMealId === meal.id ? "not-allowed" : "pointer",
@@ -527,11 +527,11 @@ export default function MealsPage() {
                         }}
                         onMouseEnter={(e) => {
                           if (deletingMealId !== meal.id) {
-                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.2)";
+                            e.currentTarget.style.backgroundColor = "rgba(124, 58, 237, 0.2)";
                           }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+                          e.currentTarget.style.backgroundColor = "rgba(124, 58, 237, 0.1)";
                         }}
                       >
                         <Trash2 style={{ width: "14px", height: "14px" }} />

@@ -42,7 +42,7 @@ interface TeamOption {
 
 export default function RosterMapPage() {
   const { getCustomization } = useToolCustomizations();
-  const toolCustom = getCustomization("roster-map", "Roster Map", "#f97316");
+  const toolCustom = getCustomization("roster-map", "Roster Map", "#14b8a6");
 
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [conferences, setConferences] = useState<string[]>([]);

@@ -46,7 +46,7 @@ const CONFIDENCE_COLORS: Record<string, string> = {
   high: "#22c55e",
   medium: "#06b6d4",
   low: "#6366f1",
-  speculative: "#ef4444",
+  speculative: "#7c3aed",
 };
 
 export default function ContactFinderPage() {
@@ -321,10 +321,10 @@ function ContactFinderContent() {
           <div
             style={{
               padding: "16px",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
+              background: "rgba(124, 58, 237, 0.1)",
+              border: "1px solid rgba(124, 58, 237, 0.3)",
               borderRadius: "8px",
-              color: "#ef4444",
+              color: "#7c3aed",
               marginBottom: "24px",
             }}
           >

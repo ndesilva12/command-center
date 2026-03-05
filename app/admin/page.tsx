@@ -341,8 +341,8 @@ export default function AdminPage() {
                       style={{
                         display: "inline-block",
                         padding: "4px 12px",
-                        background: user.role === "admin" ? "rgba(239, 68, 68, 0.1)" : "rgba(59, 130, 246, 0.1)",
-                        color: user.role === "admin" ? "#ef4444" : "#3b82f6",
+                        background: user.role === "admin" ? "rgba(124, 58, 237, 0.1)" : "rgba(59, 130, 246, 0.1)",
+                        color: user.role === "admin" ? "#7c3aed" : "#3b82f6",
                         borderRadius: "6px",
                         fontSize: "12px",
                         fontWeight: 600,
@@ -415,9 +415,9 @@ export default function AdminPage() {
                           onClick={() => handleDeleteUser(user.id)}
                           style={{
                             padding: "8px 16px",
-                            background: "rgba(239, 68, 68, 0.1)",
-                            color: "#ef4444",
-                            border: "1px solid rgba(239, 68, 68, 0.2)",
+                            background: "rgba(124, 58, 237, 0.1)",
+                            color: "#7c3aed",
+                            border: "1px solid rgba(124, 58, 237, 0.2)",
                             borderRadius: "8px",
                             fontSize: "14px",
                             fontWeight: 600,

@@ -270,10 +270,10 @@ function ImageLookupContent() {
                   onClick={clearImage}
                   style={{
                     padding: "6px",
-                    background: "rgba(239, 68, 68, 0.1)",
-                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    background: "rgba(124, 58, 237, 0.1)",
+                    border: "1px solid rgba(124, 58, 237, 0.3)",
                     borderRadius: "6px",
-                    color: "#ef4444",
+                    color: "#7c3aed",
                     cursor: "pointer",
                   }}
                 >
@@ -335,10 +335,10 @@ function ImageLookupContent() {
           <div
             style={{
               padding: "16px",
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
+              background: "rgba(124, 58, 237, 0.1)",
+              border: "1px solid rgba(124, 58, 237, 0.3)",
               borderRadius: "8px",
-              color: "#ef4444",
+              color: "#7c3aed",
               marginBottom: "24px",
             }}
           >

@@ -136,8 +136,8 @@ export default function BusinessPage() {
           <div style={{
             padding: "6px 14px",
             borderRadius: "20px",
-            background: data.confidenceScore >= 70 ? "rgba(16, 185, 129, 0.15)" : data.confidenceScore >= 40 ? "rgba(245, 158, 11, 0.15)" : "rgba(220, 38, 38, 0.15)",
-            color: data.confidenceScore >= 70 ? toolCustom.color : data.confidenceScore >= 40 ? "#f59e0b" : "#dc2626",
+            background: data.confidenceScore >= 70 ? "rgba(16, 185, 129, 0.15)" : data.confidenceScore >= 40 ? "rgba(245, 158, 11, 0.15)" : "rgba(124, 58, 237, 0.15)",
+            color: data.confidenceScore >= 70 ? toolCustom.color : data.confidenceScore >= 40 ? "#d4af37" : "#7c3aed",
             fontSize: "13px",
             fontWeight: 700,
           }}>
@@ -278,11 +278,11 @@ export default function BusinessPage() {
         <div style={{
           marginBottom: "20px",
           padding: "16px",
-          background: "rgba(220, 38, 38, 0.08)",
-          border: "1px solid rgba(220, 38, 38, 0.25)",
+          background: "rgba(124, 58, 237, 0.08)",
+          border: "1px solid rgba(124, 58, 237, 0.25)",
           borderRadius: "8px"
         }}>
-          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#dc2626" }}>
+          <h4 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "10px", color: "#7c3aed" }}>
             🚨 Suspicious Findings
           </h4>
           <p style={{ fontSize: "14px", lineHeight: 1.7, color: "var(--foreground)", whiteSpace: "pre-wrap" }}>

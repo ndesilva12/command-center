@@ -75,7 +75,7 @@ const POSITION_COLORS: Record<string, string> = {
   F: "#10b981",
   SF: "#10b981",
   PF: "#34d399",
-  C: "#f59e0b",
+  C: "#d4af37",
 };
 
 const YEAR_ORDER: Record<string, number> = { Fr: 1, So: 2, Jr: 3, Sr: 4 };
@@ -291,7 +291,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
 
   if (error) {
     return (
-      <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px" }}>
+      <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)", color: "#7c3aed", fontSize: "14px" }}>
         {error}
       </div>
     );
@@ -303,7 +303,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", padding: "12px 16px", borderRadius: "10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", alignItems: "center" }}>
         <span style={{ fontSize: "13px", color: "#9ca3af" }}>
           <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> total players
-          {" · "}<strong style={{ color: "#f59e0b" }}>{bigBoardPlayers.size}</strong> on Big Board
+          {" · "}<strong style={{ color: "#d4af37" }}>{bigBoardPlayers.size}</strong> on Big Board
           {" · "}<strong style={{ color: "#10b981" }}>{players.filter(p => p["Power Conf"] === "TRUE").length}</strong> Power Conf
           {" · "}<strong style={{ color: "#3b82f6" }}>{players.filter(p => p["School History"]).length}</strong> with transfer history
         </span>
@@ -367,7 +367,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
         </button>
 
         {hasActiveFilters && (
-          <button onClick={clearFilters} style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#f87171", fontSize: "12px", cursor: "pointer" }}>
+          <button onClick={clearFilters} style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.1)", color: "#a78bfa", fontSize: "12px", cursor: "pointer" }}>
             Clear All
           </button>
         )}
@@ -564,8 +564,8 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                       <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["eFG%"] ? `${fmt(player["eFG%"])}%` : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: "#9ca3af" }}>{player["3P%"] ? `${fmt(player["3P%"])}%` : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "right", color: player["Ast%"] && parseFloat(player["Ast%"]) >= 20 ? "#60a5fa" : "#9ca3af" }}>{player["Ast%"] ? fmt(player["Ast%"]) : "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", color: player["OReb%"] && parseFloat(player["OReb%"]) >= 10 ? "#f59e0b" : "#9ca3af" }}>{player["OReb%"] ? fmt(player["OReb%"]) : "—"}</td>
-                      <td style={{ padding: "8px", textAlign: "right", fontWeight: player.BPM && parseFloat(player.BPM) >= 5 ? 700 : 400, color: player.BPM && parseFloat(player.BPM) >= 8 ? "#10b981" : player.BPM && parseFloat(player.BPM) >= 5 ? "#60a5fa" : player.BPM && parseFloat(player.BPM) < 0 ? "#ef4444" : "#9ca3af" }}>{player.BPM ? fmt(player.BPM) : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: player["OReb%"] && parseFloat(player["OReb%"]) >= 10 ? "#d4af37" : "#9ca3af" }}>{player["OReb%"] ? fmt(player["OReb%"]) : "—"}</td>
+                      <td style={{ padding: "8px", textAlign: "right", fontWeight: player.BPM && parseFloat(player.BPM) >= 5 ? 700 : 400, color: player.BPM && parseFloat(player.BPM) >= 8 ? "#10b981" : player.BPM && parseFloat(player.BPM) >= 5 ? "#60a5fa" : player.BPM && parseFloat(player.BPM) < 0 ? "#7c3aed" : "#9ca3af" }}>{player.BPM ? fmt(player.BPM) : "—"}</td>
                       <td style={{ padding: "8px", textAlign: "center" }}>
                         {hasHistory && <History size={12} style={{ color: "#60a5fa" }} />}
                       </td>
@@ -685,7 +685,7 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                       <span style={{ padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 600, background: `${posColor}20`, color: posColor }}>
                         {player.Position}
                       </span>
-                      {player["Power Conf"] === "TRUE" && <Star size={10} fill="#f59e0b" style={{ color: "#f59e0b" }} />}
+                      {player["Power Conf"] === "TRUE" && <Star size={10} fill="#d4af37" style={{ color: "#d4af37" }} />}
                     </div>
                     <div style={{ fontSize: "12px", color: "#9ca3af" }}>
                       {player.Team} · {player.Conference} · {player.Year}
@@ -703,8 +703,8 @@ export function FullDatabaseBoard({ isMobile }: { isMobile: boolean }) {
                   <span>{fmt(player["eFG%"])}% eFG</span>
                   <span>{fmt(player["3P%"])}% 3P</span>
                   {player["Ast%"] && <span style={{ color: parseFloat(player["Ast%"]) >= 20 ? "#60a5fa" : "#9ca3af" }}>{fmt(player["Ast%"])} Ast%</span>}
-                  {player["OReb%"] && <span style={{ color: parseFloat(player["OReb%"]) >= 10 ? "#f59e0b" : "#9ca3af" }}>{fmt(player["OReb%"])} OReb%</span>}
-                  {player.BPM && <span style={{ color: parseFloat(player.BPM) >= 5 ? "#10b981" : parseFloat(player.BPM) < 0 ? "#ef4444" : "#9ca3af", fontWeight: parseFloat(player.BPM) >= 5 ? 700 : 400 }}>{fmt(player.BPM)} BPM</span>}
+                  {player["OReb%"] && <span style={{ color: parseFloat(player["OReb%"]) >= 10 ? "#d4af37" : "#9ca3af" }}>{fmt(player["OReb%"])} OReb%</span>}
+                  {player.BPM && <span style={{ color: parseFloat(player.BPM) >= 5 ? "#10b981" : parseFloat(player.BPM) < 0 ? "#7c3aed" : "#9ca3af", fontWeight: parseFloat(player.BPM) >= 5 ? 700 : 400 }}>{fmt(player.BPM)} BPM</span>}
                   <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
                     <a
                       href={getBarttorvikUrl(player.Player, player.Team)}

@@ -207,9 +207,9 @@ const DEFAULT_SLOTS: BudgetSlot[] = [
 const TIER_COLORS: Record<string, { bg: string; border: string; text: string; badge: string }> = {
   T1: { bg: "rgba(16,185,129,0.07)", border: "rgba(16,185,129,0.4)", text: "#10b981", badge: "rgba(16,185,129,0.15)" },
   T2: { bg: "rgba(59,130,246,0.07)", border: "rgba(59,130,246,0.4)", text: "#3b82f6", badge: "rgba(59,130,246,0.15)" },
-  T3: { bg: "rgba(245,158,11,0.07)", border: "rgba(245,158,11,0.4)", text: "#f59e0b", badge: "rgba(245,158,11,0.15)" },
+  T3: { bg: "rgba(212,175,55,0.07)", border: "rgba(212,175,55,0.4)", text: "#d4af37", badge: "rgba(212,175,55,0.15)" },
   T4: { bg: "rgba(107,114,128,0.07)", border: "rgba(107,114,128,0.3)", text: "#9ca3af", badge: "rgba(107,114,128,0.12)" },
-  "T4-RF": { bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.5)", text: "#ef4444", badge: "rgba(239,68,68,0.2)" },
+  "T4-RF": { bg: "rgba(124,58,237,0.1)", border: "rgba(124,58,237,0.5)", text: "#7c3aed", badge: "rgba(124,58,237,0.2)" },
   NR: { bg: "rgba(75,85,99,0.05)", border: "rgba(75,85,99,0.2)", text: "#6b7280", badge: "rgba(75,85,99,0.1)" },
 };
 
@@ -223,8 +223,8 @@ function getTierStyle(tier: string) {
 }
 
 function getRiskStyle(risk: "low" | "moderate" | "high") {
-  if (risk === "high") return { color: "#ef4444", bg: "rgba(239,68,68,0.12)", dot: "#ef4444" };
-  if (risk === "moderate") return { color: "#f59e0b", bg: "rgba(245,158,11,0.12)", dot: "#f59e0b" };
+  if (risk === "high") return { color: "#7c3aed", bg: "rgba(124,58,237,0.12)", dot: "#7c3aed" };
+  if (risk === "moderate") return { color: "#d4af37", bg: "rgba(212,175,55,0.12)", dot: "#d4af37" };
   return { color: "#10b981", bg: "rgba(16,185,129,0.12)", dot: "#10b981" };
 }
 
@@ -257,7 +257,7 @@ function LoadingSpinner() {
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)", color: "#7c3aed", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
       <AlertTriangle size={16} />
       {message}
     </div>
@@ -345,10 +345,10 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
           📊 <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> players tracked
           {" · "}<strong style={{ color: "#10b981" }}>{players.filter((p) => p.Tier.includes("T1") && !p.Tier.includes("RF")).length} T1</strong>
           {" · "}<strong style={{ color: "#3b82f6" }}>{players.filter((p) => p.Tier.includes("T2") && !p.Tier.includes("RF")).length} T2</strong>
-          {" · "}<strong style={{ color: "#f59e0b" }}>{players.filter((p) => p.Tier.includes("T3") && !p.Tier.includes("RF")).length} T3</strong>
+          {" · "}<strong style={{ color: "#d4af37" }}>{players.filter((p) => p.Tier.includes("T3") && !p.Tier.includes("RF")).length} T3</strong>
           {(() => {
             const unverified = players.filter((p) => p["Net Adj.Rtg"].toLowerCase().includes("est.")).length;
-            return unverified > 0 ? <>{" · "}<strong style={{ color: "#f59e0b" }} title="Players with estimated Net Adj Rtg">~{unverified} unverified</strong></> : null;
+            return unverified > 0 ? <>{" · "}<strong style={{ color: "#d4af37" }} title="Players with estimated Net Adj Rtg">~{unverified} unverified</strong></> : null;
           })()}
         </span>
         {lastFetched && (
@@ -404,8 +404,8 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
           const hasFlag = player["Team Impact Flag"] && player["Team Impact Flag"].trim() !== "";
           const flightRisk = parseFloat(player["Flight Risk Score"] || "0");
           const hasFlightRisk = !isNaN(flightRisk) && flightRisk > 0;
-          const flightRiskColor = flightRisk >= 7 ? "#ef4444" : flightRisk >= 5 ? "#f59e0b" : "#10b981";
-          const flightRiskBg = flightRisk >= 7 ? "rgba(239,68,68,0.12)" : flightRisk >= 5 ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)";
+          const flightRiskColor = flightRisk >= 7 ? "#7c3aed" : flightRisk >= 5 ? "#d4af37" : "#10b981";
+          const flightRiskBg = flightRisk >= 7 ? "rgba(124,58,237,0.12)" : flightRisk >= 5 ? "rgba(212,175,55,0.12)" : "rgba(16,185,129,0.12)";
           return (
             <div key={i} style={{ padding: "14px 16px", borderRadius: "12px", background: tierStyle.bg, border: `1px solid ${tierStyle.border}`, position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: tierStyle.text, borderRadius: "12px 0 0 12px" }} />
@@ -414,7 +414,7 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
                     <span style={{ fontSize: "15px", fontWeight: 700, color: "#f3f4f6" }}>{player.Player}</span>
                     <span style={{ padding: "2px 7px", borderRadius: "10px", fontSize: "10px", fontWeight: 700, background: tierStyle.badge, color: tierStyle.text, letterSpacing: "0.04em" }}>{player.Tier}</span>
-                    {player.Tier.includes("RF") && <AlertTriangle size={13} color="#ef4444" />}
+                    {player.Tier.includes("RF") && <AlertTriangle size={13} color="#7c3aed" />}
                   </div>
                   <div style={{ fontSize: "12px", color: "#9ca3af", display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     <span>{player["Current School"]}</span><span>·</span><span>{player.Position}</span><span>·</span><span>{player.Class}</span><span>·</span><span style={{ color: "#6b7280" }}>{player.Conference}</span>
@@ -430,20 +430,20 @@ function PortalBigBoard({ isMobile, syncTrigger }: { isMobile: boolean; syncTrig
                 {player["Cin Score v2"] && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
                     <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>Cin.v2</span>
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: cinV2Downgraded ? "#f59e0b" : "#d1d5db" }}>{cinV2Downgraded && <span style={{ fontSize: "11px", marginRight: "2px" }}>↓</span>}{cinScoreV2 ? cinScoreV2.toFixed(1) : "—"}</span>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: cinV2Downgraded ? "#d4af37" : "#d1d5db" }}>{cinV2Downgraded && <span style={{ fontSize: "11px", marginRight: "2px" }}>↓</span>}{cinScoreV2 ? cinScoreV2.toFixed(1) : "—"}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column", gap: "1px" }} title={netRtgIsEst ? "Estimated value" : undefined}>
                   <span style={{ fontSize: "9px", color: "#6b7280", fontWeight: 600, letterSpacing: "0.05em" }}>Net Adj.Rtg</span>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: netRtgIsEst ? "#f59e0b" : (netRtg > 5 ? "#10b981" : "#d1d5db") }}>
-                    {netRtgRaw ? (netRtgIsEst ? <><span style={{ color: "#f59e0b" }}>~</span>{netRtgRaw.replace(/est\.\s*/i, "").trim() || "—"}</> : netRtgRaw) : "—"}
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: netRtgIsEst ? "#d4af37" : (netRtg > 5 ? "#10b981" : "#d1d5db") }}>
+                    {netRtgRaw ? (netRtgIsEst ? <><span style={{ color: "#d4af37" }}>~</span>{netRtgRaw.replace(/est\.\s*/i, "").trim() || "—"}</> : netRtgRaw) : "—"}
                   </span>
                 </div>
                 <StatPill label="PPG" value={player.PPG || "—"} />
                 <StatPill label="APG" value={player.APG || "—"} />
                 <StatPill label="3P%" value={player["3P%"] ? `${player["3P%"]}%` : "—"} />
               </div>
-              {hasFlag && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", fontSize: "11px", color: "#f59e0b", fontWeight: 600 }}><Zap size={10} />{player["Team Impact Flag"]}</div>}
+              {hasFlag && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: "rgba(212,175,55,0.12)", border: "1px solid rgba(212,175,55,0.3)", fontSize: "11px", color: "#d4af37", fontWeight: 600 }}><Zap size={10} />{player["Team Impact Flag"]}</div>}
               {hasFlightRisk && <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 10px", borderRadius: "6px", background: flightRiskBg, border: `1px solid ${flightRiskColor}40`, fontSize: "11px", color: flightRiskColor, fontWeight: 600, marginTop: hasFlag ? "6px" : "0" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: flightRiskColor, flexShrink: 0 }} />Flight Risk: {player["Flight Risk Score"]}</div>}
               {player["Conference Check"] && <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "3px 8px", borderRadius: "6px", background: "rgba(107,114,128,0.1)", border: "1px solid rgba(107,114,128,0.25)", fontSize: "10px", color: "#9ca3af", fontWeight: 600, marginTop: "4px", marginLeft: hasFlightRisk ? "6px" : "0" }}>{player["Conference Check"]}</div>}
               {player["Role Fit"] && <div style={{ marginTop: "6px", fontSize: "11px", color: "#6b7280", fontStyle: "italic" }}>Role: {player["Role Fit"]}</div>}
@@ -466,7 +466,7 @@ function SortablePlayerItem({ player, rank, isDragging }: { player: RankingPlaye
     opacity: isDragging ? 0.5 : 1,
   };
   return (
-    <div ref={setNodeRef} style={{ ...style, display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: player.isRedFlag ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${player.isRedFlag ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}`, cursor: "default" }}>
+    <div ref={setNodeRef} style={{ ...style, display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "8px", background: player.isRedFlag ? "rgba(124,58,237,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${player.isRedFlag ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.08)"}`, cursor: "default" }}>
       {/* Drag handle */}
       <div {...attributes} {...listeners} style={{ cursor: "grab", color: "#4b5563", flexShrink: 0, display: "flex", alignItems: "center" }}>
         <GripVertical size={16} />
@@ -478,7 +478,7 @@ function SortablePlayerItem({ player, rank, isDragging }: { player: RankingPlaye
       {/* Name + school */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          {player.isRedFlag && <AlertTriangle size={12} color="#ef4444" />}
+          {player.isRedFlag && <AlertTriangle size={12} color="#7c3aed" />}
           <span style={{ fontSize: "13px", fontWeight: 700, color: player.isRedFlag ? "#fca5a5" : "#f3f4f6", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{player.name}</span>
         </div>
         <div style={{ fontSize: "11px", color: "#6b7280" }}>{player.school} · {player.pos} · {player.yr}</div>
@@ -541,7 +541,7 @@ function DraggableList({ players, sectionKey, onReorder }: { players: RankingPla
     <div>
       {/* Save status */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", minHeight: "24px" }}>
-        {saving && <span style={{ fontSize: "11px", color: "#f59e0b", display: "flex", alignItems: "center", gap: "4px" }}><RefreshCw size={11} style={{ animation: "spin 1s linear infinite" }} />Saving order…</span>}
+        {saving && <span style={{ fontSize: "11px", color: "#d4af37", display: "flex", alignItems: "center", gap: "4px" }}><RefreshCw size={11} style={{ animation: "spin 1s linear infinite" }} />Saving order…</span>}
         {saved && <span style={{ fontSize: "11px", color: "#10b981", display: "flex", alignItems: "center", gap: "4px" }}><Check size={11} />Saved to Google Sheet</span>}
         {!saving && !saved && <span style={{ fontSize: "11px", color: "#4b5563" }}>Drag to reorder · {items.length} players</span>}
       </div>
@@ -614,12 +614,12 @@ function NormansRankings({ isMobile, syncTrigger }: { isMobile: boolean; syncTri
                   {group.map((player, i) => {
                     const ts = getTierStyle(player.tier);
                     return (
-                      <div key={i} style={{ padding: "12px 14px", borderRadius: "10px", background: player.isRedFlag ? "rgba(239,68,68,0.08)" : ts.bg, border: `1px solid ${player.isRedFlag ? "rgba(239,68,68,0.4)" : ts.border}`, position: "relative", overflow: "hidden" }}>
-                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: player.isRedFlag ? "#ef4444" : ts.text }} />
+                      <div key={i} style={{ padding: "12px 14px", borderRadius: "10px", background: player.isRedFlag ? "rgba(124,58,237,0.08)" : ts.bg, border: `1px solid ${player.isRedFlag ? "rgba(124,58,237,0.4)" : ts.border}`, position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: player.isRedFlag ? "#7c3aed" : ts.text }} />
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: player.scoutNotes ? "8px" : "0" }}>
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-                              {player.isRedFlag && <AlertTriangle size={13} color="#ef4444" />}
+                              {player.isRedFlag && <AlertTriangle size={13} color="#7c3aed" />}
                               <span style={{ fontSize: "14px", fontWeight: 700, color: player.isRedFlag ? "#fca5a5" : "#f3f4f6" }}>{player.name}</span>
                             </div>
                             <div style={{ fontSize: "11px", color: "#9ca3af", display: "flex", gap: "6px" }}>
@@ -784,12 +784,12 @@ function RosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigg
         })}
       </div>
       {strikeOrder.length > 0 && (
-        <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)" }}>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ef4444", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}><Zap size={16} />PORTAL STRIKE ORDER — Opens ~March 23, 2026</h3>
+        <div style={{ padding: "20px", borderRadius: "12px", background: "rgba(124,58,237,0.05)", border: "1px solid rgba(124,58,237,0.2)" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#7c3aed", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}><Zap size={16} />PORTAL STRIKE ORDER — Opens ~March 23, 2026</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {strikeOrder.map((target, i) => (
               <div key={i} style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: "12px", alignItems: "flex-start", flexWrap: "wrap" }}>
-                <span style={{ padding: "2px 8px", borderRadius: "6px", background: i <= 1 ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.1)", color: i <= 1 ? "#ef4444" : "#f59e0b", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap" }}>{target.priority}</span>
+                <span style={{ padding: "2px 8px", borderRadius: "6px", background: i <= 1 ? "rgba(124,58,237,0.15)" : "rgba(212,175,55,0.1)", color: i <= 1 ? "#7c3aed" : "#d4af37", fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap" }}>{target.priority}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "#f3f4f6", marginBottom: "2px" }}>{target.player} <span style={{ fontSize: "12px", color: "#9ca3af" }}>({target.school})</span></div>
                   <div style={{ fontSize: "12px", color: "#9ca3af" }}>{target.reason}</div>
@@ -829,7 +829,7 @@ function PlayerPickerDropdown({ players, onSelect, onClose, currentPlayer }: { p
         <input ref={inputRef} value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, school, position…" style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#f3f4f6", fontSize: "13px", outline: "none" }} />
         <div style={{ overflowY: "auto", display: "flex", flexDirection: "column", gap: "4px" }}>
           {currentPlayer && (
-            <button onClick={() => { onSelect(null as any); onClose(); }} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "12px", cursor: "pointer", textAlign: "left" }}>
+            <button onClick={() => { onSelect(null as any); onClose(); }} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: "12px", cursor: "pointer", textAlign: "left" }}>
               Remove player
             </button>
           )}
@@ -857,7 +857,7 @@ function BudgetSlotRow({ slot, players, onChange }: { slot: BudgetSlot; players:
   const isEmpty = !slot.player;
   const salaryPct = slot.salary / MAX_SALARY * 100;
   const nilLabel = slot.salary >= 2_500_000 ? "ANCHOR" : slot.salary >= 1_000_000 ? "STARTER" : slot.salary >= 500_000 ? "KEY ROT." : slot.salary >= 200_000 ? "SLEEPER" : "—";
-  const nilColor = slot.salary >= 2_500_000 ? "#a78bfa" : slot.salary >= 1_000_000 ? "#10b981" : slot.salary >= 500_000 ? "#3b82f6" : slot.salary >= 200_000 ? "#f59e0b" : "#6b7280";
+  const nilColor = slot.salary >= 2_500_000 ? "#a78bfa" : slot.salary >= 1_000_000 ? "#10b981" : slot.salary >= 500_000 ? "#3b82f6" : slot.salary >= 200_000 ? "#d4af37" : "#6b7280";
 
   const tierStyle = slot.player ? getTierStyle(slot.player.Tier) : null;
 
@@ -1046,7 +1046,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       {/* Header / Budget Bar */}
-      <div style={{ padding: "16px 20px", borderRadius: "12px", background: "linear-gradient(135deg, rgba(16,185,129,0.07), rgba(59,130,246,0.05))", border: `1px solid ${isOverBudget ? "rgba(239,68,68,0.4)" : "rgba(16,185,129,0.25)"}` }}>
+      <div style={{ padding: "16px 20px", borderRadius: "12px", background: "linear-gradient(135deg, rgba(16,185,129,0.07), rgba(59,130,246,0.05))", border: `1px solid ${isOverBudget ? "rgba(124,58,237,0.4)" : "rgba(16,185,129,0.25)"}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
           <div>
             <div style={{ fontSize: "16px", fontWeight: 800, color: "#f3f4f6", display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1056,7 +1056,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
             <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>Total budget: $8,000,000 · Drag players in, set salaries</div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "20px", fontWeight: 800, color: isOverBudget ? "#ef4444" : "#10b981" }}>{formatSalary(remaining)} left</div>
+            <div style={{ fontSize: "20px", fontWeight: 800, color: isOverBudget ? "#7c3aed" : "#10b981" }}>{formatSalary(remaining)} left</div>
             <div style={{ fontSize: "11px", color: "#6b7280" }}>of $8M total</div>
           </div>
         </div>
@@ -1068,8 +1068,8 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
           {/* Forwards portion */}
           <div style={{ position: "absolute", left: `${guardTotal / TOTAL_BUDGET * 100}%`, top: 0, bottom: 0, width: `${forwardTotal / TOTAL_BUDGET * 100}%`, background: "#10b981", transition: "all 0.3s ease" }} />
           {/* Bench portion */}
-          <div style={{ position: "absolute", left: `${(guardTotal + forwardTotal) / TOTAL_BUDGET * 100}%`, top: 0, bottom: 0, width: `${benchTotal / TOTAL_BUDGET * 100}%`, background: "#f59e0b", transition: "all 0.3s ease" }} />
-          {isOverBudget && <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", background: "#ef4444", animation: "pulse 1s ease-in-out infinite" }} />}
+          <div style={{ position: "absolute", left: `${(guardTotal + forwardTotal) / TOTAL_BUDGET * 100}%`, top: 0, bottom: 0, width: `${benchTotal / TOTAL_BUDGET * 100}%`, background: "#d4af37", transition: "all 0.3s ease" }} />
+          {isOverBudget && <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", background: "#7c3aed", animation: "pulse 1s ease-in-out infinite" }} />}
         </div>
         <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
@@ -1077,7 +1077,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
         <div style={{ display: "flex", gap: "16px", marginTop: "8px", flexWrap: "wrap" }}>
           <span style={{ fontSize: "11px", color: "#60a5fa" }}>🔵 Guards: {formatSalary(guardTotal)} ({Math.round(guardTotal / TOTAL_BUDGET * 100)}%)</span>
           <span style={{ fontSize: "11px", color: "#34d399" }}>🟢 Forwards: {formatSalary(forwardTotal)} ({Math.round(forwardTotal / TOTAL_BUDGET * 100)}%)</span>
-          <span style={{ fontSize: "11px", color: "#fbbf24" }}>🟡 Bench: {formatSalary(benchTotal)} ({Math.round(benchTotal / TOTAL_BUDGET * 100)}%)</span>
+          <span style={{ fontSize: "11px", color: "#d4af37" }}>🟡 Bench: {formatSalary(benchTotal)} ({Math.round(benchTotal / TOTAL_BUDGET * 100)}%)</span>
           <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>Allocated: {formatSalary(totalAllocated)} / {Math.round(pct)}%</span>
         </div>
       </div>
@@ -1086,7 +1086,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
       {warnings.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {warnings.map((w, i) => (
-            <div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", fontSize: "12px", color: "#fbbf24" }}>{w}</div>
+            <div key={i} style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.25)", fontSize: "12px", color: "#d4af37" }}>{w}</div>
           ))}
         </div>
       )}
@@ -1121,7 +1121,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
               {/* Bench */}
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#fbbf24", letterSpacing: "0.08em" }}>🟡 BENCH</span>
+                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#d4af37", letterSpacing: "0.08em" }}>🟡 BENCH</span>
                   <span style={{ fontSize: "11px", color: "#6b7280" }}>Subtotal: {formatSalary(benchTotal)}</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -1141,7 +1141,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
               { label: "ANCHOR", range: "$2.5M — $4.0M", color: "#a78bfa" },
               { label: "STARTER", range: "$1.0M — $2.5M", color: "#10b981" },
               { label: "KEY ROT.", range: "$500K — $1.0M", color: "#3b82f6" },
-              { label: "SLEEPER", range: "$200K — $500K", color: "#f59e0b" },
+              { label: "SLEEPER", range: "$200K — $500K", color: "#d4af37" },
             ].map(r => (
               <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: r.color }}>{r.label}</span>
@@ -1172,7 +1172,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
                 {saving ? <RefreshCw size={12} style={{ animation: "spin 1s linear infinite" }} /> : saveStatus === "saved" ? <Check size={12} /> : <Save size={12} />}
                 {saving ? "Saving…" : saveStatus === "saved" ? "Saved!" : "Save"}
               </button>
-              <button onClick={handleReset} style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: "12px", cursor: "pointer" }}>
+              <button onClick={handleReset} style={{ padding: "8px 10px", borderRadius: "8px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: "12px", cursor: "pointer" }}>
                 <Trash2 size={12} />
               </button>
             </div>
@@ -1205,7 +1205,7 @@ function BudgetRosterBuilder({ isMobile, syncTrigger }: { isMobile: boolean; syn
 function getStrengthStyle(strength: number): { glow: string; border: string; text: string; bg: string } {
   if (strength >= 5) return { glow: "0 0 12px rgba(16,185,129,0.35)", border: "rgba(16,185,129,0.45)", text: "#10b981", bg: "rgba(16,185,129,0.08)" };
   if (strength === 4) return { glow: "0 0 8px rgba(59,130,246,0.25)", border: "rgba(59,130,246,0.4)", text: "#3b82f6", bg: "rgba(59,130,246,0.07)" };
-  if (strength === 3) return { glow: "none", border: "rgba(245,158,11,0.35)", text: "#f59e0b", bg: "rgba(245,158,11,0.07)" };
+  if (strength === 3) return { glow: "none", border: "rgba(212,175,55,0.35)", text: "#d4af37", bg: "rgba(212,175,55,0.07)" };
   return { glow: "none", border: "rgba(107,114,128,0.25)", text: "#6b7280", bg: "rgba(107,114,128,0.05)" };
 }
 
@@ -1245,15 +1245,15 @@ function CoachingConnections({ isMobile, syncTrigger }: { isMobile: boolean; syn
           🤝 <strong style={{ color: "#e5e7eb" }}>{connections.length}</strong> coaching connections
           {" · "}<strong style={{ color: "#10b981" }}>{connections.filter((c) => c.strength === 5).length} Strength-5</strong>
           {" · "}<strong style={{ color: "#3b82f6" }}>{connections.filter((c) => c.strength === 4).length} Strength-4</strong>
-          {" · "}<strong style={{ color: "#ef4444" }}>{connections.filter((c) => c.priority.toLowerCase() === "high").length} High-Priority</strong>
+          {" · "}<strong style={{ color: "#7c3aed" }}>{connections.filter((c) => c.priority.toLowerCase() === "high").length} High-Priority</strong>
         </span>
         {lastFetched && <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>Synced: {lastFetched.toLocaleTimeString()} · live</span>}
       </div>
       {grouped.order.map((priority) => {
         const group = grouped.result[priority];
         if (!group || group.length === 0) return null;
-        const priorityColor = priority === "High" ? "#ef4444" : priority === "Medium" ? "#f59e0b" : "#6b7280";
-        const priorityBg = priority === "High" ? "rgba(239,68,68,0.08)" : priority === "Medium" ? "rgba(245,158,11,0.06)" : "rgba(107,114,128,0.05)";
+        const priorityColor = priority === "High" ? "#7c3aed" : priority === "Medium" ? "#d4af37" : "#6b7280";
+        const priorityBg = priority === "High" ? "rgba(124,58,237,0.08)" : priority === "Medium" ? "rgba(212,175,55,0.06)" : "rgba(107,114,128,0.05)";
         return (
           <div key={priority}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", paddingBottom: "8px", borderBottom: `1px solid ${priorityColor}30` }}>
@@ -1310,7 +1310,7 @@ function CoachingConnections({ isMobile, syncTrigger }: { isMobile: boolean; syn
 const WAVE_COLORS = {
   1: { bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.35)", text: "#10b981", badge: "rgba(16,185,129,0.15)", label: "WAVE 1" },
   2: { bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.35)", text: "#3b82f6", badge: "rgba(59,130,246,0.15)", label: "WAVE 2" },
-  3: { bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.35)", text: "#f59e0b", badge: "rgba(245,158,11,0.15)", label: "WAVE 3" },
+  3: { bg: "rgba(212,175,55,0.08)", border: "rgba(212,175,55,0.35)", text: "#d4af37", badge: "rgba(212,175,55,0.15)", label: "WAVE 3" },
 } as const;
 
 function getWaveStyle(wave: number) { return WAVE_COLORS[wave as keyof typeof WAVE_COLORS] || WAVE_COLORS[3]; }
@@ -1318,14 +1318,14 @@ function nilTierColor(nilTier: string): { color: string; bg: string } {
   if (nilTier.includes("ANCHOR")) return { color: "#a78bfa", bg: "rgba(139,92,246,0.12)" };
   if (nilTier.includes("STARTER")) return { color: "#10b981", bg: "rgba(16,185,129,0.10)" };
   if (nilTier.includes("KEY ROTATION")) return { color: "#3b82f6", bg: "rgba(59,130,246,0.10)" };
-  if (nilTier.includes("SLEEPER")) return { color: "#f59e0b", bg: "rgba(245,158,11,0.10)" };
+  if (nilTier.includes("SLEEPER")) return { color: "#d4af37", bg: "rgba(212,175,55,0.10)" };
   return { color: "#9ca3af", bg: "rgba(107,114,128,0.08)" };
 }
 function flightRiskColor(risk: string): string {
   const r = parseFloat(risk);
   if (isNaN(r)) return "#6b7280";
-  if (r >= 7) return "#ef4444";
-  if (r >= 5) return "#f59e0b";
+  if (r >= 7) return "#7c3aed";
+  if (r >= 5) return "#d4af37";
   return "#10b981";
 }
 
@@ -1370,7 +1370,7 @@ function StrikeList({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger:
           🎯 <strong style={{ color: "#e5e7eb" }}>{players.length}</strong> strike targets
           {" · "}<strong style={{ color: "#10b981" }}>{wave1.length} Wave 1</strong>
           {" · "}<strong style={{ color: "#3b82f6" }}>{wave2.length} Wave 2</strong>
-          {" · "}<strong style={{ color: "#f59e0b" }}>{wave3.length} Wave 3</strong>
+          {" · "}<strong style={{ color: "#d4af37" }}>{wave3.length} Wave 3</strong>
         </span>
         {lastFetched && <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "auto" }}>Synced: {lastFetched.toLocaleTimeString()} · live</span>}
       </div>
@@ -1379,7 +1379,7 @@ function StrikeList({ isMobile, syncTrigger }: { isMobile: boolean; syncTrigger:
         <FilterBtn active={filterWave === null} onClick={() => setFilterWave(null)}>All</FilterBtn>
         <FilterBtn active={filterWave === 1} onClick={() => setFilterWave(filterWave === 1 ? null : 1)} color="#10b981">🟢 Wave 1 ({wave1.length})</FilterBtn>
         <FilterBtn active={filterWave === 2} onClick={() => setFilterWave(filterWave === 2 ? null : 2)} color="#3b82f6">🔵 Wave 2 ({wave2.length})</FilterBtn>
-        <FilterBtn active={filterWave === 3} onClick={() => setFilterWave(filterWave === 3 ? null : 3)} color="#f59e0b">🟡 Wave 3 ({wave3.length})</FilterBtn>
+        <FilterBtn active={filterWave === 3} onClick={() => setFilterWave(filterWave === 3 ? null : 3)} color="#d4af37">🟡 Wave 3 ({wave3.length})</FilterBtn>
       </div>
       <div style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", fontSize: "12px", color: "#93c5fd", display: "flex", alignItems: "center", gap: "6px" }}>
         <Zap size={12} />Portal opens ~<strong>March 23, 2026</strong>. Wave 1 contacts go out Day 1. Contact Status column is yours to fill.
@@ -1478,7 +1478,7 @@ function QuickStatsBar({ syncTrigger }: { syncTrigger: number }) {
     <div style={{ display: "flex", gap: "0", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", background: "rgba(255,255,255,0.02)" }}>
       <StatBlock icon={<Users size={14} color="#9ca3af" />} label="Players Tracked" value={stats ? String(stats.totalPlayers) : "—"} valueColor="#e5e7eb" />
       <StatBlock icon={<Star size={14} color="#10b981" />} label="T1 Targets" value={stats ? String(stats.t1Count) : "—"} valueColor="#10b981" />
-      <StatBlock icon={<Clock size={14} color={portalOpen ? "#ef4444" : "#f59e0b"} />} label={portalOpen ? "Portal OPEN" : "Portal Opens"} value={portalOpen ? "NOW" : `${daysUntilPortal}d`} valueColor={portalOpen ? "#ef4444" : "#f59e0b"} sub="Mar 23, 2026" />
+      <StatBlock icon={<Clock size={14} color={portalOpen ? "#7c3aed" : "#d4af37"} />} label={portalOpen ? "Portal OPEN" : "Portal Opens"} value={portalOpen ? "NOW" : `${daysUntilPortal}d`} valueColor={portalOpen ? "#7c3aed" : "#d4af37"} sub="Mar 23, 2026" />
       <StatBlock icon={<Target size={14} color="#3b82f6" />} label="Wave 1 Strikes" value="6" valueColor="#3b82f6" sub="Day 1 contacts" />
     </div>
   );
@@ -1526,8 +1526,8 @@ export function WarRoom({ isMobile }: { isMobile: boolean }) {
     rankings: { active: "#a78bfa", border: "rgba(139,92,246,0.4)", bg: "rgba(139,92,246,0.12)" },
     roster: { active: "#34d399", border: "rgba(52,211,153,0.4)", bg: "rgba(52,211,153,0.12)" },
     budget: { active: "#10b981", border: "rgba(16,185,129,0.4)", bg: "rgba(16,185,129,0.12)" },
-    connections: { active: "#fbbf24", border: "rgba(251,191,36,0.4)", bg: "rgba(251,191,36,0.10)" },
-    strikelist: { active: "#f87171", border: "rgba(239,68,68,0.45)", bg: "rgba(239,68,68,0.10)" },
+    connections: { active: "#d4af37", border: "rgba(212,175,55,0.4)", bg: "rgba(212,175,55,0.10)" },
+    strikelist: { active: "#a78bfa", border: "rgba(124,58,237,0.45)", bg: "rgba(124,58,237,0.10)" },
   };
 
   return (

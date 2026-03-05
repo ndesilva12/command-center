@@ -140,7 +140,7 @@ function DarkSearchContent() {
     setExpandedSections(newExpanded);
   };
 
-  const sectionColors = [toolCustom.color, "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#dc2626"];
+  const sectionColors = [toolCustom.color, "#6366f1", "#8b5cf6", "#ec4899", "#14b8a6", "#7c3aed"];
 
   return (
     <>
@@ -180,8 +180,8 @@ function DarkSearchContent() {
               style={{
                 padding: "10px 20px",
                 borderRadius: "8px",
-                border: activeTab === tab ? "1px solid rgba(239, 68, 68, 0.5)" : "1px solid rgba(148, 163, 184, 0.2)",
-                background: activeTab === tab ? "rgba(239, 68, 68, 0.15)" : "rgba(30, 41, 59, 0.6)",
+                border: activeTab === tab ? "1px solid rgba(124, 58, 237, 0.5)" : "1px solid rgba(148, 163, 184, 0.2)",
+                background: activeTab === tab ? "rgba(124, 58, 237, 0.15)" : "rgba(30, 41, 59, 0.6)",
                 color: activeTab === tab ? toolCustom.color : "#94a3b8",
                 fontSize: "14px",
                 fontWeight: 600,
@@ -200,7 +200,7 @@ function DarkSearchContent() {
             <div style={{
               display: "flex", alignItems: "flex-start", gap: "10px",
               padding: isMobile ? "10px 12px" : "12px 16px",
-              background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)",
+              background: "rgba(124, 58, 237, 0.1)", border: "1px solid rgba(124, 58, 237, 0.3)",
               borderRadius: "8px", marginBottom: isMobile ? "16px" : "20px",
             }}>
               <AlertTriangle size={18} style={{ color: toolCustom.color, marginTop: "2px", flexShrink: 0 }} />
@@ -223,10 +223,10 @@ function DarkSearchContent() {
                     flex: isMobile ? "1 1 100%" : "0 0 auto",
                     padding: isMobile ? "12px 16px" : "12px 20px",
                     background: mode === modeOption.id
-                      ? "linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(220, 38, 38, 0.3))"
+                      ? "linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(220, 38, 38, 0.3))"
                       : "rgba(30, 41, 59, 0.6)",
                     border: mode === modeOption.id
-                      ? "1px solid rgba(239, 68, 68, 0.5)"
+                      ? "1px solid rgba(124, 58, 237, 0.5)"
                       : "1px solid rgba(148, 163, 184, 0.2)",
                     borderRadius: "8px", color: "white", cursor: "pointer", textAlign: "left",
                   }}
@@ -259,7 +259,7 @@ function DarkSearchContent() {
                 disabled={loading || !searchQuery.trim()}
                 style={{
                   padding: isMobile ? "14px 24px" : "18px 32px",
-                  background: loading || !searchQuery.trim() ? "rgba(239, 68, 68, 0.3)" : "linear-gradient(135deg, #ef4444, #dc2626)",
+                  background: loading || !searchQuery.trim() ? "rgba(124, 58, 237, 0.3)" : "linear-gradient(135deg, #7c3aed, #7c3aed)",
                   border: "none", borderRadius: "12px", color: "white",
                   fontSize: isMobile ? "14px" : "16px", fontWeight: "600",
                   cursor: loading || !searchQuery.trim() ? "not-allowed" : "pointer",
@@ -275,7 +275,7 @@ function DarkSearchContent() {
               <div style={{ textAlign: "center", padding: "60px 20px", color: "#94a3b8" }}>
                 <div style={{
                   width: "40px", height: "40px",
-                  border: "3px solid rgba(148, 163, 184, 0.2)", borderTop: "3px solid #ef4444",
+                  border: "3px solid rgba(148, 163, 184, 0.2)", borderTop: "3px solid #7c3aed",
                   borderRadius: "50%", margin: "0 auto 16px", animation: "spin 1s linear infinite",
                 }} />
                 <p style={{ fontSize: "14px", margin: 0 }}>Conducting uncensored research...</p>
@@ -322,7 +322,7 @@ function DarkSearchContent() {
                         background: "rgba(30, 41, 59, 0.6)", cursor: "pointer",
                         border: "1px solid transparent", transition: "border-color 0.2s",
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.5)"}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = "rgba(124, 58, 237, 0.5)"}
                       onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
                     >
                       <div style={{ fontWeight: 600, fontSize: "15px", color: "white", marginBottom: "4px" }}>
@@ -349,7 +349,7 @@ function DarkSearchContent() {
                     onClick={() => setHistoryLimit(historyLimit + 25)}
                     style={{
                       width: "100%", padding: "12px", marginTop: "8px", borderRadius: "8px",
-                      border: "1px solid rgba(239, 68, 68, 0.3)", background: "transparent",
+                      border: "1px solid rgba(124, 58, 237, 0.3)", background: "transparent",
                       color: toolCustom.color, fontSize: "14px", fontWeight: 600, cursor: "pointer",
                     }}
                   >
@@ -377,8 +377,8 @@ function ReportDisplay({ report, isMobile, expandedSections, toggleSection, sect
     <div>
       {/* Topic & Summary */}
       <div style={{
-        background: "linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2))",
-        border: "1px solid rgba(239, 68, 68, 0.3)", borderRadius: "16px",
+        background: "linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(220, 38, 38, 0.2))",
+        border: "1px solid rgba(124, 58, 237, 0.3)", borderRadius: "16px",
         padding: isMobile ? "20px" : "24px", marginBottom: "24px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>

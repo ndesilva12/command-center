@@ -230,7 +230,7 @@ function CommunicationsTab({ isMobile }: { isMobile: boolean }) {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'High': return '#ef4444';
+      case 'High': return '#7c3aed';
       case 'Medium': return '#6366f1';
       case 'Low': return '#10b981';
       default: return '#6b7280';
@@ -509,7 +509,7 @@ function CalendarTab({ isMobile }: { isMobile: boolean }) {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'High': return '#ef4444';
+      case 'High': return '#7c3aed';
       case 'Medium': return '#6366f1';
       case 'Low': return '#10b981';
       default: return '#6b7280';
@@ -563,8 +563,8 @@ function CalendarTab({ isMobile }: { isMobile: boolean }) {
                     <div style={{
                       padding: "4px 10px",
                       borderRadius: "12px",
-                      background: daysUntil <= 1 ? "rgba(239, 68, 68, 0.2)" : "rgba(59, 130, 246, 0.2)",
-                      color: daysUntil <= 1 ? "#ef4444" : "#3b82f6",
+                      background: daysUntil <= 1 ? "rgba(124, 58, 237, 0.2)" : "rgba(59, 130, 246, 0.2)",
+                      color: daysUntil <= 1 ? "#7c3aed" : "#3b82f6",
                       fontSize: "12px",
                       fontWeight: 600,
                       whiteSpace: "nowrap",
@@ -1787,11 +1787,11 @@ function RepsTab({ isMobile }: { isMobile: boolean }) {
     "CAA": "#3b82f6",
     "WME": "#10b981",
     "UTA": "#8b5cf6",
-    "ICM": "#f59e0b",
+    "ICM": "#d4af37",
     "3 Arts": "#ec4899",
     "Mosaic": "#6366f1",
-    "Klutch Sports": "#ef4444",
-    "Roc Nation": "#f59e0b",
+    "Klutch Sports": "#7c3aed",
+    "Roc Nation": "#d4af37",
     "OVO": "#a78bfa",
     "SB Projects": "#06b6d4",
   };
@@ -1807,7 +1807,7 @@ function RepsTab({ isMobile }: { isMobile: boolean }) {
   );
 
   if (error) return (
-    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: "14px" }}>{error}</div>
+    <div style={{ padding: "16px 20px", borderRadius: "10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.3)", color: "#7c3aed", fontSize: "14px" }}>{error}</div>
   );
 
   return (
