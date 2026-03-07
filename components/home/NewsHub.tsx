@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Newspaper, ExternalLink, RefreshCw, MapPin, TrendingUp, Briefcase, Cpu, Trophy, Globe } from 'lucide-react';
+import { Newspaper, ExternalLink, RefreshCw, MapPin, TrendingUp, Briefcase, Cpu, Trophy, Globe, ChevronRight } from 'lucide-react';
 
 interface NewsItem {
   title: string;
@@ -22,7 +22,7 @@ interface NewsSection {
 const SECTIONS = [
   { id: 'top', label: 'Top Stories', icon: TrendingUp, feed: 'top' },
   { id: 'business', label: 'Business', icon: Briefcase, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'technology', label: 'Technology', icon: Cpu, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB' },
+  { id: 'technology', label: 'Tech', icon: Cpu, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB' },
   { id: 'sports', label: 'Sports', icon: Trophy, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB' },
   { id: 'world', label: 'World', icon: Globe, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB' },
   { id: 'wellesley', label: 'Wellesley', icon: MapPin, feed: 'local', location: 'Wellesley Massachusetts' },
@@ -31,8 +31,15 @@ const SECTIONS = [
 
 export default function NewsHub() {
   const [sections, setSections] = useState<Record<string, NewsSection>>({});
-  const [activeTab, setActiveTab] = useState('top');
   const [refreshing, setRefreshing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const fetchSection = async (section: typeof SECTIONS[0]) => {
     setSections(prev => ({
@@ -48,7 +55,7 @@ export default function NewsHub() {
     }));
 
     try {
-      let url = '/api/news?limit=8';
+      let url = '/api/news?limit=6';
       if (section.feed === 'top') {
         url += '&feed=top';
       } else if (section.feed === 'topic' && section.topic) {
@@ -69,7 +76,7 @@ export default function NewsHub() {
           error: data.error || null
         }
       }));
-    } catch (err) {
+    } catch {
       setSections(prev => ({
         ...prev,
         [section.id]: {
@@ -94,182 +101,273 @@ export default function NewsHub() {
     return () => clearInterval(interval);
   }, []);
 
-  const currentSection = sections[activeTab];
-  const activeConfig = SECTIONS.find(s => s.id === activeTab);
-  const ActiveIcon = activeConfig?.icon || TrendingUp;
+  const topStories = sections['top']?.items || [];
+  const featuredStory = topStories[0];
+  const secondaryStories = topStories.slice(1, 4);
+
+  const renderNewsCard = (item: NewsItem, size: 'large' | 'medium' | 'small' = 'small') => {
+    const isLarge = size === 'large';
+    const isMedium = size === 'medium';
+    
+    return (
+      <a
+        key={item.link}
+        href={item.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "block",
+          padding: isLarge ? "20px" : isMedium ? "16px" : "12px",
+          borderRadius: "12px",
+          background: "rgba(255, 255, 255, 0.03)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+          textDecoration: "none",
+          transition: "all 0.2s",
+          height: "100%"
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+          e.currentTarget.style.borderColor = "rgba(59, 130, 246, 0.3)";
+          e.currentTarget.style.transform = "translateY(-2px)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
+          e.currentTarget.style.transform = "translateY(0)";
+        }}
+      >
+        <div style={{
+          fontSize: isLarge ? "18px" : isMedium ? "15px" : "13px",
+          fontWeight: isLarge ? 600 : 500,
+          color: "rgba(255, 255, 255, 0.95)",
+          lineHeight: 1.4,
+          marginBottom: isLarge ? "12px" : "8px",
+          display: "-webkit-box",
+          WebkitLineClamp: isLarge ? 3 : 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden"
+        }}>
+          {item.title}
+        </div>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontSize: "11px",
+          color: "rgba(255, 255, 255, 0.4)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ 
+              color: "#3b82f6", 
+              fontWeight: 500,
+              maxWidth: "120px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}>
+              {item.source}
+            </span>
+            {item.relativeTime && <span>• {item.relativeTime}</span>}
+          </div>
+          <ExternalLink style={{ width: "12px", height: "12px", opacity: 0.5 }} />
+        </div>
+      </a>
+    );
+  };
+
+  const renderSectionCard = (sectionId: string) => {
+    const section = sections[sectionId];
+    const config = SECTIONS.find(s => s.id === sectionId);
+    if (!config) return null;
+    const Icon = config.icon;
+    const items = section?.items || [];
+    const isLoading = section?.loading && !items.length;
+
+    return (
+      <div style={{
+        background: "rgba(255, 255, 255, 0.02)",
+        border: "1px solid rgba(255, 255, 255, 0.05)",
+        borderRadius: "12px",
+        overflow: "hidden"
+      }}>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 14px",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.05)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Icon style={{ width: "14px", height: "14px", color: "#3b82f6" }} />
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.9)" }}>
+              {config.label}
+            </span>
+          </div>
+          <ChevronRight style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.3)" }} />
+        </div>
+        
+        <div style={{ padding: "8px" }}>
+          {isLoading ? (
+            <div style={{ padding: "24px", textAlign: "center" }}>
+              <div style={{
+                width: "20px",
+                height: "20px",
+                border: "2px solid #3b82f6",
+                borderTopColor: "transparent",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto"
+              }} />
+            </div>
+          ) : items.length === 0 ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "rgba(255, 255, 255, 0.3)", fontSize: "12px" }}>
+              No news
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {items.slice(0, 3).map(item => (
+                <a
+                  key={item.link}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    textDecoration: "none",
+                    transition: "background 0.15s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "rgba(255, 255, 255, 0.85)",
+                    lineHeight: 1.4,
+                    marginBottom: "4px",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
+                  }}>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
+                    {item.source} {item.relativeTime && `• ${item.relativeTime}`}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style={{
-      background: "rgba(255, 255, 255, 0.03)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      borderRadius: "16px",
-      border: "1px solid rgba(255, 255, 255, 0.08)",
-      overflow: "hidden"
-    }}>
+    <div>
       {/* Header */}
       <div style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "16px",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.06)"
+        marginBottom: "16px"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <Newspaper style={{ width: "20px", height: "20px", color: "#3b82f6" }} />
-          <span style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)" }}>News</span>
+          <span style={{ fontSize: "18px", fontWeight: 600, color: "rgba(255, 255, 255, 0.95)" }}>News</span>
         </div>
         <button
           onClick={refreshAll}
           disabled={refreshing}
           style={{
-            padding: "8px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "6px 12px",
             borderRadius: "8px",
-            background: "transparent",
-            border: "none",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            color: "rgba(255, 255, 255, 0.6)",
+            fontSize: "12px",
             cursor: refreshing ? "not-allowed" : "pointer",
             opacity: refreshing ? 0.5 : 1
           }}
         >
           <RefreshCw style={{ 
-            width: "16px", 
-            height: "16px", 
-            color: "rgba(255, 255, 255, 0.5)",
+            width: "14px", 
+            height: "14px",
             animation: refreshing ? "spin 1s linear infinite" : "none"
           }} />
+          Refresh
         </button>
       </div>
 
-      {/* Tabs */}
+      {/* Featured + Secondary Stories Grid */}
+      {!isMobile && featuredStory && (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1.5fr 1fr",
+          gap: "16px",
+          marginBottom: "20px"
+        }}>
+          {/* Featured Story */}
+          <div>
+            {renderNewsCard(featuredStory, 'large')}
+          </div>
+          
+          {/* Secondary Stories */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {secondaryStories.map(item => renderNewsCard(item, 'medium'))}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile: Just show top stories in a list */}
+      {isMobile && topStories.length > 0 && (
+        <div style={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          gap: "10px",
+          marginBottom: "20px"
+        }}>
+          {topStories.slice(0, 4).map(item => renderNewsCard(item, 'small'))}
+        </div>
+      )}
+
+      {/* Section Cards Grid */}
       <div style={{
-        display: "flex",
-        gap: "6px",
-        padding: "8px 12px",
-        overflowX: "auto",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.04)"
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
+        gap: "12px"
       }}>
-        {SECTIONS.map(section => {
-          const Icon = section.icon;
-          const isActive = activeTab === section.id;
-          return (
-            <button
-              key={section.id}
-              onClick={() => setActiveTab(section.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 12px",
-                borderRadius: "8px",
-                fontSize: "12px",
-                fontWeight: 500,
-                whiteSpace: "nowrap",
-                border: isActive ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid transparent",
-                background: isActive ? "rgba(59, 130, 246, 0.15)" : "rgba(255, 255, 255, 0.03)",
-                color: isActive ? "#60a5fa" : "rgba(255, 255, 255, 0.6)",
-                cursor: "pointer",
-                transition: "all 0.2s"
-              }}
-            >
-              <Icon style={{ width: "14px", height: "14px" }} />
-              {section.label}
-            </button>
-          );
-        })}
+        {renderSectionCard('business')}
+        {renderSectionCard('technology')}
+        {renderSectionCard('sports')}
+        {renderSectionCard('world')}
       </div>
 
-      {/* News Items */}
-      <div style={{ padding: "12px", maxHeight: "400px", overflowY: "auto" }}>
-        {currentSection?.loading && !currentSection.items.length ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
-            <div style={{
-              width: "24px",
-              height: "24px",
-              border: "2px solid #3b82f6",
-              borderTopColor: "transparent",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite"
-            }} />
-          </div>
-        ) : currentSection?.error && !currentSection.items.length ? (
-          <div style={{ textAlign: "center", padding: "48px 0", color: "rgba(255, 255, 255, 0.4)" }}>
-            {currentSection.error}
-          </div>
-        ) : !currentSection?.items.length ? (
-          <div style={{ textAlign: "center", padding: "48px 0", color: "rgba(255, 255, 255, 0.4)" }}>
-            No recent news
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {currentSection?.items.map((item, idx) => (
-              <a
-                key={idx}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: "block",
-                  padding: "12px",
-                  borderRadius: "12px",
-                  background: "rgba(255, 255, 255, 0.02)",
-                  border: "1px solid rgba(255, 255, 255, 0.04)",
-                  textDecoration: "none",
-                  transition: "all 0.2s"
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.02)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.04)";
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      color: "var(--foreground)",
-                      lineHeight: 1.4,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden"
-                    }}>
-                      {item.title}
-                    </div>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginTop: "6px",
-                      fontSize: "12px",
-                      color: "rgba(255, 255, 255, 0.4)"
-                    }}>
-                      <span style={{ maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {item.source}
-                      </span>
-                      {item.relativeTime && (
-                        <>
-                          <span>•</span>
-                          <span>{item.relativeTime}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <ExternalLink style={{ width: "16px", height: "16px", color: "rgba(255, 255, 255, 0.3)", flexShrink: 0, marginTop: "2px" }} />
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
+      {/* Local News Row */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+        gap: "12px",
+        marginTop: "12px"
+      }}>
+        {renderSectionCard('wellesley')}
+        {renderSectionCard('dartmouth')}
       </div>
 
       {/* Footer */}
-      <div style={{
-        padding: "12px 16px",
-        borderTop: "1px solid rgba(255, 255, 255, 0.04)"
+      <div style={{ 
+        marginTop: "16px", 
+        paddingTop: "12px", 
+        borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+        display: "flex",
+        justifyContent: "center"
       }}>
         <a
           href="https://news.google.com/"
@@ -277,7 +375,7 @@ export default function NewsHub() {
           rel="noopener noreferrer"
           style={{
             fontSize: "11px",
-            color: "rgba(255, 255, 255, 0.35)",
+            color: "rgba(255, 255, 255, 0.3)",
             textDecoration: "none",
             display: "flex",
             alignItems: "center",
