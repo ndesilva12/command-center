@@ -151,7 +151,7 @@ export default function NewsHub() {
         rel="noopener noreferrer"
         style={{
           display: "block",
-          borderRadius: "10px",
+          borderRadius: isDouble ? "8px" : "10px",
           background: "rgba(255, 255, 255, 0.03)",
           border: "1px solid rgba(255, 255, 255, 0.06)",
           overflow: "hidden",
@@ -174,21 +174,21 @@ export default function NewsHub() {
         {item.image && (
           <div style={{
             width: "100%",
-            height: isDouble ? "140px" : "180px",
+            height: isDouble ? "90px" : "160px",
             backgroundImage: `url(${item.image})`,
             backgroundSize: "cover",
             backgroundPosition: "center"
           }} />
         )}
-        <div style={{ padding: "12px" }}>
+        <div style={{ padding: isDouble ? "10px" : "12px" }}>
           <div style={{
-            fontSize: isDouble ? "14px" : "16px",
+            fontSize: isDouble ? "12px" : "15px",
             fontWeight: 600,
             color: "rgba(255, 255, 255, 0.95)",
-            lineHeight: 1.35,
-            marginBottom: "8px",
+            lineHeight: 1.3,
+            marginBottom: "6px",
             display: "-webkit-box",
-            WebkitLineClamp: isDouble ? 2 : 3,
+            WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             overflow: "hidden"
           }}>
@@ -198,7 +198,7 @@ export default function NewsHub() {
             display: "flex",
             alignItems: "center",
             gap: "6px",
-            fontSize: "10px",
+            fontSize: isDouble ? "9px" : "10px",
             color: "rgba(255, 255, 255, 0.4)"
           }}>
             <span style={{ color: "#f97316", fontWeight: 500 }}>Featured</span>
