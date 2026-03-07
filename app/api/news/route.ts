@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
       rssUrl = `https://news.google.com/rss/topics/${topic}?hl=en-US&gl=US&ceid=US:en`;
       feedLabel = topic.charAt(0).toUpperCase() + topic.slice(1);
     } else {
-      // Local search
-      const query = encodeURIComponent(location);
+      // Local search - add when:1d to get recent articles only
+      const query = encodeURIComponent(location + ' when:1d');
       rssUrl = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
       feedLabel = location;
     }
