@@ -14,20 +14,19 @@ interface NewsItem {
 interface NewsSection {
   id: string;
   label: string;
-  icon: React.ReactNode;
   items: NewsItem[];
   loading: boolean;
   error: string | null;
 }
 
 const SECTIONS = [
-  { id: 'top', label: 'Top Stories', icon: <TrendingUp className="w-4 h-4" />, feed: 'top' },
-  { id: 'business', label: 'Business', icon: <Briefcase className="w-4 h-4" />, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'technology', label: 'Technology', icon: <Cpu className="w-4 h-4" />, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'sports', label: 'Sports', icon: <Trophy className="w-4 h-4" />, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'world', label: 'World', icon: <Globe className="w-4 h-4" />, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'wellesley', label: 'Wellesley', icon: <MapPin className="w-4 h-4" />, feed: 'local', location: 'Wellesley Massachusetts' },
-  { id: 'dartmouth', label: 'Dartmouth', icon: <MapPin className="w-4 h-4" />, feed: 'local', location: 'Dartmouth Massachusetts' },
+  { id: 'top', label: 'Top Stories', icon: TrendingUp, feed: 'top' },
+  { id: 'business', label: 'Business', icon: Briefcase, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB' },
+  { id: 'technology', label: 'Technology', icon: Cpu, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB' },
+  { id: 'sports', label: 'Sports', icon: Trophy, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB' },
+  { id: 'world', label: 'World', icon: Globe, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB' },
+  { id: 'wellesley', label: 'Wellesley', icon: MapPin, feed: 'local', location: 'Wellesley Massachusetts' },
+  { id: 'dartmouth', label: 'Dartmouth', icon: MapPin, feed: 'local', location: 'Dartmouth Massachusetts' },
 ];
 
 export default function NewsHub() {
@@ -42,7 +41,6 @@ export default function NewsHub() {
         ...prev[section.id],
         id: section.id,
         label: section.label,
-        icon: section.icon,
         items: prev[section.id]?.items || [],
         loading: true,
         error: null
@@ -91,115 +89,210 @@ export default function NewsHub() {
   };
 
   useEffect(() => {
-    // Fetch all sections on mount
     SECTIONS.forEach(s => fetchSection(s));
-    // Refresh every 10 minutes
     const interval = setInterval(refreshAll, 600000);
     return () => clearInterval(interval);
   }, []);
 
   const currentSection = sections[activeTab];
+  const activeConfig = SECTIONS.find(s => s.id === activeTab);
+  const ActiveIcon = activeConfig?.icon || TrendingUp;
 
   return (
-    <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
+    <div style={{
+      background: "rgba(255, 255, 255, 0.03)",
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      borderRadius: "16px",
+      border: "1px solid rgba(255, 255, 255, 0.08)",
+      overflow: "hidden"
+    }}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <Newspaper className="w-5 h-5 text-blue-400" />
-          <h2 className="text-lg font-semibold text-white">News</h2>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "16px",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.06)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Newspaper style={{ width: "20px", height: "20px", color: "#3b82f6" }} />
+          <span style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)" }}>News</span>
         </div>
         <button
           onClick={refreshAll}
           disabled={refreshing}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
+          style={{
+            padding: "8px",
+            borderRadius: "8px",
+            background: "transparent",
+            border: "none",
+            cursor: refreshing ? "not-allowed" : "pointer",
+            opacity: refreshing ? 0.5 : 1
+          }}
         >
-          <RefreshCw className={`w-4 h-4 text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw style={{ 
+            width: "16px", 
+            height: "16px", 
+            color: "rgba(255, 255, 255, 0.5)",
+            animation: refreshing ? "spin 1s linear infinite" : "none"
+          }} />
         </button>
       </div>
 
-      {/* Tabs - Scrollable */}
-      <div className="flex gap-1 p-2 overflow-x-auto border-b border-white/5 scrollbar-hide">
-        {SECTIONS.map(section => (
-          <button
-            key={section.id}
-            onClick={() => setActiveTab(section.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-              activeTab === section.id
-                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
-            }`}
-          >
-            {section.icon}
-            {section.label}
-          </button>
-        ))}
+      {/* Tabs */}
+      <div style={{
+        display: "flex",
+        gap: "6px",
+        padding: "8px 12px",
+        overflowX: "auto",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.04)"
+      }}>
+        {SECTIONS.map(section => {
+          const Icon = section.icon;
+          const isActive = activeTab === section.id;
+          return (
+            <button
+              key={section.id}
+              onClick={() => setActiveTab(section.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                border: isActive ? "1px solid rgba(59, 130, 246, 0.3)" : "1px solid transparent",
+                background: isActive ? "rgba(59, 130, 246, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                color: isActive ? "#60a5fa" : "rgba(255, 255, 255, 0.6)",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              <Icon style={{ width: "14px", height: "14px" }} />
+              {section.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* News Items */}
-      <div className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
+      <div style={{ padding: "12px", maxHeight: "400px", overflowY: "auto" }}>
         {currentSection?.loading && !currentSection.items.length ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
+            <div style={{
+              width: "24px",
+              height: "24px",
+              border: "2px solid #3b82f6",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite"
+            }} />
           </div>
         ) : currentSection?.error && !currentSection.items.length ? (
-          <div className="text-center py-12 text-gray-500">
+          <div style={{ textAlign: "center", padding: "48px 0", color: "rgba(255, 255, 255, 0.4)" }}>
             {currentSection.error}
           </div>
         ) : !currentSection?.items.length ? (
-          <div className="text-center py-12 text-gray-500">
+          <div style={{ textAlign: "center", padding: "48px 0", color: "rgba(255, 255, 255, 0.4)" }}>
             No recent news
           </div>
         ) : (
-          currentSection?.items.map((item, idx) => (
-            <a
-              key={idx}
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all group"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-white leading-snug line-clamp-2 group-hover:text-blue-400 transition-colors">
-                    {item.title}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                    <span className="truncate max-w-[150px]">{item.source}</span>
-                    {item.relativeTime && (
-                      <>
-                        <span>•</span>
-                        <span>{item.relativeTime}</span>
-                      </>
-                    )}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {currentSection?.items.map((item, idx) => (
+              <a
+                key={idx}
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "block",
+                  padding: "12px",
+                  borderRadius: "12px",
+                  background: "rgba(255, 255, 255, 0.02)",
+                  border: "1px solid rgba(255, 255, 255, 0.04)",
+                  textDecoration: "none",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.02)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.04)";
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: "14px",
+                      fontWeight: 500,
+                      color: "var(--foreground)",
+                      lineHeight: 1.4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}>
+                      {item.title}
+                    </div>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginTop: "6px",
+                      fontSize: "12px",
+                      color: "rgba(255, 255, 255, 0.4)"
+                    }}>
+                      <span style={{ maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {item.source}
+                      </span>
+                      {item.relativeTime && (
+                        <>
+                          <span>•</span>
+                          <span>{item.relativeTime}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  <ExternalLink style={{ width: "16px", height: "16px", color: "rgba(255, 255, 255, 0.3)", flexShrink: 0, marginTop: "2px" }} />
                 </div>
-                <ExternalLink className="w-4 h-4 text-gray-600 group-hover:text-blue-400 flex-shrink-0 mt-0.5" />
-              </div>
-            </a>
-          ))
+              </a>
+            ))}
+          </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-3 pt-0 border-t border-white/5">
+      <div style={{
+        padding: "12px 16px",
+        borderTop: "1px solid rgba(255, 255, 255, 0.04)"
+      }}>
         <a
           href="https://news.google.com/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-gray-500 hover:text-blue-400 transition-colors flex items-center gap-1"
+          style={{
+            fontSize: "11px",
+            color: "rgba(255, 255, 255, 0.35)",
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px"
+          }}
         >
           Powered by Google News
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink style={{ width: "10px", height: "10px" }} />
         </a>
       </div>
 
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
