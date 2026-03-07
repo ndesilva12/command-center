@@ -6,6 +6,8 @@ interface NewsItem {
   source: string;
   pubDate: string;
   relativeTime: string;
+  image?: string;
+  isFeatured?: boolean;
 }
 
 interface NewsResponse {
@@ -29,7 +31,7 @@ function getRelativeTime(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
-function parseRSSItem(itemXml: string): NewsItem | null {
+function parseGoogleRSSItem(itemXml: string): NewsItem | null {
   const titleMatch = itemXml.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/);
   const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
   const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
@@ -51,75 +53,164 @@ function parseRSSItem(itemXml: string): NewsItem | null {
   };
 }
 
-function parseRSS(xml: string): NewsItem[] {
+function parseZeroHedgeRSSItem(itemXml: string): NewsItem | null {
+  const titleMatch = itemXml.match(/<title>([\s\S]*?)<\/title>/);
+  const linkMatch = itemXml.match(/<link>([\s\S]*?)<\/link>/);
+  const pubDateMatch = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+  const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
+
+  const title = titleMatch ? titleMatch[1].trim().replace(/&amp;/g, '&') : '';
+  const link = linkMatch ? linkMatch[1].trim() : '';
+  const pubDate = pubDateMatch ? pubDateMatch[1].trim() : '';
+  
+  // Extract first image from description
+  let image: string | undefined;
+  if (descMatch) {
+    const imgMatch = descMatch[1].match(/src="(https:\/\/assets\.zerohedge\.com[^"]+)"/);
+    if (imgMatch) {
+      image = imgMatch[1];
+    }
+  }
+
+  if (!title || !link) return null;
+
+  return {
+    title,
+    link,
+    source: 'ZeroHedge',
+    pubDate,
+    relativeTime: pubDate ? getRelativeTime(pubDate) : '',
+    image
+  };
+}
+
+function parseGoogleRSS(xml: string): NewsItem[] {
   const items: NewsItem[] = [];
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   let match;
 
   while ((match = itemRegex.exec(xml)) !== null) {
-    const parsed = parseRSSItem(match[1]);
+    const parsed = parseGoogleRSSItem(match[1]);
     if (parsed) items.push(parsed);
   }
 
   return items;
 }
 
+function parseZeroHedgeRSS(xml: string): NewsItem[] {
+  const items: NewsItem[] = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let match;
+
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const parsed = parseZeroHedgeRSSItem(match[1]);
+    if (parsed) items.push(parsed);
+  }
+
+  return items;
+}
+
+async function getFeaturedZeroHedgeSlug(): Promise<string | null> {
+  try {
+    const response = await fetch('https://www.zerohedge.com/', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html'
+      },
+      next: { revalidate: 300 }
+    });
+    
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    // Find first article link (featured/pinned article)
+    const articleMatch = html.match(/href="(\/[a-z-]+\/[a-z0-9-]+)"/);
+    if (articleMatch) {
+      return articleMatch[1];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const feed = searchParams.get('feed') || 'top'; // top, local, topic
+  const feed = searchParams.get('feed') || 'zerohedge';
   const location = searchParams.get('location') || 'Wellesley Massachusetts';
-  const topic = searchParams.get('topic') || '';
-  const limit = parseInt(searchParams.get('limit') || '6', 10);
+  const limit = parseInt(searchParams.get('limit') || '5', 10);
 
   try {
-    let rssUrl: string;
-    let feedLabel: string;
+    let items: NewsItem[] = [];
+    let feedLabel = 'News';
 
-    if (feed === 'top') {
-      // Top Stories - main Google News feed
-      rssUrl = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
-      feedLabel = 'Top Stories';
-    } else if (feed === 'topic' && topic) {
-      // Topic-based feed (business, technology, sports, etc.)
-      rssUrl = `https://news.google.com/rss/topics/${topic}?hl=en-US&gl=US&ceid=US:en`;
-      feedLabel = topic.charAt(0).toUpperCase() + topic.slice(1);
-    } else {
-      // Local search - add when:1d to get recent articles only
+    if (feed === 'zerohedge') {
+      // Fetch ZeroHedge RSS
+      const rssUrl = 'https://cms.zerohedge.com/fullrss2.xml';
+      const response = await fetch(rssUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
+          'Accept': 'application/rss+xml, application/xml, text/xml'
+        },
+        next: { revalidate: 300 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`RSS fetch failed: ${response.status}`);
+      }
+
+      const xml = await response.text();
+      const allItems = parseZeroHedgeRSS(xml);
+      
+      // Get featured article slug from homepage
+      const featuredSlug = await getFeaturedZeroHedgeSlug();
+      
+      // Mark featured article and reorder
+      if (featuredSlug) {
+        const featuredIndex = allItems.findIndex(item => item.link.includes(featuredSlug));
+        if (featuredIndex > 0) {
+          // Move featured to top
+          const [featured] = allItems.splice(featuredIndex, 1);
+          featured.isFeatured = true;
+          allItems.unshift(featured);
+        } else if (featuredIndex === 0) {
+          allItems[0].isFeatured = true;
+        }
+      }
+      
+      items = allItems.slice(0, limit);
+      feedLabel = 'ZeroHedge';
+      
+    } else if (feed === 'local') {
+      // Local Google News search with when:1d
       const query = encodeURIComponent(location + ' when:1d');
-      rssUrl = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+      const rssUrl = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
       feedLabel = location;
-    }
 
-    const response = await fetch(rssUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
-        'Accept': 'application/rss+xml, application/xml, text/xml'
-      },
-      next: { revalidate: 300 } // Cache for 5 minutes
-    });
+      const response = await fetch(rssUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
+          'Accept': 'application/rss+xml, application/xml, text/xml'
+        },
+        next: { revalidate: 300 }
+      });
 
-    if (!response.ok) {
-      throw new Error(`RSS fetch failed: ${response.status}`);
-    }
+      if (!response.ok) {
+        throw new Error(`RSS fetch failed: ${response.status}`);
+      }
 
-    const xml = await response.text();
-    const allItems = parseRSS(xml);
-    
-    // Sort by date (newest first) and filter out articles older than 30 days
-    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-    const sortedItems = allItems
-      .filter(item => {
-        if (!item.pubDate) return true; // Keep items without dates
-        const itemDate = new Date(item.pubDate).getTime();
-        return itemDate > thirtyDaysAgo;
-      })
-      .sort((a, b) => {
+      const xml = await response.text();
+      const allItems = parseGoogleRSS(xml);
+      
+      // Sort by date and take limit
+      const sortedItems = allItems.sort((a, b) => {
         const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
         const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
-        return dateB - dateA; // Newest first
+        return dateB - dateA;
       });
-    
-    const items = sortedItems.slice(0, limit);
+      
+      items = sortedItems.slice(0, limit);
+    }
 
     const result: NewsResponse = {
       location: feedLabel,
