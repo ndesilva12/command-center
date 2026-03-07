@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('News API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch news', location: feedLabel, items: [] },
+      { error: 'Failed to fetch news', location: 'Unknown', items: [] },
       { status: 500 }
     );
   }
