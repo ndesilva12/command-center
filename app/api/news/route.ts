@@ -174,15 +174,25 @@ async function fetchZeroHedgeArticlePage(slug: string): Promise<{ title: string;
     
     const html = await response.text();
     
-    // Extract og:title
-    const titleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ||
+    // Extract og:title (ZH uses name= not property=)
+    const titleMatch = html.match(/<meta[^>]*name="og:title"[^>]*content="([^"]+)"/i) ||
+                       html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i) ||
                        html.match(/<title>([^<]+)<\/title>/i);
     
     // Extract og:image
-    const imageMatch = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+    const imageMatch = html.match(/<meta[^>]*name="og:image"[^>]*content="([^"]+)"/i) ||
+                       html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
+    
+    // Decode HTML entities
+    const decodeHtml = (str: string) => str
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&#39;/g, "'");
     
     return {
-      title: titleMatch ? titleMatch[1].replace(/\s*\|\s*ZeroHedge$/i, '').trim() : '',
+      title: titleMatch ? decodeHtml(titleMatch[1].replace(/\s*\|\s*ZeroHedge$/i, '').trim()) : '',
       image: imageMatch ? imageMatch[1] : undefined
     };
   } catch {
