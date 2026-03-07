@@ -30,7 +30,7 @@ function getRelativeTime(dateString: string): string {
 }
 
 function parseRSSItem(itemXml: string): NewsItem | null {
-  const titleMatch = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/s);
+  const titleMatch = itemXml.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/);
   const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
   const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
   const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
@@ -66,12 +66,29 @@ function parseRSS(xml: string): NewsItem[] {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
+  const feed = searchParams.get('feed') || 'top'; // top, local, topic
   const location = searchParams.get('location') || 'Wellesley Massachusetts';
-  const limit = parseInt(searchParams.get('limit') || '5', 10);
+  const topic = searchParams.get('topic') || '';
+  const limit = parseInt(searchParams.get('limit') || '6', 10);
 
   try {
-    const query = encodeURIComponent(location);
-    const rssUrl = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+    let rssUrl: string;
+    let feedLabel: string;
+
+    if (feed === 'top') {
+      // Top Stories - main Google News feed
+      rssUrl = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
+      feedLabel = 'Top Stories';
+    } else if (feed === 'topic' && topic) {
+      // Topic-based feed (business, technology, sports, etc.)
+      rssUrl = `https://news.google.com/rss/topics/${topic}?hl=en-US&gl=US&ceid=US:en`;
+      feedLabel = topic.charAt(0).toUpperCase() + topic.slice(1);
+    } else {
+      // Local search
+      const query = encodeURIComponent(location);
+      rssUrl = `https://news.google.com/rss/search?q=${query}&hl=en-US&gl=US&ceid=US:en`;
+      feedLabel = location;
+    }
 
     const response = await fetch(rssUrl, {
       headers: {
@@ -90,7 +107,7 @@ export async function GET(request: NextRequest) {
     const items = allItems.slice(0, limit);
 
     const result: NewsResponse = {
-      location,
+      location: feedLabel,
       items,
       lastUpdated: new Date().toISOString()
     };
@@ -99,7 +116,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('News API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch news', location, items: [] },
+      { error: 'Failed to fetch news', location: feedLabel, items: [] },
       { status: 500 }
     );
   }

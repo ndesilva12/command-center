@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/navigation/Sidebar";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
 import { DigitalClock } from "@/components/home/DigitalClock";
-import LocalNews from "@/components/home/LocalNews";
+import NewsHub from "@/components/home/NewsHub";
 import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
@@ -266,16 +266,17 @@ export default function Home() {
             <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
           </div>
 
-          {/* Trending Topics + Local News */}
+          {/* Trending Topics */}
           {!aiSearchQuery && (
-            <div style={{ 
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-              gap: isMobile ? "16px" : "24px",
-              marginBottom: isMobile ? "16px" : "24px" 
-            }}>
+            <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
               <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
-              <LocalNews />
+            </div>
+          )}
+
+          {/* News Hub - Full Width */}
+          {!aiSearchQuery && (
+            <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
+              <NewsHub />
             </div>
           )}
 
