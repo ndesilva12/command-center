@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Newspaper, ExternalLink, RefreshCw, MapPin, TrendingUp, ChevronRight } from 'lucide-react';
+import { Newspaper, ExternalLink, RefreshCw, MapPin, TrendingUp, ChevronRight, Globe } from 'lucide-react';
 
 interface NewsItem {
   title: string;
@@ -32,6 +32,11 @@ export default function NewsHub() {
     loading: true,
     error: null
   });
+  const [googleNews, setGoogleNews] = useState<{ items: NewsItem[]; loading: boolean; error: string | null }>({
+    items: [],
+    loading: true,
+    error: null
+  });
   const [localSections, setLocalSections] = useState<Record<string, NewsSection>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -46,7 +51,7 @@ export default function NewsHub() {
   const fetchZeroHedge = async () => {
     setZeroHedge(prev => ({ ...prev, loading: true, error: null }));
     try {
-      const response = await fetch('/api/news?feed=zerohedge&limit=5');
+      const response = await fetch('/api/news?feed=zerohedge&limit=6');
       const data = await response.json();
       setZeroHedge({
         items: data.items || [],
@@ -55,6 +60,21 @@ export default function NewsHub() {
       });
     } catch {
       setZeroHedge({ items: [], loading: false, error: 'Failed to load' });
+    }
+  };
+
+  const fetchGoogleNews = async () => {
+    setGoogleNews(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await fetch('/api/news?feed=top&limit=5');
+      const data = await response.json();
+      setGoogleNews({
+        items: data.items || [],
+        loading: false,
+        error: data.error || null
+      });
+    } catch {
+      setGoogleNews({ items: [], loading: false, error: 'Failed to load' });
     }
   };
 
@@ -102,6 +122,7 @@ export default function NewsHub() {
     setRefreshing(true);
     await Promise.all([
       fetchZeroHedge(),
+      fetchGoogleNews(),
       ...LOCAL_SECTIONS.map(s => fetchLocalSection(s))
     ]);
     setRefreshing(false);
@@ -109,13 +130,84 @@ export default function NewsHub() {
 
   useEffect(() => {
     fetchZeroHedge();
+    fetchGoogleNews();
     LOCAL_SECTIONS.forEach(s => fetchLocalSection(s));
     const interval = setInterval(refreshAll, 600000);
     return () => clearInterval(interval);
   }, []);
 
-  const featuredStory = zeroHedge.items.find(item => item.isFeatured) || zeroHedge.items[0];
-  const otherStories = zeroHedge.items.filter(item => item !== featuredStory).slice(0, 4);
+  // Split ZeroHedge items into featured (up to 2) and others
+  const featuredStories = zeroHedge.items.filter(item => item.isFeatured).slice(0, 2);
+  const otherStories = zeroHedge.items.filter(item => !item.isFeatured).slice(0, 4);
+
+  const renderFeaturedCard = (item: NewsItem, index: number) => {
+    const isDouble = featuredStories.length === 2;
+    
+    return (
+      <a
+        key={item.link}
+        href={item.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: "block",
+          borderRadius: "10px",
+          background: "rgba(255, 255, 255, 0.03)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+          overflow: "hidden",
+          textDecoration: "none",
+          transition: "all 0.2s",
+          flex: isDouble ? "1" : "none",
+          minWidth: isDouble ? "0" : "auto"
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+          e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.3)";
+          e.currentTarget.style.transform = "translateY(-2px)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
+          e.currentTarget.style.transform = "translateY(0)";
+        }}
+      >
+        {item.image && (
+          <div style={{
+            width: "100%",
+            height: isDouble ? "140px" : "180px",
+            backgroundImage: `url(${item.image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center"
+          }} />
+        )}
+        <div style={{ padding: "12px" }}>
+          <div style={{
+            fontSize: isDouble ? "14px" : "16px",
+            fontWeight: 600,
+            color: "rgba(255, 255, 255, 0.95)",
+            lineHeight: 1.35,
+            marginBottom: "8px",
+            display: "-webkit-box",
+            WebkitLineClamp: isDouble ? 2 : 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden"
+          }}>
+            {item.title}
+          </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "10px",
+            color: "rgba(255, 255, 255, 0.4)"
+          }}>
+            <span style={{ color: "#f97316", fontWeight: 500 }}>Featured</span>
+            {item.relativeTime && item.relativeTime !== 'Featured' && <span>• {item.relativeTime}</span>}
+          </div>
+        </div>
+      </a>
+    );
+  };
 
   const renderLocalSection = (sectionId: string) => {
     const section = localSections[sectionId];
@@ -125,7 +217,6 @@ export default function NewsHub() {
     const items = section?.items || [];
     const isLoading = section?.loading && !items.length;
 
-    // Get Google News search URL for this location
     const googleNewsUrl = `https://news.google.com/search?q=${encodeURIComponent(config.location)}&hl=en-US&gl=US&ceid=US:en`;
 
     return (
@@ -179,7 +270,7 @@ export default function NewsHub() {
               No recent news
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {items.slice(0, 4).map(item => (
                 <a
                   key={item.link}
@@ -315,113 +406,60 @@ export default function NewsHub() {
               Unable to load ZeroHedge feed
             </div>
           ) : (
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : featuredStory?.image ? "1.2fr 1fr" : "1fr",
-              gap: "16px"
-            }}>
-              {/* Featured Story */}
-              {featuredStory && (
-                <a
-                  href={featuredStory.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "block",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                    overflow: "hidden",
-                    textDecoration: "none",
-                    transition: "all 0.2s"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
-                    e.currentTarget.style.borderColor = "rgba(249, 115, 22, 0.3)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
-                    e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  {featuredStory.image && (
-                    <div style={{
-                      width: "100%",
-                      height: isMobile ? "160px" : "180px",
-                      backgroundImage: `url(${featuredStory.image})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center"
-                    }} />
-                  )}
-                  <div style={{ padding: "14px" }}>
-                    <div style={{
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      color: "rgba(255, 255, 255, 0.95)",
-                      lineHeight: 1.35,
-                      marginBottom: "10px",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden"
-                    }}>
-                      {featuredStory.title}
-                    </div>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      fontSize: "11px",
-                      color: "rgba(255, 255, 255, 0.4)"
-                    }}>
-                      <span style={{ color: "#f97316", fontWeight: 500 }}>Featured</span>
-                      {featuredStory.relativeTime && <span>• {featuredStory.relativeTime}</span>}
-                    </div>
-                  </div>
-                </a>
+            <>
+              {/* Featured Stories - Side by Side or Single */}
+              {featuredStories.length > 0 && (
+                <div style={{
+                  display: "flex",
+                  flexDirection: isMobile ? "column" : "row",
+                  gap: "12px",
+                  marginBottom: otherStories.length > 0 ? "12px" : "0"
+                }}>
+                  {featuredStories.map((item, i) => renderFeaturedCard(item, i))}
+                </div>
               )}
 
               {/* Other Stories */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {otherStories.map(item => (
-                  <a
-                    key={item.link}
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: "block",
-                      padding: "12px",
-                      borderRadius: "8px",
-                      background: "transparent",
-                      textDecoration: "none",
-                      transition: "background 0.15s"
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                  >
-                    <div style={{
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      color: "rgba(255, 255, 255, 0.85)",
-                      lineHeight: 1.4,
-                      marginBottom: "4px",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden"
-                    }}>
-                      {item.title}
-                    </div>
-                    <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
-                      {item.relativeTime}
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
+              {otherStories.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {otherStories.map(item => (
+                    <a
+                      key={item.link}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "block",
+                        padding: "10px",
+                        borderRadius: "8px",
+                        background: "transparent",
+                        textDecoration: "none",
+                        transition: "background 0.15s"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      <div style={{
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        color: "rgba(255, 255, 255, 0.85)",
+                        lineHeight: 1.4,
+                        marginBottom: "4px",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                      }}>
+                        {item.title}
+                      </div>
+                      <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
+                        {item.relativeTime}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -430,10 +468,103 @@ export default function NewsHub() {
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-        gap: "12px"
+        gap: "12px",
+        marginBottom: "16px"
       }}>
         {renderLocalSection('wellesley')}
         {renderLocalSection('dartmouth')}
+      </div>
+
+      {/* Google News Top Stories */}
+      <div style={{
+        background: "rgba(255, 255, 255, 0.02)",
+        border: "1px solid rgba(255, 255, 255, 0.05)",
+        borderRadius: "12px",
+        overflow: "hidden"
+      }}>
+        <a
+          href="https://news.google.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 14px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+            textDecoration: "none",
+            cursor: "pointer",
+            transition: "background 0.15s"
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)"}
+          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Globe style={{ width: "14px", height: "14px", color: "#22c55e" }} />
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.9)" }}>
+              Google News
+            </span>
+          </div>
+          <ChevronRight style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.3)" }} />
+        </a>
+        
+        <div style={{ padding: "8px" }}>
+          {googleNews.loading && !googleNews.items.length ? (
+            <div style={{ padding: "24px", textAlign: "center" }}>
+              <div style={{
+                width: "20px",
+                height: "20px",
+                border: "2px solid #22c55e",
+                borderTopColor: "transparent",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto"
+              }} />
+            </div>
+          ) : googleNews.items.length === 0 ? (
+            <div style={{ padding: "24px", textAlign: "center", color: "rgba(255, 255, 255, 0.3)", fontSize: "12px" }}>
+              Unable to load news
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              {googleNews.items.map(item => (
+                <a
+                  key={item.link}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    background: "transparent",
+                    textDecoration: "none",
+                    transition: "background 0.15s"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "rgba(255, 255, 255, 0.85)",
+                    lineHeight: 1.4,
+                    marginBottom: "4px",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
+                  }}>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
+                    {item.source} {item.relativeTime && `• ${item.relativeTime}`}
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}

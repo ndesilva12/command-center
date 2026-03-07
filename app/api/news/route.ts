@@ -31,15 +31,25 @@ function getRelativeTime(dateString: string): string {
   return `${diffDays}d ago`;
 }
 
+function decodeHtml(str: string): string {
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+}
+
 function parseGoogleRSSItem(itemXml: string): NewsItem | null {
   const titleMatch = itemXml.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/);
   const linkMatch = itemXml.match(/<link>(.*?)<\/link>/);
   const sourceMatch = itemXml.match(/<source[^>]*>(.*?)<\/source>/);
   const pubDateMatch = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);
 
-  const title = titleMatch ? (titleMatch[1] || titleMatch[2] || '').trim() : '';
+  const title = titleMatch ? decodeHtml((titleMatch[1] || titleMatch[2] || '').trim()) : '';
   const link = linkMatch ? linkMatch[1].trim() : '';
-  const source = sourceMatch ? sourceMatch[1].trim() : 'Unknown';
+  const source = sourceMatch ? decodeHtml(sourceMatch[1].trim()) : 'Unknown';
   const pubDate = pubDateMatch ? pubDateMatch[1].trim() : '';
 
   if (!title || !link) return null;
@@ -59,7 +69,7 @@ function parseZeroHedgeRSSItem(itemXml: string): NewsItem | null {
   const pubDateMatch = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
   const descMatch = itemXml.match(/<description>([\s\S]*?)<\/description>/);
 
-  const title = titleMatch ? titleMatch[1].trim().replace(/&amp;/g, '&') : '';
+  const title = titleMatch ? decodeHtml(titleMatch[1].trim()) : '';
   const link = linkMatch ? linkMatch[1].trim() : '';
   const pubDate = pubDateMatch ? pubDateMatch[1].trim() : '';
   
@@ -110,52 +120,36 @@ function parseZeroHedgeRSS(xml: string): NewsItem[] {
   return items;
 }
 
-interface FeaturedArticle {
-  slug: string;
-  title: string;
-  image?: string;
-}
-
-async function getFeaturedZeroHedgeArticle(): Promise<FeaturedArticle | null> {
+async function getFeaturedZeroHedgeSlugs(count: number = 2): Promise<string[]> {
   try {
     const response = await fetch('https://www.zerohedge.com/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'text/html'
       },
-      next: { revalidate: 60 } // Cache for 1 minute to stay fresh
+      next: { revalidate: 60 }
     });
     
-    if (!response.ok) return null;
+    if (!response.ok) return [];
     
     const html = await response.text();
     
-    // Find first article link (featured/pinned) - must be a content category
+    // Find first N unique article links
     const categories = 'geopolitical|economics|markets|political|technology|health|crypto|news|energy|commodities|military|personal-finance|entertainment|ai';
-    const articleRegex = new RegExp(`href="\\/(${categories})\\/([a-z0-9-]+)"`);
-    const articleMatch = html.match(articleRegex);
+    const articleRegex = new RegExp(`href="\\/(${categories})\\/([a-z0-9-]+)"`, 'g');
     
-    if (!articleMatch) return null;
+    const slugs: string[] = [];
+    let match;
+    while ((match = articleRegex.exec(html)) !== null && slugs.length < count) {
+      const slug = `/${match[1]}/${match[2]}`;
+      if (!slugs.includes(slug)) {
+        slugs.push(slug);
+      }
+    }
     
-    const slug = `/${articleMatch[1]}/${articleMatch[2]}`;
-    
-    // Try to extract title near the featured article link
-    // Look for the article's h2/h3 title in the HTML
-    const slugEscaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const titleRegex = new RegExp(`href="${slugEscaped}"[^>]*>([^<]+)<`, 'i');
-    const titleMatch = html.match(titleRegex);
-    
-    // Also try to find an image associated with this article
-    const imgRegex = new RegExp(`(https://[^"]*zerohedge[^"]*(?:jpg|jpeg|png|webp))[^>]*[\\s\\S]{0,500}${slugEscaped}|${slugEscaped}[\\s\\S]{0,500}(https://[^"]*(?:jpg|jpeg|png|webp))`, 'i');
-    const imgMatch = html.match(imgRegex);
-    
-    return {
-      slug,
-      title: titleMatch ? titleMatch[1].trim() : '',
-      image: imgMatch ? (imgMatch[1] || imgMatch[2]) : undefined
-    };
+    return slugs;
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -183,14 +177,6 @@ async function fetchZeroHedgeArticlePage(slug: string): Promise<{ title: string;
     const imageMatch = html.match(/<meta[^>]*name="og:image"[^>]*content="([^"]+)"/i) ||
                        html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i);
     
-    // Decode HTML entities
-    const decodeHtml = (str: string) => str
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&#39;/g, "'");
-    
     return {
       title: titleMatch ? decodeHtml(titleMatch[1].replace(/\s*\|\s*ZeroHedge$/i, '').trim()) : '',
       image: imageMatch ? imageMatch[1] : undefined
@@ -211,9 +197,9 @@ export async function GET(request: NextRequest) {
     let feedLabel = 'News';
 
     if (feed === 'zerohedge') {
-      // Fetch ZeroHedge RSS
+      // Fetch ZeroHedge RSS and featured slugs in parallel
       const rssUrl = 'https://cms.zerohedge.com/fullrss2.xml';
-      const [rssResponse, featuredInfo] = await Promise.all([
+      const [rssResponse, featuredSlugs] = await Promise.all([
         fetch(rssUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
@@ -221,7 +207,7 @@ export async function GET(request: NextRequest) {
           },
           next: { revalidate: 60 }
         }),
-        getFeaturedZeroHedgeArticle()
+        getFeaturedZeroHedgeSlugs(2) // Get top 2 featured articles
       ]);
 
       if (!rssResponse.ok) {
@@ -231,39 +217,38 @@ export async function GET(request: NextRequest) {
       const xml = await rssResponse.text();
       let allItems = parseZeroHedgeRSS(xml);
       
-      // Check if featured article is in RSS
-      let featuredItem: NewsItem | null = null;
+      // Process featured articles
+      const featuredItems: NewsItem[] = [];
       
-      if (featuredInfo?.slug) {
-        const featuredIndex = allItems.findIndex(item => item.link.includes(featuredInfo.slug));
+      for (const slug of featuredSlugs) {
+        // Check if in RSS first
+        const rssIndex = allItems.findIndex(item => item.link.includes(slug));
         
-        if (featuredIndex >= 0) {
-          // Featured is in RSS - extract it and mark as featured
-          [featuredItem] = allItems.splice(featuredIndex, 1);
-          featuredItem.isFeatured = true;
+        if (rssIndex >= 0) {
+          // Found in RSS - extract and mark as featured
+          const [item] = allItems.splice(rssIndex, 1);
+          item.isFeatured = true;
+          featuredItems.push(item);
         } else {
-          // Featured article is NOT in RSS - fetch its details from article page
-          const articleDetails = await fetchZeroHedgeArticlePage(featuredInfo.slug);
+          // Not in RSS - fetch article page directly
+          const articleDetails = await fetchZeroHedgeArticlePage(slug);
           if (articleDetails?.title) {
-            featuredItem = {
+            featuredItems.push({
               title: articleDetails.title,
-              link: `https://www.zerohedge.com${featuredInfo.slug}`,
+              link: `https://www.zerohedge.com${slug}`,
               source: 'ZeroHedge',
               pubDate: new Date().toISOString(),
               relativeTime: 'Featured',
               image: articleDetails.image,
               isFeatured: true
-            };
+            });
           }
         }
       }
       
-      // Build final list: featured first (if found), then top RSS items
-      if (featuredItem) {
-        items = [featuredItem, ...allItems.slice(0, limit - 1)];
-      } else {
-        items = allItems.slice(0, limit);
-      }
+      // Build final list: featured items first, then remaining RSS items
+      const remainingSlots = limit - featuredItems.length;
+      items = [...featuredItems, ...allItems.slice(0, remainingSlots)];
       
       feedLabel = 'ZeroHedge';
       
@@ -296,6 +281,27 @@ export async function GET(request: NextRequest) {
       });
       
       items = sortedItems.slice(0, limit);
+      
+    } else if (feed === 'top') {
+      // Google News top stories
+      const rssUrl = 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en';
+      feedLabel = 'Top Stories';
+
+      const response = await fetch(rssUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
+          'Accept': 'application/rss+xml, application/xml, text/xml'
+        },
+        next: { revalidate: 300 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`RSS fetch failed: ${response.status}`);
+      }
+
+      const xml = await response.text();
+      const allItems = parseGoogleRSS(xml);
+      items = allItems.slice(0, limit);
     }
 
     const result: NewsResponse = {
