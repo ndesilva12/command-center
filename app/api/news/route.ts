@@ -123,10 +123,11 @@ async function getFeaturedZeroHedgeSlug(): Promise<string | null> {
     if (!response.ok) return null;
     
     const html = await response.text();
-    // Find first article link (featured/pinned article)
-    const articleMatch = html.match(/href="(\/[a-z-]+\/[a-z0-9-]+)"/);
+    // Find first article link (featured/pinned) - must be a content category, not /contributors/
+    // ZH categories: geopolitical, economics, markets, political, technology, health, crypto, etc.
+    const articleMatch = html.match(/href="\/(geopolitical|economics|markets|political|technology|health|crypto|news|energy|commodities|military|personal-finance|entertainment|ai)\/([a-z0-9-]+)"/);
     if (articleMatch) {
-      return articleMatch[1];
+      return `/${articleMatch[1]}/${articleMatch[2]}`;
     }
     return null;
   } catch {
