@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Newspaper, ExternalLink, RefreshCw, MapPin, TrendingUp, Briefcase, Cpu, Trophy, Globe, ChevronRight } from 'lucide-react';
+import { Newspaper, ExternalLink, RefreshCw, MapPin, TrendingUp, ChevronRight } from 'lucide-react';
 
 interface NewsItem {
   title: string;
@@ -21,10 +21,6 @@ interface NewsSection {
 
 const SECTIONS = [
   { id: 'top', label: 'Top Stories', icon: TrendingUp, feed: 'top' },
-  { id: 'business', label: 'Business', icon: Briefcase, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx6TVdZU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'technology', label: 'Tech', icon: Cpu, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'sports', label: 'Sports', icon: Trophy, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp1ZEdvU0FtVnVHZ0pWVXlnQVAB' },
-  { id: 'world', label: 'World', icon: Globe, feed: 'topic', topic: 'CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB' },
   { id: 'wellesley', label: 'Wellesley', icon: MapPin, feed: 'local', location: 'Wellesley Massachusetts' },
   { id: 'dartmouth', label: 'Dartmouth', icon: MapPin, feed: 'local', location: 'Dartmouth Massachusetts' },
 ];
@@ -55,11 +51,9 @@ export default function NewsHub() {
     }));
 
     try {
-      let url = '/api/news?limit=6';
+      let url = '/api/news?limit=8';
       if (section.feed === 'top') {
         url += '&feed=top';
-      } else if (section.feed === 'topic' && section.topic) {
-        url += `&feed=topic&topic=${section.topic}`;
       } else if (section.feed === 'local' && section.location) {
         url += `&feed=local&location=${encodeURIComponent(section.location)}`;
       }
@@ -175,7 +169,7 @@ export default function NewsHub() {
     );
   };
 
-  const renderSectionCard = (sectionId: string) => {
+  const renderLocalSection = (sectionId: string) => {
     const section = sections[sectionId];
     const config = SECTIONS.find(s => s.id === sectionId);
     if (!config) return null;
@@ -221,11 +215,11 @@ export default function NewsHub() {
             </div>
           ) : items.length === 0 ? (
             <div style={{ padding: "24px", textAlign: "center", color: "rgba(255, 255, 255, 0.3)", fontSize: "12px" }}>
-              No news
+              No recent news
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {items.slice(0, 3).map(item => (
+              {items.slice(0, 4).map(item => (
                 <a
                   key={item.link}
                   href={item.link}
@@ -338,27 +332,14 @@ export default function NewsHub() {
         </div>
       )}
 
-      {/* Section Cards Grid */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)",
-        gap: "12px"
-      }}>
-        {renderSectionCard('business')}
-        {renderSectionCard('technology')}
-        {renderSectionCard('sports')}
-        {renderSectionCard('world')}
-      </div>
-
       {/* Local News Row */}
       <div style={{
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-        gap: "12px",
-        marginTop: "12px"
+        gap: "12px"
       }}>
-        {renderSectionCard('wellesley')}
-        {renderSectionCard('dartmouth')}
+        {renderLocalSection('wellesley')}
+        {renderLocalSection('dartmouth')}
       </div>
 
       {/* Footer */}

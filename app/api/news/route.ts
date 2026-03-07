@@ -104,7 +104,22 @@ export async function GET(request: NextRequest) {
 
     const xml = await response.text();
     const allItems = parseRSS(xml);
-    const items = allItems.slice(0, limit);
+    
+    // Sort by date (newest first) and filter out articles older than 30 days
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    const sortedItems = allItems
+      .filter(item => {
+        if (!item.pubDate) return true; // Keep items without dates
+        const itemDate = new Date(item.pubDate).getTime();
+        return itemDate > thirtyDaysAgo;
+      })
+      .sort((a, b) => {
+        const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+        const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+        return dateB - dateA; // Newest first
+      });
+    
+    const items = sortedItems.slice(0, limit);
 
     const result: NewsResponse = {
       location: feedLabel,
