@@ -140,9 +140,7 @@ export default function NewsHub() {
   const featuredStories = zeroHedge.items.filter(item => item.isFeatured).slice(0, 2);
   const otherStories = zeroHedge.items.filter(item => !item.isFeatured).slice(0, 4);
 
-  const renderFeaturedCard = (item: NewsItem, index: number) => {
-    const isDouble = featuredStories.length === 2;
-    
+  const renderFeaturedCard = (item: NewsItem, isHalf: boolean = false) => {
     return (
       <a
         key={item.link}
@@ -150,15 +148,17 @@ export default function NewsHub() {
         target="_blank"
         rel="noopener noreferrer"
         style={{
-          display: "block",
-          borderRadius: isDouble ? "8px" : "10px",
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: "10px",
           background: "rgba(255, 255, 255, 0.03)",
           border: "1px solid rgba(255, 255, 255, 0.06)",
           overflow: "hidden",
           textDecoration: "none",
           transition: "all 0.2s",
-          flex: isDouble ? "1" : "none",
-          minWidth: isDouble ? "0" : "auto"
+          flex: isHalf ? "1" : "none",
+          minWidth: isHalf ? "0" : "auto",
+          height: "100%"
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
@@ -174,23 +174,25 @@ export default function NewsHub() {
         {item.image && (
           <div style={{
             width: "100%",
-            height: isDouble ? "90px" : "160px",
+            height: isHalf ? "100px" : "160px",
             backgroundImage: `url(${item.image})`,
             backgroundSize: "cover",
-            backgroundPosition: "center"
+            backgroundPosition: "center",
+            flexShrink: 0
           }} />
         )}
-        <div style={{ padding: isDouble ? "10px" : "12px" }}>
+        <div style={{ padding: isHalf ? "10px" : "14px", flex: 1, display: "flex", flexDirection: "column" }}>
           <div style={{
-            fontSize: isDouble ? "12px" : "15px",
+            fontSize: isHalf ? "13px" : "16px",
             fontWeight: 600,
             color: "rgba(255, 255, 255, 0.95)",
-            lineHeight: 1.3,
-            marginBottom: "6px",
+            lineHeight: 1.35,
+            marginBottom: "8px",
             display: "-webkit-box",
-            WebkitLineClamp: 2,
+            WebkitLineClamp: isHalf ? 3 : 3,
             WebkitBoxOrient: "vertical",
-            overflow: "hidden"
+            overflow: "hidden",
+            flex: 1
           }}>
             {item.title}
           </div>
@@ -198,7 +200,7 @@ export default function NewsHub() {
             display: "flex",
             alignItems: "center",
             gap: "6px",
-            fontSize: isDouble ? "9px" : "10px",
+            fontSize: "10px",
             color: "rgba(255, 255, 255, 0.4)"
           }}>
             <span style={{ color: "#f97316", fontWeight: 500 }}>Featured</span>
@@ -405,21 +407,14 @@ export default function NewsHub() {
             <div style={{ padding: "40px", textAlign: "center", color: "rgba(255, 255, 255, 0.3)", fontSize: "13px" }}>
               Unable to load ZeroHedge feed
             </div>
-          ) : (
+          ) : isMobile ? (
+            /* Mobile: Stack everything vertically */
             <>
-              {/* Featured Stories - Side by Side or Single */}
               {featuredStories.length > 0 && (
-                <div style={{
-                  display: "flex",
-                  flexDirection: isMobile ? "column" : "row",
-                  gap: "12px",
-                  marginBottom: otherStories.length > 0 ? "12px" : "0"
-                }}>
-                  {featuredStories.map((item, i) => renderFeaturedCard(item, i))}
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: otherStories.length > 0 ? "12px" : "0" }}>
+                  {featuredStories.map((item) => renderFeaturedCard(item, false))}
                 </div>
               )}
-
-              {/* Other Stories */}
               {otherStories.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {otherStories.map(item => (
@@ -460,6 +455,66 @@ export default function NewsHub() {
                 </div>
               )}
             </>
+          ) : (
+            /* Desktop: Featured left (side-by-side if 2), Other stories right */
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: otherStories.length > 0 ? "1.5fr 1fr" : "1fr",
+              gap: "16px"
+            }}>
+              {/* Left: Featured Stories */}
+              {featuredStories.length > 0 && (
+                <div style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "12px",
+                  minHeight: "220px"
+                }}>
+                  {featuredStories.map((item) => renderFeaturedCard(item, featuredStories.length === 2))}
+                </div>
+              )}
+
+              {/* Right: Other Stories */}
+              {otherStories.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {otherStories.map(item => (
+                    <a
+                      key={item.link}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "block",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        background: "transparent",
+                        textDecoration: "none",
+                        transition: "background 0.15s"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      <div style={{
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        color: "rgba(255, 255, 255, 0.85)",
+                        lineHeight: 1.4,
+                        marginBottom: "4px",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                      }}>
+                        {item.title}
+                      </div>
+                      <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
+                        {item.relativeTime}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
