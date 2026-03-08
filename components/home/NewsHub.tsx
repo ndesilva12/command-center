@@ -156,8 +156,8 @@ export default function NewsHub() {
           overflow: "hidden",
           textDecoration: "none",
           transition: "all 0.2s",
-          flex: isHalf ? "1" : "none",
-          minWidth: isHalf ? "0" : "auto",
+          flex: 1, // Always fill available space
+          minWidth: 0,
           height: "100%"
         }}
         onMouseEnter={(e) => {
@@ -189,7 +189,7 @@ export default function NewsHub() {
             lineHeight: 1.35,
             marginBottom: "8px",
             display: "-webkit-box",
-            WebkitLineClamp: isHalf ? 3 : 3,
+            WebkitLineClamp: 3,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
             flex: 1
