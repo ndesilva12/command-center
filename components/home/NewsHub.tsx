@@ -174,14 +174,14 @@ export default function NewsHub() {
         {item.image && (
           <div style={{
             width: "100%",
-            height: isHalf ? "100px" : "160px",
+            minHeight: isHalf ? "100px" : "140px",
+            flex: 1,
             backgroundImage: `url(${item.image})`,
             backgroundSize: "cover",
-            backgroundPosition: "center",
-            flexShrink: 0
+            backgroundPosition: "center"
           }} />
         )}
-        <div style={{ padding: isHalf ? "10px" : "14px", flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: isHalf ? "10px" : "14px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
           <div style={{
             fontSize: isHalf ? "13px" : "16px",
             fontWeight: 600,
@@ -191,8 +191,7 @@ export default function NewsHub() {
             display: "-webkit-box",
             WebkitLineClamp: 3,
             WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            flex: 1
+            overflow: "hidden"
           }}>
             {item.title}
           </div>
@@ -461,13 +460,14 @@ export default function NewsHub() {
               display: "grid",
               gridTemplateColumns: "1.4fr 1fr",
               gap: "16px",
-              alignItems: "start"
+              alignItems: "stretch"
             }}>
               {/* Left Column: Featured Stories (side-by-side if 2) */}
               <div style={{
                 display: "flex",
                 flexDirection: "row",
-                gap: "10px"
+                gap: "10px",
+                minHeight: "100%"
               }}>
                 {featuredStories.map((item) => renderFeaturedCard(item, featuredStories.length === 2))}
               </div>
