@@ -456,64 +456,60 @@ export default function NewsHub() {
               )}
             </>
           ) : (
-            /* Desktop: Featured left (side-by-side if 2), Other stories right */
+            /* Desktop: Grid with featured left, other stories right */
             <div style={{
               display: "grid",
-              gridTemplateColumns: otherStories.length > 0 ? "1.5fr 1fr" : "1fr",
-              gap: "16px"
+              gridTemplateColumns: "1.4fr 1fr",
+              gap: "16px",
+              alignItems: "start"
             }}>
-              {/* Left: Featured Stories */}
-              {featuredStories.length > 0 && (
-                <div style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: "12px",
-                  minHeight: "220px"
-                }}>
-                  {featuredStories.map((item) => renderFeaturedCard(item, featuredStories.length === 2))}
-                </div>
-              )}
+              {/* Left Column: Featured Stories (side-by-side if 2) */}
+              <div style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "10px"
+              }}>
+                {featuredStories.map((item) => renderFeaturedCard(item, featuredStories.length === 2))}
+              </div>
 
-              {/* Right: Other Stories */}
-              {otherStories.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {otherStories.map(item => (
-                    <a
-                      key={item.link}
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "block",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        background: "transparent",
-                        textDecoration: "none",
-                        transition: "background 0.15s"
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                    >
-                      <div style={{
-                        fontSize: "13px",
-                        fontWeight: 500,
-                        color: "rgba(255, 255, 255, 0.85)",
-                        lineHeight: 1.4,
-                        marginBottom: "4px",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden"
-                      }}>
-                        {item.title}
-                      </div>
-                      <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
-                        {item.relativeTime}
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              )}
+              {/* Right Column: Other Stories */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {otherStories.map(item => (
+                  <a
+                    key={item.link}
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "block",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      background: "transparent",
+                      textDecoration: "none",
+                      transition: "background 0.15s"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div style={{
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      color: "rgba(255, 255, 255, 0.85)",
+                      lineHeight: 1.4,
+                      marginBottom: "4px",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}>
+                      {item.title}
+                    </div>
+                    <div style={{ fontSize: "10px", color: "rgba(255, 255, 255, 0.35)" }}>
+                      {item.relativeTime}
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </div>
