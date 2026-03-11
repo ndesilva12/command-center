@@ -858,11 +858,11 @@ export default function ReadPage() {
 
             {/* Current Quick Access */}
             {tempTopFeeds.length > 0 && (
-              <div style={{ padding: "12px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", maxHeight: "200px", overflowY: "auto" }}>
-                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "10px", textTransform: "uppercase" }}>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", maxHeight: "280px", overflowY: "auto" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>
                   Quick Access ({tempTopFeeds.length})
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                   {tempTopFeeds.map((feedId, index) => {
                     const feed = allFeeds.find(f => f.id === feedId);
                     if (!feed) return null;
@@ -870,29 +870,30 @@ export default function ReadPage() {
                       <div
                         key={feedId}
                         style={{
-                          padding: "6px 10px",
+                          padding: "8px 12px",
                           background: `${toolCustom.color}15`,
                           border: `1px solid ${toolCustom.color}30`,
                           borderRadius: "6px",
                           display: "flex",
                           alignItems: "center",
                           gap: "8px",
-                          fontSize: "12px",
+                          fontSize: "13px",
                         }}
                       >
-                        <span style={{ color: toolCustom.color, fontWeight: 600 }}>#{index + 1}</span>
-                        <span style={{ color: "white" }}>{feed.title}</span>
+                        <span style={{ color: toolCustom.color, fontWeight: 600, flexShrink: 0 }}>#{index + 1}</span>
+                        <span style={{ color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "180px" }}>{feed.title}</span>
                         <button
                           onClick={() => toggleTopFeed(feedId)}
                           style={{
-                            padding: "2px 6px",
+                            padding: "4px 8px",
                             borderRadius: "4px",
-                            background: "rgba(124, 58, 237, 0.15)",
+                            background: "rgba(239, 68, 68, 0.15)",
                             border: "none",
-                            color: "#7c3aed",
+                            color: "#ef4444",
                             cursor: "pointer",
-                            fontSize: "10px",
+                            fontSize: "11px",
                             fontWeight: 600,
+                            flexShrink: 0,
                           }}
                         >
                           ✕
@@ -905,11 +906,11 @@ export default function ReadPage() {
             )}
 
             {/* All Feeds */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
-              <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "10px", textTransform: "uppercase" }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+              <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>
                 All Feeds ({filteredFeeds.length})
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "6px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "8px" }}>
                 {filteredFeeds.map(feed => {
                   const isSelected = tempTopFeeds.includes(feed.id);
                   const isDeleting = deletingFeedId === feed.id;
