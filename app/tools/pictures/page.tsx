@@ -12,10 +12,50 @@ interface Picture {
   size?: number;
 }
 
+// Compress image to target size
+async function compressImage(file: File, maxWidth = 1200, quality = 0.8): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to compress image'));
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export default function PicturesPage() {
   const [pictures, setPictures] = useState<Picture[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
   const [selectedImage, setSelectedImage] = useState<Picture | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
@@ -43,15 +83,36 @@ export default function PicturesPage() {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setUploadProgress('Compressing images...');
+    
     try {
       const formData = new FormData();
-      Array.from(files).forEach(file => {
-        formData.append('files', file);
-      });
+      
+      // Compress each image
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadProgress(`Compressing ${i + 1}/${files.length}...`);
+        
+        try {
+          const compressed = await compressImage(file, 1200, 0.7);
+          const compressedFile = new File([compressed], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+            type: 'image/jpeg'
+          });
+          formData.append('files', compressedFile);
+        } catch {
+          // If compression fails, try original if small enough
+          if (file.size < 500000) {
+            formData.append('files', file);
+          }
+        }
+      }
+      
       if (uploadTitle) {
         formData.append('title', uploadTitle);
       }
 
+      setUploadProgress('Uploading...');
+      
       const res = await fetch('/api/pictures', {
         method: 'POST',
         body: formData,
@@ -68,9 +129,10 @@ export default function PicturesPage() {
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Upload failed');
+      alert('Upload failed - try smaller images');
     } finally {
       setUploading(false);
+      setUploadProgress('');
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -91,17 +153,12 @@ export default function PicturesPage() {
 
   const handleDownload = async (picture: Picture) => {
     try {
-      const response = await fetch(picture.url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const ext = picture.url.split('.').pop() || 'jpg';
-      a.download = `${picture.title}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = picture.url;
+      link.download = `${picture.title}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Download error:', error);
     }
@@ -218,19 +275,19 @@ export default function PicturesPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  accept="image/*"
                   multiple
                   onChange={handleUpload}
                   disabled={uploading}
                   className="w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-500 file:cursor-pointer disabled:opacity-50 file:font-medium"
                 />
-                <p className="text-xs text-gray-500 mt-2">JPEG, PNG, GIF, WEBP — multiple files OK</p>
+                <p className="text-xs text-gray-500 mt-2">Images auto-compressed for upload</p>
               </div>
               
               {uploading && (
                 <div className="flex items-center gap-3 text-purple-400 bg-purple-500/10 rounded-xl p-4">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Uploading...</span>
+                  <span>{uploadProgress || 'Processing...'}</span>
                 </div>
               )}
             </div>
