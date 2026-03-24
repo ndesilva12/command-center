@@ -17,7 +17,9 @@ interface LegalDoc {
   date: string;
   status: "draft" | "review" | "approved" | "executed";
   preview: string;
-  content: string;
+  content?: string;
+  googleDocUrl?: string;
+  googleDocId?: string;
   phase?: string;
 }
 
@@ -225,51 +227,80 @@ export default function LegalDocsPage() {
                     <h2 style={{ fontSize: "24px", fontWeight: 700, color: "var(--foreground)" }}>
                       {selectedDoc.title}
                     </h2>
-                    <button
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--glass-border)",
-                        background: "rgba(139, 92, 246, 0.1)",
-                        color: toolCustom.color,
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                      onClick={() => {
-                        const blob = new Blob([selectedDoc.content], { type: "text/markdown" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `${selectedDoc.title.toLowerCase().replace(/ /g, "-")}.md`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      }}
-                    >
-                      <Download style={{ width: "14px", height: "14px" }} />
-                      Download
-                    </button>
                   </div>
-                  <div style={{ fontSize: "14px", color: "var(--foreground-muted)" }}>
+                  <div style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "24px" }}>
                     {selectedDoc.date} • {selectedDoc.status.replace("_", " ").toUpperCase()}
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    fontSize: "14px",
-                    color: "var(--foreground)",
-                    lineHeight: 1.8,
-                    fontFamily: "var(--font-mono, 'Courier New', monospace)",
-                    whiteSpace: "pre-wrap",
-                    wordWrap: "break-word",
-                  }}
-                >
-                  {selectedDoc.content}
-                </div>
+                {selectedDoc.googleDocUrl ? (
+                  <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                    <FileText style={{ width: "64px", height: "64px", color: toolCustom.color, margin: "0 auto 24px", opacity: 0.8 }} />
+                    <h3 style={{ fontSize: "18px", fontWeight: 600, color: "var(--foreground)", marginBottom: "12px" }}>
+                      Google Doc Ready
+                    </h3>
+                    <p style={{ fontSize: "14px", color: "var(--foreground-muted)", marginBottom: "32px", maxWidth: "400px", margin: "0 auto 32px" }}>
+                      {selectedDoc.preview}
+                    </p>
+                    <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                      <a
+                        href={selectedDoc.googleDocUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          padding: "12px 24px",
+                          borderRadius: "8px",
+                          border: "none",
+                          background: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+                          color: "white",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <FileText style={{ width: "16px", height: "16px" }} />
+                        Open in Google Docs
+                      </a>
+                      <a
+                        href={`https://docs.google.com/document/d/${selectedDoc.googleDocId}/export?format=pdf`}
+                        style={{
+                          padding: "12px 24px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--glass-border)",
+                          background: "rgba(139, 92, 246, 0.1)",
+                          color: toolCustom.color,
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <Download style={{ width: "16px", height: "16px" }} />
+                        Download PDF
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      fontSize: "14px",
+                      color: "var(--foreground)",
+                      lineHeight: 1.8,
+                      fontFamily: "var(--font-mono, 'Courier New', monospace)",
+                      whiteSpace: "pre-wrap",
+                      wordWrap: "break-word",
+                    }}
+                  >
+                    {selectedDoc.content}
+                  </div>
+                )}
               </div>
             )}
           </div>
