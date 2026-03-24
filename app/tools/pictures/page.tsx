@@ -369,45 +369,29 @@ export default function PicturesPage() {
             <p className="text-slate-500 text-sm mt-4">or drag files anywhere on this page</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
             {pictures.map((picture, index) => (
               <div
                 key={picture.id}
-                className={`group relative aspect-square bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                className={`group relative w-full aspect-square bg-slate-900 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
                   selectMode && selectedIds.has(picture.id) 
-                    ? "ring-3 ring-purple-500 ring-offset-2 ring-offset-slate-950 scale-[0.98]" 
-                    : "hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/10"
+                    ? "ring-2 ring-purple-500 scale-95" 
+                    : "hover:ring-2 hover:ring-slate-600"
                 }`}
                 onClick={() => selectMode ? toggleSelect(picture.id) : setViewerIndex(index)}
               >
                 <img 
                   src={picture.url} 
                   alt={picture.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  className="w-full h-full object-cover" 
                   loading="lazy" 
                 />
                 
-                {/* Gradient overlay */}
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
-                  selectMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                }`} />
-                
-                {selectMode && (
-                  <div className="absolute top-3 left-3">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                      selectedIds.has(picture.id) 
-                        ? "bg-purple-500 shadow-lg shadow-purple-500/50" 
-                        : "bg-black/40 backdrop-blur-sm border border-white/20"
-                    }`}>
-                      {selectedIds.has(picture.id) && <Check className="w-4 h-4 text-white" />}
+                {selectMode && selectedIds.has(picture.id) && (
+                  <div className="absolute top-1 left-1">
+                    <div className="w-5 h-5 rounded bg-purple-500 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
-                  </div>
-                )}
-                
-                {!selectMode && (
-                  <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <p className="text-white text-sm font-medium truncate">{picture.title}</p>
-                    <p className="text-slate-300 text-xs">{formatDate(picture.uploadedAt)}</p>
                   </div>
                 )}
               </div>
