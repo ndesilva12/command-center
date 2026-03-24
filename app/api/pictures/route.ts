@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 
+// Increase body size limit for this route
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4mb',
+    },
+  },
+};
+
 // GET - List all images
 export async function GET() {
   try {
@@ -31,18 +40,21 @@ export async function POST(request: NextRequest) {
     }
     
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSize = 800 * 1024; // 800KB max per image
+    const maxSize = 900 * 1024; // 900KB max per image (Firestore doc limit ~1MB)
     const uploadedPictures = [];
+    const skipped = [];
     
     const db = getAdminDb();
     
     for (const file of files) {
       if (!validTypes.includes(file.type)) {
+        skipped.push(`${file.name}: invalid type`);
         continue;
       }
       
       if (file.size > maxSize) {
-        continue; // Skip files too large
+        skipped.push(`${file.name}: too large (max 900KB)`);
+        continue;
       }
       
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -66,13 +78,15 @@ export async function POST(request: NextRequest) {
     }
     
     if (uploadedPictures.length === 0) {
-      return NextResponse.json({ error: 'No valid images (max 800KB each, JPEG/PNG/GIF/WEBP)' }, { status: 400 });
+      const reason = skipped.length > 0 ? skipped.join(', ') : 'No valid images';
+      return NextResponse.json({ error: reason }, { status: 400 });
     }
     
     return NextResponse.json({
       success: true,
       pictures: uploadedPictures,
       count: uploadedPictures.length,
+      skipped: skipped.length > 0 ? skipped : undefined,
     });
   } catch (error) {
     console.error('Error uploading pictures:', error);
