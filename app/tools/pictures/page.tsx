@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Upload, Download, X, Image as ImageIcon, Loader2, Trash2, RefreshCw } from 'lucide-react';
-import { TopNav } from '@/components/navigation/TopNav';
-import { BottomNav } from '@/components/navigation/BottomNav';
-import { Sidebar } from '@/components/navigation/Sidebar';
+import { Upload, Download, X, Image as ImageIcon, Loader2, Trash2, RefreshCw, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 interface Picture {
   id: string;
@@ -21,15 +19,7 @@ export default function PicturesPage() {
   const [selectedImage, setSelectedImage] = useState<Picture | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   useEffect(() => {
     fetchPictures();
@@ -127,84 +117,74 @@ export default function PicturesPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <TopNav />
-      
-      <div className="flex">
-        {!isMobile && <Sidebar />}
+      {/* Simple Header */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-black/90 backdrop-blur border-b border-gray-800 z-40 px-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="p-2 hover:bg-gray-800 rounded-lg transition">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-purple-400" />
+            <span className="font-semibold">Pictures</span>
+          </div>
+        </div>
         
-        <main className="flex-1 pt-16 pb-20 md:pb-8 md:ml-48 px-4 md:px-8">
-          {/* Header */}
-          <div className="flex items-center justify-between py-6 border-b border-gray-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-purple-400" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold">Pictures</h1>
-                <p className="text-sm text-gray-400">Public image gallery</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={fetchPictures}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"
-                title="Refresh"
-              >
-                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-              <button
-                onClick={() => setShowUpload(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition font-medium"
-              >
-                <Upload className="w-4 h-4" />
-                Upload
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchPictures}
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"
+            title="Refresh"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition font-medium"
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Upload</span>
+          </button>
+        </div>
+      </header>
 
-          {/* Gallery */}
-          <div className="py-6">
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : pictures.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="w-16 h-16 mx-auto rounded-2xl bg-gray-800 flex items-center justify-center mb-4">
-                  <ImageIcon className="w-8 h-8 text-gray-600" />
-                </div>
-                <p className="text-gray-400 text-lg">No pictures yet</p>
-                <p className="text-gray-500 text-sm mt-1">Upload some images to get started</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {pictures.map((picture) => (
-                  <div
-                    key={picture.id}
-                    className="group relative aspect-square bg-gray-900 rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500 transition"
-                    onClick={() => setSelectedImage(picture)}
-                  >
-                    <img
-                      src={picture.url}
-                      alt={picture.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition">
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <p className="text-sm font-medium truncate">{picture.title}</p>
-                        <p className="text-xs text-gray-300">{formatDate(picture.uploadedAt)}</p>
-                      </div>
-                    </div>
+      {/* Main Content */}
+      <main className="pt-20 pb-8 px-4 max-w-7xl mx-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
+        ) : pictures.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-gray-800 flex items-center justify-center mb-4">
+              <ImageIcon className="w-8 h-8 text-gray-600" />
+            </div>
+            <p className="text-gray-400 text-lg">No pictures yet</p>
+            <p className="text-gray-500 text-sm mt-1">Click Upload to add images</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {pictures.map((picture) => (
+              <div
+                key={picture.id}
+                className="group relative aspect-square bg-gray-900 rounded-xl overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500 transition"
+                onClick={() => setSelectedImage(picture)}
+              >
+                <img
+                  src={picture.url}
+                  alt={picture.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition">
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    <p className="text-sm font-medium truncate">{picture.title}</p>
+                    <p className="text-xs text-gray-300">{formatDate(picture.uploadedAt)}</p>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </main>
-      </div>
-
-      {isMobile && <BottomNav />}
+        )}
+      </main>
 
       {/* Upload Modal */}
       {showUpload && (
@@ -220,7 +200,7 @@ export default function PicturesPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Title (optional - applies to all)
+                  Title (optional)
                 </label>
                 <input
                   type="text"
@@ -244,13 +224,13 @@ export default function PicturesPage() {
                   disabled={uploading}
                   className="w-full text-sm text-gray-400 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:bg-purple-600 file:text-white hover:file:bg-purple-500 file:cursor-pointer disabled:opacity-50 file:font-medium"
                 />
-                <p className="text-xs text-gray-500 mt-2">Supports JPEG, PNG, GIF, WEBP. Multiple files allowed.</p>
+                <p className="text-xs text-gray-500 mt-2">JPEG, PNG, GIF, WEBP — multiple files OK</p>
               </div>
               
               {uploading && (
                 <div className="flex items-center gap-3 text-purple-400 bg-purple-500/10 rounded-xl p-4">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Uploading images...</span>
+                  <span>Uploading...</span>
                 </div>
               )}
             </div>
@@ -271,7 +251,6 @@ export default function PicturesPage() {
               className="w-full h-full object-contain rounded-xl"
             />
             
-            {/* Controls */}
             <div className="absolute top-4 right-4 flex gap-2">
               <button
                 onClick={() => handleDownload(selectedImage)}
@@ -296,7 +275,6 @@ export default function PicturesPage() {
               </button>
             </div>
             
-            {/* Info */}
             <div className="absolute bottom-4 left-4 bg-gray-900/90 backdrop-blur px-4 py-3 rounded-xl">
               <p className="font-medium">{selectedImage.title}</p>
               <p className="text-sm text-gray-400">{formatDate(selectedImage.uploadedAt)}</p>
