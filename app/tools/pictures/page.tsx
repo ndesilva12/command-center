@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Upload, Download, X, Image as ImageIcon, Loader2, Trash2, RefreshCw, ChevronLeft, ChevronRight, CheckSquare, Square, DownloadCloud } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Upload, Download, X, Image as ImageIcon, Loader2, Trash2, RefreshCw, ChevronLeft, ChevronRight, Check, DownloadCloud, Plus, Sparkles } from "lucide-react";
 
 interface Picture {
   id: string;
@@ -38,12 +38,11 @@ export default function PicturesPage() {
   const [pictures, setPictures] = useState<Picture[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState("");
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, status: "" });
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadTitle, setUploadTitle] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { fetchPictures(); }, []);
@@ -72,49 +71,76 @@ export default function PicturesPage() {
     }
   };
 
-  const openUploadModal = () => {
-    setShowUploadModal(true);
-    setUploadTitle("");
-    setUploadProgress("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
   };
 
-  const closeUploadModal = () => {
-    setShowUploadModal(false);
-    setUploading(false);
-  };
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const processFiles = useCallback(async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+    
     setUploading(true);
-    setUploadProgress("Compressing...");
+    setUploadProgress({ current: 0, total: fileArray.length, status: "Preparing..." });
+    
     try {
       const formData = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        setUploadProgress(`Compressing ${i + 1}/${files.length}...`);
+      
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i];
+        setUploadProgress({ current: i + 1, total: fileArray.length, status: `Compressing ${file.name.slice(0, 20)}...` });
+        
         try {
-          const compressed = await compressImage(files[i], 1200, 0.7);
-          formData.append("files", new File([compressed], files[i].name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" }));
+          const compressed = await compressImage(file, 1200, 0.7);
+          formData.append("files", new File([compressed], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" }));
         } catch {
-          if (files[i].size < 500000) formData.append("files", files[i]);
+          // If compression fails and file is small enough, use original
+          if (file.size < 500000) {
+            formData.append("files", file);
+          }
         }
       }
-      if (uploadTitle) formData.append("title", uploadTitle);
-      setUploadProgress("Uploading...");
+      
+      setUploadProgress({ current: fileArray.length, total: fileArray.length, status: "Uploading to cloud..." });
+      
       const res = await fetch("/api/pictures", { method: "POST", body: formData });
       const data = await res.json();
+      
       if (res.ok && data.pictures) {
-        setPictures([...data.pictures, ...pictures]);
-        closeUploadModal();
+        setPictures(prev => [...data.pictures, ...prev]);
+        setUploadProgress({ current: 0, total: 0, status: "" });
       } else {
         alert(data.error || "Upload failed");
-        setUploading(false);
       }
-    } catch {
-      alert("Upload failed");
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Upload failed - please try again");
+    } finally {
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      processFiles(e.target.files);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files) {
+      processFiles(e.dataTransfer.files);
+    }
+  }, [processFiles]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setDragOver(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -180,23 +206,86 @@ export default function PicturesPage() {
   const currentPicture = viewerIndex !== null ? pictures[viewerIndex] : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {/* Drag overlay */}
+      {dragOver && (
+        <div className="fixed inset-0 bg-purple-600/20 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-slate-900/90 border-2 border-dashed border-purple-400 rounded-3xl p-12 text-center">
+            <Upload className="w-16 h-16 text-purple-400 mx-auto mb-4" />
+            <p className="text-2xl font-semibold text-white">Drop images here</p>
+            <p className="text-slate-400 mt-2">Release to upload</p>
+          </div>
+        </div>
+      )}
+
+      {/* Upload progress overlay */}
+      {uploading && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl">
+            <div className="flex items-center justify-center mb-6">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full border-4 border-slate-700"></div>
+                <div 
+                  className="absolute inset-0 w-16 h-16 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"
+                ></div>
+                <Sparkles className="absolute inset-0 w-6 h-6 m-auto text-purple-400" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-white mb-1">Uploading...</p>
+              <p className="text-slate-400 text-sm">{uploadProgress.status}</p>
+              {uploadProgress.total > 0 && (
+                <div className="mt-4">
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+                      style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">{uploadProgress.current} of {uploadProgress.total}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-950/95 backdrop-blur border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-purple-400" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                <ImageIcon className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Pictures</h1>
-                <p className="text-xs text-gray-400">{pictures.length} images</p>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">Pictures</h1>
+                <p className="text-sm text-slate-500">{pictures.length} {pictures.length === 1 ? 'image' : 'images'}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <button onClick={fetchPictures} disabled={loading} className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition" title="Refresh">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button 
+                onClick={fetchPictures} 
+                disabled={loading} 
+                className="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all duration-200" 
+                title="Refresh"
+              >
                 <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
               </button>
               
@@ -204,87 +293,121 @@ export default function PicturesPage() {
                 <>
                   <button
                     onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${selectMode ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-300 hover:bg-gray-700"}`}
+                    className={`hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
+                      selectMode 
+                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/30" 
+                        : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50"
+                    }`}
                   >
-                    <CheckSquare className="w-4 h-4" />
-                    <span className="hidden sm:inline">Select</span>
+                    <Check className="w-4 h-4" />
+                    Select
                   </button>
                   
-                  <button onClick={downloadAll} className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition text-gray-300">
+                  <button 
+                    onClick={downloadAll} 
+                    className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 rounded-xl transition-all duration-200 text-slate-300 font-medium"
+                  >
                     <DownloadCloud className="w-4 h-4" />
-                    <span className="hidden sm:inline">All</span>
+                    All
                   </button>
                 </>
               )}
               
               {selectMode && selectedIds.size > 0 && (
-                <button onClick={downloadSelected} className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-500 rounded-lg transition">
+                <button 
+                  onClick={downloadSelected} 
+                  className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 rounded-xl transition-all duration-200 font-medium"
+                >
                   <Download className="w-4 h-4" />
-                  <span>{selectedIds.size}</span>
+                  {selectedIds.size}
                 </button>
               )}
               
-              <button onClick={openUploadModal} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition font-medium">
-                <Upload className="w-4 h-4" />
-                <span>Upload</span>
+              <button 
+                onClick={triggerFileSelect}
+                disabled={uploading}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl transition-all duration-200 font-semibold shadow-lg shadow-purple-500/25 disabled:opacity-50"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Upload</span>
               </button>
             </div>
           </div>
           
           {selectMode && (
-            <div className="mt-3 flex items-center gap-4 text-sm">
-              <button onClick={selectAll} className="text-purple-400 hover:text-purple-300">
+            <div className="mt-4 flex items-center gap-4 text-sm">
+              <button onClick={selectAll} className="text-purple-400 hover:text-purple-300 transition-colors font-medium">
                 {selectedIds.size === pictures.length ? "Deselect All" : "Select All"}
               </button>
-              <span className="text-gray-500">{selectedIds.size} selected</span>
+              <span className="text-slate-500">{selectedIds.size} selected</span>
             </div>
           )}
         </div>
       </header>
 
       {/* Gallery */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-24">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="w-10 h-10 animate-spin text-purple-400 mb-4" />
+            <p className="text-slate-400">Loading gallery...</p>
           </div>
         ) : pictures.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto rounded-2xl bg-gray-800/50 flex items-center justify-center mb-4">
-              <ImageIcon className="w-10 h-10 text-gray-600" />
+          <div className="text-center py-24">
+            <div className="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center mb-6 border border-slate-700/50">
+              <ImageIcon className="w-12 h-12 text-slate-600" />
             </div>
-            <p className="text-gray-300 text-lg font-medium">No pictures yet</p>
-            <p className="text-gray-500 text-sm mt-1 mb-6">Upload images to share</p>
-            <button onClick={openUploadModal} className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-xl transition font-medium">
-              <Upload className="w-4 h-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">No pictures yet</h2>
+            <p className="text-slate-400 mb-8 max-w-md mx-auto">Upload your first images to get started. Drag and drop or click the button below.</p>
+            <button 
+              onClick={triggerFileSelect}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-2xl transition-all duration-200 font-semibold shadow-xl shadow-purple-500/30 text-lg"
+            >
+              <Upload className="w-6 h-6" />
               Upload Images
             </button>
+            <p className="text-slate-500 text-sm mt-4">or drag files anywhere on this page</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {pictures.map((picture, index) => (
               <div
                 key={picture.id}
-                className={`relative aspect-square bg-gray-900 rounded-lg overflow-hidden cursor-pointer transition-all ${
-                  selectMode && selectedIds.has(picture.id) ? "ring-2 ring-purple-500" : "hover:ring-2 hover:ring-gray-600"
+                className={`group relative aspect-square bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                  selectMode && selectedIds.has(picture.id) 
+                    ? "ring-3 ring-purple-500 ring-offset-2 ring-offset-slate-950 scale-[0.98]" 
+                    : "hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/10"
                 }`}
                 onClick={() => selectMode ? toggleSelect(picture.id) : setViewerIndex(index)}
               >
-                <img src={picture.url} alt={picture.title} className="w-full h-full object-cover" loading="lazy" />
+                <img 
+                  src={picture.url} 
+                  alt={picture.title} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  loading="lazy" 
+                />
+                
+                {/* Gradient overlay */}
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
+                  selectMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`} />
                 
                 {selectMode && (
-                  <div className="absolute top-2 left-2">
-                    {selectedIds.has(picture.id) ? (
-                      <CheckSquare className="w-6 h-6 text-purple-400 bg-black/50 rounded" />
-                    ) : (
-                      <Square className="w-6 h-6 text-white/70 bg-black/50 rounded" />
-                    )}
+                  <div className="absolute top-3 left-3">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                      selectedIds.has(picture.id) 
+                        ? "bg-purple-500 shadow-lg shadow-purple-500/50" 
+                        : "bg-black/40 backdrop-blur-sm border border-white/20"
+                    }`}>
+                      {selectedIds.has(picture.id) && <Check className="w-4 h-4 text-white" />}
+                    </div>
                   </div>
                 )}
                 
                 {!selectMode && (
-                  <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
-                    <span className="text-xs bg-black/70 px-2 py-1 rounded">View</span>
+                  <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-white text-sm font-medium truncate">{picture.title}</p>
+                    <p className="text-slate-300 text-xs">{formatDate(picture.uploadedAt)}</p>
                   </div>
                 )}
               </div>
@@ -293,93 +416,87 @@ export default function PicturesPage() {
         )}
       </main>
 
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeUploadModal}>
-          <div className="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-gray-700" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Upload Images</h2>
-              <button onClick={closeUploadModal} className="p-2 hover:bg-gray-800 rounded-lg"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Title (optional)</label>
-                <input
-                  type="text"
-                  value={uploadTitle}
-                  onChange={e => setUploadTitle(e.target.value)}
-                  placeholder="Image title..."
-                  disabled={uploading}
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Select Images</label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleUpload}
-                  disabled={uploading}
-                  className="w-full text-sm file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:bg-purple-600 file:text-white file:font-medium hover:file:bg-purple-500 file:cursor-pointer disabled:opacity-50"
-                />
-                <p className="text-xs text-gray-500 mt-2">Auto-compressed for fast upload</p>
-              </div>
-              {uploading && (
-                <div className="flex items-center gap-3 text-purple-400 bg-purple-500/10 rounded-xl p-4">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{uploadProgress}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Full Image Viewer */}
       {currentPicture && (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex flex-col">
           {/* Top bar */}
-          <div className="flex items-center justify-between p-4 bg-black/80">
+          <div className="flex items-center justify-between p-4 sm:p-6">
             <div>
-              <p className="font-medium">{currentPicture.title}</p>
-              <p className="text-sm text-gray-400">{formatDate(currentPicture.uploadedAt)} • {viewerIndex! + 1} of {pictures.length}</p>
+              <p className="font-semibold text-lg text-white">{currentPicture.title}</p>
+              <p className="text-sm text-slate-400">{formatDate(currentPicture.uploadedAt)} • {viewerIndex! + 1} of {pictures.length}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => downloadImage(currentPicture)} className="p-2 hover:bg-gray-800 rounded-lg" title="Download">
-                <Download className="w-5 h-5" />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button 
+                onClick={() => downloadImage(currentPicture)} 
+                className="p-3 hover:bg-slate-800 rounded-xl transition-colors" 
+                title="Download"
+              >
+                <Download className="w-5 h-5 text-slate-300" />
               </button>
-              <button onClick={() => handleDelete(currentPicture.id)} className="p-2 hover:bg-red-600/50 rounded-lg text-red-400" title="Delete">
+              <button 
+                onClick={() => handleDelete(currentPicture.id)} 
+                className="p-3 hover:bg-red-600/20 rounded-xl text-red-400 transition-colors" 
+                title="Delete"
+              >
                 <Trash2 className="w-5 h-5" />
               </button>
-              <button onClick={() => setViewerIndex(null)} className="p-2 hover:bg-gray-800 rounded-lg" title="Close">
-                <X className="w-5 h-5" />
+              <button 
+                onClick={() => setViewerIndex(null)} 
+                className="p-3 hover:bg-slate-800 rounded-xl transition-colors ml-2" 
+                title="Close"
+              >
+                <X className="w-6 h-6 text-white" />
               </button>
             </div>
           </div>
           
           {/* Image */}
-          <div className="flex-1 flex items-center justify-center relative px-16">
-            <img src={currentPicture.url} alt={currentPicture.title} className="max-w-full max-h-full object-contain" />
+          <div className="flex-1 flex items-center justify-center relative px-4 sm:px-20">
+            <img 
+              src={currentPicture.url} 
+              alt={currentPicture.title} 
+              className="max-w-full max-h-full object-contain rounded-lg" 
+            />
             
             {/* Nav arrows */}
             {viewerIndex! > 0 && (
               <button
                 onClick={() => navigateViewer(-1)}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/80 rounded-full transition"
+                className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 p-3 sm:p-4 bg-slate-900/80 hover:bg-slate-800 rounded-full transition-all backdrop-blur-sm border border-slate-700/50"
               >
-                <ChevronLeft className="w-8 h-8" />
+                <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </button>
             )}
             {viewerIndex! < pictures.length - 1 && (
               <button
                 onClick={() => navigateViewer(1)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/80 rounded-full transition"
+                className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 p-3 sm:p-4 bg-slate-900/80 hover:bg-slate-800 rounded-full transition-all backdrop-blur-sm border border-slate-700/50"
               >
-                <ChevronRight className="w-8 h-8" />
+                <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </button>
             )}
+          </div>
+          
+          {/* Thumbnail strip */}
+          <div className="p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm">
+            <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
+              {pictures.slice(Math.max(0, viewerIndex! - 4), Math.min(pictures.length, viewerIndex! + 5)).map((pic, i) => {
+                const actualIndex = Math.max(0, viewerIndex! - 4) + i;
+                return (
+                  <button
+                    key={pic.id}
+                    onClick={() => setViewerIndex(actualIndex)}
+                    className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden transition-all ${
+                      actualIndex === viewerIndex 
+                        ? "ring-2 ring-purple-500 ring-offset-2 ring-offset-slate-950" 
+                        : "opacity-50 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={pic.url} alt="" className="w-full h-full object-cover" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
