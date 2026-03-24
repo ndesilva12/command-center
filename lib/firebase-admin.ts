@@ -2,10 +2,12 @@
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getAuth, Auth } from 'firebase-admin/auth';
+import { getStorage, Storage } from 'firebase-admin/storage';
 
 let adminApp: App | undefined;
 let adminDbInstance: Firestore | undefined;
 let adminAuthInstance: Auth | undefined;
+let adminStorageInstance: Storage | undefined;
 
 // Hardcoded Firebase Admin credentials (same pattern as Python scripts)
 const FIREBASE_ADMIN_CREDS = {
@@ -26,6 +28,7 @@ function initializeAdminApp() {
   if (!getApps().length) {
     adminApp = initializeApp({
       credential: cert(FIREBASE_ADMIN_CREDS as any),
+      storageBucket: 'the-dashboard-50be1.firebasestorage.app',
     });
   } else {
     adminApp = getApps()[0];
@@ -48,6 +51,14 @@ export function getAdminAuth(): Auth {
     adminAuthInstance = getAuth(app);
   }
   return adminAuthInstance;
+}
+
+export function getAdminStorage(): Storage {
+  if (!adminStorageInstance) {
+    const app = initializeAdminApp();
+    adminStorageInstance = getStorage(app);
+  }
+  return adminStorageInstance;
 }
 
 // Lazy getter
