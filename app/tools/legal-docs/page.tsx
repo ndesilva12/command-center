@@ -8,7 +8,7 @@ import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 
 import { FileText, CheckCircle, Clock, AlertCircle, Download } from "lucide-react";
 import { ToolBackground } from "@/components/tools/ToolBackground";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 interface LegalDoc {
@@ -46,14 +46,15 @@ export default function LegalDocsPage() {
     try {
       const q = query(
         collection(db, "jimmy_deliverables"),
-        where("createdBy", "==", "legal-jimmy"),
-        orderBy("date", "desc")
+        where("createdBy", "==", "legal-jimmy")
       );
       const snapshot = await getDocs(q);
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as LegalDoc[];
+      // Sort by date client-side
+      docs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       setDocuments(docs);
     } catch (error) {
       console.error("Error loading legal documents:", error);
