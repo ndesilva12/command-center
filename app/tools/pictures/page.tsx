@@ -26,7 +26,7 @@ export default function PublicPicturesPage() {
 
   const fetchPictures = async () => {
     try {
-      const res = await fetch('/api/shared/pictures');
+      const res = await fetch('/api/pictures');
       const data = await res.json();
       setPictures(data.pictures || []);
     } catch (error) {
@@ -46,7 +46,7 @@ export default function PublicPicturesPage() {
       formData.append('file', file);
       formData.append('title', uploadTitle || file.name);
 
-      const res = await fetch('/api/shared/pictures', {
+      const res = await fetch('/api/pictures', {
         method: 'POST',
         body: formData,
       });
@@ -73,7 +73,7 @@ export default function PublicPicturesPage() {
     if (!confirm('Delete this image?')) return;
     
     try {
-      const res = await fetch(`/api/shared/pictures?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/pictures?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         setPictures(pictures.filter(p => p.id !== id));
         setSelectedImage(null);
