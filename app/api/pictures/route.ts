@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminStorage, getAdminDb } from '@/lib/firebase-admin';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 // GET - List all images
 export async function GET() {
@@ -19,7 +19,7 @@ export async function GET() {
   }
 }
 
-// POST - Upload images (supports multiple files)
+// POST - Upload images (stores as base64 in Firestore)
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -31,41 +31,27 @@ export async function POST(request: NextRequest) {
     }
     
     const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 800 * 1024; // 800KB max per image
     const uploadedPictures = [];
     
-    const storage = getAdminStorage();
-    const bucket = storage.bucket();
     const db = getAdminDb();
     
     for (const file of files) {
       if (!validTypes.includes(file.type)) {
-        continue; // Skip invalid files
+        continue;
       }
       
-      const timestamp = Date.now();
-      const randomStr = Math.random().toString(36).substring(7);
-      const ext = file.name.split('.').pop() || 'jpg';
-      const filename = `public-pictures/${timestamp}-${randomStr}.${ext}`;
+      if (file.size > maxSize) {
+        continue; // Skip files too large
+      }
       
-      const blob = bucket.file(filename);
       const buffer = Buffer.from(await file.arrayBuffer());
+      const base64 = buffer.toString('base64');
+      const dataUrl = `data:${file.type};base64,${base64}`;
       
-      // Save file with public read access
-      await blob.save(buffer, {
-        metadata: {
-          contentType: file.type,
-        },
-        public: true,
-      });
-      
-      // Get public URL
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
-      
-      // Save metadata to Firestore
       const docRef = await db.collection('public_pictures').add({
         title: title || file.name.replace(/\.[^/.]+$/, ''),
-        filename,
-        url: publicUrl,
+        url: dataUrl,
         contentType: file.type,
         size: file.size,
         uploadedAt: new Date().toISOString(),
@@ -74,13 +60,13 @@ export async function POST(request: NextRequest) {
       uploadedPictures.push({
         id: docRef.id,
         title: title || file.name.replace(/\.[^/.]+$/, ''),
-        url: publicUrl,
+        url: dataUrl,
         uploadedAt: new Date().toISOString(),
       });
     }
     
     if (uploadedPictures.length === 0) {
-      return NextResponse.json({ error: 'No valid images to upload' }, { status: 400 });
+      return NextResponse.json({ error: 'No valid images (max 800KB each, JPEG/PNG/GIF/WEBP)' }, { status: 400 });
     }
     
     return NextResponse.json({
@@ -91,7 +77,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error uploading pictures:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: `Failed to upload: ${errorMessage}` }, { status: 500 });
+    return NextResponse.json({ error: `Upload failed: ${errorMessage}` }, { status: 500 });
   }
 }
 
@@ -113,20 +99,6 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
     
-    const data = doc.data();
-    
-    // Delete from Storage
-    if (data?.filename) {
-      try {
-        const storage = getAdminStorage();
-        const bucket = storage.bucket();
-        await bucket.file(data.filename).delete();
-      } catch (e) {
-        // File might not exist, continue anyway
-      }
-    }
-    
-    // Delete from Firestore
     await docRef.delete();
     
     return NextResponse.json({ success: true });
