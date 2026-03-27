@@ -87,19 +87,40 @@ export default function ReadPage() {
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem('read_top_feeds');
-    if (saved) {
+    // Load from Firestore (with localStorage fallback)
+    const loadQuickAccess = async () => {
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTopFeeds(parsed);
-          setTempTopFeeds(parsed);
-          setSelectedFeedId(parsed[0]);
+        const res = await fetch('/api/user-settings?key=read_top_feeds');
+        const data = await res.json();
+        if (data.value && Array.isArray(data.value) && data.value.length > 0) {
+          setTopFeeds(data.value);
+          setTempTopFeeds(data.value);
+          setSelectedFeedId(data.value[0]);
+          // Sync to localStorage for offline access
+          localStorage.setItem('read_top_feeds', JSON.stringify(data.value));
+          return;
         }
       } catch (e) {
-        console.error('Failed to parse saved top feeds:', e);
+        console.error('Failed to load from Firestore:', e);
       }
-    }
+      
+      // Fallback to localStorage
+      const saved = localStorage.getItem('read_top_feeds');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setTopFeeds(parsed);
+            setTempTopFeeds(parsed);
+            setSelectedFeedId(parsed[0]);
+          }
+        } catch (e) {
+          console.error('Failed to parse saved top feeds:', e);
+        }
+      }
+    };
+    
+    loadQuickAccess();
   }, []);
 
   useEffect(() => {
@@ -153,10 +174,22 @@ export default function ReadPage() {
     return html.replace(/<[^>]*>/g, '').substring(0, 200);
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     setTopFeeds(tempTopFeeds);
-    localStorage.setItem('read_top_feeds', JSON.stringify(tempTopFeeds));
     setShowSettings(false);
+    
+    // Save to both Firestore and localStorage
+    localStorage.setItem('read_top_feeds', JSON.stringify(tempTopFeeds));
+    try {
+      await fetch('/api/user-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'read_top_feeds', value: tempTopFeeds }),
+      });
+    } catch (e) {
+      console.error('Failed to save to Firestore:', e);
+    }
+    
     if (!tempTopFeeds.includes(selectedFeedId)) {
       const firstTopFeed = tempTopFeeds[0];
       if (firstTopFeed) {
@@ -242,6 +275,16 @@ export default function ReadPage() {
         setTopFeeds(newTopFeeds);
         setTempTopFeeds(newTopFeeds);
         localStorage.setItem('read_top_feeds', JSON.stringify(newTopFeeds));
+        // Save to Firestore
+        try {
+          await fetch('/api/user-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'read_top_feeds', value: newTopFeeds }),
+          });
+        } catch (e) {
+          console.error('Failed to save to Firestore:', e);
+        }
       }
       
       // Refresh feeds list
