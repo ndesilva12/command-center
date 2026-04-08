@@ -84,7 +84,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   'one-pager': FileText,
   'white-papers': BookOpen,
   politicorp: Globe,
-  'war-room': Target,
+
   business: Building2,
   emailer: Mail,
 };
@@ -141,7 +141,7 @@ const TOOL_COLORS: Record<string, string> = {
   'one-pager': "#6366f1",
   'white-papers': "#8b5cf6",
   politicorp: "#7c3aed",
-  'war-room': "#7c3aed",
+
   business: "#6366f1",
   emailer: "#3b82f6",
 };

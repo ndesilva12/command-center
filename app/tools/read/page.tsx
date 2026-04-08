@@ -901,11 +901,11 @@ export default function ReadPage() {
 
             {/* Current Quick Access */}
             {tempTopFeeds.length > 0 && (
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", maxHeight: "280px", overflowY: "auto" }}>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)", minHeight: "180px", maxHeight: "320px", overflowY: "auto" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "12px", textTransform: "uppercase" }}>
-                  Quick Access ({tempTopFeeds.length})
+                  Quick Access ({tempTopFeeds.length}) — drag to reorder
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {tempTopFeeds.map((feedId, index) => {
                     const feed = allFeeds.find(f => f.id === feedId);
                     if (!feed) return null;
@@ -913,18 +913,50 @@ export default function ReadPage() {
                       <div
                         key={feedId}
                         style={{
-                          padding: "8px 12px",
+                          padding: "10px 12px",
                           background: `${toolCustom.color}15`,
                           border: `1px solid ${toolCustom.color}30`,
-                          borderRadius: "6px",
+                          borderRadius: "8px",
                           display: "flex",
                           alignItems: "center",
-                          gap: "8px",
+                          gap: "10px",
                           fontSize: "13px",
                         }}
                       >
-                        <span style={{ color: toolCustom.color, fontWeight: 600, flexShrink: 0 }}>#{index + 1}</span>
-                        <span style={{ color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "180px" }}>{feed.title}</span>
+                        <span style={{ color: toolCustom.color, fontWeight: 600, flexShrink: 0, width: "24px" }}>#{index + 1}</span>
+                        <span style={{ color: "white", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{feed.title}</span>
+                        <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+                          <button
+                            onClick={() => moveFeedUp(feedId)}
+                            disabled={index === 0}
+                            style={{
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              background: index === 0 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.1)",
+                              border: "none",
+                              color: index === 0 ? "#64748b" : "white",
+                              cursor: index === 0 ? "not-allowed" : "pointer",
+                              fontSize: "11px",
+                            }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            onClick={() => moveFeedDown(feedId)}
+                            disabled={index === tempTopFeeds.length - 1}
+                            style={{
+                              padding: "4px 8px",
+                              borderRadius: "4px",
+                              background: index === tempTopFeeds.length - 1 ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.1)",
+                              border: "none",
+                              color: index === tempTopFeeds.length - 1 ? "#64748b" : "white",
+                              cursor: index === tempTopFeeds.length - 1 ? "not-allowed" : "pointer",
+                              fontSize: "11px",
+                            }}
+                          >
+                            ↓
+                          </button>
+                        </div>
                         <button
                           onClick={() => toggleTopFeed(feedId)}
                           style={{

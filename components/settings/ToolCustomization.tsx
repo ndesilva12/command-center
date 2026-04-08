@@ -76,7 +76,7 @@ const ICON_MAP: Record<string, any> = {
   "one-pager": FileText,
   "cinderella": BarChart3,
   "business": Building2,
-  "war-room": Target,
+
   "jmail": Mail,
   "roster-map": Globe,
   "local-leads": Target,
@@ -133,7 +133,7 @@ const DEFAULT_COLORS: Record<string, string> = {
   "one-pager": "#7c3aed",
   "cinderella": "#3b82f6",
   "business": "#6366f1",
-  "war-room": "#6366f1",
+
   "jmail": "#7c3aed",
   "roster-map": "#14b8a6",
   "local-leads": "#22c55e",

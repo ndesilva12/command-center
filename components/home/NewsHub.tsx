@@ -21,10 +21,7 @@ interface NewsSection {
   error: string | null;
 }
 
-const LOCAL_SECTIONS = [
-  { id: 'wellesley', label: 'Wellesley', icon: MapPin, location: 'Wellesley Massachusetts' },
-  { id: 'dartmouth', label: 'Dartmouth', icon: MapPin, location: 'Dartmouth Massachusetts' },
-];
+const LOCAL_SECTIONS: { id: string; label: string; icon: typeof MapPin; location: string }[] = [];
 
 export default function NewsHub() {
   const [zeroHedge, setZeroHedge] = useState<{ items: NewsItem[]; loading: boolean; error: string | null }>({
@@ -515,16 +512,7 @@ export default function NewsHub() {
         </div>
       </div>
 
-      {/* Local News Row */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-        gap: "12px",
-        marginBottom: "16px"
-      }}>
-        {renderLocalSection('wellesley')}
-        {renderLocalSection('dartmouth')}
-      </div>
+
 
       {/* Google News Top Stories */}
       <div style={{

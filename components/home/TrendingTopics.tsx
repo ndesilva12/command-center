@@ -129,11 +129,11 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: isMobile ? "8px 14px" : "10px 16px",
-              borderRadius: "24px",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "rgba(255, 255, 255, 0.05)",
-              color: "rgba(255, 255, 255, 0.7)",
+              padding: isMobile ? "6px 10px" : "8px 12px",
+              borderRadius: "6px",
+              border: "none",
+              background: "transparent",
+              color: "#93c5fd",
               fontSize: isMobile ? "12px" : "14px",
               fontWeight: 500,
               cursor: "pointer",
@@ -144,14 +144,12 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
               textOverflow: "ellipsis",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-              e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
+              e.currentTarget.style.color = "#bfdbfe";
+              e.currentTarget.style.textDecoration = "underline";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
-              e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
+              e.currentTarget.style.color = "#93c5fd";
+              e.currentTarget.style.textDecoration = "none";
             }}
           >
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{topic.text}</span>
