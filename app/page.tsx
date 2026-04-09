@@ -5,89 +5,20 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
-import { DigitalClock } from "@/components/home/DigitalClock";
-import NewsHub from "@/components/home/NewsHub";
-import { useToolCustomizations } from "@/hooks/useToolCustomizations";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef } from "react";
-import { ALL_TOOLS } from "@/lib/tool-categories";
 import Link from "next/link";
-import { isInHouseAI } from "@/lib/unified-sources";
 import {
   Sparkles,
-  TrendingUp,
-  Search,
-  Lock,
-  Mail,
-  Calendar,
-  Users,
-  FolderOpen,
-  StickyNote,
-  Droplets,
-  Music,
-  DollarSign,
-  BookOpen,
-  Briefcase,
-  Building2,
-  Image,
-  BarChart3,
-  UserSearch,
-  Globe,
-  Network,
-  Target,
-  TrendingDown,
-  Handshake,
-  LucideIcon,
-  Rss,
-  ChefHat,
   Settings,
   RefreshCw,
-  ShoppingBag,
-  FileText,
+  ExternalLink,
+  TrendingUp,
+  Globe,
+  ChevronRight,
+  Zap,
 } from "lucide-react";
-
-// Icon mapping for tools
-const TOOL_ICONS: Record<string, LucideIcon> = {
-  emails: Mail,
-  calendar: Calendar,
-  contacts: Users,
-  people: Users,
-  recommendations: Handshake,
-  read: Rss,
-  bookmarks: Droplets,
-  market: DollarSign,
-  notes: StickyNote,
-  files: FolderOpen,
-  spotify: Music,
-  trending: TrendingUp,
-  rosters: BarChart3,
-  meals: ChefHat,
-  curate: Sparkles,
-  l3d: TrendingUp,
-  'deep-search': Search,
-  'dark-search': Lock,
-  'jmail': Mail,
-  'image-lookup': Image,
-  'contact-finder': UserSearch,
-  relationships: Network,
-  mission: Target,
-  investors: TrendingDown,
-  'business-info': Building2,
-  corporate: Briefcase,
-  analyze: BarChart3,
-  insights: Sparkles,
-  cinderella: TrendingUp,
-  shopping: ShoppingBag,
-  summarizer: FileText,
-  legal: BookOpen,
-  'one-pager': FileText,
-  'white-papers': BookOpen,
-  politicorp: Globe,
-
-  business: Building2,
-  emailer: Mail,
-};
 
 // Simple markdown to HTML converter
 function simpleMarkdownToHtml(markdown: string): string {
@@ -104,55 +35,26 @@ function simpleMarkdownToHtml(markdown: string): string {
   return html;
 }
 
-// Color mapping for tools
-const TOOL_COLORS: Record<string, string> = {
-  emails: "#3b82f6",
-  calendar: "#10b981",
-  contacts: "#8b5cf6",
-  people: "#06b6d4",
-  recommendations: "#ec4899",
-  read: "#10b981",
-  bookmarks: "#06b6d4",
-  market: "#3b82f6",
-  notes: "#a78bfa",
-  files: "#6366f1",
-  spotify: "#1DB954",
-  trending: "#14b8a6",
-  rosters: "#3b82f6",
-  meals: "#10b981",
-  curate: "#8b5cf6",
-  l3d: "#10b981",
-  'deep-search': "#6366f1",
-  'dark-search': "#7c3aed",
-  'jmail': "#7c3aed",
-  'image-lookup': "#a78bfa",
-  'contact-finder': "#6366f1",
-  relationships: "#14b8a6",
-  mission: "#6366f1",
-  investors: "#3b82f6",
-  'business-info': "#8b5cf6",
-  corporate: "#10b981",
-  cinderella: "#3b82f6",
-  analyze: "#6366f1",
-  insights: "#a78bfa",
-  shopping: "#10b981",
-  summarizer: "#8b5cf6",
-  legal: "#d4af37",
-  'one-pager': "#6366f1",
-  'white-papers': "#8b5cf6",
-  politicorp: "#7c3aed",
-
-  business: "#6366f1",
-  emailer: "#3b82f6",
-};
+interface NewsItem {
+  title: string;
+  link: string;
+  source: string;
+  pubDate: string;
+  relativeTime: string;
+  isFeatured?: boolean;
+}
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
-  const { customizations, loading, getCustomization } = useToolCustomizations();
-  const { hasPermission, isAdmin, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const searchBarRef = useRef<{ setQuery: (q: string) => void; setSource: (s: string) => void } | null>(null);
   const trendingTopicsRef = useRef<TrendingTopicsRef>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [time, setTime] = useState(new Date());
+
+  // News state
+  const [zeroHedge, setZeroHedge] = useState<{ items: NewsItem[]; loading: boolean }>({ items: [], loading: true });
+  const [googleNews, setGoogleNews] = useState<{ items: NewsItem[]; loading: boolean }>({ items: [], loading: true });
 
   // AI Search state
   const [aiSearchQuery, setAiSearchQuery] = useState<string>("");
@@ -167,6 +69,38 @@ export default function Home() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Clock
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fetch news
+  useEffect(() => {
+    fetchZeroHedge();
+    fetchGoogleNews();
+  }, []);
+
+  const fetchZeroHedge = async () => {
+    try {
+      const response = await fetch('/api/news?feed=zerohedge&limit=8');
+      const data = await response.json();
+      setZeroHedge({ items: data.items || [], loading: false });
+    } catch {
+      setZeroHedge({ items: [], loading: false });
+    }
+  };
+
+  const fetchGoogleNews = async () => {
+    try {
+      const response = await fetch('/api/news?feed=top&limit=6');
+      const data = await response.json();
+      setGoogleNews({ items: data.items || [], loading: false });
+    } catch {
+      setGoogleNews({ items: [], loading: false });
+    }
+  };
+
   const handleTrendingClick = (query: string) => {
     const searchSection = document.getElementById('search-section');
     if (searchSection) {
@@ -179,9 +113,10 @@ export default function Home() {
   };
 
   const handleRefresh = async () => {
-    if (refreshing || !trendingTopicsRef.current) return;
+    if (refreshing) return;
     setRefreshing(true);
-    trendingTopicsRef.current.refresh();
+    trendingTopicsRef.current?.refresh();
+    await Promise.all([fetchZeroHedge(), fetchGoogleNews()]);
     setTimeout(() => setRefreshing(false), 1000);
   };
 
@@ -225,9 +160,25 @@ export default function Home() {
     setAiSearchLoading(false);
   };
 
-  const handleCopyAIResponse = () => {
-    navigator.clipboard.writeText(aiSearchResult);
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Split ZeroHedge into featured and regular
+  const featuredStories = zeroHedge.items.filter(item => item.isFeatured).slice(0, 3);
+  const regularStories = zeroHedge.items.filter(item => !item.isFeatured).slice(0, 5);
 
   return (
     <ProtectedRoute>
@@ -241,8 +192,9 @@ export default function Home() {
             minHeight: "100vh",
             paddingTop: isMobile ? "72px" : "76px",
             paddingBottom: isMobile ? "88px" : "24px",
-            paddingLeft: isMobile ? "12px" : "24px",
-            paddingRight: isMobile ? "12px" : "20px",
+            paddingLeft: isMobile ? "16px" : "32px",
+            paddingRight: isMobile ? "16px" : "32px",
+            background: "linear-gradient(180deg, rgba(10,10,15,1) 0%, rgba(5,5,10,1) 100%)",
           }}
         >
         {authLoading ? (
@@ -250,48 +202,60 @@ export default function Home() {
             Loading...
           </div>
         ) : (
-        <div className="container" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {/* Clock Section */}
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          
+          {/* Hero Section - Time & Search */}
           <div style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: isMobile ? "12px" : "20px",
+            textAlign: "center",
+            paddingTop: isMobile ? "20px" : "40px",
+            paddingBottom: isMobile ? "24px" : "40px",
           }}>
-            <DigitalClock />
+            {/* Minimal Clock */}
+            <div style={{ marginBottom: isMobile ? "20px" : "32px" }}>
+              <div style={{
+                fontSize: isMobile ? "56px" : "80px",
+                fontWeight: 200,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                color: "rgba(255, 255, 255, 0.95)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+              }}>
+                {formatTime(time)}
+              </div>
+              <div style={{
+                fontSize: isMobile ? "13px" : "15px",
+                color: "rgba(255, 255, 255, 0.4)",
+                marginTop: "8px",
+                fontWeight: 400,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+              }}>
+                {formatDate(time)}
+              </div>
+            </div>
+
+            {/* Search */}
+            <div id="search-section" style={{ maxWidth: "680px", margin: "0 auto" }}>
+              <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
+            </div>
+
+            {/* Trending Topics */}
+            {!aiSearchQuery && (
+              <div style={{ marginTop: isMobile ? "20px" : "28px" }}>
+                <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
+              </div>
+            )}
           </div>
 
-          {/* Search Section */}
-          <div id="search-section" style={{ marginBottom: isMobile ? "12px" : "24px" }}>
-            <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
-          </div>
-
-          {/* Trending Topics */}
-          {!aiSearchQuery && (
-            <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
-              <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
-            </div>
-          )}
-
-          {/* News Hub - Full Width */}
-          {!aiSearchQuery && (
-            <div style={{ marginBottom: isMobile ? "16px" : "24px" }}>
-              <NewsHub />
-            </div>
-          )}
-
-          {/* AI Search Response Area */}
+          {/* AI Search Response */}
           {aiSearchQuery && (
             <div style={{
-              maxWidth: "900px",
-              margin: "0 auto 32px",
-              padding: isMobile ? "16px" : "24px",
+              maxWidth: "800px",
+              margin: "0 auto 40px",
+              padding: isMobile ? "20px" : "28px",
               borderRadius: "16px",
-              background: "rgba(10, 10, 10, 0.95)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
             }}>
               <div style={{
                 display: "flex",
@@ -299,23 +263,23 @@ export default function Home() {
                 gap: "12px",
                 paddingBottom: "16px",
                 marginBottom: "16px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
               }}>
-                <Sparkles style={{ width: "20px", height: "20px", color: "#00aaff" }} />
+                <Sparkles style={{ width: "18px", height: "18px", color: "#60a5fa" }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "14px", fontWeight: 600, color: "#00aaff", textTransform: "capitalize" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 500, color: "#60a5fa", textTransform: "capitalize" }}>
                     {aiSearchModel}
                   </div>
-                  <div style={{ fontSize: "13px", color: "var(--foreground-muted)", marginTop: "2px" }}>
+                  <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)", marginTop: "2px" }}>
                     {aiSearchQuery}
                   </div>
                 </div>
               </div>
               <div style={{
                 fontSize: "14px",
-                lineHeight: "1.6",
-                color: "var(--foreground)",
-                minHeight: "100px",
+                lineHeight: "1.7",
+                color: "rgba(255, 255, 255, 0.85)",
+                minHeight: "80px",
               }}>
                 {aiSearchResult ? (
                   <div
@@ -324,76 +288,26 @@ export default function Home() {
                     style={{ whiteSpace: "pre-wrap" }}
                   />
                 ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--foreground-muted)" }}>
-                    <div style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: "#00aaff",
-                      animation: "pulse 1.5s ease-in-out infinite",
-                    }} />
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255, 255, 255, 0.4)" }}>
+                    <div className="pulse-dot" />
                     Thinking...
                   </div>
                 )}
-                {aiSearchLoading && (
-                  <span style={{
-                    display: "inline-block",
-                    width: "8px",
-                    height: "16px",
-                    marginLeft: "2px",
-                    background: "#00aaff",
-                    animation: "blink 1s step-end infinite",
-                  }} />
-                )}
+                {aiSearchLoading && <span className="cursor-blink" />}
               </div>
               <div style={{
                 display: "flex",
                 gap: "12px",
                 marginTop: "20px",
                 paddingTop: "16px",
-                borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+                borderTop: "1px solid rgba(255, 255, 255, 0.06)",
               }}>
+                <button onClick={handleCloseAISearch} className="btn-secondary">Close</button>
                 <button
-                  onClick={handleCloseAISearch}
-                  style={{
-                    flex: 1,
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    color: "var(--foreground)",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"; }}
-                >
-                  Close
-                </button>
-                <button
-                  onClick={handleCopyAIResponse}
+                  onClick={() => navigator.clipboard.writeText(aiSearchResult)}
                   disabled={!aiSearchResult || aiSearchLoading}
-                  style={{
-                    flex: 1,
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(0, 170, 255, 0.3)",
-                    background: "rgba(0, 170, 255, 0.1)",
-                    color: "#00aaff",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    cursor: (!aiSearchResult || aiSearchLoading) ? "not-allowed" : "pointer",
-                    opacity: (!aiSearchResult || aiSearchLoading) ? 0.5 : 1,
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (aiSearchResult && !aiSearchLoading) e.currentTarget.style.background = "rgba(0, 170, 255, 0.2)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (aiSearchResult && !aiSearchLoading) e.currentTarget.style.background = "rgba(0, 170, 255, 0.1)";
-                  }}
+                  className="btn-primary"
+                  style={{ opacity: (!aiSearchResult || aiSearchLoading) ? 0.5 : 1 }}
                 >
                   Copy
                 </button>
@@ -401,118 +315,442 @@ export default function Home() {
             </div>
           )}
 
-          {/* Settings & Refresh - Bottom on Mobile */}
+          {/* News Content */}
+          {!aiSearchQuery && (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 340px",
+              gap: isMobile ? "24px" : "32px",
+              marginTop: "8px",
+            }}>
+              
+              {/* Main Column - ZeroHedge */}
+              <div>
+                {/* Section Header */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "20px",
+                  paddingBottom: "12px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                }}>
+                  <a
+                    href="https://www.zerohedge.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <div style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                      <Zap style={{ width: "16px", height: "16px", color: "white" }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "16px", fontWeight: 600, color: "rgba(255, 255, 255, 0.95)" }}>
+                        ZeroHedge
+                      </div>
+                      <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.4)" }}>
+                        Markets • Finance • Politics
+                      </div>
+                    </div>
+                  </a>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    style={{
+                      padding: "8px",
+                      borderRadius: "8px",
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      cursor: refreshing ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <RefreshCw style={{
+                      width: "14px",
+                      height: "14px",
+                      animation: refreshing ? "spin 1s linear infinite" : "none",
+                    }} />
+                  </button>
+                </div>
+
+                {/* Featured Stories */}
+                {zeroHedge.loading ? (
+                  <div style={{ padding: "60px 20px", textAlign: "center" }}>
+                    <div className="spinner" style={{ borderColor: "#f97316" }} />
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    {/* Featured - Large Typography */}
+                    {featuredStories.map((item, index) => (
+                      <a
+                        key={item.link}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="news-item-featured"
+                        style={{
+                          display: "block",
+                          padding: isMobile ? "16px 0" : "20px 0",
+                          borderBottom: index < featuredStories.length - 1 ? "1px solid rgba(255, 255, 255, 0.04)" : "none",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <div style={{
+                          fontSize: isMobile ? "18px" : "22px",
+                          fontWeight: 600,
+                          color: "rgba(255, 255, 255, 0.95)",
+                          lineHeight: 1.35,
+                          marginBottom: "8px",
+                          transition: "color 0.2s",
+                        }}>
+                          {item.title}
+                        </div>
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          fontSize: "12px",
+                          color: "rgba(255, 255, 255, 0.35)",
+                        }}>
+                          <span style={{ color: "#f97316", fontWeight: 500 }}>Featured</span>
+                          <span>•</span>
+                          <span>{item.relativeTime}</span>
+                        </div>
+                      </a>
+                    ))}
+
+                    {/* Separator */}
+                    {featuredStories.length > 0 && regularStories.length > 0 && (
+                      <div style={{
+                        height: "1px",
+                        background: "linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+                        margin: "12px 0",
+                      }} />
+                    )}
+
+                    {/* Regular Stories - Compact */}
+                    {regularStories.map((item) => (
+                      <a
+                        key={item.link}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="news-item"
+                        style={{
+                          display: "block",
+                          padding: "12px 0",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <div style={{
+                          fontSize: isMobile ? "14px" : "15px",
+                          fontWeight: 500,
+                          color: "rgba(255, 255, 255, 0.8)",
+                          lineHeight: 1.45,
+                          marginBottom: "4px",
+                          transition: "color 0.2s",
+                        }}>
+                          {item.title}
+                        </div>
+                        <div style={{
+                          fontSize: "11px",
+                          color: "rgba(255, 255, 255, 0.3)",
+                        }}>
+                          {item.relativeTime}
+                        </div>
+                      </a>
+                    ))}
+
+                    {/* View More Link */}
+                    <a
+                      href="https://www.zerohedge.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        marginTop: "16px",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        color: "#f97316",
+                        textDecoration: "none",
+                      }}
+                    >
+                      View all on ZeroHedge
+                      <ExternalLink style={{ width: "12px", height: "12px" }} />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Sidebar Column - Google News */}
+              <div>
+                {/* Section Header */}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "16px",
+                  paddingBottom: "12px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                }}>
+                  <a
+                    href="https://news.google.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <div style={{
+                      width: "28px",
+                      height: "28px",
+                      borderRadius: "6px",
+                      background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                      <Globe style={{ width: "14px", height: "14px", color: "white" }} />
+                    </div>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255, 255, 255, 0.9)" }}>
+                      Top Stories
+                    </span>
+                  </a>
+                  <ChevronRight style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.3)" }} />
+                </div>
+
+                {/* Google News Items */}
+                {googleNews.loading ? (
+                  <div style={{ padding: "40px 20px", textAlign: "center" }}>
+                    <div className="spinner" style={{ borderColor: "#22c55e" }} />
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    {googleNews.items.map((item) => (
+                      <a
+                        key={item.link}
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="news-item-small"
+                        style={{
+                          display: "block",
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          textDecoration: "none",
+                          transition: "background 0.15s",
+                        }}
+                      >
+                        <div style={{
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          color: "rgba(255, 255, 255, 0.8)",
+                          lineHeight: 1.4,
+                          marginBottom: "4px",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}>
+                          {item.title}
+                        </div>
+                        <div style={{
+                          fontSize: "10px",
+                          color: "rgba(255, 255, 255, 0.35)",
+                        }}>
+                          {item.source} • {item.relativeTime}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Footer Actions */}
           {!aiSearchQuery && isMobile && (
             <div style={{
               display: "flex",
               justifyContent: "center",
               gap: "12px",
-              marginTop: "32px",
-              marginBottom: "32px",
+              marginTop: "40px",
+              marginBottom: "20px",
             }}>
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                style={{
-                  flex: 1,
-                  maxWidth: "200px",
-                  padding: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  borderRadius: "12px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid var(--glass-border)",
-                  color: "var(--foreground)",
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  cursor: refreshing ? "not-allowed" : "pointer",
-                  opacity: refreshing ? 0.5 : 1,
-                }}
+                className="btn-secondary"
+                style={{ flex: 1, maxWidth: "160px", padding: "14px" }}
               >
-                <RefreshCw
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    animation: refreshing ? "spin 1s linear infinite" : "none",
-                  }}
-                />
+                <RefreshCw style={{
+                  width: "16px",
+                  height: "16px",
+                  marginRight: "8px",
+                  animation: refreshing ? "spin 1s linear infinite" : "none",
+                }} />
                 Refresh
               </button>
-              <Link
-                href="/settings"
-                style={{
-                  flex: 1,
-                  maxWidth: "200px",
-                  padding: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  borderRadius: "12px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid var(--glass-border)",
-                  color: "var(--foreground)",
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  textDecoration: "none",
-                }}
-              >
-                <Settings style={{ width: "20px", height: "20px" }} />
+              <Link href="/settings" className="btn-secondary" style={{ flex: 1, maxWidth: "160px", padding: "14px", textDecoration: "none" }}>
+                <Settings style={{ width: "16px", height: "16px", marginRight: "8px" }} />
                 Settings
               </Link>
             </div>
           )}
-
-          <style jsx global>{`
-            @keyframes spin {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
-            @keyframes pulse {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.3; }
-            }
-            @keyframes blink {
-              0%, 50% { opacity: 1; }
-              51%, 100% { opacity: 0; }
-            }
-            .ai-response h3 {
-              font-size: 18px;
-              font-weight: 600;
-              margin: 16px 0 8px;
-              color: var(--foreground);
-            }
-            .ai-response h4 {
-              font-size: 16px;
-              font-weight: 600;
-              margin: 12px 0 6px;
-              color: var(--foreground);
-            }
-            .ai-response strong {
-              font-weight: 600;
-              color: var(--foreground);
-            }
-            .ai-response em { font-style: italic; }
-            .ai-response ul { margin: 8px 0; padding-left: 20px; }
-            .ai-response li { margin: 4px 0; list-style-type: disc; }
-            .ai-response pre {
-              background: rgba(0, 0, 0, 0.3);
-              padding: 12px;
-              border-radius: 8px;
-              overflow-x: auto;
-              margin: 12px 0;
-            }
-            .ai-response code {
-              font-family: 'Monaco', 'Courier New', monospace;
-              font-size: 13px;
-            }
-          `}</style>
         </div>
         )}
         </main>
       </div>
+
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
+        }
+        
+        .spinner {
+          width: 24px;
+          height: 24px;
+          border: 2px solid currentColor;
+          border-top-color: transparent;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
+        }
+        
+        .pulse-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #60a5fa;
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .cursor-blink {
+          display: inline-block;
+          width: 2px;
+          height: 16px;
+          margin-left: 2px;
+          background: #60a5fa;
+          animation: blink 1s step-end infinite;
+          vertical-align: text-bottom;
+        }
+        
+        .btn-primary {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 8px;
+          border: 1px solid rgba(96, 165, 250, 0.3);
+          background: rgba(96, 165, 250, 0.1);
+          color: #60a5fa;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+        .btn-primary:hover {
+          background: rgba(96, 165, 250, 0.2);
+        }
+        
+        .btn-secondary {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.04);
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .news-item-featured:hover div:first-child {
+          color: #f97316 !important;
+        }
+        
+        .news-item:hover div:first-child {
+          color: rgba(255, 255, 255, 0.95) !important;
+        }
+        
+        .news-item-small:hover {
+          background: rgba(255, 255, 255, 0.04);
+        }
+        .news-item-small:hover div:first-child {
+          color: rgba(255, 255, 255, 0.95) !important;
+        }
+        
+        .ai-response h3 {
+          font-size: 17px;
+          font-weight: 600;
+          margin: 16px 0 8px;
+          color: rgba(255, 255, 255, 0.95);
+        }
+        .ai-response h4 {
+          font-size: 15px;
+          font-weight: 600;
+          margin: 12px 0 6px;
+          color: rgba(255, 255, 255, 0.9);
+        }
+        .ai-response strong {
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.95);
+        }
+        .ai-response em { font-style: italic; }
+        .ai-response ul { margin: 8px 0; padding-left: 20px; }
+        .ai-response li { margin: 4px 0; list-style-type: disc; }
+        .ai-response pre {
+          background: rgba(0, 0, 0, 0.3);
+          padding: 12px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 12px 0;
+        }
+        .ai-response code {
+          font-family: 'Monaco', 'Courier New', monospace;
+          font-size: 13px;
+        }
+      `}</style>
     </ProtectedRoute>
   );
 }

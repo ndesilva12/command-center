@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
-import { TrendingUp, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface TrendingTopic {
   text: string;
@@ -39,13 +39,11 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
     setError(false);
     
     try {
-      // Add aggressive timeout to prevent hanging
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second max wait
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch('/api/trending', {
         signal: controller.signal,
-        // Use client-side cache for 5 minutes
         next: { revalidate: 300 }
       });
       
@@ -57,7 +55,6 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
 
       const data = await response.json();
 
-      // Combine X and Google trends (top 5 from each)
       const xTopics: TrendingTopic[] = (data.xTrends || []).slice(0, 5).map((t: any) => ({
         text: t.topic || t.title,
         source: "x" as const
@@ -73,27 +70,24 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
       if (combinedTopics.length > 0) {
         setTopics(combinedTopics);
       } else {
-        // If no topics, consider it an error state
         setError(true);
       }
     } catch (err) {
       console.error('Error fetching trending topics:', err);
       setError(true);
-      // Don't show error to user, just hide the component gracefully
     } finally {
       setLoading(false);
     }
   };
 
-  // Show loading spinner briefly (improves perceived performance)
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
         <Loader2 
           style={{ 
-            width: "20px", 
-            height: "20px", 
-            color: "rgba(255, 255, 255, 0.3)",
+            width: "16px", 
+            height: "16px", 
+            color: "rgba(255, 255, 255, 0.2)",
             animation: "spin 1s linear infinite" 
           }} 
         />
@@ -107,55 +101,44 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
     );
   }
 
-  // Hide component if no topics or error
   if (error || topics.length === 0) {
     return null;
   }
 
   return (
-    <div>
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(5, 1fr)",
-        gap: isMobile ? "8px" : "10px",
-        maxWidth: "1200px",
-        margin: "0 auto"
-      }}>
-        {topics.map((topic, index) => (
-          <button
-            key={index}
-            onClick={() => onTagClick(topic.text)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: isMobile ? "6px 10px" : "8px 12px",
-              borderRadius: "6px",
-              border: "none",
-              background: "transparent",
-              color: "#93c5fd",
-              fontSize: isMobile ? "12px" : "14px",
-              fontWeight: 500,
-              cursor: "pointer",
-              transition: "all 0.2s",
-              textAlign: "center",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#bfdbfe";
-              e.currentTarget.style.textDecoration = "underline";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#93c5fd";
-              e.currentTarget.style.textDecoration = "none";
-            }}
-          >
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{topic.text}</span>
-          </button>
-        ))}
-      </div>
+    <div style={{
+      display: "flex",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      gap: isMobile ? "6px 12px" : "8px 20px",
+      maxWidth: "900px",
+      margin: "0 auto",
+    }}>
+      {topics.slice(0, isMobile ? 6 : 10).map((topic, index) => (
+        <button
+          key={index}
+          onClick={() => onTagClick(topic.text)}
+          style={{
+            padding: "4px 0",
+            border: "none",
+            background: "transparent",
+            color: "rgba(147, 197, 253, 0.7)",
+            fontSize: isMobile ? "12px" : "13px",
+            fontWeight: 400,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            whiteSpace: "nowrap",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "#93c5fd";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "rgba(147, 197, 253, 0.7)";
+          }}
+        >
+          {topic.text}
+        </button>
+      ))}
     </div>
   );
 });
