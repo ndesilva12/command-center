@@ -20,6 +20,9 @@ interface Task {
   content?: string;
   commandText?: string;
   createdAt?: any;
+  fileUrl?: string;  // For file deliverables (Google Docs, Sheets, PDFs)
+  fileType?: string; // 'gdoc' | 'gsheet' | 'gslide' | 'pdf' | 'link'
+  source?: string;   // 'telegram' | 'cc' | 'discord' etc.
 }
 
 export default function JimmyPage() {
@@ -54,6 +57,9 @@ export default function JimmyPage() {
                 commandText: data.commandText || "",
                 createdBy: data.createdBy,
                 createdAt: data.createdAt,
+                fileUrl: data.fileUrl,
+                fileType: data.fileType,
+                source: data.source,
               };
             });
             

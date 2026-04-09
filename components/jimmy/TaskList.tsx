@@ -25,8 +25,8 @@ export function TaskList({ tasks }: TaskListProps) {
     "in-progress": Clock,
   };
 
-  // CRITICAL FILTER: Only show tasks created via "cc jimmy" command
-  const filteredTasks = tasks.filter((task) => task.createdBy === "cc_jimmy_command");
+  // Show all deliverables (no filter - all sources welcome)
+  const filteredTasks = tasks;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -97,19 +97,25 @@ export function TaskList({ tasks }: TaskListProps) {
                     <div>
                       {new Date(task.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </div>
-                    <span>•</span>
-                    <div
-                      style={{
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        background: "rgba(102, 126, 234, 0.2)",
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        color: "#667eea",
-                      }}
-                    >
-                      cc jimmy
-                    </div>
+                    {task.createdBy && (
+                      <>
+                        <span>•</span>
+                        <div
+                          style={{
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            background: task.createdBy === "cc_jimmy_command" 
+                              ? "rgba(102, 126, 234, 0.2)" 
+                              : "rgba(96, 165, 250, 0.2)",
+                            fontSize: "10px",
+                            fontWeight: 600,
+                            color: task.createdBy === "cc_jimmy_command" ? "#667eea" : "#60a5fa",
+                          }}
+                        >
+                          {task.createdBy === "cc_jimmy_command" ? "cc jimmy" : "telegram"}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
