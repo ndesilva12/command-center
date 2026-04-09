@@ -13,17 +13,17 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ id, title, date, status, preview, createdBy }: TaskCardProps) {
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     completed: "#10b981",
     "in-progress": "#6366f1",
   };
 
-  const statusIcons = {
+  const statusIcons: Record<string, typeof CheckCircle> = {
     completed: CheckCircle,
     "in-progress": Clock,
   };
 
-  const StatusIcon = statusIcons[status];
+  const StatusIcon = statusIcons[status] || CheckCircle;
 
   return (
     <Link

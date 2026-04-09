@@ -15,12 +15,12 @@ interface TaskListProps {
 }
 
 export function TaskList({ tasks }: TaskListProps) {
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     completed: "#10b981",
     "in-progress": "#6366f1",
   };
 
-  const statusIcons = {
+  const statusIcons: Record<string, typeof CheckCircle> = {
     completed: CheckCircle,
     "in-progress": Clock,
   };
@@ -31,7 +31,7 @@ export function TaskList({ tasks }: TaskListProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       {filteredTasks.map((task) => {
-        const StatusIcon = statusIcons[task.status];
+        const StatusIcon = statusIcons[task.status] || CheckCircle;
 
         return (
           <Link
