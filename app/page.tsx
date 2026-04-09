@@ -351,7 +351,7 @@ export default function Home() {
                       width: "32px",
                       height: "32px",
                       borderRadius: "8px",
-                      background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                      background: "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -393,7 +393,7 @@ export default function Home() {
                 {/* Featured Stories */}
                 {zeroHedge.loading ? (
                   <div style={{ padding: "60px 20px", textAlign: "center" }}>
-                    <div className="spinner" style={{ borderColor: "#f97316" }} />
+                    <div className="spinner" style={{ borderColor: "#60a5fa" }} />
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -429,7 +429,7 @@ export default function Home() {
                           fontSize: "12px",
                           color: "rgba(255, 255, 255, 0.35)",
                         }}>
-                          <span style={{ color: "#f97316", fontWeight: 500 }}>Featured</span>
+                          <span style={{ color: "#60a5fa", fontWeight: 500 }}>Featured</span>
                           <span>•</span>
                           <span>{item.relativeTime}</span>
                         </div>
@@ -490,7 +490,7 @@ export default function Home() {
                         marginTop: "16px",
                         fontSize: "13px",
                         fontWeight: 500,
-                        color: "#f97316",
+                        color: "#60a5fa",
                         textDecoration: "none",
                       }}
                     >
@@ -706,7 +706,7 @@ export default function Home() {
         }
         
         .news-item-featured:hover div:first-child {
-          color: #f97316 !important;
+          color: #60a5fa !important;
         }
         
         .news-item:hover div:first-child {
