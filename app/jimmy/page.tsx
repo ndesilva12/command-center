@@ -31,14 +31,6 @@ export default function JimmyPage() {
   useEffect(() => {
     // Load tasks from Firestore with real-time updates
     const loadTasksFromFirestore = () => {
-      if (!db) {
-        console.warn("Firebase not initialized, falling back to localStorage");
-        setError("Firebase not configured");
-        setLoading(false);
-        loadTasksFromLocalStorage();
-        return;
-      }
-      
       try {
         const deliveriesRef = collection(db, "jimmy_deliverables");
         const q = query(
