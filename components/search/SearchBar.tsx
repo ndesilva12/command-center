@@ -211,84 +211,129 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
           )}
         </div>
 
-        {/* Source Selector - Text links below search bar */}
-        <div style={{
-          marginTop: "12px",
-          display: "flex",
-          gap: isMobile ? "8px" : "12px",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          fontSize: isMobile ? "12px" : "13px",
-        }}>
-          {/* Web Sources */}
-          {webSources.map((source) => (
-            <button
-              key={source.id}
-              type="button"
-              onClick={() => setSelectedSource(source.id)}
+        {/* Source Selector - Dropdown on mobile, text links on desktop */}
+        {isMobile ? (
+          <div style={{
+            marginTop: "12px",
+            display: "flex",
+            justifyContent: "center",
+          }}>
+            <select
+              value={selectedSource}
+              onChange={(e) => setSelectedSource(e.target.value as UnifiedSourceId)}
               style={{
-                padding: "4px 8px",
-                border: "none",
-                background: "transparent",
-                color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
-                fontSize: "inherit",
-                fontWeight: selectedSource === source.id ? 600 : 400,
+                padding: "8px 12px",
+                paddingRight: "32px",
+                borderRadius: "20px",
+                border: "1px solid rgba(255, 255, 255, 0.15)",
+                background: "rgba(255, 255, 255, 0.05)",
+                color: "#00aaff",
+                fontSize: "13px",
+                fontWeight: 500,
                 cursor: "pointer",
-                transition: "all 0.2s ease",
-                textDecoration: selectedSource === source.id ? "underline" : "none",
-                textUnderlineOffset: "3px",
-              }}
-              onMouseEnter={(e) => {
-                if (selectedSource !== source.id) {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedSource !== source.id) {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                }
+                appearance: "none",
+                WebkitAppearance: "none",
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2300aaff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 10px center",
+                minWidth: "140px",
               }}
             >
-              {source.name}
-            </button>
-          ))}
-          
-          {/* Separator */}
-          <span style={{ color: "rgba(255, 255, 255, 0.2)", userSelect: "none" }}>|</span>
+              <optgroup label="Web Search">
+                {webSources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="AI">
+                {aiSources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+        ) : (
+          <div style={{
+            marginTop: "12px",
+            display: "flex",
+            gap: "12px",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            fontSize: "13px",
+          }}>
+            {/* Web Sources */}
+            {webSources.map((source) => (
+              <button
+                key={source.id}
+                type="button"
+                onClick={() => setSelectedSource(source.id)}
+                style={{
+                  padding: "4px 8px",
+                  border: "none",
+                  background: "transparent",
+                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
+                  fontSize: "inherit",
+                  fontWeight: selectedSource === source.id ? 600 : 400,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  textDecoration: selectedSource === source.id ? "underline" : "none",
+                  textUnderlineOffset: "3px",
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedSource !== source.id) {
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedSource !== source.id) {
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                  }
+                }}
+              >
+                {source.name}
+              </button>
+            ))}
+            
+            {/* Separator */}
+            <span style={{ color: "rgba(255, 255, 255, 0.2)", userSelect: "none" }}>|</span>
 
-          {/* AI Sources */}
-          {aiSources.map((source) => (
-            <button
-              key={source.id}
-              type="button"
-              onClick={() => setSelectedSource(source.id)}
-              style={{
-                padding: "4px 8px",
-                border: "none",
-                background: "transparent",
-                color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
-                fontSize: "inherit",
-                fontWeight: selectedSource === source.id ? 600 : 400,
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                textDecoration: selectedSource === source.id ? "underline" : "none",
-                textUnderlineOffset: "3px",
-              }}
-              onMouseEnter={(e) => {
-                if (selectedSource !== source.id) {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedSource !== source.id) {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                }
-              }}
-            >
-              {source.name}
-            </button>
-          ))}
-        </div>
+            {/* AI Sources */}
+            {aiSources.map((source) => (
+              <button
+                key={source.id}
+                type="button"
+                onClick={() => setSelectedSource(source.id)}
+                style={{
+                  padding: "4px 8px",
+                  border: "none",
+                  background: "transparent",
+                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
+                  fontSize: "inherit",
+                  fontWeight: selectedSource === source.id ? 600 : 400,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  textDecoration: selectedSource === source.id ? "underline" : "none",
+                  textUnderlineOffset: "3px",
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedSource !== source.id) {
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedSource !== source.id) {
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                  }
+                }}
+              >
+                {source.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Recent Searches Dropdown */}
         {showRecent && recentSearches.length > 0 && (

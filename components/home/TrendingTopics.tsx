@@ -110,11 +110,12 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
       display: "flex",
       flexWrap: "wrap",
       justifyContent: "center",
-      gap: isMobile ? "6px 12px" : "8px 20px",
+      gap: isMobile ? "6px 10px" : "8px 20px",
       maxWidth: "900px",
       margin: "0 auto",
+      padding: isMobile ? "0 8px" : "0",
     }}>
-      {topics.slice(0, isMobile ? 6 : 10).map((topic, index) => (
+      {topics.slice(0, 10).map((topic, index) => (
         <button
           key={index}
           onClick={() => onTagClick(topic.text)}
@@ -123,7 +124,7 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
             border: "none",
             background: "transparent",
             color: "rgba(147, 197, 253, 0.7)",
-            fontSize: isMobile ? "12px" : "13px",
+            fontSize: isMobile ? "11px" : "13px",
             fontWeight: 400,
             cursor: "pointer",
             transition: "all 0.2s",
