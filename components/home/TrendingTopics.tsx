@@ -12,22 +12,13 @@ export interface TrendingTopicsRef {
   refresh: () => void;
 }
 
-// Color schemes for each source - subtle tints
-const SOURCE_COLORS = {
-  x: {
-    bg: "rgba(29, 155, 240, 0.08)",
-    border: "rgba(29, 155, 240, 0.15)",
-    text: "rgba(255, 255, 255, 0.85)",
-    hoverBg: "rgba(29, 155, 240, 0.15)",
-    hoverBorder: "rgba(29, 155, 240, 0.25)",
-  },
-  google: {
-    bg: "rgba(234, 67, 53, 0.08)",
-    border: "rgba(234, 67, 53, 0.15)",
-    text: "rgba(255, 255, 255, 0.85)",
-    hoverBg: "rgba(234, 67, 53, 0.15)",
-    hoverBorder: "rgba(234, 67, 53, 0.25)",
-  },
+// Unified glass style with light blue tint
+const GLASS_STYLE = {
+  bg: "rgba(0, 170, 255, 0.08)",
+  border: "rgba(0, 170, 255, 0.15)",
+  text: "rgba(255, 255, 255, 0.9)",
+  hoverBg: "rgba(0, 170, 255, 0.15)",
+  hoverBorder: "rgba(0, 170, 255, 0.28)",
 };
 
 export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query: string) => void }>(
@@ -141,20 +132,20 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
       padding: isMobile ? "0 12px" : "0",
     }}>
       {topics.slice(0, 20).map((topic, index) => {
-        const colors = SOURCE_COLORS[topic.source];
+        const colors = GLASS_STYLE;
         return (
           <button
             key={index}
             onClick={() => onTagClick(topic.text)}
             style={{
-              padding: isMobile ? "8px 14px" : "10px 18px",
+              padding: isMobile ? "10px 16px" : "12px 20px",
               borderRadius: "12px",
               border: `1px solid ${colors.border}`,
               background: colors.bg,
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
               color: colors.text,
-              fontSize: isMobile ? "13px" : "14px",
+              fontSize: isMobile ? "14px" : "15px",
               fontWeight: 500,
               cursor: "pointer",
               transition: "all 0.2s ease",
