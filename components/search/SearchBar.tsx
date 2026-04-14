@@ -106,36 +106,37 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
   const aiSources = UNIFIED_SOURCES.filter(s => s.type === "ai");
 
   return (
-    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
+    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "720px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative", width: "100%" }}>
-        {/* Search Input */}
+        {/* Search Input - Larger and softer glass effect */}
         <div
-          className={isMobile ? "" : "glass"}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: isMobile ? "8px" : "10px",
-            padding: isMobile ? "8px 16px" : "12px 20px",
-            borderRadius: isMobile ? "25px" : "50px",
-            border: "1px solid var(--glass-border)",
-            background: isMobile ? "rgba(255, 255, 255, 0.05)" : undefined,
-            backdropFilter: isMobile ? "blur(12px)" : undefined,
-            WebkitBackdropFilter: isMobile ? "blur(12px)" : undefined,
+            gap: isMobile ? "10px" : "14px",
+            padding: isMobile ? "14px 20px" : "18px 28px",
+            borderRadius: "32px",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "rgba(255, 255, 255, 0.04)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
             transition: "all 0.3s ease",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
             width: "100%",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.3)";
-            e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 170, 255, 0.15)";
+            e.currentTarget.style.borderColor = "rgba(0, 170, 255, 0.25)";
+            e.currentTarget.style.boxShadow = "0 12px 48px rgba(0, 170, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08)";
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = "var(--glass-border)";
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.2)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+            e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05)";
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
           }}
         >
-          {/* Left side: X button when text present, Search icon when empty */}
+          {/* Left side: Search icon or X button */}
           {query.trim() ? (
             <button
               type="button"
@@ -143,23 +144,28 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
               style={{
                 padding: 0,
                 border: "none",
-                background: "transparent",
-                color: "rgba(255, 255, 255, 0.9)",
+                background: "rgba(255, 255, 255, 0.1)",
+                color: "rgba(255, 255, 255, 0.8)",
                 cursor: "pointer",
                 flexShrink: 0,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: isMobile ? "28px" : "24px",
-                height: isMobile ? "28px" : "24px",
+                width: isMobile ? "28px" : "32px",
+                height: isMobile ? "28px" : "32px",
                 borderRadius: "50%",
                 transition: "all 0.2s ease",
               }}
             >
-              <X style={{ width: isMobile ? "18px" : "14px", height: isMobile ? "18px" : "14px", strokeWidth: 2.5 }} />
+              <X style={{ width: isMobile ? "16px" : "18px", height: isMobile ? "16px" : "18px", strokeWidth: 2 }} />
             </button>
           ) : (
-            !isMobile && <Search style={{ width: "18px", height: "18px", color: "var(--foreground-muted)", flexShrink: 0 }} />
+            <Search style={{ 
+              width: isMobile ? "20px" : "22px", 
+              height: isMobile ? "20px" : "22px", 
+              color: "rgba(255, 255, 255, 0.4)", 
+              flexShrink: 0 
+            }} />
           )}
 
           <input
@@ -174,9 +180,10 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
               border: "none",
               outline: "none",
               color: "var(--foreground)",
-              fontSize: isMobile ? "14px" : "15px",
+              fontSize: isMobile ? "16px" : "18px",
               fontWeight: 400,
               minWidth: 0,
+              letterSpacing: "0.01em",
             }}
           />
 
@@ -185,25 +192,26 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
             <button
               type="submit"
               style={{
-                padding: "6px 16px",
-                borderRadius: "20px",
+                padding: isMobile ? "10px 20px" : "12px 24px",
+                borderRadius: "24px",
                 border: "none",
-                background: "#00aaff",
+                background: "linear-gradient(135deg, #00aaff 0%, #0088dd 100%)",
                 color: "white",
-                fontSize: "13px",
+                fontSize: isMobile ? "14px" : "15px",
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "all 0.2s ease",
                 flexShrink: 0,
                 whiteSpace: "nowrap",
+                boxShadow: "0 4px 16px rgba(0, 170, 255, 0.3)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#0099ee";
-                e.currentTarget.style.transform = "scale(1.05)";
+                e.currentTarget.style.transform = "scale(1.03)";
+                e.currentTarget.style.boxShadow = "0 6px 24px rgba(0, 170, 255, 0.4)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#00aaff";
                 e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 170, 255, 0.3)";
               }}
             >
               Search
@@ -214,7 +222,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
         {/* Source Selector - Dropdown on mobile, text links on desktop */}
         {isMobile ? (
           <div style={{
-            marginTop: "12px",
+            marginTop: "14px",
             display: "flex",
             justifyContent: "center",
           }}>
@@ -222,21 +230,21 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value as UnifiedSourceId)}
               style={{
-                padding: "8px 12px",
-                paddingRight: "32px",
-                borderRadius: "20px",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                background: "rgba(255, 255, 255, 0.05)",
+                padding: "10px 14px",
+                paddingRight: "36px",
+                borderRadius: "24px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                background: "rgba(255, 255, 255, 0.04)",
                 color: "#00aaff",
-                fontSize: "13px",
+                fontSize: "14px",
                 fontWeight: 500,
                 cursor: "pointer",
                 appearance: "none",
                 WebkitAppearance: "none",
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2300aaff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                 backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 10px center",
-                minWidth: "140px",
+                backgroundPosition: "right 12px center",
+                minWidth: "150px",
               }}
             >
               <optgroup label="Web Search">
@@ -257,7 +265,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
           </div>
         ) : (
           <div style={{
-            marginTop: "12px",
+            marginTop: "16px",
             display: "flex",
             gap: "12px",
             flexWrap: "wrap",
@@ -271,25 +279,25 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 type="button"
                 onClick={() => setSelectedSource(source.id)}
                 style={{
-                  padding: "4px 8px",
+                  padding: "6px 10px",
                   border: "none",
                   background: "transparent",
-                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
+                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.45)",
                   fontSize: "inherit",
                   fontWeight: selectedSource === source.id ? 600 : 400,
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   textDecoration: selectedSource === source.id ? "underline" : "none",
-                  textUnderlineOffset: "3px",
+                  textUnderlineOffset: "4px",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.45)";
                   }
                 }}
               >
@@ -298,7 +306,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
             ))}
             
             {/* Separator */}
-            <span style={{ color: "rgba(255, 255, 255, 0.2)", userSelect: "none" }}>|</span>
+            <span style={{ color: "rgba(255, 255, 255, 0.15)", userSelect: "none" }}>|</span>
 
             {/* AI Sources */}
             {aiSources.map((source) => (
@@ -307,25 +315,25 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 type="button"
                 onClick={() => setSelectedSource(source.id)}
                 style={{
-                  padding: "4px 8px",
+                  padding: "6px 10px",
                   border: "none",
                   background: "transparent",
-                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.5)",
+                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.45)",
                   fontSize: "inherit",
                   fontWeight: selectedSource === source.id ? 600 : 400,
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   textDecoration: selectedSource === source.id ? "underline" : "none",
-                  textUnderlineOffset: "3px",
+                  textUnderlineOffset: "4px",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.45)";
                   }
                 }}
               >
@@ -340,23 +348,23 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
           <div
             style={{
               position: "absolute",
-              top: "calc(100% + 8px)",
+              top: "calc(100% + 12px)",
               left: 0,
               right: 0,
-              borderRadius: "14px",
-              padding: "12px",
+              borderRadius: "20px",
+              padding: "14px",
               zIndex: 1000,
-              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)",
-              background: "rgba(10, 10, 10, 0.95)",
-              backdropFilter: "blur(16px)",
-              WebkitBackdropFilter: "blur(16px)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 16px 48px rgba(0, 0, 0, 0.4)",
+              background: "rgba(15, 15, 18, 0.95)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Clock style={{ width: "14px", height: "14px", color: "var(--foreground-muted)" }} />
-                <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground-muted)" }}>
+                <Clock style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.4)" }} />
+                <span style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255, 255, 255, 0.5)" }}>
                   Recent Searches
                 </span>
               </div>
@@ -368,10 +376,10 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                   alignItems: "center",
                   gap: "4px",
                   padding: "4px 8px",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
                   border: "none",
                   background: "transparent",
-                  color: "var(--foreground-muted)",
+                  color: "rgba(255, 255, 255, 0.4)",
                   fontSize: "11px",
                   cursor: "pointer",
                 }}
@@ -390,25 +398,25 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                   width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  gap: "10px",
-                  padding: "10px 12px",
-                  borderRadius: "8px",
+                  gap: "12px",
+                  padding: "12px 14px",
+                  borderRadius: "12px",
                   border: "none",
                   background: "transparent",
                   color: "var(--foreground)",
-                  fontSize: "14px",
+                  fontSize: "15px",
                   textAlign: "left",
                   cursor: "pointer",
                   transition: "all 0.15s",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = "transparent";
                 }}
               >
-                <Clock style={{ width: "14px", height: "14px", color: "var(--foreground-muted)" }} />
+                <Clock style={{ width: "14px", height: "14px", color: "rgba(255, 255, 255, 0.35)" }} />
                 {recent}
               </button>
             ))}
