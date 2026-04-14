@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Music, ExternalLink } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 interface Track {
@@ -24,6 +24,14 @@ export function SpotifyWidget() {
   const [authenticated, setAuthenticated] = useState(false);
   const [playback, setPlayback] = useState<PlaybackState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     checkAuth();
@@ -75,86 +83,19 @@ export function SpotifyWidget() {
     }
   };
 
+  // Don't render on mobile
+  if (isMobile) {
+    return null;
+  }
+
+  // Don't render while loading
   if (loading) {
     return null;
   }
 
-  if (!authenticated) {
-    return (
-      <Link
-        href="/tools/spotify"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          padding: "12px 16px",
-          borderRadius: "12px",
-          background: "rgba(29, 185, 84, 0.1)",
-          border: "1px solid rgba(29, 185, 84, 0.2)",
-          textDecoration: "none",
-          transition: "all 0.2s",
-        }}
-      >
-        <div style={{
-          width: "40px",
-          height: "40px",
-          borderRadius: "8px",
-          background: "#1DB954",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <Music style={{ width: "20px", height: "20px", color: "white" }} />
-        </div>
-        <div>
-          <div style={{ fontSize: "14px", fontWeight: 500, color: "white" }}>
-            Connect Spotify
-          </div>
-          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
-            Control your music
-          </div>
-        </div>
-      </Link>
-    );
-  }
-
-  if (!playback?.item) {
-    return (
-      <Link
-        href="/tools/spotify"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          padding: "12px 16px",
-          borderRadius: "12px",
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          textDecoration: "none",
-          transition: "all 0.2s",
-        }}
-      >
-        <div style={{
-          width: "40px",
-          height: "40px",
-          borderRadius: "8px",
-          background: "rgba(29, 185, 84, 0.2)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <Music style={{ width: "20px", height: "20px", color: "#1DB954" }} />
-        </div>
-        <div>
-          <div style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255,255,255,0.7)" }}>
-            Nothing playing
-          </div>
-          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
-            Open Spotify
-          </div>
-        </div>
-      </Link>
-    );
+  // Don't render if not authenticated or nothing playing
+  if (!authenticated || !playback?.item) {
+    return null;
   }
 
   return (
@@ -223,14 +164,26 @@ export function SpotifyWidget() {
             }} />
           </div>
         </div>
+
+        {/* External Link */}
+        <Link
+          href="/tools/spotify"
+          style={{
+            padding: "6px",
+            color: "rgba(255,255,255,0.4)",
+            alignSelf: "flex-start",
+          }}
+        >
+          <ExternalLink style={{ width: "14px", height: "14px" }} />
+        </Link>
       </div>
 
-      {/* Controls */}
+      {/* Controls - Centered */}
       <div style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: "8px",
+        gap: "12px",
       }}>
         <button
           onClick={() => control('previous')}
@@ -277,18 +230,6 @@ export function SpotifyWidget() {
         >
           <SkipForward style={{ width: "18px", height: "18px" }} />
         </button>
-
-        <Link
-          href="/tools/spotify"
-          style={{
-            marginLeft: "auto",
-            padding: "6px",
-            borderRadius: "50%",
-            color: "rgba(255,255,255,0.4)",
-          }}
-        >
-          <ExternalLink style={{ width: "14px", height: "14px" }} />
-        </Link>
       </div>
     </div>
   );
