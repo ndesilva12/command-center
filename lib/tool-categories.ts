@@ -21,6 +21,7 @@ export const PRODUCTIVITY_TOOLS: ToolDefinition[] = [
   { id: 'market', name: 'Market', href: '/tools/market', description: 'Stocks and crypto prices' },
   { id: 'notes', name: 'Notes', href: '/tools/notes', description: 'Quick notes' },
   { id: 'files', name: 'Files', href: '/tools/files', description: 'Google Drive files' },
+  { id: 'spotify', name: 'Spotify', href: '/tools/spotify', description: 'Control your music' },
   { id: 'trending', name: 'Trending', href: '/tools/trending', description: 'Trending topics' },
   { id: 'meals', name: 'Meals', href: '/tools/meals', description: 'Weekly meal planning' },
   { id: 'image-lookup', name: 'Image Lookup', href: '/tools/image-lookup', description: 'Reverse image search' },
