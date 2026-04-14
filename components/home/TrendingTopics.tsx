@@ -12,13 +12,22 @@ export interface TrendingTopicsRef {
   refresh: () => void;
 }
 
-// Unified glass style with light blue tint
-const GLASS_STYLE = {
-  bg: "rgba(0, 170, 255, 0.08)",
-  border: "rgba(0, 170, 255, 0.15)",
-  text: "rgba(255, 255, 255, 0.9)",
-  hoverBg: "rgba(0, 170, 255, 0.15)",
-  hoverBorder: "rgba(0, 170, 255, 0.28)",
+// Color schemes for each source - light blue and darker blue
+const SOURCE_COLORS = {
+  x: {
+    bg: "rgba(0, 170, 255, 0.08)",
+    border: "rgba(0, 170, 255, 0.15)",
+    text: "rgba(255, 255, 255, 0.9)",
+    hoverBg: "rgba(0, 170, 255, 0.15)",
+    hoverBorder: "rgba(0, 170, 255, 0.28)",
+  },
+  google: {
+    bg: "rgba(0, 100, 180, 0.12)",
+    border: "rgba(0, 100, 180, 0.2)",
+    text: "rgba(255, 255, 255, 0.9)",
+    hoverBg: "rgba(0, 100, 180, 0.2)",
+    hoverBorder: "rgba(0, 100, 180, 0.32)",
+  },
 };
 
 export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query: string) => void }>(
@@ -132,7 +141,7 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
       padding: isMobile ? "0 12px" : "0",
     }}>
       {topics.slice(0, 20).map((topic, index) => {
-        const colors = GLASS_STYLE;
+        const colors = SOURCE_COLORS[topic.source];
         return (
           <button
             key={index}
