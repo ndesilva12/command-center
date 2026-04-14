@@ -12,6 +12,24 @@ export interface TrendingTopicsRef {
   refresh: () => void;
 }
 
+// Color schemes for each source - subtle tints
+const SOURCE_COLORS = {
+  x: {
+    bg: "rgba(29, 155, 240, 0.08)",
+    border: "rgba(29, 155, 240, 0.15)",
+    text: "rgba(255, 255, 255, 0.85)",
+    hoverBg: "rgba(29, 155, 240, 0.15)",
+    hoverBorder: "rgba(29, 155, 240, 0.25)",
+  },
+  google: {
+    bg: "rgba(234, 67, 53, 0.08)",
+    border: "rgba(234, 67, 53, 0.15)",
+    text: "rgba(255, 255, 255, 0.85)",
+    hoverBg: "rgba(234, 67, 53, 0.15)",
+    hoverBorder: "rgba(234, 67, 53, 0.25)",
+  },
+};
+
 export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query: string) => void }>(
   ({ onTagClick }, ref) => {
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
@@ -55,20 +73,27 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
 
       const data = await response.json();
 
-      const xTopics: TrendingTopic[] = (data.xTrends || []).slice(0, 5).map((t: any) => ({
+      // Get 10 from each source
+      const xTopics: TrendingTopic[] = (data.xTrends || []).slice(0, 10).map((t: any) => ({
         text: t.topic || t.title,
         source: "x" as const
       }));
 
-      const googleTopics: TrendingTopic[] = (data.googleTrends || []).slice(0, 5).map((t: any) => ({
+      const googleTopics: TrendingTopic[] = (data.googleTrends || []).slice(0, 10).map((t: any) => ({
         text: t.title || t.topic,
         source: "google" as const
       }));
 
-      const combinedTopics = [...xTopics, ...googleTopics];
+      // Interleave them for visual variety
+      const combined: TrendingTopic[] = [];
+      const maxLen = Math.max(xTopics.length, googleTopics.length);
+      for (let i = 0; i < maxLen; i++) {
+        if (googleTopics[i]) combined.push(googleTopics[i]);
+        if (xTopics[i]) combined.push(xTopics[i]);
+      }
       
-      if (combinedTopics.length > 0) {
-        setTopics(combinedTopics);
+      if (combined.length > 0) {
+        setTopics(combined);
       } else {
         setError(true);
       }
@@ -82,12 +107,12 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
+      <div style={{ display: "flex", justifyContent: "center", padding: "16px 0" }}>
         <Loader2 
           style={{ 
-            width: "16px", 
-            height: "16px", 
-            color: "rgba(255, 255, 255, 0.2)",
+            width: "20px", 
+            height: "20px", 
+            color: "rgba(255, 255, 255, 0.3)",
             animation: "spin 1s linear infinite" 
           }} 
         />
@@ -110,36 +135,49 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
       display: "flex",
       flexWrap: "wrap",
       justifyContent: "center",
-      gap: isMobile ? "6px 10px" : "8px 20px",
-      maxWidth: "900px",
+      gap: isMobile ? "8px" : "10px",
+      maxWidth: "1000px",
       margin: "0 auto",
-      padding: isMobile ? "0 8px" : "0",
+      padding: isMobile ? "0 12px" : "0",
     }}>
-      {topics.slice(0, 10).map((topic, index) => (
-        <button
-          key={index}
-          onClick={() => onTagClick(topic.text)}
-          style={{
-            padding: "4px 0",
-            border: "none",
-            background: "transparent",
-            color: "rgba(147, 197, 253, 0.7)",
-            fontSize: isMobile ? "11px" : "13px",
-            fontWeight: 400,
-            cursor: "pointer",
-            transition: "all 0.2s",
-            whiteSpace: "nowrap",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "#93c5fd";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "rgba(147, 197, 253, 0.7)";
-          }}
-        >
-          {topic.text}
-        </button>
-      ))}
+      {topics.slice(0, 20).map((topic, index) => {
+        const colors = SOURCE_COLORS[topic.source];
+        return (
+          <button
+            key={index}
+            onClick={() => onTagClick(topic.text)}
+            style={{
+              padding: isMobile ? "8px 14px" : "10px 18px",
+              borderRadius: "12px",
+              border: `1px solid ${colors.border}`,
+              background: colors.bg,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              color: colors.text,
+              fontSize: isMobile ? "13px" : "14px",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = colors.hoverBg;
+              e.currentTarget.style.borderColor = colors.hoverBorder;
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = colors.bg;
+              e.currentTarget.style.borderColor = colors.border;
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
+            }}
+          >
+            {topic.text}
+          </button>
+        );
+      })}
     </div>
   );
 });
