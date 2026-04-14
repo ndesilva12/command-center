@@ -106,7 +106,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
   const aiSources = UNIFIED_SOURCES.filter(s => s.type === "ai");
 
   return (
-    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "720px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
+    <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
       {/* Search Form */}
       <form onSubmit={handleSearch} style={{ position: "relative", width: "100%" }}>
         {/* Search Input - Larger and softer glass effect */}
@@ -115,7 +115,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
             display: "flex",
             alignItems: "center",
             gap: isMobile ? "10px" : "14px",
-            padding: isMobile ? "14px 20px" : "18px 28px",
+            padding: isMobile ? "16px 22px" : "22px 32px",
             borderRadius: "32px",
             border: "1px solid rgba(255, 255, 255, 0.08)",
             background: "rgba(255, 255, 255, 0.04)",
@@ -180,7 +180,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
               border: "none",
               outline: "none",
               color: "var(--foreground)",
-              fontSize: isMobile ? "16px" : "18px",
+              fontSize: isMobile ? "17px" : "22px",
               fontWeight: 400,
               minWidth: 0,
               letterSpacing: "0.01em",
@@ -265,12 +265,12 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
           </div>
         ) : (
           <div style={{
-            marginTop: "16px",
+            marginTop: "20px",
             display: "flex",
-            gap: "12px",
+            gap: "16px",
             flexWrap: "wrap",
             justifyContent: "center",
-            fontSize: "13px",
+            fontSize: "15px",
           }}>
             {/* Web Sources */}
             {webSources.map((source) => (
@@ -279,12 +279,12 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 type="button"
                 onClick={() => setSelectedSource(source.id)}
                 style={{
-                  padding: "6px 10px",
+                  padding: "8px 14px",
                   border: "none",
                   background: "transparent",
-                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.45)",
+                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.55)",
                   fontSize: "inherit",
-                  fontWeight: selectedSource === source.id ? 600 : 400,
+                  fontWeight: selectedSource === source.id ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   textDecoration: selectedSource === source.id ? "underline" : "none",
@@ -292,12 +292,12 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 }}
                 onMouseEnter={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.45)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.55)";
                   }
                 }}
               >
@@ -306,7 +306,7 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
             ))}
             
             {/* Separator */}
-            <span style={{ color: "rgba(255, 255, 255, 0.15)", userSelect: "none" }}>|</span>
+            <span style={{ color: "rgba(255, 255, 255, 0.2)", userSelect: "none", fontSize: "18px", lineHeight: 1 }}>|</span>
 
             {/* AI Sources */}
             {aiSources.map((source) => (
@@ -315,12 +315,12 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 type="button"
                 onClick={() => setSelectedSource(source.id)}
                 style={{
-                  padding: "6px 10px",
+                  padding: "8px 14px",
                   border: "none",
                   background: "transparent",
-                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.45)",
+                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.55)",
                   fontSize: "inherit",
-                  fontWeight: selectedSource === source.id ? 600 : 400,
+                  fontWeight: selectedSource === source.id ? 600 : 500,
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   textDecoration: selectedSource === source.id ? "underline" : "none",
@@ -328,12 +328,12 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 }}
                 onMouseEnter={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.75)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.45)";
+                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.55)";
                   }
                 }}
               >

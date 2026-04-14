@@ -235,17 +235,17 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Search */}
-            <div id="search-section" style={{ maxWidth: "720px", margin: "0 auto", textAlign: "center" }}>
-              <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
-            </div>
-
-            {/* Trending Topics */}
+            {/* Trending Topics - Above Search */}
             {!aiSearchQuery && (
-              <div style={{ marginTop: isMobile ? "20px" : "28px" }}>
+              <div style={{ marginBottom: isMobile ? "20px" : "28px" }}>
                 <TrendingTopics ref={trendingTopicsRef} onTagClick={handleTrendingClick} />
               </div>
             )}
+
+            {/* Search */}
+            <div id="search-section" style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
+              <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
+            </div>
           </div>
 
           {/* AI Search Response */}
