@@ -44,7 +44,8 @@ interface Playlist {
   id: string;
   name: string;
   images: { url: string }[];
-  tracks: { total: number };
+  tracks?: { total: number; href?: string; items?: any[] };
+  items?: { href: string; total: number };
   owner: { display_name: string };
 }
 
@@ -607,7 +608,7 @@ export default function SpotifyPage() {
                           fontSize: "12px",
                           color: "rgba(255,255,255,0.5)",
                         }}>
-                          {playlist.tracks.total} tracks
+                          {(playlist.tracks?.total || playlist.items?.total || 0)} tracks
                         </div>
                       </button>
                     ))}
