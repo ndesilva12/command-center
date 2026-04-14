@@ -1,17 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || 'e2b725dd97f8477bb93787502b1c5693';
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '793fd21ebc8a4b019165946323c6c004';
 const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'https://normandesilva.vercel.app/api/spotify/callback';
 
-// In-memory token storage (use Redis/DB in production)
-let tokenData: {
+const TOKEN_DOC_ID = 'spotify_tokens';
+
+interface TokenData {
   access_token: string;
   refresh_token: string;
   expires_at: number;
-} | null = null;
+}
+
+async function getStoredTokens(): Promise<TokenData | null> {
+  try {
+    const db = getAdminDb();
+    const doc = await db.collection('settings').doc(TOKEN_DOC_ID).get();
+    if (doc.exists) {
+      return doc.data() as TokenData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting tokens:', error);
+    return null;
+  }
+}
+
+async function storeTokens(tokens: TokenData): Promise<void> {
+  try {
+    const db = getAdminDb();
+    await db.collection('settings').doc(TOKEN_DOC_ID).set(tokens);
+  } catch (error) {
+    console.error('Error storing tokens:', error);
+  }
+}
 
 async function refreshAccessToken(): Promise<string | null> {
+  const tokenData = await getStoredTokens();
   if (!tokenData?.refresh_token) return null;
 
   try {
@@ -33,13 +59,14 @@ async function refreshAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json();
-    tokenData = {
+    const newTokens: TokenData = {
       access_token: data.access_token,
       refresh_token: data.refresh_token || tokenData.refresh_token,
       expires_at: Date.now() + (data.expires_in * 1000),
     };
-
-    return tokenData.access_token;
+    
+    await storeTokens(newTokens);
+    return newTokens.access_token;
   } catch (error) {
     console.error('Token refresh error:', error);
     return null;
@@ -47,6 +74,7 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 async function getValidToken(): Promise<string | null> {
+  const tokenData = await getStoredTokens();
   if (!tokenData) return null;
   
   // Refresh if expiring in next 5 minutes
@@ -113,8 +141,9 @@ export async function GET(request: NextRequest) {
       }
 
       case 'status': {
+        const tokenData = await getStoredTokens();
         return NextResponse.json({ 
-          authenticated: !!tokenData,
+          authenticated: !!tokenData?.access_token,
           expires_at: tokenData?.expires_at,
         });
       }
@@ -260,13 +289,18 @@ export async function POST(request: NextRequest) {
       }
 
       case 'set-token': {
-        // Manual token setting (for development)
         const { access_token, refresh_token, expires_in } = await request.json();
-        tokenData = {
+        await storeTokens({
           access_token,
           refresh_token,
           expires_at: Date.now() + (expires_in * 1000),
-        };
+        });
+        return NextResponse.json({ success: true });
+      }
+
+      case 'logout': {
+        const db = getAdminDb();
+        await db.collection('settings').doc(TOKEN_DOC_ID).delete();
         return NextResponse.json({ success: true });
       }
 
