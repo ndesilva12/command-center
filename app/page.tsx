@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
-import { SpotifyWidget } from "@/components/home/SpotifyWidget";
+
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef } from "react";
@@ -205,50 +205,33 @@ export default function Home() {
         ) : (
         <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
           
-          {/* Hero Section - Time, Spotify & Search */}
+          {/* Hero Section - Time & Search */}
           <div style={{
+            textAlign: "center",
             paddingTop: isMobile ? "20px" : "40px",
             paddingBottom: isMobile ? "24px" : "40px",
           }}>
-            {/* Clock + Spotify Row */}
-            <div style={{
-              display: "flex",
-              flexDirection: isMobile ? "column" : "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: isMobile ? "20px" : "48px",
-              marginBottom: isMobile ? "24px" : "36px",
-            }}>
-              {/* Minimal Clock */}
-              <div style={{ textAlign: "center" }}>
-                <div style={{
-                  fontSize: isMobile ? "56px" : "80px",
-                  fontWeight: 200,
-                  fontFamily: "system-ui, -apple-system, sans-serif",
-                  color: "rgba(255, 255, 255, 0.95)",
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1,
-                }}>
-                  {formatTime(time)}
-                </div>
-                <div style={{
-                  fontSize: isMobile ? "13px" : "15px",
-                  color: "rgba(255, 255, 255, 0.4)",
-                  marginTop: "8px",
-                  fontWeight: 400,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}>
-                  {formatDate(time)}
-                </div>
-              </div>
-
-              {/* Spotify Widget - Desktop only inline, Mobile below */}
-              <div style={{ 
-                width: isMobile ? "100%" : "280px",
-                maxWidth: isMobile ? "320px" : "280px",
+            {/* Minimal Clock */}
+            <div style={{ marginBottom: isMobile ? "24px" : "36px" }}>
+              <div style={{
+                fontSize: isMobile ? "56px" : "80px",
+                fontWeight: 200,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                color: "rgba(255, 255, 255, 0.95)",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
               }}>
-                <SpotifyWidget />
+                {formatTime(time)}
+              </div>
+              <div style={{
+                fontSize: isMobile ? "13px" : "15px",
+                color: "rgba(255, 255, 255, 0.4)",
+                marginTop: "8px",
+                fontWeight: 400,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+              }}>
+                {formatDate(time)}
               </div>
             </div>
 
