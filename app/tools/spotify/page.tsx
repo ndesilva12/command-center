@@ -70,7 +70,7 @@ export default function SpotifyPage() {
   const [recentTracks, setRecentTracks] = useState<Track[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Track[]>([]);
-  const [activeTab, setActiveTab] = useState<'now-playing' | 'playlists' | 'search' | 'recent'>('now-playing');
+  const [activeTab, setActiveTab] = useState<'now-playing' | 'playlists' | 'devices' | 'search' | 'recent'>('now-playing');
   const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
   const [playlistTracks, setPlaylistTracks] = useState<Track[]>([]);
   const [showDevices, setShowDevices] = useState(false);
@@ -328,6 +328,7 @@ export default function SpotifyPage() {
               {[
                 { id: 'now-playing', label: 'Now Playing', icon: Music },
                 { id: 'playlists', label: 'Playlists', icon: ListMusic },
+                { id: 'devices', label: 'Devices', icon: Speaker },
                 { id: 'search', label: 'Search', icon: Search },
                 { id: 'recent', label: 'Recent', icon: Clock },
               ].map(tab => (
@@ -614,6 +615,140 @@ export default function SpotifyPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Devices Tab */}
+            {activeTab === 'devices' && (
+              <div>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px",
+                }}>
+                  <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>Available Devices</h2>
+                  <button
+                    onClick={loadDevices}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "20px",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.05)",
+                      color: "rgba(255,255,255,0.7)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "13px",
+                    }}
+                  >
+                    <RefreshCw style={{ width: "14px", height: "14px" }} />
+                    Refresh
+                  </button>
+                </div>
+                
+                {devices.length === 0 ? (
+                  <div style={{
+                    textAlign: "center",
+                    padding: "60px 20px",
+                    color: "rgba(255,255,255,0.5)",
+                  }}>
+                    <Speaker style={{ width: "48px", height: "48px", marginBottom: "16px", opacity: 0.3 }} />
+                    <p style={{ margin: "0 0 8px 0" }}>No devices found</p>
+                    <p style={{ fontSize: "14px", margin: 0 }}>Open Spotify on a device to see it here</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {devices.map(device => (
+                      <button
+                        key={device.id}
+                        onClick={() => transferPlayback(device.id)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "16px",
+                          padding: "16px 20px",
+                          borderRadius: "12px",
+                          border: device.is_active 
+                            ? "1px solid rgba(29, 185, 84, 0.3)" 
+                            : "1px solid rgba(255,255,255,0.08)",
+                          background: device.is_active 
+                            ? "rgba(29, 185, 84, 0.15)" 
+                            : "rgba(255,255,255,0.03)",
+                          color: "white",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          width: "100%",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        <div style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "12px",
+                          background: device.is_active 
+                            ? "rgba(29, 185, 84, 0.3)" 
+                            : "rgba(255,255,255,0.08)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}>
+                          {device.type === 'Smartphone' ? (
+                            <Smartphone style={{ width: "24px", height: "24px", color: device.is_active ? "#1DB954" : "rgba(255,255,255,0.6)" }} />
+                          ) : (
+                            <Speaker style={{ width: "24px", height: "24px", color: device.is_active ? "#1DB954" : "rgba(255,255,255,0.6)" }} />
+                          )}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ 
+                            fontWeight: 600, 
+                            fontSize: "16px",
+                            color: device.is_active ? "#1DB954" : "white",
+                          }}>
+                            {device.name}
+                          </div>
+                          <div style={{ 
+                            fontSize: "13px", 
+                            color: "rgba(255,255,255,0.5)",
+                            marginTop: "2px",
+                          }}>
+                            {device.type} {device.is_active && "• Currently playing"}
+                          </div>
+                        </div>
+                        {device.is_active && (
+                          <div style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            color: "rgba(255,255,255,0.5)",
+                            fontSize: "13px",
+                          }}>
+                            <Volume2 style={{ width: "16px", height: "16px" }} />
+                            {device.volume_percent}%
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{
+                  marginTop: "32px",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: "13px", 
+                    color: "rgba(255,255,255,0.5)",
+                    lineHeight: 1.5,
+                  }}>
+                    💡 <strong>Tip:</strong> To see a device here, open Spotify on that device. Click a device to transfer playback to it.
+                  </p>
+                </div>
               </div>
             )}
 

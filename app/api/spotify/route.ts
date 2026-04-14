@@ -164,9 +164,22 @@ export async function GET(request: NextRequest) {
       }
 
       case 'playlists': {
-        const limit = searchParams.get('limit') || '50';
-        const data = await spotifyApi(`/me/playlists?limit=${limit}`);
-        return NextResponse.json(data);
+        // Fetch all playlists with pagination
+        const allPlaylists: any[] = [];
+        let offset = 0;
+        const limit = 50;
+        let total = 0;
+        
+        do {
+          const data = await spotifyApi(`/me/playlists?limit=${limit}&offset=${offset}`);
+          if (data?.items) {
+            allPlaylists.push(...data.items);
+            total = data.total || 0;
+          }
+          offset += limit;
+        } while (offset < total && offset < 500); // Cap at 500 to prevent infinite loops
+        
+        return NextResponse.json({ items: allPlaylists, total: allPlaylists.length });
       }
 
       case 'playlist': {
