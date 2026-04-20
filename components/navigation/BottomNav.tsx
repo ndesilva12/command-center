@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
-import { Home, Sparkles, Mail, Grid3X3, Calendar } from "lucide-react";
+import { Home, BookOpen, Mail, Grid3X3, Calendar } from "lucide-react";
 import { ToolGridOverlay } from "@/components/mobile/ToolGridOverlay";
 
 export function BottomNav() {
@@ -45,7 +45,7 @@ export function BottomNav() {
         <NavItem href="/" icon={Home} label="Home" active={isActive("/")} />
         <NavItem href="/tools/emails" icon={Mail} label="Email" active={isActive("/tools/emails")} />
         <NavItem href="/tools/calendar" icon={Calendar} label="Calendar" active={isActive("/tools/calendar")} />
-        <NavItem href="/jimmy" icon={Sparkles} label="Jimmy" active={isActive("/jimmy")} />
+        <NavItem href="/tools/read" icon={BookOpen} label="Content" active={isActive("/tools/read")} />
         <button
           onClick={(e) => {
             e.preventDefault();
