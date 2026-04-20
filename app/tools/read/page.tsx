@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search, Plus, Trash2 } from "lucide-react";
+import { BookOpen, RefreshCw, Settings, ExternalLink, Calendar, User, X, Search, Plus, Trash2, ChevronDown, List } from "lucide-react";
 import { TopNav } from "@/components/navigation/TopNav";
 import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
@@ -80,6 +80,7 @@ export default function ReadPage() {
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [refreshResult, setRefreshResult] = useState<{ show: boolean; message: string; success: boolean }>({ show: false, message: '', success: false });
+  const [mobileShowSources, setMobileShowSources] = useState(true); // Start with sources visible on mobile
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -132,8 +133,12 @@ export default function ReadPage() {
   useEffect(() => {
     if (selectedFeedId) {
       loadEntries(selectedFeedId);
+      // Auto-collapse sources on mobile when a feed is selected
+      if (isMobile) {
+        setMobileShowSources(false);
+      }
     }
-  }, [selectedFeedId]);
+  }, [selectedFeedId, isMobile]);
 
   const loadFeeds = async () => {
     try {
@@ -391,17 +396,18 @@ export default function ReadPage() {
           display: "flex", 
           flexDirection: isMobile ? "column" : "row",
           gap: "12px",
-          height: isMobile ? "auto" : "calc(100vh - 84px)",
+          height: isMobile ? "calc(100vh - 144px)" : "calc(100vh - 84px)",
         }}>
           {/* Left Panel: Sources */}
           <div style={{ 
             width: isMobile ? "100%" : "280px",
             minWidth: isMobile ? "100%" : "280px",
-            display: "flex",
+            display: isMobile && !mobileShowSources ? "none" : "flex",
             flexDirection: "column",
             gap: "10px",
-            height: isMobile ? "auto" : "100%",
-            overflow: isMobile ? "visible" : "auto",
+            height: isMobile ? (mobileShowSources ? "100%" : "0") : "100%",
+            overflow: isMobile ? "auto" : "auto",
+            flex: isMobile && mobileShowSources ? 1 : undefined,
           }}>
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 4px" }}>
@@ -469,7 +475,7 @@ export default function ReadPage() {
             </div>
 
             {/* All Sources - Single Scrollable Section */}
-            <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto", minHeight: isMobile ? "300px" : "0" }}>
+            <div className="glass card" style={{ padding: "12px", flex: 1, overflow: "auto", minHeight: "0" }}>
               {/* Quick Access */}
               <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 Quick Access
@@ -478,7 +484,10 @@ export default function ReadPage() {
                 {topFeedObjs.map(feed => (
                   <button
                     key={feed.id}
-                    onClick={() => setSelectedFeedId(feed.id)}
+                    onClick={() => {
+                      setSelectedFeedId(feed.id);
+                      if (isMobile) setMobileShowSources(false);
+                    }}
                     style={{
                       padding: "10px 12px",
                       borderRadius: "6px",
@@ -596,7 +605,10 @@ export default function ReadPage() {
                       {feeds.map(feed => (
                         <button
                           key={feed.id}
-                          onClick={() => setSelectedFeedId(feed.id)}
+                          onClick={() => {
+                            setSelectedFeedId(feed.id);
+                            if (isMobile) setMobileShowSources(false);
+                          }}
                           style={{
                             padding: "8px 10px",
                             borderRadius: "6px",
@@ -628,32 +640,50 @@ export default function ReadPage() {
           <div style={{ 
             flex: 1,
             minWidth: 0,
-            height: isMobile ? "auto" : "100%",
-            overflow: isMobile ? "visible" : "auto",
-            display: "flex",
+            height: isMobile ? "100%" : "100%",
+            overflow: "auto",
+            display: isMobile && mobileShowSources ? "none" : "flex",
             flexDirection: "column",
           }}>
-            {/* Current Feed Header */}
+            {/* Current Feed Header - Mobile: Clickable to show sources */}
             {currentFeed && (
-              <div style={{
-                padding: "12px 16px",
-                background: `${toolCustom.color}10`,
-                borderRadius: "10px",
-                border: `1px solid ${toolCustom.color}20`,
-                marginBottom: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}>
-                <div>
-                  <div style={{ fontSize: "16px", fontWeight: 700, color: toolCustom.color, marginBottom: "2px" }}>
-                    {currentFeed.title}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
-                    {currentFeed.category} • {entries.length} articles
+              <div 
+                onClick={isMobile ? () => setMobileShowSources(true) : undefined}
+                style={{
+                  padding: "12px 16px",
+                  background: `${toolCustom.color}10`,
+                  borderRadius: "10px",
+                  border: `1px solid ${toolCustom.color}20`,
+                  marginBottom: "12px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  cursor: isMobile ? "pointer" : "default",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {isMobile && (
+                    <div style={{
+                      padding: "6px",
+                      borderRadius: "6px",
+                      backgroundColor: `${toolCustom.color}20`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                      <List style={{ width: "16px", height: "16px", color: toolCustom.color }} />
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize: "16px", fontWeight: 700, color: toolCustom.color, marginBottom: "2px" }}>
+                      {currentFeed.title}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--foreground-muted)" }}>
+                      {isMobile ? "Tap to change source" : `${currentFeed.category} • ${entries.length} articles`}
+                    </div>
                   </div>
                 </div>
-                {currentFeed.site_url && (
+                {!isMobile && currentFeed.site_url && (
                   <a
                     href={currentFeed.site_url}
                     target="_blank"
@@ -670,10 +700,14 @@ export default function ReadPage() {
                       fontSize: "12px",
                       fontWeight: 500,
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <ExternalLink style={{ width: "12px", height: "12px" }} />
                     Visit
                   </a>
+                )}
+                {isMobile && (
+                  <ChevronDown style={{ width: "20px", height: "20px", color: toolCustom.color }} />
                 )}
               </div>
             )}
