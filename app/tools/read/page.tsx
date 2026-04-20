@@ -78,6 +78,8 @@ export default function ReadPage() {
   const [feedError, setFeedError] = useState<string | null>(null);
   const [deletingFeedId, setDeletingFeedId] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; title: string } | null>(null);
+  const [refreshingAll, setRefreshingAll] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<{ show: boolean; message: string; success: boolean }>({ show: false, message: '', success: false });
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -140,6 +142,30 @@ export default function ReadPage() {
       setAllFeeds(data.feeds || []);
     } catch (err) {
       console.error("Failed to load feeds:", err);
+    }
+  };
+
+  const handleForceRefreshAll = async () => {
+    setRefreshingAll(true);
+    setRefreshResult({ show: false, message: '', success: false });
+    try {
+      const res = await fetch('/api/miniflux?action=refresh-all', { method: 'PUT' });
+      const data = await res.json();
+      if (data.success) {
+        setRefreshResult({ show: true, message: data.message, success: true });
+        // Reload current feed entries
+        if (selectedFeedId) {
+          await loadEntries(selectedFeedId);
+        }
+      } else {
+        setRefreshResult({ show: true, message: data.error || 'Failed to refresh', success: false });
+      }
+    } catch (err) {
+      setRefreshResult({ show: true, message: 'Failed to refresh feeds', success: false });
+    } finally {
+      setRefreshingAll(false);
+      // Auto-hide success message after 4 seconds
+      setTimeout(() => setRefreshResult(r => ({ ...r, show: false })), 4000);
     }
   };
 
@@ -404,6 +430,7 @@ export default function ReadPage() {
                 <button
                   onClick={() => loadEntries(selectedFeedId)}
                   disabled={loading}
+                  title="Refresh current feed"
                   style={{
                     padding: "6px",
                     borderRadius: "6px",
@@ -415,6 +442,28 @@ export default function ReadPage() {
                   }}
                 >
                   <RefreshCw style={{ width: "14px", height: "14px" }} />
+                </button>
+                <button
+                  onClick={handleForceRefreshAll}
+                  disabled={refreshingAll}
+                  title="Force refresh all stale feeds"
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    backgroundColor: refreshingAll ? "rgba(255, 255, 255, 0.05)" : `${toolCustom.color}20`,
+                    color: refreshingAll ? "var(--foreground-muted)" : toolCustom.color,
+                    border: `1px solid ${refreshingAll ? 'transparent' : toolCustom.color + '40'}`,
+                    cursor: refreshingAll ? "not-allowed" : "pointer",
+                    opacity: refreshingAll ? 0.6 : 1,
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <RefreshCw style={{ width: "12px", height: "12px", animation: refreshingAll ? "spin 1s linear infinite" : "none" }} />
+                  {refreshingAll ? "Refreshing..." : "Fix Stale"}
                 </button>
               </div>
             </div>
@@ -1160,6 +1209,31 @@ export default function ReadPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Refresh Result Toast */}
+      {refreshResult.show && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "100px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            background: refreshResult.success ? "rgba(34, 197, 94, 0.95)" : "rgba(239, 68, 68, 0.95)",
+            color: "white",
+            fontSize: "14px",
+            fontWeight: 600,
+            zIndex: 10000,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          {refreshResult.success ? "✓" : "✕"} {refreshResult.message}
         </div>
       )}
 

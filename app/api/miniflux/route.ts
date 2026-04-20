@@ -174,6 +174,74 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Force refresh stale feeds
+export async function PUT(request: NextRequest) {
+  try {
+    if (!MINIFLUX_API_KEY) {
+      return NextResponse.json({ error: 'Miniflux API key not configured' }, { status: 500 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+
+    if (action === 'refresh-all') {
+      // Fetch all feeds
+      const feedsResponse = await fetch(`${MINIFLUX_BASE_URL}/v1/feeds`, {
+        headers: { 'X-Auth-Token': MINIFLUX_API_KEY },
+      });
+
+      if (!feedsResponse.ok) {
+        return NextResponse.json({ error: 'Failed to fetch feeds' }, { status: feedsResponse.status });
+      }
+
+      const feeds = await feedsResponse.json();
+      const now = Date.now();
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+      // Find stale feeds (error count > 0 or not checked in 24h)
+      const staleFeeds = feeds.filter((f: any) => 
+        f.parsing_error_count > 0 || new Date(f.checked_at).getTime() < oneDayAgo
+      );
+
+      // Refresh each stale feed
+      let refreshed = 0;
+      let failed = 0;
+      for (const feed of staleFeeds) {
+        try {
+          const refreshResponse = await fetch(`${MINIFLUX_BASE_URL}/v1/feeds/${feed.id}/refresh`, {
+            method: 'PUT',
+            headers: { 'X-Auth-Token': MINIFLUX_API_KEY },
+          });
+          if (refreshResponse.ok || refreshResponse.status === 204) {
+            refreshed++;
+          } else {
+            failed++;
+          }
+        } catch {
+          failed++;
+        }
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        total: staleFeeds.length,
+        refreshed,
+        failed,
+        message: `Refreshed ${refreshed} of ${staleFeeds.length} stale feeds`
+      });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+
+  } catch (error) {
+    console.error('Miniflux refresh error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
 // Delete a feed
 export async function DELETE(request: NextRequest) {
   try {
