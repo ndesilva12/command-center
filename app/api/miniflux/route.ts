@@ -3,6 +3,24 @@ import { NextRequest, NextResponse } from 'next/server';
 const MINIFLUX_BASE_URL = process.env.MINIFLUX_BASE_URL || 'http://localhost:8080';
 const MINIFLUX_API_KEY = process.env.MINIFLUX_API_KEY || '';
 
+// Decode HTML entities (&#x27; -> ', &amp; -> &, etc.)
+function decodeHtmlEntities(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x22;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+}
+
 // Extract base URL from feed URL (protocol + hostname)
 function getBaseUrl(url: string): string {
   try {
@@ -75,13 +93,13 @@ export async function GET(request: NextRequest) {
 
       const data = await response.json();
       
-      // Transform entries to simpler format
+      // Transform entries to simpler format (decode HTML entities)
       const entries = data.entries?.map((entry: any) => ({
         id: entry.id,
-        title: entry.title,
+        title: decodeHtmlEntities(entry.title),
         url: entry.url,
         content: entry.content || '',
-        author: entry.author || '',
+        author: decodeHtmlEntities(entry.author || ''),
         published_at: entry.published_at,
         feed_id: entry.feed_id,
       })) || [];
