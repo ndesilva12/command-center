@@ -7,28 +7,25 @@ interface QuickLink {
   id: string;
   name: string;
   url: string;
-  icon?: string;
 }
 
 const DEFAULT_QUICK_LINKS: QuickLink[] = [
-  { id: "spotify", name: "Spotify", url: "https://open.spotify.com", icon: "🎵" },
-  { id: "claude", name: "Claude", url: "https://claude.ai", icon: "🤖" },
-  { id: "grok", name: "Grok", url: "https://grok.com", icon: "⚡" },
-  { id: "gemini", name: "Gemini", url: "https://gemini.google.com", icon: "✨" },
-  { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com", icon: "💬" },
+  { id: "spotify", name: "Spotify", url: "https://open.spotify.com" },
+  { id: "claude", name: "Claude", url: "https://claude.ai" },
+  { id: "grok", name: "Grok", url: "https://grok.com" },
+  { id: "gemini", name: "Gemini", url: "https://gemini.google.com" },
+  { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com" },
 ];
 
 const STORAGE_KEY = "cc-quick-links";
-
-const EMOJI_SUGGESTIONS = ["🔗", "🌐", "📱", "💻", "🎮", "📧", "📝", "🎵", "🎬", "📚", "💼", "🛒", "🏠", "⭐", "🔥", "💡", "🚀", "🎯", "💬", "🤖", "✨", "⚡"];
 
 export function QuickLinksSettings() {
   const [links, setLinks] = useState<QuickLink[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", url: "", icon: "" });
+  const [editForm, setEditForm] = useState({ name: "", url: "" });
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newLink, setNewLink] = useState({ name: "", url: "", icon: "🔗" });
+  const [newLink, setNewLink] = useState({ name: "", url: "" });
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,11 +59,10 @@ export function QuickLinksSettings() {
       id: `link-${Date.now()}`,
       name: newLink.name.trim(),
       url,
-      icon: newLink.icon || "🔗",
     };
     
     saveLinks([...links, link]);
-    setNewLink({ name: "", url: "", icon: "🔗" });
+    setNewLink({ name: "", url: "" });
     setShowAddForm(false);
   };
 
@@ -76,12 +72,12 @@ export function QuickLinksSettings() {
 
   const startEdit = (link: QuickLink) => {
     setEditingId(link.id);
-    setEditForm({ name: link.name, url: link.url, icon: link.icon || "" });
+    setEditForm({ name: link.name, url: link.url });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ name: "", url: "", icon: "" });
+    setEditForm({ name: "", url: "" });
   };
 
   const saveEdit = () => {
@@ -94,7 +90,7 @@ export function QuickLinksSettings() {
 
     saveLinks(links.map(l => 
       l.id === editingId 
-        ? { ...l, name: editForm.name.trim(), url, icon: editForm.icon || "🔗" }
+        ? { ...l, name: editForm.name.trim(), url }
         : l
     ));
     cancelEdit();
@@ -224,39 +220,21 @@ export function QuickLinksSettings() {
             {editingId === link.id ? (
               /* Edit Mode */
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  <input
-                    type="text"
-                    value={editForm.icon}
-                    onChange={(e) => setEditForm({ ...editForm, icon: e.target.value })}
-                    placeholder="🔗"
-                    style={{
-                      width: "48px",
-                      padding: "8px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      background: "rgba(0, 0, 0, 0.3)",
-                      color: "var(--foreground)",
-                      fontSize: "18px",
-                      textAlign: "center",
-                    }}
-                  />
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    placeholder="Name"
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      background: "rgba(0, 0, 0, 0.3)",
-                      color: "var(--foreground)",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  placeholder="Name"
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    background: "rgba(0, 0, 0, 0.3)",
+                    color: "var(--foreground)",
+                    fontSize: "14px",
+                  }}
+                />
                 <input
                   type="text"
                   value={editForm.url}
@@ -264,7 +242,7 @@ export function QuickLinksSettings() {
                   placeholder="https://example.com"
                   style={{
                     width: "100%",
-                    padding: "8px 12px",
+                    padding: "10px 14px",
                     borderRadius: "8px",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
                     background: "rgba(0, 0, 0, 0.3)",
@@ -276,7 +254,7 @@ export function QuickLinksSettings() {
                   <button
                     onClick={cancelEdit}
                     style={{
-                      padding: "6px 12px",
+                      padding: "8px 14px",
                       borderRadius: "6px",
                       border: "1px solid rgba(255, 255, 255, 0.1)",
                       background: "transparent",
@@ -294,7 +272,7 @@ export function QuickLinksSettings() {
                   <button
                     onClick={saveEdit}
                     style={{
-                      padding: "6px 12px",
+                      padding: "8px 14px",
                       borderRadius: "6px",
                       border: "none",
                       background: "#00aaff",
@@ -315,7 +293,6 @@ export function QuickLinksSettings() {
             ) : (
               /* Display Mode */
               <>
-                <span style={{ fontSize: "20px", flexShrink: 0 }}>{link.icon || "🔗"}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: "14px",
@@ -430,47 +407,14 @@ export function QuickLinksSettings() {
             Add New Link
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <input
-                type="text"
-                value={newLink.icon}
-                onChange={(e) => setNewLink({ ...newLink, icon: e.target.value })}
-                placeholder="🔗"
-                style={{
-                  width: "48px",
-                  padding: "10px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  color: "var(--foreground)",
-                  fontSize: "18px",
-                  textAlign: "center",
-                }}
-              />
-              <input
-                type="text"
-                value={newLink.name}
-                onChange={(e) => setNewLink({ ...newLink, name: e.target.value })}
-                placeholder="Link Name"
-                style={{
-                  flex: 1,
-                  padding: "10px 14px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  background: "rgba(0, 0, 0, 0.3)",
-                  color: "var(--foreground)",
-                  fontSize: "14px",
-                }}
-              />
-            </div>
             <input
               type="text"
-              value={newLink.url}
-              onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-              placeholder="https://example.com"
+              value={newLink.name}
+              onChange={(e) => setNewLink({ ...newLink, name: e.target.value })}
+              placeholder="Link Name"
               style={{
                 width: "100%",
-                padding: "10px 14px",
+                padding: "12px 14px",
                 borderRadius: "8px",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
                 background: "rgba(0, 0, 0, 0.3)",
@@ -478,37 +422,26 @@ export function QuickLinksSettings() {
                 fontSize: "14px",
               }}
             />
-            <div style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "6px",
-              padding: "8px 0",
-            }}>
-              {EMOJI_SUGGESTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setNewLink({ ...newLink, icon: emoji })}
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "6px",
-                    border: newLink.icon === emoji ? "2px solid #00aaff" : "1px solid rgba(255, 255, 255, 0.1)",
-                    background: newLink.icon === emoji ? "rgba(0, 170, 255, 0.1)" : "transparent",
-                    fontSize: "16px",
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+            <input
+              type="text"
+              value={newLink.url}
+              onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+              placeholder="https://example.com"
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                background: "rgba(0, 0, 0, 0.3)",
+                color: "var(--foreground)",
+                fontSize: "14px",
+              }}
+            />
+            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "4px" }}>
               <button
                 onClick={() => {
                   setShowAddForm(false);
-                  setNewLink({ name: "", url: "", icon: "🔗" });
+                  setNewLink({ name: "", url: "" });
                 }}
                 style={{
                   padding: "10px 16px",

@@ -1,22 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ExternalLink } from "lucide-react";
 
 export interface QuickLink {
   id: string;
   name: string;
   url: string;
-  icon?: string; // emoji or icon identifier
 }
 
 // Default quick links
 const DEFAULT_QUICK_LINKS: QuickLink[] = [
-  { id: "spotify", name: "Spotify", url: "https://open.spotify.com", icon: "🎵" },
-  { id: "claude", name: "Claude", url: "https://claude.ai", icon: "🤖" },
-  { id: "grok", name: "Grok", url: "https://grok.com", icon: "⚡" },
-  { id: "gemini", name: "Gemini", url: "https://gemini.google.com", icon: "✨" },
-  { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com", icon: "💬" },
+  { id: "spotify", name: "Spotify", url: "https://open.spotify.com" },
+  { id: "claude", name: "Claude", url: "https://claude.ai" },
+  { id: "grok", name: "Grok", url: "https://grok.com" },
+  { id: "gemini", name: "Gemini", url: "https://gemini.google.com" },
+  { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com" },
 ];
 
 const STORAGE_KEY = "cc-quick-links";
@@ -96,31 +94,22 @@ export function QuickLinks({ isMobile = false }: QuickLinksProps) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: isMobile ? "10px 16px" : "12px 20px",
-            borderRadius: "16px",
-            background: "rgba(255, 255, 255, 0.03)",
+            padding: isMobile ? "10px 18px" : "11px 22px",
+            borderRadius: "20px",
+            background: "rgba(255, 255, 255, 0.04)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            color: "rgba(255, 255, 255, 0.85)",
+            color: "rgba(255, 255, 255, 0.75)",
             textDecoration: "none",
             fontSize: isMobile ? "13px" : "14px",
             fontWeight: 500,
+            letterSpacing: "0.01em",
             transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
           }}
         >
-          {link.icon && (
-            <span style={{ fontSize: isMobile ? "16px" : "18px" }}>{link.icon}</span>
-          )}
-          <span>{link.name}</span>
-          <ExternalLink style={{
-            width: "12px",
-            height: "12px",
-            opacity: 0.4,
-            marginLeft: "2px",
-          }} />
+          {link.name}
         </a>
       ))}
 
