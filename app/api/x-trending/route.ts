@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { getXAccessToken } from "@/lib/x-auth";
 
 export interface TrendingTopic {
   topic: string;
   description?: string;
   searchUrl: string;
+  source?: string;
 }
 
 // In-memory cache with 5-minute TTL
@@ -49,6 +51,21 @@ export async function GET() {
         source: "cache",
         cached: true 
       });
+    }
+
+    // Try authenticated X API first (for personalized content)
+    try {
+      const accessToken = await getXAccessToken();
+      if (accessToken) {
+        const xApiTopics = await fetchFromXApi(accessToken);
+        if (xApiTopics.length > 0) {
+          cachedTopics = xApiTopics;
+          cacheTimestamp = now;
+          return NextResponse.json({ topics: xApiTopics, source: "x-api-authenticated" });
+        }
+      }
+    } catch (e) {
+      console.error("X API auth failed, falling back to scraping:", e);
     }
 
     // Try scraping methods in parallel with Promise.race for first success
@@ -298,6 +315,97 @@ function parseTrendsFromGetdaytrends(html: string): TrendingTopic[] {
         });
       }
     }
+  }
+
+  return topics;
+}
+
+// Fetch trends from authenticated X API
+async function fetchFromXApi(accessToken: string): Promise<TrendingTopic[]> {
+  const topics: TrendingTopic[] = [];
+
+  try {
+    // Get trends for US (WOEID 23424977)
+    // Note: Trends endpoint requires elevated access, try timeline-based approach first
+    
+    // Approach 1: Try to get user's home timeline and extract trending topics
+    const timelineResponse = await fetch(
+      'https://api.twitter.com/2/users/me/timelines/reverse_chronological?max_results=50&tweet.fields=entities,context_annotations',
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+
+    if (timelineResponse.ok) {
+      const timelineData = await timelineResponse.json();
+      const hashtags = new Map<string, number>();
+      
+      // Extract hashtags from timeline tweets
+      for (const tweet of timelineData.data || []) {
+        if (tweet.entities?.hashtags) {
+          for (const tag of tweet.entities.hashtags) {
+            const count = hashtags.get(tag.tag) || 0;
+            hashtags.set(tag.tag, count + 1);
+          }
+        }
+        // Also extract from context annotations (topics)
+        if (tweet.context_annotations) {
+          for (const annotation of tweet.context_annotations) {
+            if (annotation.entity?.name) {
+              const count = hashtags.get(annotation.entity.name) || 0;
+              hashtags.set(annotation.entity.name, count + 1);
+            }
+          }
+        }
+      }
+
+      // Sort by frequency and take top 15
+      const sortedTags = [...hashtags.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15);
+
+      for (const [tag] of sortedTags) {
+        topics.push({
+          topic: tag.startsWith('#') ? tag : `#${tag}`,
+          searchUrl: `https://x.com/search?q=${encodeURIComponent(tag)}`,
+          source: 'x-api-timeline',
+        });
+      }
+    }
+
+    // Approach 2: If we have elevated access, try the trends endpoint
+    if (topics.length < 5) {
+      const trendsResponse = await fetch(
+        'https://api.twitter.com/1.1/trends/place.json?id=23424977', // US WOEID
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+
+      if (trendsResponse.ok) {
+        const trendsData = await trendsResponse.json();
+        const trends = trendsData[0]?.trends || [];
+        
+        for (const trend of trends.slice(0, 15)) {
+          if (!topics.some(t => t.topic.toLowerCase() === trend.name.toLowerCase())) {
+            topics.push({
+              topic: trend.name,
+              description: trend.tweet_volume ? `${trend.tweet_volume.toLocaleString()} posts` : undefined,
+              searchUrl: trend.url || `https://x.com/search?q=${encodeURIComponent(trend.name)}`,
+              source: 'x-api-trends',
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('X API fetch error:', error);
   }
 
   return topics;
