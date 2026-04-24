@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const XAI_API_KEY = process.env.XAI_API_KEY;
 
 export interface DeepSearchReport {
   topic: string;
@@ -21,18 +21,6 @@ export interface DeepSearchReport {
   podcastReferences: { title: string; episode: string; timestamp?: string; summary: string; url: string }[];
   links?: { title: string; url: string; type: string }[];
   timestamp: number;
-}
-
-interface GroundingChunk {
-  web?: {
-    uri: string;
-    title: string;
-  };
-}
-
-interface GroundingMetadata {
-  groundingChunks?: GroundingChunk[];
-  webSearchQueries?: string[];
 }
 
 const DEEP_SEARCH_SYSTEM_PROMPT = `You are an elite research analyst writing for EXPERTS who are already deeply familiar with the topic. Your audience has PhD-level understanding of the basics - they don't need introductions or fundamentals explained.
@@ -72,6 +60,9 @@ REPORT STRUCTURE - You MUST respond with valid JSON in this exact format:
   ],
   "podcastReferences": [
     {"title": "Podcast Name", "episode": "Episode title or number", "timestamp": "1:23:45 (optional)", "summary": "What expert insight or nuanced discussion occurred - focus on what most people don't know", "url": "https://..."}
+  ],
+  "links": [
+    {"title": "Source title", "url": "https://...", "type": "article|video|document|academic|social|podcast"}
   ]
 }
 
@@ -86,9 +77,10 @@ SECTION TOPICS TO COVER (adapt to the topic):
 8. Insider Perspectives - What practitioners/insiders know that outsiders don't
 
 CRITICAL - USE SEARCH RESULTS:
-- You have access to Google Search. Use the search results provided to include REAL URLs.
+- You have access to live web search. Use it to find REAL URLs.
 - Reference the actual URLs from search results in your content.
 - Include a mix of academic and expert sources found in search results.
+- Add all relevant URLs to the "links" array in your response.
 
 SOCIAL MEDIA HIGHLIGHTS (CRITICAL):
 - Include 3-5 tweets/posts from genuine experts, industry insiders, or practitioners
@@ -106,32 +98,10 @@ PODCAST REFERENCES (CRITICAL):
 
 Write for someone who will be BORED by basics and DELIGHTED by nuance. Every sentence should teach them something they didn't know or make them see something familiar in a new light.`;
 
-function getLinkType(url: string, title: string): string {
-  const lowerUrl = url.toLowerCase();
-  const lowerTitle = title.toLowerCase();
-
-  if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
-    return 'video';
-  }
-  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
-    return 'social';
-  }
-  if (lowerUrl.includes('spotify.com') || lowerUrl.includes('podcasts.apple.com') || lowerTitle.includes('podcast')) {
-    return 'podcast';
-  }
-  if (lowerUrl.includes('.pdf') || lowerUrl.includes('arxiv') || lowerUrl.includes('doi.org')) {
-    return 'document';
-  }
-  if (lowerUrl.includes('jstor') || lowerUrl.includes('pubmed') || lowerUrl.includes('scholar.google')) {
-    return 'academic';
-  }
-  return 'article';
-}
-
 export async function POST(request: NextRequest) {
-  if (!GEMINI_API_KEY) {
+  if (!XAI_API_KEY) {
     return NextResponse.json(
-      { error: "Gemini API key not configured" },
+      { error: "xAI API key not configured" },
       { status: 503 }
     );
   }
@@ -159,85 +129,51 @@ Remember:
 4. Include counterintuitive findings and ongoing expert debates
 5. Every section should teach something most educated people don't know
 6. Be specific - name names, cite mechanisms, explain dynamics
-7. Include references to academic sources, expert content, and primary documents from search results
+7. Use your live web search to find real sources and include their URLs in the "links" array
 8. CRITICAL: Include 3-5 social media highlights from experts/insiders sharing nuanced insights
 9. CRITICAL: Include 2-4 podcast references where experts discuss this topic in depth
 10. CRITICAL: Include a "keyTakeaways" array with 5-8 actionable/memorable takeaways
 
 Respond with valid JSON only. No markdown formatting around the JSON.`;
 
-    // Call Gemini API with grounding (with retry for rate limits)
-    const MAX_RETRIES = 3;
-    let response: Response | null = null;
-    let lastError = '';
+    // Call xAI/Grok API with live search enabled
+    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${XAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "grok-3-latest",
+        messages: [
+          { role: "system", content: DEEP_SEARCH_SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+        search: true, // Enable live web search
+        temperature: 0.7,
+        max_tokens: 16000,
+      }),
+    });
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      if (attempt > 0) {
-        // Exponential backoff: 2s, 4s, 8s
-        const delay = Math.pow(2, attempt) * 1000;
-        console.log(`Gemini rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: `${DEEP_SEARCH_SYSTEM_PROMPT}\n\n${userPrompt}` }],
-              },
-            ],
-            tools: [
-              {
-                google_search: {},
-              },
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 8000,
-            },
-          }),
-        }
-      );
-
-      if (response.ok) {
-        break;
-      }
-
-      if (response.status === 429) {
-        lastError = 'Rate limited by Gemini API';
-        continue; // Retry on rate limit
-      }
-
-      // Non-rate-limit error, don't retry
+    if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
+      console.error("xAI API error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return NextResponse.json(
+          { error: "Rate limited. Please try again in a moment." },
+          { status: 429 }
+        );
+      }
+      
       return NextResponse.json(
         { error: `AI service error: ${response.status}` },
         { status: 500 }
       );
     }
 
-    if (!response || !response.ok) {
-      console.error("Gemini API exhausted retries:", lastError);
-      return NextResponse.json(
-        { error: "AI service temporarily unavailable (rate limited). Please try again in a minute." },
-        { status: 429 }
-      );
-    }
-
     const data = await response.json();
-
-    // Extract content and grounding metadata
-    const candidate = data.candidates?.[0];
-    let content = candidate?.content?.parts?.[0]?.text || "";
-    const groundingMetadata: GroundingMetadata = candidate?.groundingMetadata || {};
+    let content = data.choices?.[0]?.message?.content || "";
 
     if (!content) {
       return NextResponse.json(
@@ -246,21 +182,7 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
       );
     }
 
-    // Extract real URLs from grounding metadata
-    const groundedLinks: { title: string; url: string; type: string }[] = [];
-    if (groundingMetadata.groundingChunks) {
-      for (const chunk of groundingMetadata.groundingChunks) {
-        if (chunk.web?.uri && chunk.web?.title) {
-          groundedLinks.push({
-            title: chunk.web.title,
-            url: chunk.web.uri,
-            type: getLinkType(chunk.web.uri, chunk.web.title),
-          });
-        }
-      }
-    }
-
-    console.log(`Deep Search: Found ${groundedLinks.length} grounded links from Google Search`);
+    console.log(`Deep Search via Grok: Got response for "${query.trim().substring(0, 50)}..."`);
 
     // Strip markdown code blocks if present
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -273,7 +195,7 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
     try {
       report = JSON.parse(content.trim());
     } catch (parseError) {
-      console.error("Failed to parse JSON response:", content);
+      console.error("Failed to parse JSON response:", content.substring(0, 500));
       return NextResponse.json({
         report: {
           topic: query,
@@ -283,15 +205,16 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
           counterintuitiveInsights: [],
           expertDebates: [],
           underreportedAngles: [],
+          keyTakeaways: [],
           socialMediaHighlights: [],
           podcastReferences: [],
-          links: groundedLinks,
+          links: [],
           timestamp: Date.now(),
         },
       });
     }
 
-    // Build full report with grounded links
+    // Build full report
     const fullReport: DeepSearchReport = {
       topic: query,
       briefOverview: report.briefOverview || "",
@@ -303,7 +226,7 @@ Respond with valid JSON only. No markdown formatting around the JSON.`;
       keyTakeaways: report.keyTakeaways || [],
       socialMediaHighlights: report.socialMediaHighlights || [],
       podcastReferences: report.podcastReferences || [],
-      links: groundedLinks, // Use verified grounded links
+      links: report.links || [],
       timestamp: Date.now(),
     };
 

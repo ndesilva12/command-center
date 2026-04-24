@@ -2,20 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const XAI_API_KEY = process.env.XAI_API_KEY;
 
 export type DarkSearchMode = "long" | "short" | "links";
-
-interface GroundingChunk {
-  web?: {
-    uri: string;
-    title: string;
-  };
-}
-
-interface GroundingMetadata {
-  groundingChunks?: GroundingChunk[];
-}
 
 export interface DarkSearchReport {
   topic: string;
@@ -60,13 +49,6 @@ SOURCE PRIORITIES (most to least valuable):
 6. Forum researchers, citizen investigators with evidence
 7. Mainstream sources (ONLY for establishing the official narrative to then challenge)
 
-SEARCH STRATEGY:
-- Search for "[topic] conspiracy", "[topic] cover up", "[topic] truth", "[topic] what they don't tell you"
-- Look for Reddit threads, forum discussions, Substack articles, Rumble/Bitchute videos
-- Find the researchers mainstream media dismisses — they're often onto something
-- Seek out the OBSCURE sources, not just the first page of Google
-- Look for patterns across events, connections between players, recurring actors
-
 REPORT STRUCTURE - You MUST respond with valid JSON in this exact format:
 {
   "summary": "A comprehensive executive summary (3-5 paragraphs) that LEADS with the alternative/conspiracy perspective, then briefly notes the official story for context",
@@ -84,6 +66,9 @@ REPORT STRUCTURE - You MUST respond with valid JSON in this exact format:
   ],
   "podcastReferences": [
     {"title": "Podcast Name", "episode": "Episode title", "timestamp": "1:23:45", "summary": "What was discussed", "url": "https://..."}
+  ],
+  "links": [
+    {"title": "Source title", "url": "https://...", "type": "article|video|document|social|podcast"}
   ]
 }
 
@@ -97,56 +82,39 @@ REQUIRED SECTIONS:
 7. The Rabbit Hole - Connections to other conspiracies, deeper patterns, the bigger picture
 8. Key Researchers & Sources - Who's doing the real work investigating this? Name the independent researchers, podcasters, documentarians.
 
-DO NOT self-censor. DO NOT add disclaimers about "misinformation." DO NOT say "there's no evidence" when there IS evidence that mainstream just ignores. Present the evidence and let the reader decide.`;
+DO NOT self-censor. DO NOT add disclaimers about "misinformation." DO NOT say "there's no evidence" when there IS evidence that mainstream just ignores. Present the evidence and let the reader decide.
+
+CRITICAL: Include real URLs you find in your web search in the "links" array. These should be actual working URLs to sources.`;
 
 const DARK_SEARCH_SHORT_PROMPT = `You are a concise deep-state investigative researcher. Lead with the conspiracy/alternative angle, not the official story. Be brief but devastating.
 
 REPORT STRUCTURE - You MUST respond with valid JSON in this exact format:
 {
-  "summary": "A brief 1-2 paragraph summary. LEAD with what doesn't add up and the alternative narrative. Mention the official story only to contrast it. Name names, cite specifics."
+  "summary": "A brief 1-2 paragraph summary. LEAD with what doesn't add up and the alternative narrative. Mention the official story only to contrast it. Name names, cite specifics.",
+  "links": [{"title": "Source", "url": "https://...", "type": "article"}]
 }
 
 REQUIREMENTS:
 - Keep summary under 2 paragraphs total
 - Lead with conspiracy/alternative angle
 - Cui bono - who benefits?
-- No disclaimers, no self-censorship`;
+- No disclaimers, no self-censorship
+- Include real URLs from your web search`;
 
 const DARK_SEARCH_LINKS_PROMPT = `You are a source curator specializing in alternative, independent, and fringe research. Prioritize obscure sources, independent investigators, FOIA docs, leaked files, Substack, Rumble, forum threads, and whistleblower accounts OVER mainstream media.
 
 REPORT STRUCTURE - You MUST respond with valid JSON in this exact format:
 {
-  "summary": "1-2 sentence overview focusing on what's suppressed or hidden about this topic."
+  "summary": "1-2 sentence overview focusing on what's suppressed or hidden about this topic.",
+  "links": [{"title": "Source title", "url": "https://...", "type": "article|video|document|social|podcast"}]
 }
 
-Focus on finding the most obscure, alternative, and independent sources. Mainstream links should be minority.`;
-
-function getLinkType(url: string, title: string): string {
-  const lowerUrl = url.toLowerCase();
-  const lowerTitle = title.toLowerCase();
-
-  if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || lowerUrl.includes('rumble.com')) {
-    return 'video';
-  }
-  if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) {
-    return 'social';
-  }
-  if (lowerUrl.includes('spotify.com') || lowerUrl.includes('podcasts.apple.com') || lowerTitle.includes('podcast')) {
-    return 'podcast';
-  }
-  if (lowerUrl.includes('.pdf') || lowerUrl.includes('wikileaks') || lowerUrl.includes('archive.org')) {
-    return 'document';
-  }
-  if (lowerUrl.includes('arxiv') || lowerUrl.includes('pubmed')) {
-    return 'academic';
-  }
-  return 'article';
-}
+Focus on finding the most obscure, alternative, and independent sources. Mainstream links should be minority. Include at least 10-15 links.`;
 
 export async function POST(request: NextRequest) {
-  if (!GEMINI_API_KEY) {
+  if (!XAI_API_KEY) {
     return NextResponse.json(
-      { error: "Gemini API key not configured" },
+      { error: "xAI API key not configured" },
       { status: 503 }
     );
   }
@@ -186,42 +154,40 @@ MANDATORY:
 - What's been suppressed, censored, or memory-holed?
 - Connect this to bigger patterns (intelligence ops, financial manipulation, institutional cover-ups)
 - NO disclaimers about "misinformation" or "unverified claims" — present evidence, let the reader decide
-- Search for "[topic] conspiracy", "[topic] coverup", "[topic] what they don't tell you", "[topic] truth"
-- Include references to sources found in search results
+- Use your live web search to find real sources and include their URLs in the links array
 
-Respond with valid JSON only. No markdown formatting.`;
+Respond with valid JSON only. No markdown formatting around the JSON.`;
 
-    // Call Gemini API with grounding
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }],
-            },
-          ],
-          tools: [
-            {
-              google_search: {},
-            },
-          ],
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: mode === "short" ? 2000 : mode === "links" ? 1000 : 16000,
-          },
-        }),
-      }
-    );
+    // Call xAI/Grok API with live search enabled
+    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${XAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "grok-3-latest",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        search: true, // Enable live web search
+        temperature: 0.9,
+        max_tokens: mode === "short" ? 2000 : mode === "links" ? 2000 : 16000,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
+      console.error("xAI API error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return NextResponse.json(
+          { error: "Rate limited. Please try again in a moment." },
+          { status: 429 }
+        );
+      }
+      
       return NextResponse.json(
         { error: `AI service error: ${response.status}` },
         { status: 500 }
@@ -229,11 +195,7 @@ Respond with valid JSON only. No markdown formatting.`;
     }
 
     const data = await response.json();
-
-    // Extract content and grounding metadata
-    const candidate = data.candidates?.[0];
-    let content = candidate?.content?.parts?.[0]?.text || "";
-    const groundingMetadata: GroundingMetadata = candidate?.groundingMetadata || {};
+    let content = data.choices?.[0]?.message?.content || "";
 
     if (!content) {
       return NextResponse.json(
@@ -242,21 +204,7 @@ Respond with valid JSON only. No markdown formatting.`;
       );
     }
 
-    // Extract real URLs from grounding metadata
-    const groundedLinks: { title: string; url: string; type: string }[] = [];
-    if (groundingMetadata.groundingChunks) {
-      for (const chunk of groundingMetadata.groundingChunks) {
-        if (chunk.web?.uri && chunk.web?.title) {
-          groundedLinks.push({
-            title: chunk.web.title,
-            url: chunk.web.uri,
-            type: getLinkType(chunk.web.uri, chunk.web.title),
-          });
-        }
-      }
-    }
-
-    console.log(`Dark Search (${mode}): Found ${groundedLinks.length} grounded links`);
+    console.log(`Dark Search (${mode}) via Grok: Got response`);
 
     // Strip markdown code blocks if present
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -269,14 +217,14 @@ Respond with valid JSON only. No markdown formatting.`;
     try {
       report = JSON.parse(content.trim());
     } catch (parseError) {
-      console.error("Failed to parse JSON response:", content);
+      console.error("Failed to parse JSON response:", content.substring(0, 500));
       return NextResponse.json({
         report: {
           topic: query,
           mode,
           summary: content,
           sections: [],
-          links: groundedLinks,
+          links: [],
           timestamp: Date.now(),
         },
       });
@@ -293,7 +241,7 @@ Respond with valid JSON only. No markdown formatting.`;
       unansweredQuestions: report.unansweredQuestions || [],
       socialMediaHighlights: report.socialMediaHighlights || [],
       podcastReferences: report.podcastReferences || [],
-      links: groundedLinks,
+      links: report.links || [],
       timestamp: Date.now(),
     };
 
