@@ -5,27 +5,14 @@ import {
   cacheBusinessSearchResults,
 } from '@/lib/business-cache';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-interface GeminiResponse {
-  candidates: {
-    content: {
-      parts: {
-        text: string;
-      }[];
-    };
-  }[];
-}
+const XAI_API_KEY = process.env.XAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 async function searchBusinessesWithAI(
   query: string,
   city: string,
   state: string
 ): Promise<BusinessSearchResult[]> {
-  if (!GEMINI_API_KEY) {
-    throw new Error('Gemini API key not configured');
-  }
-
   const prompt = `Search for local businesses matching "${query}" in ${city}, ${state}.
 
 Find up to 5 potential business matches. For each business, provide:
@@ -56,37 +43,67 @@ IMPORTANT:
 - If no businesses are found, return an empty results array
 - Order by confidence score (highest first)`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 4096,
+  // Try Grok first (has live search)
+  if (XAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${XAI_API_KEY}`,
         },
-        tools: [{ google_search: {} }],
-      }),
+        body: JSON.stringify({
+          model: 'grok-3-mini-fast',
+          messages: [{ role: 'user', content: prompt }],
+          search: true,
+          temperature: 0.1,
+          max_tokens: 4096,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || '';
+        return parseBusinessResults(responseText);
+      }
+      console.error('Grok API error:', response.status);
+    } catch (err) {
+      console.error('Grok API failed:', err);
     }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini API error:', response.status, errorText);
-    throw new Error(`Gemini API error: ${response.status}`);
   }
 
-  const data: GeminiResponse = await response.json();
+  // Fallback to OpenAI
+  if (OPENAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          max_tokens: 4096,
+        }),
+      });
 
-  if (!data.candidates || data.candidates.length === 0) {
-    throw new Error('No response from Gemini');
+      if (response.ok) {
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || '';
+        return parseBusinessResults(responseText);
+      }
+      console.error('OpenAI API error:', response.status);
+    } catch (err) {
+      console.error('OpenAI API failed:', err);
+    }
   }
 
-  const responseText = data.candidates[0].content.parts[0].text;
+  throw new Error('No AI API available');
+}
 
-  // Parse JSON response
+function parseBusinessResults(responseText: string): BusinessSearchResult[] {
   let cleanedResponse = responseText;
   if (responseText.includes('```')) {
     cleanedResponse = responseText
@@ -122,7 +139,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!GEMINI_API_KEY) {
+  if (!XAI_API_KEY && !OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'AI API not configured' },
       { status: 503 }

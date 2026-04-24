@@ -5,17 +5,8 @@ import {
   cacheBusinessReport,
 } from '@/lib/business-cache';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-interface GeminiResponse {
-  candidates: {
-    content: {
-      parts: {
-        text: string;
-      }[];
-    };
-  }[];
-}
+const XAI_API_KEY = process.env.XAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 async function getBusinessDetailsWithAI(
   businessName: string,
@@ -23,10 +14,6 @@ async function getBusinessDetailsWithAI(
   city: string,
   state: string
 ): Promise<BusinessAnalysis> {
-  if (!GEMINI_API_KEY) {
-    throw new Error('Gemini API key not configured');
-  }
-
   const prompt = `Perform a comprehensive public records search for the local business:
 Business Name: "${businessName}"
 Address: ${address}
@@ -99,37 +86,67 @@ IMPORTANT:
 - If information is not available, omit that field or use null
 - Prioritize official government sources and public records`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 16384,
+  // Try Grok first (has live search)
+  if (XAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${XAI_API_KEY}`,
         },
-        tools: [{ google_search: {} }],
-      }),
+        body: JSON.stringify({
+          model: 'grok-3-mini-fast',
+          messages: [{ role: 'user', content: prompt }],
+          search: true,
+          temperature: 0.1,
+          max_tokens: 16384,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || '';
+        return parseBusinessAnalysis(responseText, businessName, city, state);
+      }
+      console.error('Grok API error:', response.status);
+    } catch (err) {
+      console.error('Grok API failed:', err);
     }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini API error:', response.status, errorText);
-    throw new Error(`Gemini API error: ${response.status}`);
   }
 
-  const data: GeminiResponse = await response.json();
+  // Fallback to OpenAI
+  if (OPENAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          max_tokens: 16384,
+        }),
+      });
 
-  if (!data.candidates || data.candidates.length === 0) {
-    throw new Error('No response from Gemini');
+      if (response.ok) {
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || '';
+        return parseBusinessAnalysis(responseText, businessName, city, state);
+      }
+      console.error('OpenAI API error:', response.status);
+    } catch (err) {
+      console.error('OpenAI API failed:', err);
+    }
   }
 
-  const responseText = data.candidates[0].content.parts[0].text;
+  throw new Error('No AI API available');
+}
 
-  // Parse JSON response
+function parseBusinessAnalysis(responseText: string, businessName: string, city: string, state: string): BusinessAnalysis {
   let cleanedResponse = responseText;
   if (responseText.includes('```')) {
     cleanedResponse = responseText
@@ -148,6 +165,9 @@ IMPORTANT:
 
   return {
     ...parsed,
+    businessName: parsed.businessName || businessName,
+    city: parsed.city || city,
+    state: parsed.state || state,
     owners: parsed.owners || [],
     filings: parsed.filings || [],
     licenses: parsed.licenses || [],
@@ -171,7 +191,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!GEMINI_API_KEY) {
+  if (!XAI_API_KEY && !OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'AI API not configured' },
       { status: 503 }

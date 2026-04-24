@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SearchType, ContactResult } from '@/lib/types/contact-finder';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-interface GeminiResponse {
-  candidates: {
-    content: {
-      parts: {
-        text: string;
-      }[];
-    };
-  }[];
-}
+const XAI_API_KEY = process.env.XAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 function getIndividualSearchPrompt(query: string): string {
   return `You are an expert OSINT researcher finding publicly available contact information.
@@ -114,6 +105,89 @@ Return ONLY valid JSON (no markdown, no backticks):
 }`;
 }
 
+async function searchWithAI(prompt: string): Promise<{ results: any[]; summary: string }> {
+  // Try Grok first (has live search)
+  if (XAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${XAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'grok-3-mini-fast',
+          messages: [{ role: 'user', content: prompt }],
+          search: true,
+          temperature: 0.1,
+          max_tokens: 8192,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || '';
+        return parseContactResults(responseText);
+      }
+      console.error('Grok API error:', response.status);
+    } catch (err) {
+      console.error('Grok API failed:', err);
+    }
+  }
+
+  // Fallback to OpenAI
+  if (OPENAI_API_KEY) {
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+          max_tokens: 8192,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || '';
+        return parseContactResults(responseText);
+      }
+      console.error('OpenAI API error:', response.status);
+    } catch (err) {
+      console.error('OpenAI API failed:', err);
+    }
+  }
+
+  throw new Error('No AI API available');
+}
+
+function parseContactResults(responseText: string): { results: any[]; summary: string } {
+  let cleanedResponse = responseText;
+  if (responseText.includes('```')) {
+    cleanedResponse = responseText
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .trim();
+  }
+
+  const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    console.error('No JSON found in response:', responseText.substring(0, 500));
+    throw new Error('Failed to parse contact search results');
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    results: parsed.results || [],
+    summary: parsed.summary || 'Search completed',
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { query, searchType } = await request.json();
@@ -132,7 +206,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!GEMINI_API_KEY) {
+    if (!XAI_API_KEY && !OPENAI_API_KEY) {
       return NextResponse.json(
         { error: 'AI API not configured' },
         { status: 503 }
@@ -143,58 +217,13 @@ export async function POST(request: NextRequest) {
       ? getIndividualSearchPrompt(query)
       : getTargetSearchPrompt(query);
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 8192,
-          },
-          tools: [{ google_search: {} }],
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const data: GeminiResponse = await response.json();
-
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new Error('No response from Gemini');
-    }
-
-    const responseText = data.candidates[0].content.parts[0].text;
-
-    // Parse JSON response
-    let cleanedResponse = responseText;
-    if (responseText.includes('```')) {
-      cleanedResponse = responseText
-        .replace(/```json\s*/gi, '')
-        .replace(/```\s*/g, '')
-        .trim();
-    }
-
-    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('No JSON found in response:', responseText.substring(0, 500));
-      throw new Error('Failed to parse contact search results');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
+    const { results, summary } = await searchWithAI(prompt);
 
     return NextResponse.json({
       query,
       searchType,
-      results: parsed.results || [],
-      summary: parsed.summary || 'Search completed',
+      results,
+      summary,
       createdAt: new Date().toISOString(),
     });
   } catch (error) {

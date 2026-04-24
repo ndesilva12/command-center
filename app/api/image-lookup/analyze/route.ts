@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-interface GeminiResponse {
-  candidates: {
-    content: {
-      parts: {
-        text: string;
-      }[];
-    };
-  }[];
-}
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const XAI_API_KEY = process.env.XAI_API_KEY;
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,40 +14,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!GEMINI_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return NextResponse.json(
-        { error: 'AI API not configured' },
+        { error: 'OpenAI API not configured (required for image analysis)' },
         { status: 503 }
       );
     }
 
-    // Prepare image data for Gemini
-    let imageData: any;
+    // Prepare image for OpenAI Vision
+    let imageContent: any;
     if (imageBase64) {
-      // Remove data URL prefix if present
-      const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
-      imageData = {
-        inlineData: {
-          data: base64Data,
-          mimeType: imageBase64.match(/^data:image\/([a-z]+);base64,/)?.[0].includes('png') ? 'image/png' : 'image/jpeg',
+      // Use base64 directly
+      imageContent = {
+        type: "image_url",
+        image_url: {
+          url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`,
         },
       };
     } else {
-      // For URLs, we need to fetch and convert to base64
-      const imageResponse = await fetch(imageUrl);
-      const arrayBuffer = await imageResponse.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString('base64');
-      const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-      
-      imageData = {
-        inlineData: {
-          data: base64,
-          mimeType: contentType,
+      // Use URL directly
+      imageContent = {
+        type: "image_url",
+        image_url: {
+          url: imageUrl,
         },
       };
     }
 
-    // Analyze image with Gemini Vision
     const analysisPrompt = `Analyze this image in detail. Provide:
 
 1. **Image Description**: What is shown in the image? Be specific and detailed.
@@ -76,41 +60,41 @@ Return ONLY valid JSON with this exact structure (no markdown, no backticks):
   "searchKeywords": ["keyword1", "keyword2", "keyword3"]
 }`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: analysisPrompt },
-                imageData,
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 4096,
+    // Use OpenAI GPT-4o for vision
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: analysisPrompt },
+              imageContent,
+            ],
           },
-        }),
-      }
-    );
+        ],
+        max_tokens: 4096,
+        temperature: 0.2,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    const data: GeminiResponse = await response.json();
+    const data = await response.json();
+    const responseText = data.choices?.[0]?.message?.content || '';
 
-    if (!data.candidates || data.candidates.length === 0) {
-      throw new Error('No response from Gemini');
+    if (!responseText) {
+      throw new Error('No response from OpenAI');
     }
-
-    const responseText = data.candidates[0].content.parts[0].text;
 
     // Parse JSON response
     let cleanedResponse = responseText;
@@ -129,9 +113,9 @@ Return ONLY valid JSON with this exact structure (no markdown, no backticks):
 
     const analysis = JSON.parse(jsonMatch[0]);
 
-    // Also perform web search for context if we have good keywords
+    // Perform web search for context using Grok (has live search)
     let webContext = null;
-    if (analysis.searchKeywords && analysis.searchKeywords.length > 0) {
+    if (XAI_API_KEY && analysis.searchKeywords && analysis.searchKeywords.length > 0) {
       const searchQuery = analysis.searchKeywords.slice(0, 3).join(' ');
       const searchPrompt = `Search the web for information related to: ${searchQuery}
       
@@ -144,27 +128,28 @@ Find relevant information about:
 
 Return a brief summary of findings.`;
 
-      const searchResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
+      try {
+        const searchResponse = await fetch('https://api.x.ai/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${XAI_API_KEY}`,
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: searchPrompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 2048,
-            },
-            tools: [{ google_search: {} }],
+            model: 'grok-3-mini-fast',
+            messages: [{ role: 'user', content: searchPrompt }],
+            search: true,
+            temperature: 0.3,
+            max_tokens: 2048,
           }),
-        }
-      );
+        });
 
-      if (searchResponse.ok) {
-        const searchData: GeminiResponse = await searchResponse.json();
-        if (searchData.candidates && searchData.candidates.length > 0) {
-          webContext = searchData.candidates[0].content.parts[0].text;
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          webContext = searchData.choices?.[0]?.message?.content || null;
         }
+      } catch (err) {
+        console.error('Web context search failed:', err);
       }
     }
 
