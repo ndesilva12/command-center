@@ -10,13 +10,7 @@ export type UnifiedSourceId =
   | "wikipedia"
   | "x"
   | "youtube"
-  | "amazon"
-  | "spotify"
-  // AI sources
-  | "grok"
-  | "gemini"
-  | "claude"
-  | "chatgpt";
+  | "amazon";
 
 export type SourceType = "web" | "ai";
 
@@ -97,46 +91,6 @@ export const UNIFIED_SOURCES: UnifiedSourceConfig[] = [
     type: "web",
     searchUrlTemplate: "https://www.amazon.com/s?k={query}",
   },
-  {
-    id: "spotify",
-    name: "Spotify",
-    description: "Spotify music search",
-    type: "web",
-    searchUrlTemplate: "https://open.spotify.com/search/{query}",
-  },
-  // AI sources
-  {
-    id: "grok",
-    name: "Grok",
-    description: "xAI Grok",
-    type: "ai",
-    apiEndpoint: "https://grok.com",
-    searchUrlTemplate: "https://grok.com/?q={query}",
-  },
-  {
-    id: "gemini",
-    name: "Gemini",
-    description: "Google Gemini",
-    type: "ai",
-    apiEndpoint: "https://gemini.google.com/app",
-    searchUrlTemplate: "https://gemini.google.com/app?text={query}",
-  },
-  {
-    id: "claude",
-    name: "Claude",
-    description: "Anthropic Claude",
-    type: "ai",
-    apiEndpoint: "https://claude.ai/new",
-    searchUrlTemplate: "https://claude.ai/new?q={query}",
-  },
-  {
-    id: "chatgpt",
-    name: "ChatGPT",
-    description: "OpenAI ChatGPT",
-    type: "ai",
-    apiEndpoint: "https://chatgpt.com",
-    searchUrlTemplate: "https://chatgpt.com/?q={query}",
-  },
 ];
 
 // Default source
@@ -163,7 +117,4 @@ export function getAIModelUrl(sourceId: UnifiedSourceId): string {
   return "";
 }
 
-// Check if AI source is handled in-house (not external)
-export function isInHouseAI(sourceId: UnifiedSourceId): boolean {
-  return sourceId === "chatgpt" || sourceId === "grok" || sourceId === "gemini" || sourceId === "claude";
-}
+

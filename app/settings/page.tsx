@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { ConnectedAccounts } from "@/components/settings/ConnectedAccounts";
 import { ToolCustomization } from "@/components/settings/ToolCustomization";
+import { QuickLinksSettings } from "@/components/settings/QuickLinksSettings";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -129,6 +130,11 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {/* Quick Links Settings */}
+          <div style={{ marginBottom: "32px" }}>
+            <QuickLinksSettings />
+          </div>
 
           {/* Tool Customization Section */}
           <div style={{ marginBottom: "32px" }}>

@@ -75,19 +75,13 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
 
     saveToRecent(query);
 
-    // Check if this is an AI source we can handle in-house
-    if (sourceConfig.type === "ai" && selectedSource !== "claude" && onAISearch) {
-      // Use in-house AI search for chatgpt, grok, gemini
-      onAISearch(query.trim(), selectedSource);
-    } else {
-      // Open search URL - same tab on mobile to avoid overlay issues
-      const searchUrl = getSearchUrl(selectedSource, query.trim());
-      if (searchUrl) {
-        if (isMobile) {
-          window.location.href = searchUrl;
-        } else {
-          window.open(searchUrl, "_blank");
-        }
+    // Open search URL - same tab on mobile to avoid overlay issues
+    const searchUrl = getSearchUrl(selectedSource, query.trim());
+    if (searchUrl) {
+      if (isMobile) {
+        window.location.href = searchUrl;
+      } else {
+        window.open(searchUrl, "_blank");
       }
     }
 
@@ -101,9 +95,8 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
     setShowRecent(false);
   };
 
-  // Group sources by type
-  const webSources = UNIFIED_SOURCES.filter(s => s.type === "web");
-  const aiSources = UNIFIED_SOURCES.filter(s => s.type === "ai");
+  // All sources are now web sources
+  const webSources = UNIFIED_SOURCES;
 
   return (
     <div style={{ width: "100%", maxWidth: isMobile ? "none" : "800px", margin: "0 auto", padding: isMobile ? "0 8px" : "0" }}>
@@ -247,20 +240,11 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
                 minWidth: "150px",
               }}
             >
-              <optgroup label="Web Search">
-                {webSources.map((source) => (
-                  <option key={source.id} value={source.id}>
-                    {source.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="AI">
-                {aiSources.map((source) => (
-                  <option key={source.id} value={source.id}>
-                    {source.name}
-                  </option>
-                ))}
-              </optgroup>
+              {webSources.map((source) => (
+                <option key={source.id} value={source.id}>
+                  {source.name}
+                </option>
+              ))}
             </select>
           </div>
         ) : (
@@ -272,44 +256,8 @@ export const SearchBar = forwardRef<SearchBarRef, SearchBarProps>(function Searc
             justifyContent: "center",
             fontSize: "15px",
           }}>
-            {/* Web Sources */}
+            {/* Search Sources */}
             {webSources.map((source) => (
-              <button
-                key={source.id}
-                type="button"
-                onClick={() => setSelectedSource(source.id)}
-                style={{
-                  padding: "8px 14px",
-                  border: "none",
-                  background: "transparent",
-                  color: selectedSource === source.id ? "#00aaff" : "rgba(255, 255, 255, 0.55)",
-                  fontSize: "inherit",
-                  fontWeight: selectedSource === source.id ? 600 : 500,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                  textDecoration: selectedSource === source.id ? "underline" : "none",
-                  textUnderlineOffset: "4px",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.85)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedSource !== source.id) {
-                    e.currentTarget.style.color = "rgba(255, 255, 255, 0.55)";
-                  }
-                }}
-              >
-                {source.name}
-              </button>
-            ))}
-            
-            {/* Separator */}
-            <span style={{ color: "rgba(255, 255, 255, 0.2)", userSelect: "none", fontSize: "18px", lineHeight: 1 }}>|</span>
-
-            {/* AI Sources */}
-            {aiSources.map((source) => (
               <button
                 key={source.id}
                 type="button"

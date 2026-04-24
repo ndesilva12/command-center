@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/navigation/BottomNav";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
+import { QuickLinks } from "@/components/home/QuickLinks";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
@@ -246,6 +247,9 @@ export default function Home() {
             <div id="search-section" style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
               <SearchBar ref={searchBarRef} onAISearch={handleAISearch} />
             </div>
+
+            {/* Quick Links */}
+            <QuickLinks isMobile={isMobile} />
           </div>
 
           {/* AI Search Response */}
