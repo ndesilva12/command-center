@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/navigation/Sidebar";
 import { SearchBar } from "@/components/search/SearchBar";
 import { TrendingTopics, TrendingTopicsRef } from "@/components/home/TrendingTopics";
 import { QuickLinks } from "@/components/home/QuickLinks";
+import { XForYou } from "@/components/home/XForYou";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/hooks/useAuth";
@@ -318,6 +319,13 @@ export default function Home() {
                   Copy
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* X For You Section */}
+          {!aiSearchQuery && (
+            <div style={{ maxWidth: "800px", margin: "0 auto 32px" }}>
+              <XForYou isMobile={isMobile} />
             </div>
           )}
 
