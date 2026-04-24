@@ -30,7 +30,7 @@ const SOURCE_COLORS = {
   },
 };
 
-export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query: string) => void }>(
+export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query: string, source: "x" | "google") => void }>(
   ({ onTagClick }, ref) => {
   const [topics, setTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +145,7 @@ export const TrendingTopics = forwardRef<TrendingTopicsRef, { onTagClick: (query
         return (
           <button
             key={index}
-            onClick={() => onTagClick(topic.text)}
+            onClick={() => onTagClick(topic.text, topic.source)}
             style={{
               padding: isMobile ? "10px 16px" : "12px 20px",
               borderRadius: "12px",

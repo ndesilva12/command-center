@@ -103,14 +103,15 @@ export default function Home() {
     }
   };
 
-  const handleTrendingClick = (query: string) => {
+  const handleTrendingClick = (query: string, source: "x" | "google") => {
     const searchSection = document.getElementById('search-section');
     if (searchSection) {
       searchSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     if (searchBarRef.current) {
       searchBarRef.current.setQuery(query);
-      searchBarRef.current.setSource('news');
+      // X trends → search on X, Google trends → search on News
+      searchBarRef.current.setSource(source === 'x' ? 'x' : 'news');
     }
   };
 
