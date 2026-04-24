@@ -166,40 +166,69 @@ Remember:
 
 Respond with valid JSON only. No markdown formatting around the JSON.`;
 
-    // Call Gemini API with grounding
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: `${DEEP_SEARCH_SYSTEM_PROMPT}\n\n${userPrompt}` }],
-            },
-          ],
-          tools: [
-            {
-              google_search: {},
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 8000,
-          },
-        }),
-      }
-    );
+    // Call Gemini API with grounding (with retry for rate limits)
+    const MAX_RETRIES = 3;
+    let response: Response | null = null;
+    let lastError = '';
 
-    if (!response.ok) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        // Exponential backoff: 2s, 4s, 8s
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Gemini rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: `${DEEP_SEARCH_SYSTEM_PROMPT}\n\n${userPrompt}` }],
+              },
+            ],
+            tools: [
+              {
+                google_search: {},
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 8000,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        break;
+      }
+
+      if (response.status === 429) {
+        lastError = 'Rate limited by Gemini API';
+        continue; // Retry on rate limit
+      }
+
+      // Non-rate-limit error, don't retry
       const errorText = await response.text();
       console.error("Gemini API error:", errorText);
       return NextResponse.json(
         { error: `AI service error: ${response.status}` },
         { status: 500 }
+      );
+    }
+
+    if (!response || !response.ok) {
+      console.error("Gemini API exhausted retries:", lastError);
+      return NextResponse.json(
+        { error: "AI service temporarily unavailable (rate limited). Please try again in a minute." },
+        { status: 429 }
       );
     }
 
