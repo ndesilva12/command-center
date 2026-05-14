@@ -103,7 +103,7 @@ Return JSON array of leads found:
 If no valid leads found, return empty array []. Only return the JSON, no other text.`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 2000,
       messages: [{ role: 'user', content: analysisPrompt }]
     });

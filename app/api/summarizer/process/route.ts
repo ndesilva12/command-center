@@ -149,7 +149,7 @@ INSTRUCTIONS:
 Return the summary directly (no JSON, no meta-commentary):`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     });
