@@ -254,7 +254,7 @@ Return ONLY valid JSON (no markdown, no explanation):
 }`;
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250514',
       max_tokens: 4000,
       messages: [{ role: 'user', content: curatePrompt }],
     });
