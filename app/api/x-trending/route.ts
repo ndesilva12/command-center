@@ -245,14 +245,15 @@ function parseTrendsFromTrends24(html: string): TrendingTopic[] {
   const topics: TrendingTopic[] = [];
 
   // trends24.in uses various structures
-  const trendRegex = /<a[^>]*class="[^"]*trend-link[^"]*"[^>]*>([^<]+)<\/a>/gi;
+  // class attribute may be unquoted (e.g. class=trend-link)
+  const trendRegex = /<a[^>]*class=["']?[^"'>]*trend-link[^>]*>([^<]+)<\/a>/gi;
   const altRegex = /<span[^>]*class="[^"]*trend-name[^"]*"[^>]*>([^<]+)<\/span>/gi;
   const listRegex = /<li[^>]*>[\s\S]*?<a[^>]*href="[^"]*twitter\.com\/search[^"]*"[^>]*>([^<]+)<\/a>/gi;
 
   let match;
   while ((match = trendRegex.exec(html)) !== null && topics.length < 20) {
-    const topic = match[1].trim();
-    if (topic && !topics.some(t => t.topic === topic)) {
+    const topic = decodeEntities(match[1]);
+    if (isValidTopic(topic) && !topics.some(t => t.topic === topic)) {
       topics.push({
         topic,
         searchUrl: `https://www.google.com/search?q=${encodeURIComponent(topic)}&tbm=nws`,
@@ -262,8 +263,8 @@ function parseTrendsFromTrends24(html: string): TrendingTopic[] {
 
   if (topics.length === 0) {
     while ((match = altRegex.exec(html)) !== null && topics.length < 20) {
-      const topic = match[1].trim();
-      if (topic && !topics.some(t => t.topic === topic)) {
+      const topic = decodeEntities(match[1]);
+      if (isValidTopic(topic) && !topics.some(t => t.topic === topic)) {
         topics.push({
           topic,
           searchUrl: `https://www.google.com/search?q=${encodeURIComponent(topic)}&tbm=nws`,
@@ -274,8 +275,8 @@ function parseTrendsFromTrends24(html: string): TrendingTopic[] {
 
   if (topics.length === 0) {
     while ((match = listRegex.exec(html)) !== null && topics.length < 20) {
-      const topic = match[1].trim();
-      if (topic && !topics.some(t => t.topic === topic)) {
+      const topic = decodeEntities(match[1]);
+      if (isValidTopic(topic) && !topics.some(t => t.topic === topic)) {
         topics.push({
           topic,
           searchUrl: `https://www.google.com/search?q=${encodeURIComponent(topic)}&tbm=nws`,
@@ -291,13 +292,14 @@ function parseTrendsFromGetdaytrends(html: string): TrendingTopic[] {
   const topics: TrendingTopic[] = [];
 
   // getdaytrends.com format
-  const trendRegex = /<a[^>]*href="\/[^"]*\/trend\/([^"]+)"[^>]*>[\s\S]*?<span[^>]*>([^<]+)<\/span>/gi;
+  // Topic name is the anchor text of each /trend/ link
+  const trendRegex = /<a[^>]*href="\/[^"]*\/trend\/([^"]+)"[^>]*>([^<]*)<\/a>/gi;
   const altRegex = /<td[^>]*class="[^"]*main[^"]*"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>/gi;
 
   let match;
   while ((match = trendRegex.exec(html)) !== null && topics.length < 20) {
-    const topic = (match[2] || match[1]).trim();
-    if (topic && !topics.some(t => t.topic === topic)) {
+    const topic = decodeEntities(match[2]) || safeDecodeURI(match[1].replace(/\/$/, ""));
+    if (isValidTopic(topic) && !topics.some(t => t.topic === topic)) {
       topics.push({
         topic,
         searchUrl: `https://www.google.com/search?q=${encodeURIComponent(topic)}&tbm=nws`,
@@ -307,8 +309,8 @@ function parseTrendsFromGetdaytrends(html: string): TrendingTopic[] {
 
   if (topics.length === 0) {
     while ((match = altRegex.exec(html)) !== null && topics.length < 20) {
-      const topic = match[1].trim();
-      if (topic && topic !== "Trends" && !topics.some(t => t.topic === topic)) {
+      const topic = decodeEntities(match[1]);
+      if (isValidTopic(topic) && !topics.some(t => t.topic === topic)) {
         topics.push({
           topic,
           searchUrl: `https://www.google.com/search?q=${encodeURIComponent(topic)}&tbm=nws`,
@@ -318,6 +320,32 @@ function parseTrendsFromGetdaytrends(html: string): TrendingTopic[] {
   }
 
   return topics;
+}
+
+function decodeEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
+function safeDecodeURI(text: string): string {
+  try {
+    return decodeURIComponent(text).trim();
+  } catch {
+    return text.trim();
+  }
+}
+
+// Reject UI labels that scraping can pick up instead of real trends
+const JUNK_TOPICS = new Set(["view details", "trends", "more", "see more", "show more"]);
+function isValidTopic(topic: string): boolean {
+  return !!topic && topic.length <= 100 && !JUNK_TOPICS.has(topic.toLowerCase());
 }
 
 // Fetch trends from authenticated X API
